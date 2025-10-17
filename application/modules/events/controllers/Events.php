@@ -183,4 +183,9 @@ class Events extends MX_Controller {
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
+    public function take_attendance(){
+        $data = $this->em->takeAttendance();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
 }

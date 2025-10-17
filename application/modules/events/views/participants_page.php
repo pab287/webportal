@@ -192,9 +192,6 @@
                                             <button type="button" v-if="!eventAlreadyHappened" class="btn m-btn m-btn--sm btn-success mb-2 btnNew" data-toggle="modal" data-target="#addNewParticipant">
                                                 ADD PARTICIPANT
                                             </button>
-                                            <!-- <button type="button" v-if="eventAlreadyHappened" class="btn m-btn m-btn--sm btn-warning mb-2 text-white btnNew" data-toggle="modal" data-target="#attendanceSheet">
-                                                GENERATE ATTENDANCE
-                                            </button> -->
                                         </div>
                                         <div class="col-12">
                                             <div class="table-responsive">
@@ -277,7 +274,7 @@
                                                                         <div class="input-group-prepend">
                                                                             <span class="input-group-text"><i class="la la-clock-o"></i></span>
                                                                         </div>
-                                                                        <input id="schedule_date" name="start" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
+                                                                        <input id="schedule_date" name="event_date" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -348,7 +345,7 @@
                                                                 <div class="col-12">
                                                                     <div class="row text-center">
                                                                     <span class="col-4 p-1">
-                                                                        <button class="btn btn-info m-btn m-btn--icon m-btn--icon-only text-white w-100" data-bs-toggle="tooltip" data-bs-placement="top" title="Take Attendance">
+                                                                        <button class="btn btn-info m-btn m-btn--icon m-btn--icon-only text-white w-100" data-bs-toggle="tooltip" data-bs-placement="top" title="Take Attendance" @click="takeAttendance(item)">
                                                                             <i class="la la-calendar"></i>
                                                                         </button>
                                                                     </span>
@@ -805,7 +802,7 @@
                                                 <div class="input-group-prepend">
                                                     <span class="input-group-text"><i class="la la-clock-o"></i></span>
                                                 </div>
-                                                <input id="edit_schedule_date" name="start" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
+                                                <input id="edit_schedule_date" name="event_date" type="text" class="form-control m-input" placeholder="Schedule" data-validation="required" readonly>
                                             </div>
                                         </div>
                                     </div>
@@ -844,6 +841,85 @@
                         <button type="button" class="btn btn-warning text-white" data-dismiss="modal">CLOSE</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="generate_attendance" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate Attendance</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card mb-4">
+                                <div class="card-body bg-light">
+                                    <h5 class="card-title mb-3">Attendance for Schedule:</h5>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <strong>Title:</strong> {{ editSched.title }}<br>
+                                            <strong>Date:</strong> {{ editSched.event_date }}<br>
+                                            <strong>Time:</strong> {{ editSched.start }} - {{ editSched.end }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Location:</strong> {{ editSched.location }}<br>
+                                            <strong>Description:</strong> {{ editSched.description }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="table-responsive">
+                                <table class="table display table-bordered table-striped dataTable no-footer" id="attendanceTable">
+                                    <thead>
+                                        <tr>
+                                            <th hidden>ID</th>
+                                            <th>#</th>
+                                            <th>Participant</th>
+                                            <th>Company</th>
+                                            <th>Contact</th>
+                                            <th>Attendance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="(item, index) in attendance" :key="item.id">
+                                            <td hidden>{{ item.id }}</td>
+                                            <td>{{ index + 1 }}</td>
+                                            <td>
+                                                {{ item.firstname }} {{ item.middlename }} {{ item.lastname }}<br>
+                                                <small class="text-muted">{{ item.position }}</small>
+                                            </td>
+                                            <td>
+                                                {{ item.company }}<br>
+                                                <small class="text-muted">{{ item.department }}</small>
+                                            </td>
+                                            <td>
+                                                {{ item.email }}<br>
+                                                {{ item.mobile_no }}
+                                            </td>
+                                            <td class="text-center">
+                                                <label class="m-checkbox m-checkbox--bold m-checkbox--state-success ">
+                                                <input type="checkbox" class="form-check-input h-10px w-10px" :value="item.is_present" @change="togglePresence(item.id)" true-value="1" false-value="0"/>
+                                                <span></span>
+                                                </label>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success btnSave" @click="exportAttendance">EXPORT</button>
+                    <button type="button" class="btn btn-warning text-white" data-dismiss="modal">CLOSE</button>
+                </div>
             </div>
         </div>
     </div>

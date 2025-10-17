@@ -50,7 +50,6 @@ if (_tempContentData !== undefined && _tempContentData !== null && _tempContentD
     employees =_tempContentData.employees;
     attachments = _tempContentData.attachments;
     schedule = _tempContentData.schedule;
-    console.log(schedule);
 }
 
 
@@ -85,6 +84,7 @@ let eventVue = new Vue({
             start: '',
             end: '',
         },
+        attendance:{},
     },
     mounted: function () {
         this.eventsData = JSON.parse(JSON.stringify(eventsDetails));
@@ -300,7 +300,6 @@ let eventVue = new Vue({
             selectedSchedule = JSON.parse(JSON.stringify(event));
             this.editSched = event;
             $('#edit_schedule_date').val(moment(event.event_date).format('MM-DD-YYYY'));
-            console.log(event.start, event.end);
             $('#edit_schedule_start').timepicker('setTime', moment(event.start, 'HH:mm:ss').format('hh:mm A'));
             $('#edit_schedule_end').timepicker('setTime', moment(event.end, 'HH:mm:ss').format('hh:mm A'));
             $('#edit_schedule').modal('show');
@@ -311,12 +310,14 @@ let eventVue = new Vue({
                 type: "POST",
                 global: false,
                 data: {
-                    csrf_token: _csrf_hash,
-                    id: id,
+                    csrf_token:_csrf_hash,
+                    id:id,
+                    event_id: eventsDetails.id
                 },
                 dataType: "JSON",
                 success: function(res) {
                     if (res.success) {
+                        eventVue.schedule = res.schedule;
                         toastr.success(res.toastr_msg, "Success", 5000);
                     } else {
                         toastr.error(res.toastr_msg, "Error", 5000);
@@ -417,6 +418,27 @@ let eventVue = new Vue({
                 day: 'numeric' 
             });
         },
+        takeAttendance(sched){
+            $.ajax({
+                url: baseUrl("events/take_attendance"),
+                type: "POST",
+                global: false,
+                data: {
+                    csrf_token: _csrf_hash,
+                    sched_id: sched.id,
+                },
+                dataType: "JSON",
+                success: function(res) {
+                  eventVue.attendance = res;
+                  eventVue.editSched = sched;
+                  $('#generate_attendance').modal('show');
+                }
+            });
+          
+        },
+        exportAttendance(item){
+
+        }
     },
 });
 
@@ -552,7 +574,7 @@ function itemDatatableActions(id, status, emp_id = null, awarded) {
         if(status == 'confirmed'){
             _actionButton += `
             <a href="javascript:void(0)" 
-                class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
+                class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnEdit" 
                 onclick="assignSchedule(${id})" 
                 title="Manage Schedule">
                 <i class="la 	la-calendar-plus-o"></i>
@@ -1136,32 +1158,6 @@ $('#schedule_end').timepicker({
     minuteStep: 10,
 });
 
-$.validate({
-    form: "#new_event_sched",
-    lang: "en",
-    onSuccess: function (form) {
-        let currentForm = form[0];
-        let url = baseUrl("events/new_event_sched");
-        let formData = $(currentForm).serialize();
-        formData += "&event_id=" + encodeURIComponent(eventsDetails.id);
-        $.ajax({
-            url: url,
-            type: "POST",
-            dataType: "JSON",
-            data: formData,
-            success: function (response) {
-                if (response.success) {
-                    toastr.success(response.toastr_msg, 'Success', 5000);
-                    eventVue.trainings = response.trainings;
-                    $('#new_event_sched').modal('hide');
-                } else {
-                    toastr.error(response.toastr_msg, 'Error', 5000);
-                }
-            }
-        });
-    }
-});
-
 function assignSchedule(participant){
     $.ajax({
         url: baseUrl("events/assign_schedule"),
@@ -1180,6 +1176,30 @@ function assignSchedule(participant){
     });
 }
 
+$.validate({
+    form: "#new_event_sched",
+    lang: "en",
+    onSuccess: function (form) {
+        let currentForm = form[0];
+        let url = baseUrl("events/new_event_sched");
+        let formData = $(currentForm).serialize();
+        formData += "&event_id=" + encodeURIComponent(eventsDetails.id);
+        $.ajax({
+            url: url,
+            type: "POST",
+            dataType: "JSON",
+            data: formData,
+            success: function (response) {
+                if (response.success) {
+                    toastr.success(response.toastr_msg, 'Success', 5000);
+                    eventVue.schedule = response.schedule;
+                } else {
+                    toastr.error(response.toastr_msg, 'Error', 5000);
+                }
+            }
+        });
+    }
+});
 
 $.validate({
     form: "#edit_event_sched",
@@ -1187,7 +1207,6 @@ $.validate({
     onSuccess: function (form) {
         let currentForm = form[0];
         let edited = JSON.parse(JSON.stringify(eventVue.editSched));
-        console.log(selectedSchedule, edited);
         if(!checkChanges(selectedSchedule, edited)){
             toastr.error("NO CHANGES DETECTED", 'Error', 5000);
             return false;
@@ -1201,10 +1220,10 @@ $.validate({
             dataType: "JSON",
             data: formData,
             success: function (response) {
-                console.log(response);
                 if (response.success) {
                     toastr.success(response.toastr_msg, 'Success', 5000);
-                    eventVue.trainings = response.trainings;
+                    eventVue.schedule = response.schedule;
+                    $(currentForm)[0].reset();
                     $('#edit_schedule').modal('hide');
                 } else {
                     toastr.error(response.toastr_msg, 'Error', 5000);

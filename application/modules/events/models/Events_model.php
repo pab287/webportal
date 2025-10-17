@@ -858,14 +858,15 @@ class Events_model extends MX_Controller {
     public function newEventSched(){
         $resultset = array();
         $post = $this->input->post();
+        $post['event_date'] = date("Y-m-d", strtotime($post['event_date']));
         $insert = $this->db->insert($this->evetsSched, $post);
         if ($insert){
-            $resultset["response"] = true;
+            $resultset["success"] = true;
             $resultset["schedule"] = $this->getEventSchedule($post['event_id']);
             $resultset["toastr_msg"] = "Event schedule has been added.";
         }
         else{
-            $resultset["response"] = false;
+            $resultset["success"] = false;
             $resultset["toastr_msg"] = "Failed to add event schedule.";
         }
         return $resultset;
@@ -877,7 +878,7 @@ class Events_model extends MX_Controller {
         $id = $post['id'];
         $start_24 = date("H:i", strtotime($post['start']));
         $end_24 = date("H:i", strtotime($post['end']));
-        $event_date = date("Y-m-d", strtotime($post['event_date']));
+        $event_date = date("Y-m-d", strtotime(str_replace('-', '/', $post['event_date'])));
         $data = array(
             'start' =>    $start_24,
             'end' =>  $end_24,
@@ -971,6 +972,17 @@ class Events_model extends MX_Controller {
             $this->core_layout->setEventLog("Failed to unassign participant from schedule","insert", "error", "gcchris", "system");
         }
         return $resultset;
+    }
+
+    public function takeAttendance() {
+        $post = $this->input->post();
+        $schedule_id = $post['sched_id'];
+        $this->db->select('a.id,a.participant_id,a.is_present, b.firstname, b.middlename, b.lastname, b.emp_id, b.email, b.mobile_no, b.position, b.company, b.department');
+        $this->db->from($this->events_attendance.' a');
+        $this->db->where('schedule_id', $schedule_id);
+        $this->db->join($this->eventsParticipantsTable.' b', 'a.participant_id = b.id', 'left');
+        $result = $this->db->get()->result_array();
+        return $result;
     }
     
 
