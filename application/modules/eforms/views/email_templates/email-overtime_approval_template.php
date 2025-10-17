@@ -8,7 +8,7 @@
         <link href='https://fonts.googleapis.com/css?family=Work+Sans:300,400,500,600,700' rel="stylesheet">
         <link href='https://fonts.googleapis.com/css?family=Quicksand:300,400,700' rel="stylesheet">
         <!-- <![endif]-->
-        <title>MRS V1.0</title>
+        <title>EFORMS - OVERTIME</title>
         <style type="text/css">
             body {
                 width: 100%;
@@ -187,62 +187,69 @@
                         </tr>
                         <tr>
                             <td align="left" style="color: #888888; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 24px;">
-                                <div style="line-height: 24px;">This are the list of employees that are set to <strong>AUTOMATIC OVERTIME APPROVED</strong>.</div>
+                                <?php if (is_array($data) && !empty($data)): ?>
+                                    <div style="line-height: 24px;">These are the employees set to <strong>AUTOMATIC OVERTIME APPROVED</strong>.</div>
+                                <?php else: ?>
+                                    <div style="line-height: 24px;">No Overtime Records found for <strong>AUTOMATIC OVERTIME APPROVED</strong>.</div>
+                                <?php endif; ?>
                             </td>
                         </tr>
-                        <tr>
-                            <td height="30" style="font-size: 30px; line-height: 30px;">&nbsp;</td>
-                        </tr>
-                        <tr>
-                            <td align="left" style="color: #888888; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 24px; font-weight: 500;">
-                                <table border="0" class="table table-bordered" width="100%" cellpadding="0" cellspacing="0" bgcolor="ffffff">
-                                    <col width="300">
-                                    <col width="350">
-                                    <col width="400">
-                                    <col width="100">
-                                    <thead bgcolor="ffffff">
-                                        <th align="left" width="300" style="COLOR: #343434; font-size: 16px; font-family: Quicksand, Calibri, sans-serif; font-weight:700;letter-spacing: 0px; line-height: 18px; border-bottom: 1px solid #343434; padding: 4px;">EMPLOYEE</th>
-                                        <th align="left" width="350" style="COLOR: #343434; font-size: 16px; font-family: Quicksand, Calibri, sans-serif; font-weight:700;letter-spacing: 0px; line-height: 18px; border-bottom: 1px solid #343434; padding: 4px;">PURPOSE</th>
-                                        <th align="left" width="400" style="COLOR: #343434; font-size: 16px; font-family: Quicksand, Calibri, sans-serif; font-weight:700;letter-spacing: 0px; line-height: 18px; border-bottom: 1px solid #343434; padding: 4px;">FROM - TO</th>
-                                        <th align="left" width="100" style="COLOR: #343434; font-size: 16px; font-family: Quicksand, Calibri, sans-serif; font-weight:700;letter-spacing: 0px; line-height: 18px; border-bottom: 1px solid #343434; padding: 4px;">HRS WORK</th>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach($data as $key => $rs): ?>
-                                            <tr  bgcolor="<?php echo ($key % 2 == 0)? "ffffff" : "e5e5e5"; ?>">
-                                                <td align="left" width="300" style="color: #343434; font-size: 13px; font-family: Quicksand, Calibri, sans-serif; letter-spacing: 0px; border-bottom: 1px solid #343434; padding: 8px; vertical-align: top; text-transform: uppercase; line-height: 1.2">
-                                                    <?php
-                                                        $name = "<p style='font-weight: 700'>$rs->employee</p>";
-                                                        $name .= "<p style='margin: 0'>$rs->position</p>";
-                                                        $name .= "<p style='margin: 0; font-weight: 700'>$rs->company</p>";
-                                                        $name .= "<p style='margin: 0'>$rs->department</p>";
-
-                                                        echo $name;
-                                                    ?>
-                                                </td>
-                                                <td align="left" width="350" style="color: #343434; font-size: 13px; font-family: Quicksand, Calibri, sans-serif; letter-spacing: 0px; line-height: 13px; border-bottom: 1px solid #343434; padding: 8px; vertical-align: top; text-transform: uppercase"><?=$rs->purpose ?></td>
-                                                <td align="left" width="400" style="color: #343434; font-size: 13px; font-family: Quicksand, Calibri, sans-serif;letter-spacing: 0px; line-height: 13px; border-bottom: 1px solid #343434; padding: 8px; vertical-align: top; text-transform: uppercase">
-                                                    <?=date('M d, Y h:i A', strtotime($rs->date_from)). ' - ' . date('M d, Y h:i A', strtotime($rs->date_to)) ?>
-                                                </td>
-                                                <td align="left" width="100" style="color: #343434; font-size: 13px; font-family: Quicksand, Calibri, sans-serif;letter-spacing: 0px; line-height: 13px; border-bottom: 1px solid #343434; padding: 8px; vertical-align: top; text-transform: uppercase">
-                                                    <?php
-                                                        $date1 = new DateTime($rs->date_from);
-                                                        $date2 = new DateTime($rs->date_to);
-
-                                                        $diff = $date1->diff($date2);
-
-                                                        // Total hours difference (includes days converted to hours)
-                                                        $hours = $diff->h + ($diff->days * 24);
-                                                        $minutes = $diff->i > 0 ? $diff->i.' mins' : ''; 
-
-                                                        echo "{$hours}hr(s) {$minutes}";
-                                                    ?>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </td>
-                        </tr>
+                        <?php if (is_array($data) && !empty($data)): ?>
+                            <tr>
+                                <td height="30" style="font-size: 30px; line-height: 30px;">&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td align="left" style="color: #888888; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 24px; font-weight: 500;">
+                                    <table border="0" class="table table-bordered" width="100%" cellpadding="0" cellspacing="0" bgcolor="ffffff">
+                                        <col width="300">
+                                        <col width="350">
+                                        <col width="400">
+                                        <col width="100">
+                                        <thead bgcolor="ffffff">
+                                            <th align="left" width="300" style="COLOR: #343434; font-size: 16px; font-family: Quicksand, Calibri, sans-serif; font-weight:700;letter-spacing: 0px; line-height: 18px; border-bottom: 1px solid #343434; padding: 4px;">EMPLOYEE</th>
+                                            <th align="left" width="350" style="COLOR: #343434; font-size: 16px; font-family: Quicksand, Calibri, sans-serif; font-weight:700;letter-spacing: 0px; line-height: 18px; border-bottom: 1px solid #343434; padding: 4px;">PURPOSE</th>
+                                            <th align="left" width="400" style="COLOR: #343434; font-size: 16px; font-family: Quicksand, Calibri, sans-serif; font-weight:700;letter-spacing: 0px; line-height: 18px; border-bottom: 1px solid #343434; padding: 4px;">FROM - TO</th>
+                                            <th align="left" width="100" style="COLOR: #343434; font-size: 16px; font-family: Quicksand, Calibri, sans-serif; font-weight:700;letter-spacing: 0px; line-height: 18px; border-bottom: 1px solid #343434; padding: 4px;">HRS WORK</th>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach($data as $key => $rs): ?>
+                                                <tr bgcolor="<?php echo ($key % 2 == 0)? "ffffff" : "e5e5e5"; ?>">
+                                                    <td align="left" width="300" style="color: #343434; font-size: 13px; font-family: Quicksand, Calibri, sans-serif; letter-spacing: 0px; border-bottom: 1px solid #343434; padding: 8px; vertical-align: top; text-transform: uppercase; line-height: 1.2">
+                                                        <?php
+                                                            $name = "<p style='font-weight: 700'>$rs->employee</p>";
+                                                            $name .= "<p style='margin: 0'>$rs->position</p>";
+                                                            $name .= "<p style='margin: 0; font-weight: 700'>$rs->company</p>";
+                                                            $name .= "<p style='margin: 0'>$rs->department</p>";
+                                                            $name .= "<p style='margin: 0'><span style='font-weight: 700'>Ref #:</span> $rs->reference_no</p>";
+    
+                                                            echo $name;
+                                                        ?>
+                                                    </td>
+                                                    <td align="left" width="350" style="color: #343434; font-size: 13px; font-family: Quicksand, Calibri, sans-serif; letter-spacing: 0px; line-height: 13px; border-bottom: 1px solid #343434; padding: 8px; vertical-align: top; text-transform: uppercase"><?=$rs->purpose ?></td>
+                                                    <td align="left" width="400" style="color: #343434; font-size: 13px; font-family: Quicksand, Calibri, sans-serif;letter-spacing: 0px; line-height: 13px; border-bottom: 1px solid #343434; padding: 8px; vertical-align: top; text-transform: uppercase">
+                                                        <?=date('M d, Y h:i A', strtotime($rs->date_from)). ' - ' . date('M d, Y h:i A', strtotime($rs->date_to)) ?>
+                                                    </td>
+                                                    <td align="left" width="100" style="color: #343434; font-size: 13px; font-family: Quicksand, Calibri, sans-serif;letter-spacing: 0px; line-height: 13px; border-bottom: 1px solid #343434; padding: 8px; vertical-align: top; text-transform: uppercase">
+                                                        <?php
+                                                            $date1 = new DateTime($rs->date_from);
+                                                            $date2 = new DateTime($rs->date_to);
+    
+                                                            $diff = $date1->diff($date2);
+    
+                                                            // Total hours difference (includes days converted to hours)
+                                                            $hours = $diff->h + ($diff->days * 24);
+                                                            $minutes = $diff->i > 0 ? $diff->i.' mins' : ''; 
+    
+                                                            echo "{$hours}hr(s) {$minutes}";
+                                                        ?>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
                         <tr>
                             <td height="10" style="font-size: 10px; line-height: 10px;">&nbsp;</td>
                         </tr>

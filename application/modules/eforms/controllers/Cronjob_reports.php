@@ -817,7 +817,9 @@ class Cronjob_reports extends MY_Controller {
                 echo $message;
             }
         } else {
-            return 'No Overtime found.';
+            if (!$email) {
+                echo $this->load->view("eforms/email_templates/email-overtime_approval_template", array('data' => array()), true);
+            }
         }
     }
 }
