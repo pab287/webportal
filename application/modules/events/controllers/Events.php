@@ -68,6 +68,15 @@ class Events extends MX_Controller {
         $this->load->view("core/templates/footer");
     }
 
+    public function settings(){
+        $this->core_layout->setPageTitle("Settings");
+        $this->core_layout->setPrivilegeName("event_settings");
+        $this->core_layout->addJs("js/events/event_settings.js",true);
+        $this->load->view("core/templates/header");
+        $this->load->view("settings_page");
+        $this->load->view("core/templates/footer");
+    }
+
     public function get_events_tabular(){
         $data = $this->em->getEventsTabular();
         $this->output->set_content_type('json')->set_output(json_encode($data));
