@@ -175,11 +175,11 @@
                         action="<?php echo site_url("login/verifylogin/index"); ?>">
                     <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                     <div class="form-group m-form__group passwordgroup">
-                        <input class="form-control m-input" type="text" placeholder="Username" name="username" autocomplete="off">
+                        <input class="form-control m-input" type="text" placeholder="Username" name="username" autocomplete="off" maxlength="50">
                     </div>
                     <br>
                     <div class="passwordgroup">
-                        <input id="password-field" type="password" name="password" placeholder="Password" autocomplete="off">
+                        <input id="password-field" type="password" name="password" placeholder="Password" autocomplete="off" maxlength="50">
                         <text class="glyph-icon flaticon-visible" id="showpassword" onmousedown="showpass()"
                                 onclick="togglepass()"></text>
                     </div>

@@ -601,6 +601,7 @@ class User_model extends CI_Model{
         $this->db->set('force_update',1);
         $this->db->set('login_attempts', 0);
         $this->db->set('reset_attempts', 0);
+        $this->db->set('remember_token', NULL);
         $this->db->set('password', md5($otp));
         $update = $this->db->update('gccmaster.tblusers');
         return $update;
