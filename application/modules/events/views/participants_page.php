@@ -857,18 +857,37 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-12">
-                            <div class="card mb-4">
-                                <div class="card-body bg-light">
-                                    <h5 class="card-title mb-3">Attendance for Schedule:</h5>
+                            <div class="card card-custom card-border gutter-b">
+                                <div class="card-body pt-8">
                                     <div class="row">
-                                        <div class="col-md-6">
-                                            <strong>Title:</strong> {{ editSched.title }}<br>
-                                            <strong>Date:</strong> {{ editSched.event_date }}<br>
-                                            <strong>Time:</strong> {{ editSched.start }} - {{ editSched.end }}
+                                        <div class="col-sm-6 col-md-6 col-lg-3">
+                                            <div class="mb-8">
+                                                <span class="font-weight-bolder text-dark-75 font-size-sm text-uppercase">Title</span>
+                                                <div class="text-dark font-weight-bold font-size-lg mt-2">{{ editSched.title }}</div>
+                                            </div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <strong>Location:</strong> {{ editSched.location }}<br>
-                                            <strong>Description:</strong> {{ editSched.description }}
+                                        <div class="col-sm-6 col-md-6 col-lg-3">
+                                            <div class="mb-8">
+                                                <span class="font-weight-bolder text-dark-75 font-size-sm text-uppercase">Date</span>
+                                                <div class="text-dark font-weight-bold font-size-lg mt-2">{{ editSched.event_date }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-6 col-lg-3">
+                                            <div class="mb-8">
+                                                <span class="font-weight-bolder text-dark-75 font-size-sm text-uppercase">Time</span>
+                                                <div class="text-dark font-weight-bold font-size-lg mt-2">{{ formatTime(editSched.start,editSched.end) }} </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6 col-md-6 col-lg-3">
+                                            <div class="mb-8">
+                                                <span class="font-weight-bolder text-dark-75 font-size-sm text-uppercase">Location</span>
+                                                <div class="text-dark font-weight-bold font-size-lg mt-2">{{ editSched.location }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="separator separator-dashed my-5"></div>
+                                            <span class="font-weight-bolder text-dark-75 font-size-sm text-uppercase">Description</span>
+                                            <textarea class="form-control m-input col-12 text-uppercase" rows="3" style="resize: none; overflow-y: auto;" readonly>{{ editSched.description }}</textarea>
                                         </div>
                                     </div>
                                 </div>

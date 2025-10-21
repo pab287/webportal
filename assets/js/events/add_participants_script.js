@@ -456,24 +456,22 @@ let eventVue = new Vue({
             });
         },
         exportAttendance(item){
-            console.log(item);
             const headers = [
-              "First Name", "Middle Name", "Last Name", 
-                "Employee ID", "Email", "Mobile No", "Position", "Company", "Department",  ""
+                "FIRST NAME", "MIDDLE NAME", "LAST NAME", "EMAIL", "MOBILE NO", "POSITION",
+                "COMPANY", "DEPARTMENT", "ATTENDANCE"
             ];
             const workbook = XLSX.utils.book_new();
             const worksheet = XLSX.utils.aoa_to_sheet([headers]);
             const dataRows = item.map(participant => [
-                participant.firstname,
-                participant.middlename,
-                participant.lastname,
-                participant.emp_id,
-                participant.email,
-                participant.mobile_no,
-                participant.position,
-                participant.company,
-                participant.department,
-                participant.is_present,
+                (participant.firstname || '').toString().toUpperCase(),
+                (participant.middlename || '').toString().toUpperCase(),
+                (participant.lastname || '').toString().toUpperCase(),
+                (participant.email || '').toString().toUpperCase(),
+                (participant.mobile_no || '').toString().toUpperCase(),
+                (participant.position || '').toString().toUpperCase(),
+                (participant.company || '').toString().toUpperCase(),
+                (participant.department || '').toString().toUpperCase(),
+                ('').toString().toUpperCase(),
             ]);
             XLSX.utils.sheet_add_aoa(worksheet, dataRows, { origin: 'A2' });
             XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
@@ -482,12 +480,11 @@ let eventVue = new Vue({
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `attendance_${new Date().toISOString().split('T')[0]}.xlsx`;
+            link.download = `ATTENDANCE_${new Date().toISOString().split('T')[0]}.xlsx`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-        
         }
     },
 });
