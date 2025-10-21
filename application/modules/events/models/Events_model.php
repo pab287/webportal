@@ -641,7 +641,8 @@ class Events_model extends MX_Controller {
                 $insertId = $this->db->insert_id();
                 $this->db->where('emp_id', $post['emp_id']);
                 $this->db->update('gcchris.events_participants', [
-                    'cert_awarded' => $insertId
+                    'cert_awarded' => $insertId,
+                    'event_id' => $eventId,
                 ]);
                 $resultset['participants'] = $this->getEventParticipants($eventId);
                 $resultset["toastr_msg"] = "Employee training and seminar has been added successfully.";
