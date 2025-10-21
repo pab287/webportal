@@ -178,8 +178,9 @@
                         </div>
                     </div>
                 </div>
-                <div>
-                    <table id="tbl-allowances" class="table display table-bordered table-striped dataTable no-footer table-responsive" width="100%">
+                <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
+                    <table id="tbl-allowances" class="table display table-bordered table-striped dataTable no-footer"
+                           width="100%">
                         <thead>
                             <th>Name</th>
                             <th>Amount</th>
@@ -221,8 +222,9 @@
                         </div>
                     </div>
                 </div>
-                <div>
-                    <table id="tbl-benefits" class="table display table-bordered table-striped dataTable no-footer table-responsive" width="100%">
+                <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
+                    <table id="tbl-benefits" class="table display table-bordered table-striped dataTable no-footer"
+                           width="100%">
                         <thead>
                             <th>Name</th>
                             <th>Amount</th>
@@ -276,8 +278,9 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div>
-                                    <table id="tbl-loans" class="table display table-bordered table-striped dataTable no-footer table-responsive" width="100%">
+                                <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
+                                    <table id="tbl-loans" class="table display table-bordered table-striped dataTable no-footer"
+                                        width="100%">
                                         <thead>
                                         <th>Loan Name</th>
                                         <th>Loaned Amount</th>
@@ -323,7 +326,7 @@
                                 </div>
                             </div>
                         </div>
-                        <table id="tbl-deduction-history" class="table display table-bordered table-striped dataTable no-footer table-responsive" width="100%">
+                        <table id="tbl-deduction-history" class="table display table-bordered table-striped dataTable no-footer" width="100%">
                             <thead>
                                 <th>Loan Name</th>
                                 <th>Loaned Amount</th>
@@ -366,7 +369,7 @@
                                 </div>
                             </div>
                         </div>
-                        <table id="tbl-deduction-cancelled" class="table display table-bordered table-striped dataTable no-footer table-responsive" width="100%">
+                        <table id="tbl-deduction-cancelled" class="table display table-bordered table-striped dataTable no-footer" width="100%">
                             <thead>
                                 <th>Loan Name</th>
                                 <th>Loaned Amount</th>
@@ -426,7 +429,8 @@
                     </div>
                 </div>
                 <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
-                    <table id="tbl-payroll_history" class="table display table-bordered table-striped dataTable no-footer table-responsive" width="100%">
+                    <table id="tbl-payroll_history" class="table display table-bordered table-striped dataTable no-footer"
+                           width="100%">
                         <thead>
                             <th>Logs</th>
                             <th>Action</th>
@@ -892,7 +896,7 @@
             </div>
             <div class="modal-body">
                 <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
-                    <table id="tbl-approval_history" class="table display table-bordered table-striped dataTable no-footer table-responsive" width="100%">
+                    <table id="tbl-approval_history" class="table display table-bordered table-striped dataTable no-footer" width="100%">
                         <colgroup>
                             <col width="*">
                             <col width="20%">
