@@ -9857,7 +9857,7 @@ class Timesheet_model extends CI_Model{
             if (is_array($ids) && !empty($ids)) {
                 $this->db->select('id, employee, date_from, date_to');
                 $this->db->where_in('employee', $ids);
-                $this->db->where('TIMESTAMPDIFF(HOUR, date_from, date_to) <=', 3); //only gets the record 3hrs and under
+                $this->db->where('TIMESTAMPDIFF(MINUTE, date_from, date_to) <=', 180); //only gets the record 3hrs and under; 3 hrs = 180mins
                 $this->db->where('status', 'Pending');
     
                 $this->db->group_start();
