@@ -6488,6 +6488,10 @@ class Employee_model extends CI_Model {
         //                         CONCAT(emp.firstname, ' ',emp.lastname)
         //                     ELSE
         //                         CONCAT(emp.firstname, ' ', emp.middlename,' ' ,emp.lastname) END", $searchKey, 'both'); // removed middlename for name search
+        
+        $this->db->where("companies.is_archived", 0);
+        $this->db->where("companies.exclude", 0);
+        $this->db->group_start();
         $this->db->like("CONCAT(emp.firstname, ' ' ,emp.lastname)", $searchKey, 'both');
         $this->db->or_like('IF (companies . id IS NULL, emp . company_id, companies . code)', $searchKey, 'both');
         $this->db->or_like('IF (positions . id IS NULL, emp . `position`, positions . name)', $searchKey, 'both');
@@ -6502,7 +6506,9 @@ class Employee_model extends CI_Model {
         if(isset($filter) && in_array("education",$filter)){
             $this->db->or_like("educ.educ_degree", $searchKey, 'both');
         }
+        $this->db->group_end();
 
+        
         $this->db->order_by("CASE
             WHEN emp.middlename IS NULL OR emp.middlename = '' OR emp.middlename = 'NONE' OR emp.middlename = 'N/A' THEN
                 CONCAT(emp.firstname, ' ',emp.lastname)
@@ -6512,6 +6518,7 @@ class Employee_model extends CI_Model {
 
         $this->db->group_by('emp.id');
         $query = $this->db->get($this->employeeTable . ' emp');
+
         $employees = $query->result();
 
         $data = array();
