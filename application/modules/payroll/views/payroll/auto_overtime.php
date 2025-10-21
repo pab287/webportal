@@ -29,7 +29,7 @@
                     <div class="row">
                         <div class="form-group m-form-group col-xl-12 col-lg-12 col-md-12 col-sm-12">
                             <label for="company" class="required">COMPANY</label>
-                            <select name="company" id="company" class="form-control" data-validation="required">
+                            <select name="company" id="company" class="form-control">
                                 <option></option>
                             </select>
                         </div>

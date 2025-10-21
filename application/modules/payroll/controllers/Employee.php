@@ -535,4 +535,9 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
+        public function mass_update_auto_overtime_status(){
+            $data = $this->employee->massUpdateAutoOvertimeStatus();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
     }

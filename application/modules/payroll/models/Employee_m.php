@@ -2461,4 +2461,73 @@ public function getEmployeeNightDiffList(){
         }
     }
 
+    public function massUpdateAutoOvertimeStatus(){
+        $post = $this->input->post();
+        $status = isset($post["status"]) && intval($post["status"]) === 1 ? 1 : 0;
+        $employeeIds = isset($post["employee_ids"]) && !empty($post["employee_ids"]) ? (array) $post["employee_ids"] : [];
+    
+        if (empty($employeeIds)) {
+            return ["status" => false, "message" => "No employees selected."];
+        }
+    
+        $now = date("Y-m-d H:i:s");
+        $currentUser = $this->core_layout->getCurrentEmployeeId();
+    
+        $this->db->trans_start();
+    
+        $existing = $this->db
+            ->select("employee_id, allow_auto_overtime")
+            ->from($this->tbl_ps_auto_overtime)
+            ->where_in("employee_id", $employeeIds)
+            ->get()
+            ->result_array();
+    
+        $existingIds = array_column($existing, 'employee_id');
+        $newIds = array_diff($employeeIds, $existingIds);
+    
+        if (!empty($existingIds)) {
+            $this->db->where_in("employee_id", $existingIds);
+            $this->db->update($this->tbl_ps_auto_overtime, [
+                "allow_auto_overtime" => $status,
+                "last_updated_at" => $now,
+                "last_updated_by" => $currentUser
+            ]);
+        }
+    
+        if (!empty($newIds)) {
+            $insertData = [];
+            foreach ($newIds as $empId) {
+                $insertData[] = [
+                    "employee_id" => $empId,
+                    "allow_auto_overtime" => $status,
+                    "created_at" => $now,
+                    "created_by" => $currentUser
+                ];
+            }
+            $this->db->insert_batch($this->tbl_ps_auto_overtime, $insertData);
+        }
+    
+        $this->db->trans_complete();
+    
+        if ($this->db->trans_status() === FALSE) {
+            $this->db->trans_rollback();
+            return [
+                "status" => false,
+                "message" => "An error occurred while updating Auto Overtime. Changes were rolled back."
+            ];
+
+        } else {
+            $this->db->trans_commit();
+            return [
+                "status" => true,
+                "message" => "Auto Overtime successfully " . ($status ? "activated" : "deactivated") . " for selected employees.",
+                "updated" => $existingIds,
+                "inserted" => $newIds
+            ];
+
+        }
+
+    }
+    
+
 }

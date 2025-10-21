@@ -140,10 +140,12 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
     processing: true,
     serverSide: true,
     ordering: false,
+    rowId: 'employee_id',
     ajax: {
         url: baseUrl('payroll/employee/get_employee_auto_overtime_list'),
         type: 'POST',
         dataType: 'JSON',
+        global: false,
         data: function (d) { 
             d.csrf_token = _csrf_hash;
             d.search['value'] = searchRequest;
@@ -167,7 +169,18 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
                 return _html;
         }}, { data: 'allow_auto_overtime', title: "auto overtime", className: 'text-center', width: '10%',
             render: function (data) { return parseInt(data) === 1 ? "<i class='fa fa-check-circle text-success m--icon-font-size-lg3'></i>" : "<i class='fa fa-times-circle text-danger m--icon-font-size-lg3'></i>" } 
-        }, { data: null, title: 'Action', className: 'text-center', width: '7%',
+        }, { data: null,    
+            title: `
+            Action 
+                <button type='button' 
+                    id='btnMassToggle' 
+                    class='btn btn-default m-btn m-btn--hover-success m-btn--icon m-btn--icon-only m-btn--pill btnEdit'
+                    data-placement='bottom' data-toggle='m-tooltip' title='' 
+                    data-original-title='Mass Toggle Auto Overtime'>
+                    <i class='fa fa-toggle-off'></i>
+                </button>
+            `, 
+            className: 'text-center', width: '7%',
             render: function (_data, _type, row) {
                 let actionCtr = 0;
                 let _actionButton = "";
@@ -188,7 +201,32 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
                 if(actionCtr == 0) { _actionButton = '---'; }
                 return _actionButton;
         }}
-    ]
+    ],
+    drawCallback: function () {
+
+        const table = $('#tbl-employee-auto-overtime').DataTable();
+        const data = table.rows({ search: 'applied' }).data().toArray();
+    
+        const $btn = $('#btnMassToggle');
+        const $icon = $btn.find('i');
+    
+        const enabledCount = data.filter(row => parseInt(row.allow_auto_overtime) === 1).length;
+        const disabledCount = data.filter(row => parseInt(row.allow_auto_overtime) === 0).length;
+    
+        if (enabledCount === data.length) {
+            $icon.removeClass('fa-toggle-off').addClass('fa-toggle-on');
+            $btn.removeClass('m-btn--hover-success')
+                .addClass('m-btn--hover-danger')
+                .attr('data-original-title', 'Deactivate Auto Overtime');
+        } 
+        else if (disabledCount === data.length) {
+            $icon.removeClass('fa-toggle-on').addClass('fa-toggle-off');
+            $btn.removeClass('m-btn--hover-danger')
+                .addClass('m-btn--hover-success')
+                .attr('data-original-title', 'Activate Auto Overtime');
+        } 
+    }
+
 });
 
 $(document).on("click", ".btnAutoOvertime", function () {
@@ -258,7 +296,6 @@ $.validate({
             formData += '&serialized_employees=' + $(currentForm).find("#employees").val().toString();
         }
 
-        console.log(formData);
         let nData = {};
         formData.split('&').forEach(function(item) {
             const part = item.split('=');
@@ -276,4 +313,67 @@ $.validate({
         dtTable.ajax.reload(null, false);
         return false;
     }
+});
+
+$('#btnMassToggle').on('click', function () {
+    const $btn = $(this);
+    const $icon = $btn.find('i');
+    const isActive = $icon.hasClass('fa-toggle-on');
+    const actionText = isActive ? 'Deactivate' : 'Activate';
+    const confirmColor = isActive ? '#d33' : '#28a745';
+
+    $btn.tooltip('hide');
+    $btn.blur();
+
+    Swal.fire({
+        title: `${actionText} Auto Overtime`,
+        text: `This will ${actionText.toLowerCase()} auto overtime for listed employee.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: `Yes, ${actionText}`,
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: confirmColor,
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            if (isActive) {
+                $icon.removeClass('fa-toggle-on').addClass('fa-toggle-off');
+                $btn
+                    .removeClass('m-btn--hover-danger')
+                    .addClass('m-btn--hover-success')
+                    .attr('data-original-title', 'Activate Auto Overtime');
+            } else {
+                $icon.removeClass('fa-toggle-off').addClass('fa-toggle-on');
+                $btn
+                    .removeClass('m-btn--hover-success')
+                    .addClass('m-btn--hover-danger')
+                    .attr('data-original-title', 'Deactivate Auto Overtime');
+            }
+            $btn.tooltip('hide');
+            const table = $('#tbl-employee-auto-overtime').DataTable();
+            const targetState = isActive ? 0 : 1;
+            const ids = [];
+            table.rows().every(function () {
+                const rowData = this.data();
+                if (parseInt(rowData.allow_auto_overtime) !== targetState) {
+                    ids.push(rowData.employee_id);
+                }
+            });
+            if (ids.length > 0) {
+                $.ajax({
+                    url: siteUrl("payroll/employee/mass_update_auto_overtime_status"),
+                    type: "post",
+                    dataType: "json",
+                    global: false,
+                    data: { employee_ids: ids, status: targetState, csrf_token: _csrf_hash },
+                    success: function (res) {
+                        dtTable.ajax.reload();
+                    }
+                });
+            }
+            else{
+                toastr.error("No employees to update.");
+            }
+        }
+    });
 });
