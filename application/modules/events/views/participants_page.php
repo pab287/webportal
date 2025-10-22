@@ -959,4 +959,18 @@
         </div>
     </div>
 
+    <div class="modal fade show" id="modalTempContent" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content" id="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">DO NOT REMOVE THIS IS FOR UPLOADING</h5>
+                    <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">test</div>
+            </div>
+        </div>
+    </div>
+
 </div>

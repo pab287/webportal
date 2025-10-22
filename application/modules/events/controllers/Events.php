@@ -43,7 +43,7 @@ class Events extends MX_Controller {
         $data['attachments'] = $this->em->getEventAttachments($id);
         $data['schedule'] = $this->em->getEventSchedule($id);
         $this->core_layout->addCss("css/buttons.dataTables.min.css", true);
-        // $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
+        $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
         $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
         $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
         $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
