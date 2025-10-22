@@ -226,8 +226,8 @@ $.validate({
                     $("#addNewEvent").modal('hide');
                     $("#company").val(null).trigger("change");
                     $("#department").val(null).trigger("change");
-                    selectedCompanies = [];
-                    selectedDepartments = [];
+                    selectedCompanies = null;
+                    selectedDepartments = null;
                     toastr.success(res.message, 'Success', 5000);
                     tblCalendarOfHolidays.ajax.reload();
                     editEventVue.events = res.events;
@@ -412,8 +412,8 @@ $.validate({
                     $(form).trigger("reset");
                     $("#company_edit").val(null).trigger("change");
                     $("#department_edit").val(null).trigger("change");
-                    selectedCompaniesEdit = [];
-                    selectedDepartmentsEdit = [];
+                    selectedCompaniesEdit = null;
+                    selectedDepartmentsEdit = null;
                     $("#edit-events-modal").modal('hide');
                     toastr.success(res.message, 'Success', 5000);
                     tblCalendarOfHolidays.ajax.reload(null, false);

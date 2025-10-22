@@ -249,7 +249,7 @@ class Events_model extends MX_Controller {
     }
 
     public function getEventParticipants($id, $id_only = false){
-        $this->db->select("a.id, a.event_id, a.emp_id, a.is_employee, a.status, a.emp_id, a.invited_by, a.invited_at, a.firstname, a.middlename, a.lastname, a.mobile_no, a.email, a.position, a.department, a.company, a.cert_awarded, t.attachment as cert_attachment,
+        $this->db->select("a.id, a.event_id, a.emp_id, a.is_employee, a.status, a.emp_id, a.invited_by, a.invited_at, a.firstname, a.middlename, a.lastname, a.suffix, a.mobile_no, a.email, a.position, a.department, a.company, a.cert_awarded, t.attachment as cert_attachment,
             CONCAT(LOWER(a.firstname), IF(a.middlename IS NOT NULL AND a.middlename != '', CONCAT(' ', UPPER(LEFT(a.middlename, 1)), '.'), ''), ' ', LOWER(a.lastname)) AS fullname,
             CONCAT(
                 LOWER(head.firstname), 
@@ -319,7 +319,7 @@ class Events_model extends MX_Controller {
         $post = $this->input->post();
         $id = $post['emp_id'];
 
-        $this->db->select("a.firstname, a.middlename, a.lastname, a.mobile_no, c.email, d.name as position, e.code as department, f.code as company");
+        $this->db->select("a.firstname, a.middlename, a.lastname, a.suffix, a.mobile_no, c.email, d.name as position, e.code as department, f.code as company");
         $this->db->from($this->employeesTable. " as a");
         $this->db->join($this->usersTable." as c", "a.id = c.emp_id", "left");
         $this->db->join($this->positionsTable." as d", "a.position = d.id", "left");
@@ -648,14 +648,15 @@ class Events_model extends MX_Controller {
         }
         return $resultArray;
     }
-    function setModalTrainings() {
+    public function setModalTrainings() {
         $post = $this->input->post();
         $resultset = array();
-
         if ($post) {
+            $isEmp = $post['is_employee'];
+            $id = $post['is_employee'] ? $post['emp_id'] : $post['applicant_id'];
             $tempAttachment = $post["training_attachment"];
             $eventId = $post['event_id'];
-            unset($post["csrf_token"], $post["training_attachment"], $post["files"],$post['event_id']);
+            unset($post["csrf_token"], $post["training_attachment"], $post["files"], $post['event_id'], $post['applicant_id'], $post['is_employee']);
             $loggedIn = $this->core_layout->getCurrentSession();
 
             $post["add_date"] = date("Y-m-d H:i:s");
@@ -663,12 +664,12 @@ class Events_model extends MX_Controller {
 
             $post = array_map('strtoupper', $post);
             $post["attachment"] = $tempAttachment;
-            $fullname = $this->getEmployeeName($post['emp_id']);
+            $fullname = $this->getEmployeeName($id,$isEmp);
             $saved = $this->db->insert($this->tbltrainings, $post);
             if ($saved) {
                 $resultset["response"] = true;
                 $insertId = $this->db->insert_id();
-                $this->db->where('emp_id', $post['emp_id']);
+                $this->db->where($isEmp ? 'emp_id' : 'id', $id);
                 $this->db->where('event_id', $eventId);
                 $this->db->update('gcchris.events_participants', [
                     'cert_awarded' => $insertId
@@ -689,18 +690,35 @@ class Events_model extends MX_Controller {
         return $resultset;
     }
 
-    private function getEmployeeName($id){
+    private function getEmployeeName($id, $is_employee){
         $this->db->select("UCASE(
-                        CONCAT(firstname,
-                            CASE WHEN middlename IS NOT NULL AND middlename != '' THEN CONCAT(' ', substr(middlename,1,1),'.') ELSE ''
-                            END, ' ', lastname,
-                            CASE WHEN suffix IS NOT NULL AND suffix != '' AND suffix != 'N/A' AND suffix != 'NONE' THEN CONCAT(' ', suffix) ELSE '' END)
-                    ) as display_name");
-        $this->db->from("gccmaster.tblemployees");
+            CONCAT(firstname,
+                CASE WHEN middlename IS NOT NULL AND middlename != '' 
+                    THEN CONCAT(' ', SUBSTR(middlename, 1, 1), '.') 
+                    ELSE '' 
+                END, 
+                ' ', lastname,
+                CASE WHEN suffix IS NOT NULL AND suffix != '' 
+                    AND suffix != 'N/A' AND suffix != 'NONE' 
+                    THEN CONCAT(' ', suffix) 
+                    ELSE '' 
+                END)
+        ) AS display_name");
+    
+        if ($is_employee) {
+            $this->db->from($this->employeesTable);
+        } else {
+            $this->db->from($this->eventsParticipantsTable);
+        }
+    
         $this->db->where("id", $id);
         $query = $this->db->get();
-        return $query->num_rows() === 1 && $query->row()->display_name != '' ? $query->row()->display_name : "No Assigned Name";
+    
+        $display_name = ($query->num_rows() === 1 && $query->row()->display_name != '') ? $query->row()->display_name : "No Assigned Name";
+    
+        return $display_name;
     }
+    
 
     public function uploadDocuments(){
         $resultset = array();
@@ -1005,6 +1023,68 @@ class Events_model extends MX_Controller {
             $resultset["toastr_msg"] = "Failed to update attendance.";
             $this->core_layout->setEventLog("Failed to update attendance","update", "error", "gcchris", "system");
         }
+        return $resultset;
+    }
+
+    function uploadEmployeeTraining() {
+        $resultset = array();
+        $post = $this->input->post();
+        $id = $post['is_employee'] ? $post['employee_id'] : $post['applicant_id'];
+        $imagesPath = "";
+        if($post['is_employee'] == '1'){
+            $imagesPath = "./uploads/files/documents/employee_files/empcode_{$post["employee_id"]}/trainings";
+        }else{
+            $imagesPath = "./uploads/files/documents/applicant_files/appcode_{$post["applicant_id"]}/trainings";
+        }
+
+        $createFilePath = false;
+
+        if (!file_exists($imagesPath)) {
+            $mkdir = mkdir($imagesPath, 0777, true);
+            if ($mkdir) {
+                $createFilePath = true;
+            }
+        } else {
+            $createFilePath = true;
+        }
+
+        if ($createFilePath === false) {
+            $resultset["response"] = false;
+            $resultset["toastr_msg"] = "Failed to create directory folder for the uploaded file!";
+            $resultset["toastr_state"] = "warning";
+            $this->core_layout->setEventLog("Employee Training - Failed to create directory folder for the uploaded file.","file upload", "error", "gcchris", "system");
+        } else {
+            $config = array();
+            $config['upload_path'] = $imagesPath;
+            $config['allowed_types'] = 'jpg|jpeg|png|pdf|PNG|JPG|JPEG|PDF';
+            $config['max_size'] = 100000;
+            $config['create_thumbnail'] = false;
+
+            $data = $this->file_upload->uploadFile($config);
+            if ($data["response"] === true) {
+                $files = $data["files"][0];
+                $filename = $files["file_name"];
+                if ($filename) {
+                    $fullname = $this->getEmployeeName($id,$post['is_employee']);
+                    $resultset["response"] = true;
+                    $resultset["toastr_msg"] = "File upload successful.";
+                    $resultset["toastr_state"] = "success";
+                    $resultset["filename"] = $filename;
+                    $this->core_layout->setEventLog("Employee Training - File upload successfull. filename: <strong>$filename</strong> for employee: <strong>$fullname</strong>","file upload", "success", "gcchris", "user");
+                } else {
+                    $resultset["response"] = false;
+                    $resultset["toastr_msg"] = "File upload to specific path failed!";
+                    $resultset["toastr_state"] = "error";
+                    $this->core_layout->setEventLog("Employee Training - File upload to specific path failed.","file upload", "error", "gcchris", "system");
+                }
+            } else {
+                $resultset["response"] = false;
+                $resultset["toastr_msg"] = "File upload failed!";
+                $resultset["toastr_state"] = "error";
+                $this->core_layout->setEventLog("Employee Training - File upload failed.","file upload", "error", "gcchris", "system");
+            }
+        }
+        
         return $resultset;
     }
 

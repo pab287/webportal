@@ -665,7 +665,6 @@ function awardCertificate(id,rowId) {
         type: "post",
         data:{
             csrf_token : _csrf_hash,
-            // is_employee: 
         },
         dataType: "json",
         cache: false,
@@ -746,7 +745,7 @@ function awardCertificate(id,rowId) {
                     .fileupload({
                         url: url,
                         dataType: "json",
-                        formData: { csrf_token: _csrf_hash, employee_id: id },
+                        formData: { csrf_token: _csrf_hash, employee_id: id, is_employee:rowData.is_employee, applicant_id:rowData.id },
                         done: function (e, data) {
                             var result = data.result;
                             if (result.response) {
@@ -762,35 +761,6 @@ function awardCertificate(id,rowId) {
                     .parent()
                     .addClass($.support.fileInput ? undefined : "disabled");
 
-                $('#New_Add_File').on('submit', function(e) {
-                    e.preventDefault();
-                    const form = $('#New_Add_File');
-                    const formData = new FormData(form[0]);
-                    formData.append('event_id', eventsDetails.id);
-                    if (form.isValid()) {
-                        $.ajax({
-                            url: baseUrl('events/upload_documents'),
-                            dataType: "JSON",
-                            type: "POST",
-                            processData: false,
-                            contentType: false,
-                            data: formData,
-                            success: function (response) {
-                                if (response.success) {
-                                    toastr.success(response.toastr_msg, 'Success', 5000);
-                                    eventVue.uploadedFiles = [];
-                                    $('#fileupload').val(null);
-                                    eventVue.attachments = response.attachments;
-                                }else{
-                                    toastr.error(response.toastr_msg, 'Error', 5000);
-                                }
-                                $('#New_Add_File')[0].reset();
-                                $('#newAttachment').modal('hide');
-                            }
-                        });
-                    }
-                });
-
                 $.validate({
                     form: "#form-trainings",
                     lang: "en",
@@ -799,6 +769,8 @@ function awardCertificate(id,rowId) {
                         let url = baseUrl("events/set_modal_trainings");
                         let formData = $(currentForm).serialize();
                         formData += "&event_id=" + encodeURIComponent(eventsDetails.id);
+                        formData += "&is_employee=" + encodeURIComponent(rowData.is_employee);
+                        formData += "&applicant_id=" + encodeURIComponent(rowData.id);
                         $.ajax({
                             url: url,
                             type: "post",

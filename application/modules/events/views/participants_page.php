@@ -435,7 +435,7 @@
     </div>
     <!-- MODALS -->
     <div class="modal fade show" id="addNewParticipant" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">ADD NEW PARTICIPANT</h5>
@@ -468,14 +468,17 @@
                             <div class="col-md-12 mb-3">
                                 <label class="form-control-label required">Participant Name</label>
                                 <div class="row">
-                                    <div class="col-sm-12 col-md-4 mb-3">
+                                    <div class="col-sm-12 col-md-3 mb-3">
                                         <input name="first_name" type="text" class="form-control m-input" placeholder="First Name" v-model="participantData.firstname" data-validation="required" maxlength="50">
                                     </div>
-                                    <div class="col-sm-12 col-md-4 mb-3">
+                                    <div class="col-sm-12 col-md-3 mb-3">
                                         <input name="middle_name" type="text" class="form-control m-input" placeholder="Middle Name" v-model="participantData.middlename" maxlength="50">
                                     </div>
-                                    <div class="col-sm-12 col-md-4 mb-3">
+                                    <div class="col-sm-12 col-md-3 mb-3">
                                         <input name="last_name" type="text" class="form-control m-input" placeholder="Last Name" v-model="participantData.lastname" data-validation="required" maxlength="50">
+                                    </div>
+                                    <div class="col-sm-12 col-md-3 mb-3">
+                                        <input name="suffix" type="text" class="form-control m-input" placeholder="suffix" v-model="participantData.suffix" maxlength="50">
                                     </div>
                                 </div>
                             </div>
@@ -546,14 +549,17 @@
                             <div class="col-md-12 mb-3">
                                 <label class="form-control-label required">Participant Name</label>
                                 <div class="row">
-                                    <div class="col-sm-12 col-md-4 mb-3">
+                                    <div class="col-sm-12 col-md-3 mb-3">
                                         <input name="first_name" type="text" class="form-control m-input" placeholder="First Name" data-validation="required" v-model="participantDataSelected.firstname" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
                                     </div>
-                                    <div class="col-sm-12 col-md-4 mb-3">
+                                    <div class="col-sm-12 col-md-3 mb-3">
                                         <input name="middle_name" type="text" class="form-control m-input" placeholder="Middle Name" v-model="participantDataSelected.middlename" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
                                     </div>
-                                    <div class="col-sm-12 col-md-4 mb-3">
+                                    <div class="col-sm-12 col-md-3 mb-3">
                                         <input name="last_name" type="text" class="form-control m-input" placeholder="Last Name" data-validation="required"  v-model="participantDataSelected.lastname" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
+                                    </div>
+                                    <div class="col-sm-12 col-md-3 mb-3">
+                                        <input name="suffix" type="text" class="form-control m-input" placeholder="Suffix" data-validation="required"  v-model="participantDataSelected.suffix" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
                                     </div>
                                 </div>
                             </div>

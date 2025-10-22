@@ -43,6 +43,7 @@ class Events extends MX_Controller {
         $data['attachments'] = $this->em->getEventAttachments($id);
         $data['schedule'] = $this->em->getEventSchedule($id);
         $this->core_layout->addCss("css/buttons.dataTables.min.css", true);
+        $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
         $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
         $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
@@ -134,23 +135,17 @@ class Events extends MX_Controller {
 
     public function get_modal_training($id = null) {
         $data = $this->employee_model->getModalContainerContent($id, "training");
-        $this->output
-            ->set_content_type('json')
-            ->set_output(json_encode($data));
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function upload_employee_training() {
-        $data = $this->employee_model->uploadEmployeeTraining();
-        $this->output
-            ->set_content_type('json')
-            ->set_output(json_encode($data));
+        $data = $this->em->uploadEmployeeTraining();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function set_modal_trainings() {
         $data = $this->em->setModalTrainings();
-        $this->output
-            ->set_content_type('json')
-            ->set_output(json_encode($data));
+        $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
     public function upload_documents(){
