@@ -199,7 +199,6 @@ if (typeof _tempContentData !== "undefined") {
         data: {vm_tab3: tempData},
         mounted: function () {
             var vmData = this.vm_tab3;
-
             //additional info
             var sssNo = vmData.sss_no;
 
@@ -399,7 +398,6 @@ if (typeof _tempContentData !== "undefined") {
                     const data = e.params.data;
                     vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, {payroll_type: data.id});
             });
-            console.log(tempData.auto_overtime);
         }
     });    
 

@@ -201,7 +201,6 @@
                     $data->_status = $data->work_status;
                     $row = $this->db->where('employee_id', $id)->get('payroll.employee_auto_overtime')->row();
                     $data->auto_overtime = ['allow_auto_overtime' => $row->allow_auto_overtime ?? 0,'id' => $row->id ?? 0,];
-                
                     $data->current_company_id = $data->company_id;
                     $data->current_department_id = $data->department_id;
                     $data->current_position_id = $data->position;

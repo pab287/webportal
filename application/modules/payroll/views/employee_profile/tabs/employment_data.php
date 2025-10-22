@@ -9,6 +9,7 @@
     <input type="hidden" name="current_supervisor" v-model="vm_tab3.current_supervisor">
     <input type="hidden" name="current_position_id" v-model="vm_tab3.current_position_id">
     <input type="hidden" name="biometricno" v-model="vm_tab3.biometricno">
+    <input type="hidden" name="date_regular" v-model="vm_tab3.date_regular">
     <div class="m-portlet__body">
         <div class="row m--margin-bottom-10">
             <div class="col-sm-12 col-5 col-md-5">
@@ -211,8 +212,8 @@
                     <div class="col-7">
                         <span class="m-switch m-switch--sm">
                             <label>
-                                <input type="hidden" name="allow_auto_overtime" value="0">
-                                <input type="checkbox" true-value="1" false-value="0">
+                                <input type="hidden" name="allow_auto_overtime" :value="vm_tab3.auto_overtime.allow_auto_overtime == 1 ? 1 : 0" />
+                                <input type="checkbox" v-model="vm_tab3.auto_overtime.allow_auto_overtime" true-value="1" false-value="0" />
                                 <span></span>
                             </label>
                         </span>
