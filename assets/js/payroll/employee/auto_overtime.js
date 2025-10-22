@@ -140,9 +140,6 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
     processing: true,
     serverSide: true,
     ordering: false,
-    scrollCollapse: true,
-    deferRender: true,
-
     rowId: 'employee_id',
     ajax: {
         url: baseUrl('payroll/employee/get_employee_auto_overtime_list'),
