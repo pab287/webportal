@@ -930,22 +930,12 @@
             $this->db->from('gcchris.tblcompanies');
             $this->db->where('id', $company);
             $query = $this->db->get();
-            // return $query->row_array()['description'];
-
             return is_array($query->row_array()) && iseet($query->row_array()['description']) ? $query->row_array()['description'] : "No Data Found!";
         }
-
-        /**function getFilteredPostTo($arrIds = array()) { } */ 
 
         function driver() {
             $get = $this->input->get();
             $resultarray = array();
-            // if (isset($get['q'])) {
-            //     $query = $this->db->query("SELECT  e.id, e.firstname, e.middlename, e.lastname, e.suffix, e.position, c.description as company FROM gccmaster.tblemployees as e LEFT JOIN gcchris.tblcompanies as c ON c.id=e.company_id WHERE  e.employee_status='Active' AND (e.firstname LIKE '%{$get['q']}%' OR e.lastname LIKE '%{$get['q']}%' OR c.description LIKE '%{$get['q']}%') ORDER BY e.firstname ASC");
-            // } else {
-            //     $query = $this->db->query("SELECT  e.id, e.firstname, e.middlename, e.lastname, e.suffix, e.position, c.description as company FROM gccmaster.tblemployees as e LEFT JOIN gcchris.tblcompanies as c ON c.id=e.company_id WHERE e.employee_status='Active' ORDER BY e.firstname ASC");
-            // }
-
             $sql = "e.id, e.firstname, e.middlename, e.lastname, e.suffix, e.position, c.description as company";
 
             $this->db->select($sql);
@@ -2263,26 +2253,18 @@
             $this->core_layout->setPrivilegeName("to_masterfile");
             $get = $this->input->get();
             $resultarray = array();
-            // if (isset($get['q'])) {
-            //     $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tblcompanies WHERE `description` LIKE '%{$get['q']}%' ORDER BY `description` ASC");
-            // } else {
-            //     $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tblcompanies ORDER BY `description` ASC");
-            // }
             $privilege = $this->core_layout->getCurrentActions();
-
             $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
-
             $sql = "id, description";
             $this->db->select($sql);
-
             if ($view_by_company) {
                 $this->db->where('id', $this->user_data['company']);
             }
-
             if (isset($get['q']) && $get['q']){
                 $this->db->like('description', $get['q'], 'both');
             }
-
+            $this->db->where('is_archived', '0');
+            $this->db->where('exclude', '0');
             $this->db->from('gcchris.tblcompanies');
             $this->db->limit(10);
             $query = $this->db->get();
@@ -2329,35 +2311,6 @@
                 }
             }
             return array("results" => $resultarray);
-
-            // if(isset($get["company"]) && $get["company"]){
-            //     $this->db->select("a.description as id, UPPER(IF(a.`code` = a.`description`, TRIM(a.`description`), TRIM(CONCAT(a.`code`,' | ', a.`description`)))) as text");
-            //     $this->db->from("gcchris.tbldepartments a");
-            //     $this->db->join("gccmaster.tblemployees b", "b.department_id = a.id", "INNER");
-            //     $this->db->join("gcchris.tblcompanies c", "c.id = b.company_id", "INNER");
-            //     $this->db->where("b.employee_status", "Active");
-            //     $this->db->where("c.description", $get["company"]);
-
-            //     if (isset($get['q']) && $get['q']) {
-            //         $this->db->group_start();
-            //         $this->db->like("a.code", $get['q'], "both");
-            //         $this->db->or_like("a.description", $get['q'], "both");
-            //         $this->db->group_end();
-            //     }
-
-            //     $this->db->limit(25);
-            //     $this->db->group_by("a.id");
-            //     $this->db->order_by("trim(a.code)", "ASC");
-            //     $query = $this->db->get();
-        
-            //     if ($query->num_rows() > 0) { 
-            //         $resultarray = $query->result_array(); 
-            //     } else {
-            //         $resultarray = array();
-            //     }
-            // }
-
-            // return $resultarray;
         }
         
         function getAllDepartments() {

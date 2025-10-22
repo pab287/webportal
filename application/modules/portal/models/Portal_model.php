@@ -309,6 +309,8 @@ class Portal_model extends CI_Model{
           $this->db->where('id',$id);
         }
         $this->db->like('CONCAT(description, code)', $q, 'both');
+        $this->db->where("is_archived", 0);
+        $this->db->where("exclude", 0);
         return array('results' => $this->db->get('gcchris.tblcompanies')->result());
     }
 

@@ -1099,6 +1099,8 @@
             $q = isset($get['q']) ? $get['q'] : "";
             $this->db->select("id, description text");
             $this->db->like("description", $q, "both");
+            $this->db->where("is_archived", 0);
+            $this->db->where("exclude", 0);
             $this->db->order_by("description", "asc");
             $resultarray = $this->db->get("gcchris.tblcompanies")->result();
 

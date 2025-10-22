@@ -35,13 +35,6 @@
 														</span>
                                                     </li>
                                                     <li class="m-nav__item">
-                                                        <!-- <a href="javascript:void()" class="m-nav__link btnView"
-                                                           data-toggle="modal" data-target="#modal_archives">
-                                                            <i class="m-nav__link-icon flaticon-open-box"></i>
-                                                            <span class="m-nav__link-text">
-																Archives
-															</span>
-                                                        </a> -->
                                                         <a href="<?=base_url('hris/masterfile/archived_companies') ?>" class="m-nav__link btnView">
                                                             <i class="m-nav__link-icon flaticon-open-box"></i>
                                                             <span class="m-nav__link-text">
@@ -91,7 +84,7 @@
                     </div>
                     <!--begin: Datatable -->
                     <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll table-responsive">
-                        <table class="table table-striped table-bordered" id="table-company" width="100%">
+                        <table class="table table-striped table-bordered" id="table-company" style="width: 100%">
                             <thead>
                             <tr>
                                 <th>Image</th>
@@ -99,6 +92,7 @@
                                 <th>Company</th>
                                 <th>WORK DAYS IN YEAR</th>
                                 <th>SSS CLASSIFICATION</th>
+                                <th>EXCLUDE</th>
                                 <th>Action</th>
                             </tr>
                             </thead>
@@ -112,8 +106,8 @@
             <!--end::Portlet-->
         </div>
     </div>
-    <div class="modal fade" id="modalTempContent" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade" id="modalTempContent" tabindex="-1">
+        <div class="modal-dialog">
             <div id="modalTempContainer" class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="exampleModalLabel">Temp Title</h5>
@@ -125,8 +119,8 @@
             </div>
         </div>
     </div>
-    <div class="modal fade" id="modalRemoveCompany" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade" id="modalRemoveCompany" tabindex="-1">
+        <div class="modal-dialog">
             <div id="modalTempContainer" class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="exampleModalLabel"><i class="la la-trash mr-2"></i>Remove Company</h5>

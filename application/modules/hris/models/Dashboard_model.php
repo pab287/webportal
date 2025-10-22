@@ -61,6 +61,8 @@
             if (isset($company_id) && $company_id != 0) {
                 $this->db->join($this->tblCompanies . ' company', 'emp.company_id = company.id', 'LEFT');
                 $this->db->where('company.id', $company_id);
+                $this->db->where('company.is_archived', 0);
+                $this->db->where('company.exclude', 0);
             }
             $this->db->group_by('emp.employee_status');
             $this->db->order_by('key', 'DESC');
@@ -94,14 +96,12 @@
             $this->db->group_start();
             $this->db->where("emp.employee_status='Active' AND emp.employee_status IS NOT NULL", null, false);
             $this->db->group_end();
-
-            // $this->db->where("emp.work_status IN ('Regular', 'Probationary', 'Service contract', 'No contract')", NULL, FALSE);
-            // $this->db->where("emp.employee_status", 'Active');
+            $this->db->where("company.is_archived", 0, false);
+            $this->db->where("company.exclude", 0, false);
             $this->db->group_by('IF(company.id IS NULL, emp.company_id, company.code)');
             $this->db->join($this->tblCompanies . " company", 'emp.company_id = company.id', 'LEFT');
 
             /*** Supper Notty Was Here ***/
-            // $this->db->order_by('COUNT(*) '.$sort);
             $this->db->order_by('company.code '.$sort);
             /*** Supper Notty Was Here ***/
 
@@ -172,6 +172,8 @@
             $this->db->where("IF(company.id IS NULL, emp.company_id, company.code) IS NOT NULL", NULL, FALSE);
             $this->db->where("emp.work_status IN ('Regular', 'Probationary', 'Service contract', 'No contract')", NULL, FALSE);
             $this->db->where("emp.employee_status", 'Active');
+            $this->db->where("company.is_archived", 0, FALSE);
+            $this->db->where("company.exclude", 0, FALSE);
             $this->db->join($this->tblCompanies . " company", 'emp.company_id = company.id', 'LEFT');
             $this->db->group_by('IF(company.id IS NULL, emp.company_id, company.code)');
             $this->db->order_by('COUNT(*) DESC');
@@ -386,7 +388,7 @@
                         UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) AS company,
                         UCASE(IF(positions.id IS NULL, emp.position, positions.name)) AS position";
         
-            $where = "emp.work_status = 'PROBATIONARY' AND emp.employee_status = 'Active' ";
+            $where = "emp.work_status = 'PROBATIONARY' AND emp.employee_status = 'Active' AND companies.is_archived = 0 AND companies.exclude = 0 ";
         
             // Will show all unevaluated employees on first, second or finale evaluation
             $evalDateExpr = "";
@@ -556,7 +558,7 @@
                         UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) AS company,
                         UCASE(IF(positions.id IS NULL, emp.position, positions.name)) AS position";
         
-            $where = "emp.work_status = 'PROBATIONARY' AND emp.employee_status = 'Active' ";
+            $where = "emp.work_status = 'PROBATIONARY' AND emp.employee_status = 'Active' AND companies.is_archived = 0 AND companies.exclude = 0 ";
         
             // will show all unevaluated employees on first, second or finale evaluation
             $evalDateExpr = "";
@@ -710,7 +712,7 @@
                         UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) AS company,
                         UCASE(IF(positions.id IS NULL, emp.position, positions.name)) AS position,";
         
-            $where = "emp.work_status = 'PROBATIONARY' AND emp.employee_status = 'Active' ";
+            $where = "emp.work_status = 'PROBATIONARY' AND emp.employee_status = 'Active' AND companies.is_archived = '0' AND companies.exclude = '0' ";
 
             $evalDateExpr = "";
   
@@ -913,7 +915,7 @@
                         UCASE(IF(companies.id IS NULL, emp.company_id, companies.code)) AS company,
                         UCASE(IF(positions.id IS NULL, emp.position, positions.name)) AS position,";
 
-            $where = "emp.work_status = 'PROBATIONARY' AND emp.employee_status = 'Active' ";
+            $where = "emp.work_status = 'PROBATIONARY' AND emp.employee_status = 'Active' AND companies.is_archived = 0 AND companies.exclude = 0 ";
 
             $evalDateExpr = "";
             switch($stage) {
@@ -1079,8 +1081,10 @@
                 ";
 
             $where = "
-                    emp.work_status = 'PROBATIONARY' 
+                    emp.work_status = 'PROBATIONARY'
                     AND emp.employee_status = 'Active'
+                    AND companies.is_archived = 0
+                    AND companies.exclude = 0
                     AND (
                         (DATE_ADD(emp.date_start, INTERVAL 3 MONTH) < '$current_date' AND calendar.first_eval_date IS NULL)
                         OR (DATE_ADD(DATE_ADD(emp.date_start, INTERVAL 4 MONTH), INTERVAL 15 DAY) < '$current_date' AND calendar.second_eval_date IS NULL)
@@ -1268,8 +1272,10 @@
                 calendar.date_discontinued";
 
             $where = "
-                    emp.work_status = 'PROBATIONARY' 
+                    emp.work_status = 'PROBATIONARY'
                     AND emp.employee_status = 'Active'
+                    AND companies.is_archived = 0
+                    AND companies.exclude = 0
                     AND (calendar.date_discontinued IS NULL)
                     AND (
                         (DATE_ADD(emp.date_start, INTERVAL 3 MONTH) < '$current_date' AND calendar.first_eval_date IS NULL)

@@ -613,6 +613,7 @@ class Overtime_m extends CI_Model {
         $this->db->select("id, description");
         $this->db->from("gcchris.tblcompanies");
         $this->db->where("is_archived", 0);
+        $this->db->where("exclude", 0);
 
         if ($view_by_company) {
             $this->db->where('id', $this->user_data['company']);
@@ -1273,6 +1274,8 @@ class Overtime_m extends CI_Model {
 
     function select2CompanyData(){
         $this->db->select("companies.id, companies.`code` `text`, companies.*");
+        $this->db->where("is_archived", 0);
+        $this->db->where("exclude", 0);
         $this->db->order_by("`code`", "ASC");
         $results = $this->db->get("gcchris.tblcompanies companies")->result();
         return $results;

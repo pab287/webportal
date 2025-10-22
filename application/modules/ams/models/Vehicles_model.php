@@ -932,6 +932,8 @@
         function getCompanyCollection() {
             $q = isset($_GET["q"]) ? $_GET["q"] : "";
             $this->db->like("CONCAT(description, code)", $q, "both");
+            $this->db->where("is_archived", 0);
+            $this->db->where("exclude", 0);
             $result = $this->db->get("gcchris.tblcompanies")->result();
             return array("results" => $result);
         }

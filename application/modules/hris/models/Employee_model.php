@@ -92,6 +92,8 @@ class Employee_model extends CI_Model {
     function getDropdownSelectData() {
         $resultset = array();
         $this->db->select("id, description as text");
+        $this->db->where("is_archived", 0);
+        $this->db->where("exclude", 0);
         $companies = $this->db->get($this->companyTable);
         $this->db->reset_query();
 
@@ -408,7 +410,7 @@ class Employee_model extends CI_Model {
             $this->db->join($join["table"], $join["condition"], $join["option"]);
         }
 
-        $where = "emp.is_archived = 0 AND emp.hris_hidden = 0";
+        $where = "emp.is_archived = 0 AND emp.hris_hidden = 0 AND companies.is_archived = 0 AND companies.exclude = 0";
 
         if ($employee_status !== "All" && !empty($employee_status)) {
             $where .= " AND emp.employee_status = '$employee_status'";
@@ -6603,6 +6605,10 @@ class Employee_model extends CI_Model {
         //                         CONCAT(emp.firstname, ' ',emp.lastname)
         //                     ELSE
         //                         CONCAT(emp.firstname, ' ', emp.middlename,' ' ,emp.lastname) END", $searchKey, 'both'); // removed middlename for name search
+        
+        $this->db->where("companies.is_archived", 0);
+        $this->db->where("companies.exclude", 0);
+        $this->db->group_start();
         $this->db->like("CONCAT(emp.firstname, ' ' ,emp.lastname)", $searchKey, 'both');
         $this->db->or_like('IF (companies . id IS NULL, emp . company_id, companies . code)', $searchKey, 'both');
         $this->db->or_like('IF (positions . id IS NULL, emp . `position`, positions . name)', $searchKey, 'both');
@@ -6617,7 +6623,9 @@ class Employee_model extends CI_Model {
         if(isset($filter) && in_array("education",$filter)){
             $this->db->or_like("educ.educ_degree", $searchKey, 'both');
         }
+        $this->db->group_end();
 
+        
         $this->db->order_by("CASE
             WHEN emp.middlename IS NULL OR emp.middlename = '' OR emp.middlename = 'NONE' OR emp.middlename = 'N/A' THEN
                 CONCAT(emp.firstname, ' ',emp.lastname)
@@ -6627,6 +6635,7 @@ class Employee_model extends CI_Model {
 
         $this->db->group_by('emp.id');
         $query = $this->db->get($this->employeeTable . ' emp');
+
         $employees = $query->result();
 
         $data = array();
@@ -9859,6 +9868,8 @@ class Employee_model extends CI_Model {
             $this->db->join($this->employeeTable." dpthead", "dpthead.id = dept.head_id", "LEFT");
             $this->db->where("{$filterOption} >=", $dateStart);
             $this->db->where("{$filterOption} <=", $dateEnd);
+            $this->db->where("comp.is_archived", 0);
+            $this->db->where("comp.exclude", 0);
             if(isset($additionalFilters) && is_array($additionalFilters) && count($additionalFilters) > 0){
             $this->db->group_start();
             foreach ($additionalFilters as $field => $value) { $this->db->where("{$field}", $value); }
@@ -9916,6 +9927,8 @@ class Employee_model extends CI_Model {
             $this->db->where("{$filterOption} !=", "0000-00-00");
             $this->db->where("TRIM({$filterOption}) !=", "");
             $this->db->where("YEAR({$filterOption}) !=", "0000");
+            $this->db->where("comp.is_archived", 0);
+            $this->db->where("comp.exclude", 0);
             if(isset($additionalFilters) && is_array($additionalFilters) && count($additionalFilters) > 0){
             $this->db->group_start();
             foreach ($additionalFilters as $field => $value) { $this->db->where("{$field}", $value); }
@@ -9943,7 +9956,7 @@ class Employee_model extends CI_Model {
 
     public function getActiveManpowerFilter($dateStart=null, $dateEnd=null, $additionalFilters=array()){
         if($dateStart && $dateEnd){
-            $this->db->select("comp.id, comp.code, COUNT(emp.id) as total_count, 
+            $this->db->select("comp.id, UPPER(comp.code) as code, COUNT(emp.id) as total_count, 
                 COUNT(IF(TRIM(UPPER(emp.work_status)) = 'REGULAR', emp.id, null)) as regular_count, 
                 COUNT(IF(TRIM(UPPER(emp.work_status)) = 'PROBATIONARY', emp.id, null)) as probi_count, 
                 COUNT(IF(TRIM(UPPER(emp.work_status)) = 'RETIRED', emp.id, null)) as retired_count, 
@@ -9965,6 +9978,8 @@ class Employee_model extends CI_Model {
             }
 
             $this->db->where("emp.employee_status", "Active");
+            $this->db->where("code.is_archived", 0);
+            $this->db->where("code.exclude", 0);
             $this->db->group_start();
             $this->db->where("emp.date_start >=", $dateStart);
             $this->db->where("emp.date_start <=", $dateEnd);
@@ -9981,7 +9996,7 @@ class Employee_model extends CI_Model {
     }
 
     public function getAllActiveManpowerFilter($additionalFilters=array()){
-        $this->db->select("comp.id, comp.code, COUNT(emp.id) as total_count, 
+        $this->db->select("comp.id, UPPER(comp.code) as code, COUNT(emp.id) as total_count, 
                 COUNT(IF(TRIM(UPPER(emp.work_status)) = 'REGULAR', emp.id, null)) as regular_count, 
                 COUNT(IF(TRIM(UPPER(emp.work_status)) = 'PROBATIONARY', emp.id, null)) as probi_count, 
                 COUNT(IF(TRIM(UPPER(emp.work_status)) = 'RETIRED', emp.id, null)) as retired_count, 
@@ -10004,6 +10019,8 @@ class Employee_model extends CI_Model {
             }
 
             $this->db->where("emp.employee_status", "Active");
+            $this->db->where("comp.is_archived", 0);
+            $this->db->where("comp.exclude", 0);
             if(isset($additionalFilters) && is_array($additionalFilters) && count($additionalFilters) > 0){
             $this->db->group_start();
             foreach ($additionalFilters as $field => $value) { $this->db->where("{$field}", $value); }
@@ -10019,6 +10036,8 @@ class Employee_model extends CI_Model {
             $tempData = array();
             foreach ($company as $compId) {
                 $totalCount = 0;
+                $this->db->where("is_archived", 0);
+                $this->db->where("exclude", 0);
                 $companyData = $this->db->get_where($this->companyTable, array("id"=>$compId));
                 $this->db->reset_query();
                 $tempData[$compId]["company"] = $companyData->num_rows() === 1 ? $companyData->row()->code: "No Assigned Company";
@@ -10314,6 +10333,9 @@ class Employee_model extends CI_Model {
             $this->db->where("trn.train_from >=", $dateStart);
             $this->db->where("trn.train_to <=", $dateEnd);
 
+            $this->db->where("comp.is_archived", 0);
+            $this->db->where("comp.exclude", 0);
+
             if(isset($additionalFilters) && is_array($additionalFilters) && count($additionalFilters) > 0){
                 if(array_key_exists("trn.training", $additionalFilters)){
                     $tempTraining = $additionalFilters["trn.training"];
@@ -10378,6 +10400,8 @@ class Employee_model extends CI_Model {
         $this->db->join($this->departmentTable." dept", "dept.id = emp.department_id", "LEFT");
         $this->db->join($this->positionTable." pos", "pos.id = emp.position", "LEFT");
         $this->db->where("emp.employee_status", "Active");
+        $this->db->where("comp.is_archived", 0);
+        $this->db->where("comp.exclude", 0);
         if(isset($additionalFilters) && is_array($additionalFilters) && count($additionalFilters) > 0){
             if(isset($additionalFilters["trn.training"]) && $additionalFilters["trn.training"]){
                 $tempTraining = $additionalFilters["trn.training"];
@@ -10428,6 +10452,8 @@ class Employee_model extends CI_Model {
             $this->db->join($this->departmentTable." dept", "dept.id = emp.department_id", "LEFT");
             $this->db->join($this->positionTable." pos", "pos.id = emp.position", "LEFT");
             $this->db->where("emp.employee_status", "Active");
+            $this->db->where("comp.is_archived", 0);
+            $this->db->where("comp.exclude", 0);
             $this->db->where("dl.is_archived", 0);
             $this->db->where("dl.expiration_date >=", $dateStart);
             $this->db->where("dl.expiration_date <=", $dateEnd);
@@ -10476,6 +10502,8 @@ class Employee_model extends CI_Model {
         $this->db->join($this->departmentTable." dept", "dept.id = emp.department_id", "LEFT");
         $this->db->join($this->positionTable." pos", "pos.id = emp.position", "LEFT");
         $this->db->where("emp.employee_status", "Active");
+        $this->db->where("comp.is_archived", 0);
+        $this->db->where("comp.exclude", 0);
         $this->db->where("dl.is_archived", 0);
         if(isset($additionalFilters) && is_array($additionalFilters) && count($additionalFilters) > 0){
             $this->db->group_start();
@@ -10598,6 +10626,8 @@ class Employee_model extends CI_Model {
             $this->db->where("cert.release_date >=", $dateStart);
             $this->db->where("cert.release_date <=", $dateEnd);
             $this->db->where('cert.is_archived', 0);
+            $this->db->where('comp.is_archived', 0);
+            $this->db->where('comp.exclude', 0);
 
             if(isset($additionalFilters) && is_array($additionalFilters) && count($additionalFilters) > 0){
                 if(array_key_exists("cert.license_type", $additionalFilters)){
@@ -10666,6 +10696,8 @@ class Employee_model extends CI_Model {
         $this->db->join($this->licenseTable." licenses", "licenses.id = cert.license_id", "LEFT");
         $this->db->where("emp.employee_status", "Active");
         $this->db->where('cert.is_archived', 0);
+        $this->db->where('comp.is_archived', 0);
+        $this->db->where('comp.exclude', 0);
         if(isset($additionalFilters) && is_array($additionalFilters) && count($additionalFilters) > 0){
             if(isset($additionalFilters["cert.license_type"]) && $additionalFilters["cert.license_type"]){
                 $tempCert = $additionalFilters["cert.license_type"];

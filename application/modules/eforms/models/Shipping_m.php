@@ -341,9 +341,9 @@ class Shipping_m extends CI_Model {
         $get = $this->input->get();
         $resultarray = array();
         if(isset($get['q'])){
-            $query = $this->db->query("SELECT  id, description FROM gcchris.tblcompanies WHERE description LIKE '%{$get['q']}%' ORDER BY description ASC");
+            $query = $this->db->query("SELECT  id, description FROM gcchris.tblcompanies WHERE description LIKE '%{$get['q']}%' AND is_archived = 0 AND exclude = 0 ORDER BY description ASC");
         }else{
-            $query = $this->db->query("SELECT  id, description FROM gcchris.tblcompanies ORDER BY description ASC");
+            $query = $this->db->query("SELECT  id, description FROM gcchris.tblcompanies WHERE is_archived = 0 AND exclude = 0 ORDER BY description ASC");
         }
 
         if($query->num_rows() > 0){

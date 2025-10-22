@@ -54,7 +54,7 @@
 
         function getPersonnelRequest($search=null, $limit, $offset, $sortBy, $sortOrder){
             $filterFields = array("pos.name", "app.status");
-            $where = "app.is_archived = '0' AND (app.status = 'forApproval' OR app.status = 'Ongoing')";
+            $where = "app.is_archived = '0' AND comp.is_archived = '0' AND comp.exclude = '0' AND (app.status = 'forApproval' OR app.status = 'Ongoing')";
             $this->db->select("app.id, pos.name as position, app.type as type, app.people_no as needed, app.requested_dt as requested_date, app.need_dt as needed_date, app.status, app.is_archived");
             $this->db->from('gcchris.tbapplication app');
             $this->db->join('gcchris.tbldepartments dept', 'app.department_id = dept.id', "LEFT");
@@ -112,7 +112,7 @@
 
         function getPersonnelRequestCount($search=null){
             $filterFields = array("pos.name", "app.status");
-            $where = "app.is_archived = '0' AND (app.status = 'forApproval' OR app.status = 'Ongoing')";
+            $where = "app.is_archived = '0' AND comp.is_archived = '0' AND comp.exclude = '0' AND (app.status = 'forApproval' OR app.status = 'Ongoing')";
             $this->db->select("app.id, pos.name as position, app.type as type, app.people_no as needed, app.requested_dt as requested_date, app.need_dt as needed_date, app.status, app.is_archived as is_archived");
             $this->db->from('gcchris.tbapplication app');
             $this->db->join('gcchris.tbldepartments dept', 'app.department_id = dept.id', "LEFT");
@@ -174,6 +174,8 @@
             $this->db->join('gcchris.tblposition pos', 'app.position_id = pos.id', "LEFT");
             $this->db->where("app.is_archived", 0);
             $this->db->where("app.status", 'Completed');
+            $this->db->where("comp.is_archived", 0);
+            $this->db->where("comp.exclude", 0);
             if(isset($search)){
                 $this->db->group_start();
                 foreach ($filterFields as $key => $field) {
@@ -245,6 +247,8 @@
             }
             $this->db->where("app.is_archived", 0);
             $this->db->where("app.status", 'Completed');
+            $this->db->where("comp.is_archived", 0);
+            $this->db->where("comp.exclude", 0);
             $query = $this->db->get();
             return $query->num_rows();
         }
