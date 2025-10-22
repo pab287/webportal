@@ -1629,11 +1629,13 @@ class Accountability_m extends CI_Model {
         $this->db->select("a.*, TRIM(a.assetacode) as assetacode, b.id as temp_id");
         $this->db->from("gccasset.assets a");
         $this->db->join("gcceforms.accountability_body_temp b", "b.asset_id = a.id AND b.type='Asset'", "left");
-        $this->db->where('a.status !=', 'archived');
-        $this->db->where('a.status !=', 'junk');
-        $this->db->where('a.status !=', 'repair');
+        $this->db->group_start();
+        $this->db->where_not_in('a.status', ['archived', 'lost', 'junk', 'tradein', 'destructed', 'sold','repair','fordestruction','damage','destruction','others']);
+        $this->db->or_where('a.status IS NULL', null, false);
+        $this->db->group_end();
         $this->db->where('a.status !=', '');
         $this->db->where("a.is_borrowed", "0");
+        $this->db->where("a.is_archived", "0");
 
         if ($accountability_id) {
             $this->db->where_not_in("a.id", $asset_ids_array);
@@ -1683,11 +1685,13 @@ class Accountability_m extends CI_Model {
 
         $this->db->from("gccasset.assets a");
         $this->db->join("gcceforms.accountability_body_temp b", "b.asset_id = a.id AND b.type='Asset'", "left");
-        $this->db->where('a.status !=', 'archived');
-        $this->db->where('a.status !=', 'junk');
-        $this->db->where('a.status !=', 'repair');
+        $this->db->group_start();
+        $this->db->where_not_in('a.status', ['archived', 'lost', 'junk', 'tradein', 'destructed', 'sold','repair','fordestruction','damage','destruction','others']);
+        $this->db->or_where('a.status IS NULL', null, false);
+        $this->db->group_end();
         $this->db->where('a.status !=', '');
         $this->db->where("a.is_borrowed", "0");
+        $this->db->where("a.is_archived", "0");
 
         if ($accountability_id) {
             $this->db->where_not_in("a.id", $asset_ids_array);
@@ -1820,6 +1824,7 @@ class Accountability_m extends CI_Model {
         $this->db->where('status2 !=', '');
         $this->db->where('status2 !=', 'junk');
         $this->db->where('status2 !=', 'sold');
+        $this->db->where('a.is_archived', 0);
         // $this->db->group_end();
         // $this->db->or_where('status2 IS NULL', NULL, FALSE);
         // $this->db->group_end();
@@ -1876,17 +1881,16 @@ class Accountability_m extends CI_Model {
         $this->db->select('a.*');
         $this->db->from('gccasset.vehicles a');
 
-        $this->db->group_start();
-        $this->db->group_start();
         $this->db->where('status2 !=', 'archived');
         $this->db->where('status2 !=', 'repair');
         $this->db->where('status2 !=', 'under repair');
         $this->db->where('status2 !=', '');
         $this->db->where('status2 !=', 'junk');
         $this->db->where('status2 !=', 'sold');
-        $this->db->group_end();
-        $this->db->or_where('status2 IS NULL', NULL, FALSE);
-        $this->db->group_end();
+        $this->db->where('a.is_archived', 0);
+        // $this->db->group_end();
+        // $this->db->or_where('status2 IS NULL', NULL, FALSE);
+        // $this->db->group_end();
 
         /* condition that does not allow showing of vehicle components,
             * reason why if you search a component nothing will show */
@@ -2092,7 +2096,7 @@ class Accountability_m extends CI_Model {
         $this->db->where('status !=', 'junk');
         $this->db->where("a.is_borrowed", "0");
         $this->db->where("a.status !=", "archived");
-
+        $this->db->where('a.is_archived', 0);
         if (!empty($asset_ids)){
             $this->db->where_not_in("a.id", $asset_ids_array);
         }
@@ -2148,7 +2152,7 @@ class Accountability_m extends CI_Model {
         $this->db->where('status !=', 'junk');
         $this->db->where("a.is_borrowed", "0");
         $this->db->where("a.status !=", "archived");
-
+        $this->db->where('a.is_archived', 0);
         if (!empty($asset_ids)){
             $this->db->where_not_in("a.id", $asset_ids_array);
         }
