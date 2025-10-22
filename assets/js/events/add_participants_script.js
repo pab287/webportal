@@ -212,6 +212,7 @@ let eventVue = new Vue({
             this.count = this.uploadedFiles.length;
         },
         openFile(name,type) {
+            console.log(name,type);
             let fileUrl = baseUrl("uploads/files/documents/event_" + eventsDetails.id + "/"+type+"/" + encodeURIComponent(name));
             function checkFileExists(url, callback) {
                 $.ajax({
@@ -635,14 +636,14 @@ function itemDatatableActions(id, status, emp_id = null, awarded) {
                 _actionButton += `
                     <a href="javascript:void(0)" 
                         class="btn btn-primary btn-sm m-btn m-btn--pill btnSave" 
-                        onclick="awardCertificate(${emp_id})" 
+                        onclick="awardCertificate(${emp_id},${id})" 
                         title="Award Certificate">
                         <i class="la la-certificate"></i> Award Certificate
                     </a>`;
             } else {
                 _actionButton += `
-                    <button class="btn btn-secondary btn-sm m-btn m-btn--pill text-dark" disabled>
-                        <i class="la la-certificate"></i> Certificate Awarded
+                    <button class="btn btn-secondary btn-sm m-btn m-btn--pill text-dark" @click="openfile(participants.cert_attachment)">
+                        <i class="la la-certificate"></i> View Certificate
                     </button>`;
             }
         } else {
@@ -657,11 +658,14 @@ function itemDatatableActions(id, status, emp_id = null, awarded) {
 }
 
 function awardCertificate(id,rowId) {
+    let rowData = participantsTable.row('#'+rowId).data();
+    console.log(rowData);
     $.ajax({
         url: baseUrl("events/get_modal_training/" + id),
         type: "post",
         data:{
-            csrf_token : _csrf_hash
+            csrf_token : _csrf_hash,
+            // is_employee: 
         },
         dataType: "json",
         cache: false,

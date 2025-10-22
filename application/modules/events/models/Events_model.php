@@ -249,7 +249,7 @@ class Events_model extends MX_Controller {
     }
 
     public function getEventParticipants($id, $id_only = false){
-        $this->db->select("a.id, a.event_id, a.emp_id, a.is_employee, a.status, a.emp_id, a.invited_by, a.invited_at, a.firstname, a.middlename, a.lastname, a.mobile_no, a.email, a.position, a.department, a.company, a.cert_awarded,
+        $this->db->select("a.id, a.event_id, a.emp_id, a.is_employee, a.status, a.emp_id, a.invited_by, a.invited_at, a.firstname, a.middlename, a.lastname, a.mobile_no, a.email, a.position, a.department, a.company, a.cert_awarded, t.attachment as cert_attachment,
             CONCAT(LOWER(a.firstname), IF(a.middlename IS NOT NULL AND a.middlename != '', CONCAT(' ', UPPER(LEFT(a.middlename, 1)), '.'), ''), ' ', LOWER(a.lastname)) AS fullname,
             CONCAT(
                 LOWER(head.firstname), 
@@ -264,6 +264,7 @@ class Events_model extends MX_Controller {
         $this->db->join($this->employeesTable." as e", "a.emp_id = e.id", "left");
         $this->db->join($this->departmentTable." as d", "e.department_id = d.id", "left");
         $this->db->join($this->employeesTable." as head", "d.head_id = head.id", "left");
+        $this->db->join($this->tbltrainings." as t", "a.cert_awarded = t.id", "left");
         $this->db->where("a.event_id", $id);
         // $this->db->where("a.is_archived", 0);
         return $this->db->get()->result();
