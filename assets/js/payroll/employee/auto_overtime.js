@@ -140,6 +140,9 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
     processing: true,
     serverSide: true,
     ordering: false,
+    scrollCollapse: true,
+    deferRender: true,
+
     rowId: 'employee_id',
     ajax: {
         url: baseUrl('payroll/employee/get_employee_auto_overtime_list'),
@@ -257,7 +260,10 @@ $(document).on("click", ".btnAutoOvertime", function () {
                 success: function (json) {
                     if (json.response) {
                         toastr.success(json.toastr_msg, "Employee Auto Overtime", 5000);
-                        dtTable.ajax.reload(null, false);
+                        const scrollPos = $(window).scrollTop();
+                        dtTable.ajax.reload(() => {
+                            $(window).scrollTop(scrollPos);
+                        }, false);
                     }
                 }
             });
@@ -310,7 +316,10 @@ $.validate({
         });
 
         globalRequest = { ...nData };
-        dtTable.ajax.reload(null, false);
+        const scrollPos = $(window).scrollTop();
+        dtTable.ajax.reload(() => {
+            $(window).scrollTop(scrollPos);
+        }, false);
         return false;
     }
 });
@@ -367,7 +376,10 @@ $('#btnMassToggle').on('click', function () {
                     global: false,
                     data: { employee_ids: ids, status: targetState, csrf_token: _csrf_hash },
                     success: function (res) {
-                        dtTable.ajax.reload();
+                        const scrollPos = $(window).scrollTop();
+                        dtTable.ajax.reload(() => {
+                            $(window).scrollTop(scrollPos);
+                        }, false);
                     }
                 });
             }
