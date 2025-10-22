@@ -742,25 +742,54 @@ function awardCertificate(id,rowId) {
                 $("#train_venue").val(eventsDetails.event_venue);
 
                 let url = baseUrl("events/upload_employee_training");
-                $("#fileupload_training")
-                    .fileupload({
-                        url: url,
-                        dataType: "json",
-                        formData: { csrf_token: _csrf_hash, employee_id: id },
-                        done: function (e, data) {
-                            var result = data.result;
-                            if (result.response) {
-                                modalContent.find("#training_attachment").val(result.filename);
-                                modalContent.find("#temp_fileupload").empty().text(result.filename);
-                                toastr.success(result.toastr_msg, "Upload Training and Seminar File", 5000);
-                            } else {
-                                toastr.error(result.toastr_msg, "Upload Training and Seminar File", 5000);
-                            }
-                        }
-                    })
-                    .prop("disabled", !$.support.fileInput)
-                    .parent()
-                    .addClass($.support.fileInput ? undefined : "disabled");
+                // $("#fileupload_training")
+                //     .fileupload({
+                //         url: url,
+                //         dataType: "json",
+                //         formData: { csrf_token: _csrf_hash, employee_id: id },
+                //         done: function (e, data) {
+                //             var result = data.result;
+                //             if (result.response) {
+                //                 modalContent.find("#training_attachment").val(result.filename);
+                //                 modalContent.find("#temp_fileupload").empty().text(result.filename);
+                //                 toastr.success(result.toastr_msg, "Upload Training and Seminar File", 5000);
+                //             } else {
+                //                 toastr.error(result.toastr_msg, "Upload Training and Seminar File", 5000);
+                //             }
+                //         }
+                //     })
+                //     .prop("disabled", !$.support.fileInput)
+                //     .parent()
+                //     .addClass($.support.fileInput ? undefined : "disabled");
+
+                // $('#New_Add_File').on('submit', function(e) {
+                //     e.preventDefault();
+                //     const form = $('#New_Add_File');
+                //     const formData = new FormData(form[0]);
+                //     formData.append('event_id', eventsDetails.id);
+                //     if (form.isValid()) {
+                //         $.ajax({
+                //             url: baseUrl('events/upload_documents'),
+                //             dataType: "JSON",
+                //             type: "POST",
+                //             processData: false,
+                //             contentType: false,
+                //             data: formData,
+                //             success: function (response) {
+                //                 if (response.success) {
+                //                     toastr.success(response.toastr_msg, 'Success', 5000);
+                //                     eventVue.uploadedFiles = [];
+                //                     $('#fileupload').val(null);
+                //                     eventVue.attachments = response.attachments;
+                //                 }else{
+                //                     toastr.error(response.toastr_msg, 'Error', 5000);
+                //                 }
+                //                 $('#New_Add_File')[0].reset();
+                //                 $('#newAttachment').modal('hide');
+                //             }
+                //         });
+                //     }
+                // });
 
                 $.validate({
                     form: "#form-trainings",

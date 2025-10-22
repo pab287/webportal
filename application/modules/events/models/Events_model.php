@@ -705,7 +705,7 @@ class Events_model extends MX_Controller {
     public function uploadDocuments(){
         $resultset = array();
         $post = $this->input->post();
-        $event = $post['events_id'];
+        $event = $post['event_id'];
         $type = $post['attachment_type'];
         $filePath = "./uploads/files/documents/event_{$event}/$type";
         
