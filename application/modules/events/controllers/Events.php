@@ -198,4 +198,10 @@ class Events extends MX_Controller {
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
+    public function check_attendance(){
+        $data = $this->em->checkAttendance();
+        $data['modal'] = $this->employee_model->getModalContainerContent($data['participant_id'], "training");
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
 }

@@ -1088,4 +1088,18 @@ class Events_model extends MX_Controller {
         return $resultset;
     }
 
+    public function checkAttendance(){
+        $post = $this->input->post();
+        $event_id = $post['events_id'];
+        $participant_id = $post['participant_id'];
+        $this->db->select('a.title,a.description,a.event_date,a.start,a.end,a.location,b.is_present,b.id as attendance_id');
+        $this->db->from($this->evetsSched. ' a');
+        $this->db->where('a.event_id', $event_id);
+        $this->db->where('b.participant_id', $participant_id);
+        $this->db->join($this->events_attendance. ' b', 'a.id = b.schedule_id', 'left');
+        $result['request'] = $this->db->get()->result_array();
+        $result['participant_id'] = $participant_id;
+        return $result;
+    }
+
 }
