@@ -184,7 +184,7 @@
                                         <div class="form-group m-form__group row" id="approved_by" style="display: none;">
                                             <label for="" class="col-md-3 col-lg-3 col-sm-3 col-xs-12">Approved by:</label>
                                             <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12">
-                                                <b v-text="vm_tab1.approved_by"></b> ON <b v-text="vm_tab1.is_imported === '1'? moment(vm_tab1.approved_at).format('LL'): moment(vm_tab1.approved_at).format('LLL')"></b>
+                                                <b v-text="vm_tab1.approved_by" :style="vm_tab1.approved_by == '[ System Generated Approval ]' ? 'font-weight: 700' : ''"></b> ON <b v-text="vm_tab1.is_imported === '1'? moment(vm_tab1.approved_at).format('LL'): moment(vm_tab1.approved_at).format('LLL')"></b>
                                             </div>
                                         </div>
                                         <div class="form-group m-form__group row" id="cancelled_by" style="display: none;">

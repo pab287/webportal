@@ -11,6 +11,7 @@ class Cronjob_reports extends MY_Controller {
         $this->load->model("eforms/accountability_m", "accountability");
         $this->load->model("sms/Contacts_model", "contacts");
         $this->load->model("hris/employee_model", "employee");
+        $this->load->model('gcctime/timesheet_model', 'timesheet');
     }
 
     function generate_daily_loa_summary($email=false){
@@ -785,5 +786,40 @@ class Cronjob_reports extends MY_Controller {
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
+    }
+
+    public function automated_approve_ot($date = null, $email = false){
+        $ids = $this->timesheet->automated_approve_ot($date);
+
+        if (count($ids) > 0 && $ids) {
+            $data = $this->timesheet->get_automated_approved_ot($ids);
+            $message = $this->load->view("eforms/email_templates/email-overtime_approval_template", array('data' => $data), true);
+
+            if ($email) {
+                $tempTitle = "EFORMS - AUTOMATE APPROVED OT";
+                $today = date("Y-m-d");
+                $module = 'eforms_overtime_approve';
+                $email_title = $tempTitle;
+                $content_title = $tempTitle;
+                $content = $message;
+
+                if ($content) {
+                    $sent = $this->core_layout->send_email($module, $email_title, $content_title, $content);
+
+                    if ($sent) {
+                        echo $content;
+                    } else {
+                        echo 'Failed Sending Email';
+                        show_error($this->email->print_debugger()); 
+                    }
+                }
+            } else {
+                echo $message;
+            }
+        } else {
+            if (!$email) {
+                echo $this->load->view("eforms/email_templates/email-overtime_approval_template", array('data' => array()), true);
+            }
+        }
     }
 }

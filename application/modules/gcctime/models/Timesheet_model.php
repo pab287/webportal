@@ -35,6 +35,7 @@ class Timesheet_model extends CI_Model{
     protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
     protected $tbl_payroll_sheet = "payroll.payroll_sheet";
     protected $tbl_ps_employee_regular_ndiff = "payroll.employee_regular_ndiff";
+    protected $tbl_auto_overtime = 'payroll.employee_auto_overtime';
 
     private $db_debug;
     private $logged_in_user;
@@ -9853,5 +9854,100 @@ class Timesheet_model extends CI_Model{
         }
 
         return $ot_night_diff;
+    }
+
+    public function automated_approve_ot($date) {
+        $overtimeIds = array();
+
+        $this->db->select('employee_id');
+        $this->db->where('allow_auto_overtime', 1);
+        $this->db->from($this->tbl_auto_overtime);
+        $query = $this->db->get();
+
+        $this->db->reset_query();
+
+        if ($query->num_rows() > 0) {
+            $ids = array_column($query->result(), 'employee_id');
+            
+            if (is_array($ids) && !empty($ids)) {
+                $this->db->select('id, employee, date_from, date_to');
+                $this->db->where_in('employee', $ids);
+                $this->db->where('TIMESTAMPDIFF(MINUTE, date_from, date_to) <=', 180); //only gets the record 3hrs and under; 3 hrs = 180mins
+                $this->db->where('status', 'Pending');
+    
+                $this->db->group_start();
+                    $this->db->where('DATE(date_from) >= ', date('Y-m-d', strtotime($date . ' -3 days')));
+                    $this->db->where('DATE(date_to) <= ', $date);
+                $this->db->group_end();
+    
+                $this->db->from($this->tbl_overtime);
+                $q = $this->db->get();
+    
+                $this->db->reset_query();
+    
+                if ($q->num_rows() > 0) {
+                    foreach ($q->result() as $key => $rs) {
+                        $maxPayrollDate = $this->getPayrollMaxDate_OT($rs->employee);
+                        $isValidDate = $maxPayrollDate !== false ? strtotime($date) > strtotime($maxPayrollDate) : false; //blocks approving of OT when the date approved is greater than the last payroll end date
+    
+                        if ($isValidDate) {
+                            $data = array(
+                                'status' => 'Approved',
+                                'approved_by' => 0,
+                                'approved_at' => date("Y-m-d H:i:s")
+                            );
+    
+                            $this->db->where('id', $rs->id);
+                            $_q = $this->db->update($this->tbl_overtime, $data);
+    
+                            if ($_q) {
+                                array_push($overtimeIds, $rs->id);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $overtimeIds;
+    }
+
+    protected function getPayrollMaxDate_OT($id=null){
+        if($id){
+            $this->db->select("MAX(ps.date_end) as max_date");
+            $this->db->from($this->tbl_employees." emp");
+            $this->db->join($this->tbl_payroll_sheet." ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+            $this->db->where("emp.id", $id);
+            $this->db->group_by("emp.id");
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() == 1){ return $qTemp->row()->max_date; }
+            else{ return false; }
+        }else{ return false; }
+        
+    }
+
+    public function get_automated_approved_ot($ids = array()) {
+        $result = array();
+        if (count($ids) > 0) {
+            $this->db->select("a.*, UPPER(CONCAT(emp.lastname,
+                CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                    UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                    emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''
+                END, ', ', emp.firstname, ' ',
+                CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                        TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+                END)) as employee, emp.biometricno");
+            $this->db->where_in('a.id', $ids);
+            $this->db->join($this->tbl_employees.' as emp', 'emp.id = a.employee', 'LEFT');
+            $this->db->from($this->tbl_overtime.' as a');
+            $this->db->order_by('a.date_from', 'DESC');
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                $result = $query->result();
+            }
+        }
+
+        return $result;
     }
 }
