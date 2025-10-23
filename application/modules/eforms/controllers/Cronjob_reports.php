@@ -788,7 +788,8 @@ class Cronjob_reports extends MY_Controller {
             ->set_output(json_encode($data));
     }
 
-    public function automated_approve_ot($date = null, $email = false){
+    public function automated_approve_ot($email = false, $date = null){
+        $date = $date ?? date('Y-m-d');
         $ids = $this->timesheet->automated_approve_ot($date);
 
         if (count($ids) > 0 && $ids) {
