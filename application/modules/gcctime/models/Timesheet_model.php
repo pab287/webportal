@@ -2418,7 +2418,7 @@ class Timesheet_model extends CI_Model{
                     $currentAmDate = date("Y-m-d", strtotime($employee_time_sheet->date));
                     $amNdiffStart = date("Y-m-d H:i", strtotime($currentAmDate." 22:00:00"));
                     $amNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentAmDate." 06:00:00")));
-    
+                    
                     if(isset($night_diff_cfg->start_time) && $night_diff_cfg->start_time){
                         $amNdiffStart = date("Y-m-d H:i", strtotime($currentAmDate." ".$night_diff_cfg->start_time));
                     }
@@ -2579,6 +2579,20 @@ class Timesheet_model extends CI_Model{
         $employee_time_sheet->total_time_rendered = $employee_time_sheet->am_time_rendered + $employee_time_sheet->pm_time_rendered;
         $employee_time_sheet->total_ndiff_rendered = $employee_time_sheet->am_ndiff_rendered + $employee_time_sheet->pm_ndiff_rendered;
         
+        /*** Shift Schedule Checker Before Computation Ends ***/
+        $assignedShift = [ "shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end" ];
+        $tempShiftSchedule = [];
+
+        foreach ($assignedShift as $field) {
+            $shiftValue = $employee_time_sheet->$field ?? null;
+            if (!empty($shiftValue)) {
+                $tempShiftSchedule[] = $shiftValue;
+            }
+        }
+
+        if (empty($tempShiftSchedule)) { $employee_time_sheet->has_shift = 0; }
+        /*** Shift Schedule Checker Before Computation Ends ***/
+
         return $employee_time_sheet;
     }
 
@@ -5329,6 +5343,7 @@ class Timesheet_model extends CI_Model{
     public function confirmTimeAdjustmentRequest()
     {
         $this->db->db_debug = false;
+        $night_diff_cfg = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "NIGHT_DIFF_PARAMS"))->row();
         $post = $this->arrayToStdClass($this->input->post());
         $id = explode(",", $post->id);
         $status = isset($post->status) && $post->status ? intval($post->status): 0;
@@ -5393,7 +5408,7 @@ class Timesheet_model extends CI_Model{
                     $toArray = (array) $timesheetHourlyPartimer;
                     if(is_array($toArray) && count($toArray) > 0){ $qRowData->is_tagged_hourly = true; }
 
-                    $timesheetUpdates = $this->updateTimesheetShiftComputation($qRowData, $allow_late_adjustment);
+                    $timesheetUpdates = $this->updateTimesheetShiftComputation($qRowData, $allow_late_adjustment, $night_diff_cfg);
 
                     $updatedTimesheet = array_merge((array) $timesheetCalculation, (array) $timesheetUpdates);
                     $toArray = (array) $timesheetHourlyPartimer;
