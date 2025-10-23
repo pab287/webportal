@@ -45,7 +45,7 @@ $("#payroll_group").select2({
         delay: 250,
         global: false,
         data: function (params) {
-            params.company_id = $("form#frm-filter-payroll-regular_ndiff select#company").val();
+            params.company_id = $("#company").val();
             return params;
         },
         processResults: function (data) {
@@ -66,9 +66,10 @@ $("#payroll_group").select2({
             data: { group_id: tempVal, [_csrf_token]: _csrf_hash },
             success: function (json) {
                 if (json.response) {
+                    console.log(json);
                     const tempData = json.data;
                     if (typeof tempData == "object" && typeof tempData !== "undefined") {
-                        const tempEmployeeSelector = $("form#frm-filter-payroll-regular_ndiff select#employees");
+                        const tempEmployeeSelector = $("#employees");
                         if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
                             tempEmployeeSelector.empty();
                             $.each(tempData, function (_ii, vv) {
@@ -83,7 +84,7 @@ $("#payroll_group").select2({
         });
     } else {
         if (typeof employees == "object" && typeof employees !== "undefined") {
-            const tempEmployeeSelector = $("form#frm-filter-payroll-regular_ndiff select#employees");
+            const tempEmployeeSelector = $("#employees");
             if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
                 tempEmployeeSelector.empty();
                 $.each(employees, function (_ii, vv) {
@@ -98,7 +99,7 @@ $("#payroll_group").select2({
     const _this = this;
     const tempValUnselected = $(_this).val();
     if (tempValUnselected.length == 0) {
-        const tempEmployeeSelector = $("form#frm-filter-payroll-regular_ndiff select#employees");
+        const tempEmployeeSelector = $("#employees");
         if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
             tempEmployeeSelector.prop("disabled", false);
         }
@@ -112,7 +113,7 @@ $("#payroll_group").select2({
                 if (json.response) {
                     const tempData = json.data;
                     if (typeof tempData == "object" && typeof tempData !== "undefined") {
-                        const tempEmployeeSelector = $("form#frm-filter-payroll-regular_ndiff select#employees");
+                        const tempEmployeeSelector = $("#employees");
                         if (typeof tempEmployeeSelector !== "undefined" && tempEmployeeSelector.length == 1) {
                             tempEmployeeSelector.empty();
                             $.each(tempData, function (_ii, vv) {
@@ -283,6 +284,8 @@ const resetFilter = function (event) {
             });
         }
     }
+    globalRequest = {};
+    dtTable.ajax.reload();
 }
 
 $.validate({
@@ -298,7 +301,6 @@ $.validate({
         if (emptyEmployeeList === false && $(currentForm).find("#employees").val().length > 0) {
             formData += '&serialized_employees=' + $(currentForm).find("#employees").val().toString();
         }
-
         let nData = {};
         formData.split('&').forEach(function(item) {
             const part = item.split('=');

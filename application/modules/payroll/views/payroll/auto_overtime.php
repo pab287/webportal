@@ -25,40 +25,40 @@
 					<div class="m-portlet__head-tools"></div>
 				</div>
                 <form id="frm-filter-payroll-auto_overtime" class="m-form">
-				<div class="m-portlet__body">
-                    <div class="row">
-                        <div class="form-group m-form-group col-xl-12 col-lg-12 col-md-12 col-sm-12">
-                            <label for="company" class="required">COMPANY</label>
-                            <select name="company" id="company" class="form-control">
-                                <option></option>
-                            </select>
+                    <div class="m-portlet__body">
+                        <div class="row">
+                            <div class="form-group m-form-group col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                                <label for="company" class="required">COMPANY</label>
+                                <select name="company" id="company" class="form-control" data-validation="required">
+                                    <option></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="form-group col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                                <label class="m--font-bolder" for="payroll_group">PAYROLL GROUP <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">(Optional)</span>
+                                </label>
+                                <select class="form-control" id="payroll_group" multiple="multiple"></select>
+                            </div>
+                            <div class="form-group col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                                <label class="m--font-bolder" for="employees">EMPLOYEE/S <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">(Optional)</span>
+                                </label>
+                                <select name="employees[]" id="employees" class="form-control"
+                                multiple="multiple"></select>
+                            </div>
                         </div>
                     </div>
-                    <div class="row mt-2">
-                        <div class="form-group col-xl-12 col-lg-12 col-md-12 col-sm-12">
-                            <label class="m--font-bolder" for="payroll_group">PAYROLL GROUP <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">(Optional)</span>
-                            </label>
-                            <select class="form-control" id="payroll_group" multiple="multiple"></select>
-                        </div>
-                        <div class="form-group col-xl-12 col-lg-12 col-md-12 col-sm-12">
-                            <label class="m--font-bolder" for="employees">EMPLOYEE/S <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">(Optional)</span>
-                            </label>
-                            <select name="employees[]" id="employees" class="form-control"
-                            multiple="multiple"></select>
-                        </div>
+                    <div class="m-portlet__foot text-right">
+                        <button type="button"
+                            class="btn btn-warning m-btn btnAdvance_search m-btn--sm mr-1 text-white"
+                            onclick="resetFilter(this)">
+                            <span>
+                                <i class="fa fa-refresh"></i>
+                                <span>Reset Filter</span>
+                            </span>
+                        </button>
+                        <button type="submit" class="m-btn btn btn-success btnAdvance_search btn-submit"> GO </button>
                     </div>
-                </div>
-                <div class="m-portlet__foot text-right">
-                    <button type="button"
-                        class="btn btn-warning m-btn btnAdvance_search m-btn--sm mr-1 text-white"
-                        onclick="resetFilter(this)">
-                        <span>
-                            <i class="fa fa-refresh"></i>
-                            <span>Reset Filter</span>
-                        </span>
-                    </button>
-                    <button type="submit" class="m-btn btn btn-success btnAdvance_search btn-submit"> GO </button>
-                </div>
                 </form>
             </div>
         </div>
