@@ -76,9 +76,9 @@ class Employee_model extends CI_Model {
         $this->load->library('image_lib');
         
         
+        $this->user_data = $this->session->userdata("logged_in") !== null ? $this->session->userdata("logged_in") : array();
         $this->loggedinData = $this->user_data = $this->session->userdata("logged_in");
-        $this->loggedInUsername = $this->loggedinData["username"];
-        $this->user_data = $this->session->userdata("logged_in");
+        $this->loggedInUsername = isset($this->loggedinData["username"]) && $this->loggedinData['username'] ? $this->loggedinData['username'] : '';
 
     }
 
