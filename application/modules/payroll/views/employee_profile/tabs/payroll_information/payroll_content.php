@@ -21,7 +21,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-5 col-md-5">
+            <div class="col-5 col-md-5 col-sm-12">
                 <div class="form-group m-form__group row">
                     <label for="position" class="col-5 col-form-label text-right">Basic rate:</label>
                     <div class="col-7">
@@ -46,7 +46,7 @@
             </div>
         </div>
         <div class="row m--margin-bottom-10">
-            <div class="col-5 col-md-5">
+            <div class="col-5 col-md-5 col-sm-12">
                 <div class="form-group m-form__group row">
                     <label class="col-5 col-form-label text-right">Payout Schedule:</label>
                     <div class="col-7">
@@ -95,7 +95,7 @@
         </div>
         <div class="row">
             <?php if (in_array('edit_bankinfo', $this->core_layout->getCurrentActions())): ?>
-                <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
+                <div class="col-sm-12 col-md-6 col-lg-6 col-xl-5">
                     <div class="form-group m-form__group row">
                         <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Bank Name: </label>
                         <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
@@ -103,7 +103,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
+                <div class="col-sm-12 col-md-6 col-lg-6 col-xl-5">
                     <div class="form-group m-form__group row">
                         <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">ATM INFO: </label>
                         <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
@@ -112,7 +112,7 @@
                     </div>
                 </div>
             <?php else: ?>
-                <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
+                <div class="col-sm-12 col-md-6 col-lg-6 col-xl-5">
                     <div class="form-group m-form__group row">
                         <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">Bank Name: </label>
                         <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
@@ -120,7 +120,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-6 col-md-6 col-lg-6 col-xl-5">
+                <div class="col-sm-12 col-md-6 col-lg-6 col-xl-5">
                     <div class="form-group m-form__group row">
                         <label for="date_start" class="col-sm-6 col-md-5 col-lg-5 col-xl-5 col-form-label">ATM Info: </label>
                         <div class="col-sm-6 col-md-7 col-lg-7 col-xl-7">
@@ -160,7 +160,7 @@
                     <div class="col-xl-8 order-2 order-xl-1">
                         <div class="row align-items-center">
                             <div class="col-md-12">
-                                <button class="btn btn-sm btn-success btnNew" 
+                                <button class="btn btn-sm btn-success btnNew mt-2" 
                                     data-toggle="modal" data-target="#mdl-newAllowance">
                                     <i class="fa fa-plus"></i> <span>New</span>
                                 </button>
@@ -203,7 +203,7 @@
                     <div class="col-xl-8 order-2 order-xl-1">
                         <div class="row align-items-center">
                             <div class="col-md-12">
-                                <button class='btn btn-sm btn-success btnNew' 
+                                <button class='btn btn-sm btn-success btnNew mt-2' 
                                     data-toggle='modal' 
                                     data-target='#mdl-newBenefit'>
                                     <i class='fa fa-plus'></i> <span>New</span>
@@ -265,7 +265,7 @@
                             <div class="col-md-12">
                                 <div class="row align-items-center">
                                     <div class="col-xl-8 order-2 order-xl-1">
-                                        <button class='btn btn-sm btn-success btnNew' data-toggle='modal' data-target='#mdl-newLoan'><i class='fa fa-plus'></i> <span>New</span></button>
+                                        <button class='btn btn-sm btn-success btnNew mt-2' data-toggle='modal' data-target='#mdl-newLoan'><i class='fa fa-plus'></i> <span>New</span></button>
                                     </div>
                                     <div class="col-xl-4 order-1 order-xl-2 m--align-right">
                                         <div class="m-input-icon m-input-icon--left" style="border: 1px solid #c3c3c3;">
