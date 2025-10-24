@@ -1340,6 +1340,27 @@ class Timesheet_model extends CI_Model{
         }
         /*** super flexible employee script function ***/
 
+        /*** is night shift checker ***/
+        $shiftProps = ["shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end"];
+        $shiftSchedule = [];
+
+        $tempShiftDate = $date;
+        foreach ($shiftProps as $key => $prop) {
+            $value = isset($timesheet_exist->$prop) ? $timesheet_exist->$prop: null;
+            $nValue = $value;
+            if($value){
+                if($key > 0){
+                    $prevValue = isset($timesheet_exist->{$shiftProps[$key-1]}) ? $timesheet_exist->{$shiftProps[$key-1]}: null;
+                    if(strtotime($value) < strtotime($prevValue)){ $tempShiftDate = date("Y-m-d", strtotime("+1 day", strtotime($date))); }
+                }
+                $nValue = date("Y-m-d H:i", strtotime($tempShiftDate." ".$value));
+            }
+            $shiftSchedule[] = $nValue;
+        }
+        
+        $isNightShift = $this->checkNightShiftSchedule($date, $shiftSchedule);
+        /*** is night shift checker ***/
+
         $no_shift_schedule = isset($timesheet_exist->has_shift) && $timesheet_exist->has_shift !== null ?
             intval($timesheet_exist->has_shift) == 0 : $no_shift_schedule;
 
@@ -1422,7 +1443,7 @@ class Timesheet_model extends CI_Model{
                             $employee_time_sheet->am_out = date("Y-m-d H:i", strtotime($date . " " . $am_end));
                             $employee_time_sheet->pm_in = date("Y-m-d H:i", strtotime($date . " " . $pm_start));
                         }
-
+                        
                         if($am_shift_only && (($startMeridian == "AM" && $endMeridian == "AM") || ($startMeridian == "AM" && $endMeridian == "PM"))){
                             $employee_time_sheet->am_in = $first_record;
                             $employee_time_sheet->am_out = $end_record;
@@ -1437,7 +1458,7 @@ class Timesheet_model extends CI_Model{
                             $employee_time_sheet->pm_out = $end_record;
                         }
 
-                        if($isWholeDay){
+                        if($isWholeDay && $isNightShift === false){
                             if($startMeridian == "AM" && $endMeridian == "AM"){
                                 $employee_time_sheet->am_in = $first_record;
                                 $employee_time_sheet->am_out = $end_record;
@@ -1460,6 +1481,39 @@ class Timesheet_model extends CI_Model{
                                     if(!empty($employee_time_sheet->pm_in) || $employee_time_sheet->pm_in !== null || $employee_time_sheet->pm_in == null) {
                                         $employee_time_sheet->pm_in = date("Y-m-d H:i", strtotime($date . " " . $pm_start));
                                     }
+                                }else{
+                                    $employee_time_sheet->pm_in = null;
+                                    $employee_time_sheet->pm_out = null;
+                                }
+                            }
+                        } elseif ($isWholeDay && $isNightShift === true){
+                            if($startMeridian == "PM" && $endMeridian == "PM"){
+                                $employee_time_sheet->am_in = $first_record;
+                                $employee_time_sheet->am_out = $end_record;
+                                $employee_time_sheet->pm_in = null;
+                                $employee_time_sheet->pm_out = null;
+                            }elseif($startMeridian == "AM" && $endMeridian == "AM"){
+                                $employee_time_sheet->am_in = null;
+                                $employee_time_sheet->am_out = null;
+                                $employee_time_sheet->pm_in = $first_record;
+                                $employee_time_sheet->pm_out = $end_record;
+                            }elseif($startMeridian == "PM" && $endMeridian == "AM"){
+                                $employee_time_sheet->am_in = $first_record;
+                                $employee_time_sheet->pm_out = $end_record;
+
+                                $amEnd = $am_end ? date("Y-m-d H:i", strtotime($date . " " . $am_end)) : null;
+                                if($date && $amEnd && (strtotime($amEnd) < strtotime($first_record)) && (strtotime($amEnd) < strtotime($end_record))){
+                                    $amEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($date . " " . $am_end)));
+                                }
+
+                                $pmStart = $pm_start ? date("Y-m-d H:i", strtotime($date . " " . $pm_start)) : null;
+                                if($date && $amEnd && $pmStart && (strtotime($pmStart) < strtotime($amEnd)) && (strtotime($pmStart) < strtotime($end_record))){
+                                    $pmStart = date("Y-m-d H:i", strtotime("+1 day", strtotime($date . " " . $pm_start)));
+                                }
+
+                                if($amEnd && $pmStart){
+                                    $employee_time_sheet->am_out = $amEnd;
+                                    $employee_time_sheet->pm_in = $pmStart;
                                 }else{
                                     $employee_time_sheet->pm_in = null;
                                     $employee_time_sheet->pm_out = null;
@@ -2363,8 +2417,8 @@ class Timesheet_model extends CI_Model{
                 if($allowRegularNightDiff){
                     $currentAmDate = date("Y-m-d", strtotime($employee_time_sheet->date));
                     $amNdiffStart = date("Y-m-d H:i", strtotime($currentAmDate." 22:00:00"));
-                    $amNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentAmDate." 05:00:00")));
-    
+                    $amNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentAmDate." 06:00:00")));
+                    
                     if(isset($night_diff_cfg->start_time) && $night_diff_cfg->start_time){
                         $amNdiffStart = date("Y-m-d H:i", strtotime($currentAmDate." ".$night_diff_cfg->start_time));
                     }
@@ -2379,9 +2433,8 @@ class Timesheet_model extends CI_Model{
                     $tempAmNdiffEnd = $tempAmOutx >= $_amNdiffStart && $tempAmOutx <= $_amNdiffEnd ? $tempAmOutx : $_amNdiffEnd;
 
                     /** allow nightdiff checker and computation ***/
-                    $allowNightDiff = $tempAmInx >= $_amNdiffStart && $tempAmInx <= $_amNdiffEnd ? true : false;
+                    $allowNightDiff = ($tempAmInx >= $_amNdiffStart && $tempAmInx <= $_amNdiffEnd) || ($tempAmOutx >= $_amNdiffStart && $tempAmOutx <= $_amNdiffEnd) ? true : false;
                     $allowNightDiff = $allowNightDiff && $tempAmOutx >= $_amNdiffStart && $tempAmOutx <= $_amNdiffEnd ? true : $allowNightDiff;
-
                     if($allowNightDiff){
                         $am_ndiff_rendered = $tempAmNdiffEnd - $tempAmNdiffStart;
                         $employee_time_sheet->am_ndiff_rendered = round(($am_ndiff_rendered) / 60, 2);
@@ -2465,7 +2518,6 @@ class Timesheet_model extends CI_Model{
                     if(isset($night_diff_cfg->end_time) && $night_diff_cfg->end_time){
                         $pmNdiffEnd = date("Y-m-d H:i", strtotime("+1 day", strtotime($currentPmDate." ".$night_diff_cfg->end_time)));
                     }
-    
                     $_pmNdiffStart = $_pm_start >= strtotime($pmNdiffStart) && $_pm_start <= strtotime($pmNdiffEnd) ? $_pm_start : strtotime($pmNdiffStart);
                     $_pmNdiffEnd = $_pm_end >= strtotime($pmNdiffStart) && $_pm_end <= strtotime($pmNdiffEnd) ? $_pm_end : strtotime($pmNdiffEnd);
     
@@ -2473,7 +2525,7 @@ class Timesheet_model extends CI_Model{
                     $tempPmNdiffEnd = $tempPmOutx >= $_pmNdiffStart && $tempPmOutx <= $_pmNdiffEnd ? $tempPmOutx : $_pmNdiffEnd;
 
                     /** allow nightdiff checker and computation ***/
-                    $allowNextNightDiff = $tempPmInx >= $_pmNdiffStart && $tempPmInx <= $_pmNdiffEnd ? true : false;
+                    $allowNextNightDiff = ($tempPmInx >= $_pmNdiffStart && $tempPmInx <= $_pmNdiffEnd) || ($tempPmOutx >= $_pmNdiffStart && $tempPmOutx <= $_pmNdiffEnd) ? true : false;
                     $allowNextNightDiff = $allowNextNightDiff && $tempPmOutx >= $_pmNdiffStart && $tempPmOutx <= $_pmNdiffEnd ? true : $allowNextNightDiff;
                     
                     if($allowNextNightDiff){
@@ -2527,6 +2579,20 @@ class Timesheet_model extends CI_Model{
         $employee_time_sheet->total_time_rendered = $employee_time_sheet->am_time_rendered + $employee_time_sheet->pm_time_rendered;
         $employee_time_sheet->total_ndiff_rendered = $employee_time_sheet->am_ndiff_rendered + $employee_time_sheet->pm_ndiff_rendered;
         
+        /*** Shift Schedule Checker Before Computation Ends ***/
+        $assignedShift = [ "shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end" ];
+        $tempShiftSchedule = [];
+
+        foreach ($assignedShift as $field) {
+            $shiftValue = $employee_time_sheet->$field ?? null;
+            if (!empty($shiftValue)) {
+                $tempShiftSchedule[] = $shiftValue;
+            }
+        }
+
+        if (empty($tempShiftSchedule)) { $employee_time_sheet->has_shift = 0; }
+        /*** Shift Schedule Checker Before Computation Ends ***/
+
         return $employee_time_sheet;
     }
 
@@ -5277,6 +5343,7 @@ class Timesheet_model extends CI_Model{
     public function confirmTimeAdjustmentRequest()
     {
         $this->db->db_debug = false;
+        $night_diff_cfg = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "NIGHT_DIFF_PARAMS"))->row();
         $post = $this->arrayToStdClass($this->input->post());
         $id = explode(",", $post->id);
         $status = isset($post->status) && $post->status ? intval($post->status): 0;
@@ -5341,7 +5408,7 @@ class Timesheet_model extends CI_Model{
                     $toArray = (array) $timesheetHourlyPartimer;
                     if(is_array($toArray) && count($toArray) > 0){ $qRowData->is_tagged_hourly = true; }
 
-                    $timesheetUpdates = $this->updateTimesheetShiftComputation($qRowData, $allow_late_adjustment);
+                    $timesheetUpdates = $this->updateTimesheetShiftComputation($qRowData, $allow_late_adjustment, $night_diff_cfg);
 
                     $updatedTimesheet = array_merge((array) $timesheetCalculation, (array) $timesheetUpdates);
                     $toArray = (array) $timesheetHourlyPartimer;
@@ -9522,7 +9589,7 @@ class Timesheet_model extends CI_Model{
     protected function checkNightShiftSchedule($date=null, $schedule=[]){
         if($date && is_array($schedule) && !empty($schedule)){
             $nightShiftParams = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "NIGHT_SHIFT_PARAMS"))->row();
-            $nShiftStartTime = isset($nightShiftParams->start_time) ? $nightShiftParams->start_time: "16:00:00";
+            $nShiftStartTime = isset($nightShiftParams->start_time) ? $nightShiftParams->start_time: "12:00:00";
             $nShiftEndTime = isset($nightShiftParams->end_time) ? $nightShiftParams->end_time: "12:00:00";
             $_nightShiftStart = date("Y-m-d H:i:s", strtotime($date . " " . $nShiftStartTime));
             $_nightShiftEnd = strtotime($nShiftStartTime) > strtotime($nShiftEndTime) ? date("Y-m-d H:i:s", strtotime("+1 day", strtotime($date . " " . $nShiftEndTime))): date("Y-m-d H:i:s", strtotime($date . " " . $nShiftEndTime));
