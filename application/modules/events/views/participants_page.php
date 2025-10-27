@@ -863,79 +863,85 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-12">
-                            <div class="card card-custom card-border gutter-b">
-                                <div class="card-body pt-8">
-                                    <div class="row">
-                                        <div class="col-sm-6 col-md-6 col-lg-3">
-                                            <div class="mb-8">
-                                                <span class="font-weight-bolder text-dark-75 font-size-sm text-uppercase">Title</span>
-                                                <div class="text-dark font-weight-bold font-size-lg mt-2">{{ editSched.title }}</div>
-                                            </div>
+                            <div class="card rounded-0 border-0">
+                                <div class="row">
+                                    <div class="col-sm-6 col-md-6 col-lg-4">
+                                        <div class="mb-3 bg-light p-3 px-4 rounded">
+                                            <span class="font-weight-bolder text-dark font-size-sm text-uppercase">Title: </span>
+                                            <div class="text-dark font-weight-bold">{{ editSched.title }}</div>
                                         </div>
-                                        <div class="col-sm-6 col-md-6 col-lg-3">
-                                            <div class="mb-8">
-                                                <span class="font-weight-bolder text-dark-75 font-size-sm text-uppercase">Date</span>
-                                                <div class="text-dark font-weight-bold font-size-lg mt-2">{{ editSched.event_date }}</div>
-                                            </div>
+                                    </div>
+                                    <div class="col-sm-6 col-md-6 col-lg-4">
+                                        <div class="mb-3 bg-light p-3 px-4 rounded">
+                                            <span class="font-weight-bolder text-dark- font-size-sm text-uppercase">Date: </span>
+                                            <div class="text-dark font-weight-bold">{{ formatDateLocale2(editSched.event_date) }} ● {{ formatTime(editSched.start,editSched.end) }}</div>
                                         </div>
-                                        <div class="col-sm-6 col-md-6 col-lg-3">
-                                            <div class="mb-8">
-                                                <span class="font-weight-bolder text-dark-75 font-size-sm text-uppercase">Time</span>
-                                                <div class="text-dark font-weight-bold font-size-lg mt-2">{{ formatTime(editSched.start,editSched.end) }} </div>
-                                            </div>
+                                    </div>
+                                    <div class="col-sm-6 col-md-6 col-lg-4">
+                                        <div class="mb-3 bg-light p-3 px-4 rounded">
+                                            <span class="font-weight-bolder text-dark font-size-sm text-uppercase">Location: </span>
+                                            <div class="text-dark font-weight-bold">{{ editSched.location }}</div>
                                         </div>
-                                        <div class="col-sm-6 col-md-6 col-lg-3">
-                                            <div class="mb-8">
-                                                <span class="font-weight-bolder text-dark-75 font-size-sm text-uppercase">Location</span>
-                                                <div class="text-dark font-weight-bold font-size-lg mt-2">{{ editSched.location }}</div>
-                                            </div>
-                                        </div>
-                                        <div class="col-12">
-                                            <div class="separator separator-dashed my-5"></div>
-                                            <span class="font-weight-bolder text-dark-75 font-size-sm text-uppercase">Description</span>
-                                            <textarea class="form-control m-input col-12 text-uppercase" rows="3" style="resize: none; overflow-y: auto;" readonly>{{ editSched.description }}</textarea>
-                                        </div>
+                                    </div>
+                                    <div class="separator separator-dashed my-5"></div>
+                                    <div class="col-12">
+                                        <span class="font-weight-bolder text-dark font-size-sm text-uppercase">Description</span>
+                                        <textarea class="form-control m-input col-12 text-uppercase" rows="3" style="resize: none; overflow-y: auto;" readonly>{{ editSched.description }}</textarea>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12">
+                        <div class="col-12 mt-3">
                             <div class="table-responsive">
                                 <table class="table table-bordered table-striped" id="attendanceTable">
+                                    <template v-if="attendance.length <= 0">
+                                        <thead></thead>
+                                    </template>
+                                    <template v-else>
                                     <thead>
-                                        <tr>
-                                            <th hidden>ID</th>
-                                            <th>#</th>
-                                            <th>Participant</th>
-                                            <th>Company</th>
-                                            <th>Contact</th>
-                                            <th>Attendance</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="attendanceBody">
-                                        <tr v-for="(item, index) in attendance" :key="item.id">
-                                            <td hidden>{{ item.id }}</td>
-                                            <td>{{ index + 1 }}</td>
-                                            <td>
-                                                {{ item.firstname }} {{ item.middlename }} {{ item.lastname }}<br>
-                                                <small class="text-muted">{{ item.position }}</small>
-                                            </td>
-                                            <td>
-                                                {{ item.company }}<br>
-                                                <small class="text-muted">{{ item.department }}</small>
-                                            </td>
-                                            <td>
-                                                {{ item.email }}<br>
-                                                {{ item.mobile_no }}
-                                            </td>
-                                            <td class="text-center">
-                                                <label class="m-checkbox m-checkbox--bold m-checkbox--state-success">
-                                                    <input type="checkbox" class="form-check-input h-10px w-10px" :value="item.is_present" @change="togglePresence(item.id,$event.target.checked ? 1 : 0)" true-value="1" false-value="0" :checked="item.is_present == 1"/>
-                                                    <span></span>
-                                                </label>
-                                            </td>
-                                        </tr>
-                                    </tbody>
+                                            <tr>
+                                                <th hidden>ID</th>
+                                                <th>#</th>
+                                                <th>Participant</th>
+                                                <th>Company</th>
+                                                <th>Contact</th>
+                                                <th>Attendance</th>
+                                            </tr>
+                                        </thead>
+                                    </template>
+                                    <template v-if="attendance.length <= 0">
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="6" class="m--font-boldest text-center">NO RECORDS FOUND</td>
+                                            </tr>
+                                        </tbody>
+                                    </template>
+                                    <template>
+                                        <tbody id="attendanceBody">
+                                            <tr v-for="(item, index) in attendance" :key="item.id">
+                                                <td hidden>{{ item.id }}</td>
+                                                <td>{{ index + 1 }}</td>
+                                                <td>
+                                                    <strong>{{ item.fullname }}</strong><br>
+                                                    <small class="text-muted">{{ item.position }}</small>
+                                                </td>
+                                                <td>
+                                                    {{ item.company }}<br>
+                                                    <small class="text-muted">{{ item.department }}</small>
+                                                </td>
+                                                <td>
+                                                    {{ item.email }}<br>
+                                                    {{ item.mobile_no }}
+                                                </td>
+                                                <td class="text-center">
+                                                    <label class="m-checkbox m-checkbox--bold m-checkbox--state-success">
+                                                        <input type="checkbox" class="form-check-input h-10px w-10px" :value="item.is_present" @change="togglePresence(item.id,$event.target.checked ? 1 : 0)" true-value="1" false-value="0" :checked="item.is_present == 1"/>
+                                                        <span></span>
+                                                    </label>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </template>
                                 </table>
                             </div>
                         </div>
@@ -961,6 +967,9 @@
                 <div class="modal-body">
                     <iframe id="pdfFrame" style="width: 100%; height: 800px;" frameborder="0"></iframe>
                 </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger btnArchive" @click="removeCertificate(emp_attendance_selected.id)">Remove Certificate</button>
+                </div>
             </div>
         </div>
     </div>
@@ -974,7 +983,48 @@
                         <span aria-hidden="true">×</span>
                     </button>
                 </div>
-                <div class="modal-body">test</div>
+                <div class="modal-body">DO NOT REMOVE THIS IS FOR UPLOADING</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade show" id="attendanceCheck" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Employee Attendance Record<h5>
+                    <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="bg-light p-2 rounded mb-3 text-center">
+                                <h5 class="mb-2 m--font-boldest">{{emp_attendance_selected.fullname}}</h6>
+                                <span>{{emp_attendance_selected.position}}</span><br/>
+                                <span>{{emp_attendance_selected.company}} | {{emp_attendance_selected.department}}</span>
+                            </div>
+                        </div>
+                        <template v-for="(item, index) in employee_attendance" :key="index">
+                            <template v-for="(sch, idx) in item.schedules" :key="idx">
+                                <div class="col-4">
+                                    <div class="bg-gray p-4 mb-3" :class="sch.is_present == 1 ? 'border-success' : 'border-danger'" style="border: 2px solid; border-radius: 10px;">
+                                        <div class="m--font-boldest ">{{ sch.title }}</div>
+                                        <small class="m--font-bolder">{{ formatDateLocale2(item.event_date) }} ● {{ formatTime(sch.start,sch.end) }}</small><br/>
+                                        <small>{{ sch.location }}</small><br />
+                                        <span v-if="sch.is_present == 1" class="badge bg-success">Present</span>
+                                        <span v-else class="badge bg-danger">Absent</span>
+                                    </div>
+                                </div>
+                            </template>
+                        </template>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success btnSave" data-dismiss="modal" @click="uploadCertificate(emp_attendance_selected.id)"></i>AWARD CERTIFICATE</button>
+                    <button class="btn btn-danger text-white btnBack" data-dismiss="modal"></i>CLOSE</button>
+                </div>
             </div>
         </div>
     </div>

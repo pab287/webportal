@@ -21,6 +21,7 @@ class Events extends MX_Controller {
         $data["company"] = $this->em->select2CompanyData();
         $data["department"] = $this->em->select2DepartmentData();
         $data['events'] = $this->em->getEvents();
+        $data['options'] = $this->em->getEventsOptions();
         $this->core_layout->addJs("js/events/calendar_of_events.js", true,$data);
         $this->core_layout->addCss("vendors/custom/fullcalendar/fullcalendar.bundle.css", true);
         $this->core_layout->addCss("css/hris/calendar.css", true);
@@ -201,6 +202,21 @@ class Events extends MX_Controller {
     public function check_attendance(){
         $data = $this->em->checkAttendance();
         $data['modal'] = $this->employee_model->getModalContainerContent($data['participant_id'], "training");
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function remove_certificate(){
+        $data = $this->em->removeCertificate();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_events_settings(){
+        $data = $this->em->getEventsSettings();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function new_events_settings(){
+        $data = $this->em->newEventsSettings();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 

@@ -5,6 +5,9 @@ let selectedCompanies = null;
 let selectedDepartments = null;
 let selectedCompaniesEdit = null;
 let selectedDepartmentsEdit = null;
+let select2Training = null;
+let select2InitType = null;
+let Select2Category = null;
 if (_currentActions.includes("view_own_request")) {
     $(".btnNew").hide();
 }
@@ -711,3 +714,26 @@ $('#addNewEvent').on('hidden.bs.modal', function () {
     $("#company").val(null).trigger("change");
     $("#department").val(null).trigger("change");
 });
+
+$('#training_type').select2({
+    placeholder: "Select an Option",
+    allowClear: true,
+    width: '100%',
+    data: _tempContentData.options.training_type
+});
+
+$('#init_type').select2({
+    placeholder: "Select an Option",
+    allowClear: true,
+    width: '100%',
+    data: _tempContentData.options.initiation_type
+});
+
+$('#training_category').select2({
+    placeholder: "Select an Option",
+    allowClear: true,
+    width: '100%',
+    data: _tempContentData.options.training_category
+});
+
+console.log(_tempContentData);

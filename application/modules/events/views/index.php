@@ -170,9 +170,35 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-12">
+                        <div class="col-12">
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="form-group">
+                                        <label for="training_type" class="form-control-label required">Training Type</label>
+                                            <select name="training_type" class="form-control m-input" id="training_type" data-validation="required">
+                                                <option value=""></option>
+                                            </select>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="form-group">
+                                        <label for="init_type" class="form-control-label required">Initiation Type</label>
+                                            <select name="init_type" class="form-control m-input" id="init_type" data-validation="required">
+                                                <option value=""></option>
+                                            </select>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="form-group">
+                                        <label for="training_category" class="form-control-label required">Training Category</label>
+                                            <select name="training_category" class="form-control m-input" id="training_category" data-validation="required">
+                                                <option value=""></option>
+                                            </select>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="form-group">
-                                <label for="event_title" class="form-control-label required">Event Title</label>
+                                <label for="event_title" class="form-control-label required">Training Title</label>
                                 <input name="event_title" type="text" class="form-control m-input" placeholder="event title" data-validation="required">
                             </div>
                             <div class="form-group">
