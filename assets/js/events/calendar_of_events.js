@@ -172,7 +172,6 @@ let eventVue = new Vue({
             });
         },
         removeSpeaker(speakerId) {
-            console.log(speakerId, this.speakers);
             if (this.speakers.length > 1) {
                 const index = this.speakers.findIndex(speaker => speaker.id === speakerId);
                 if (index > -1) {
@@ -584,7 +583,6 @@ const CalendarBasic = function () {
                     },
 
                     eventRender: function(event, element) {
-                        console.log(event);
                         element.find('.fc-time').remove();
                         const speakers = event.speakers || [];
                         const speakerNames = speakers.map(speaker => speaker.speaker_name).join(', ');
@@ -625,7 +623,6 @@ const CalendarBasic = function () {
                         });
                         
                         let background = '';
-                        console.log(event.training_category,typeof event.training_category);
                         switch (event.training_category) {
                             case "5":
                                 background = 'linear-gradient(135deg, #36b37e 0%, #57d9a3 100%)';

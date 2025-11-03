@@ -111,7 +111,6 @@ function onEditEvent(id) {
     let rowData = tblEventsSettings.row('#'+id).data();
     selectedData = rowData; 
     eventVue.optionSelected = JSON.parse(JSON.stringify(rowData));
-    console.log( eventVue.optionSelected);
     $("#edit_options").modal("show");
 }
 

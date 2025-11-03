@@ -493,7 +493,6 @@ let eventVue = new Vue({
         },
         uploadCertificate(rowId) {
             const rowData = participantsTable.row(`#${rowId}`).data();
-            console.log(rowData);
             $('#attendanceCheck').modal('hide');
             let modalTempContent = $("#modalTempContent"); // grab the whole modal
             let modalContent = modalTempContent.find("#modal-content");
@@ -646,14 +645,12 @@ let eventVue = new Vue({
 
         },
         removeCertificate(rowId) {
-            console.log("This is the row id",rowId);
             const rowData = participantsTable.row(`#${rowId}`).data();
             if (rowData.is_employee == 1) {
                 fileUrl = baseUrl(`/uploads/files/documents/employee_files/empcode_${rowData.emp_id}/trainings/${rowData.cert_attachment}`);
             } else {
                 fileUrl = baseUrl(`/uploads/files/documents/applicant_files/appcode_${rowData.id}/trainings/${rowData.cert_attachment}`);
             }
-            console.log(rowData);
             Swal.fire({
                 title: "Are you sure?",
                 text: "This will remove the certificate record for this participant.",
