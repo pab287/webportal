@@ -45,7 +45,7 @@ class Events_model extends MX_Controller {
 
     private function getEventsData($limit, $offset, $sortBy, $sortOrder, $search , $year,$is_archived){
         $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to","b.speaker_name","b.position","b.company","a.company_array","a.department_array","a.events_by");
-        $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array, a.events_by,
+        $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array, a.events_by, a.training_type, a.init_type, a.training_category, 
             GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
             GROUP_CONCAT(b.id SEPARATOR '||') as speaker_id,
             GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
@@ -118,7 +118,7 @@ class Events_model extends MX_Controller {
 
     private function getEventsDataCount($search,$year,$is_archived){
         $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to","b.speaker_name","b.position","b.company","a.company_array","a.department_array");
-        $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_array, a.department_array, a.company_array, a.department_array,
+        $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_array, a.department_array, a.company_array, a.department_array, a.events_by, a.training_type, a.init_type, a.training_category,
         GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
         GROUP_CONCAT(b.id SEPARATOR '||') as speaker_id,
         GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
@@ -168,6 +168,9 @@ class Events_model extends MX_Controller {
             e.department_ids,
             e.company_array,
             e.department_array,
+            e.training_type,
+            e.init_type,
+            e.training_category,
             GROUP_CONCAT(
                 JSON_OBJECT(
                     'id', s.id,
@@ -197,13 +200,16 @@ class Events_model extends MX_Controller {
 
     public function getEventDetails($id) {
         $this->db->select("
-            a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array, a.events_by,
+            a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array, a.events_by, c.name as training_type, d.name as init_type, e.name as training_category,
             GROUP_CONCAT(b.id SEPARATOR '||') as speaker_ids,
             GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
             GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
             GROUP_CONCAT(b.company SEPARATOR '||') as speaker_companies
         ")->from($this->eventsCalendarTable . " as a")
           ->join($this->eventsSpeakersTable . " as b", "a.id = b.event_id", "left")
+          ->join($this->eventsSettingsTable . " as c", "c.id = a.training_type", "left")
+          ->join($this->eventsSettingsTable . " as d", "d.id = a.init_type", "left")
+          ->join($this->eventsSettingsTable . " as e", "e.id = a.training_category", "left")
           ->where("a.id", $id)
           ->group_by("a.id");
     
@@ -446,6 +452,9 @@ class Events_model extends MX_Controller {
             "event_title" => $post['event_title'],
             "description" => $post['event_description'],
             "event_venue" => $post['event_venue'],
+            "training_type" => $post['training_type'],
+            "training_category" => $post['training_category'],
+            "init_type" => $post['init_type'],
             "event_from"  => $event_from,
             "event_to"    => $event_to,
             "events_by"  => $events_by,
@@ -1286,6 +1295,39 @@ class Events_model extends MX_Controller {
         }
     
         return $grouped;
+    }
+
+    public function updateEventsSettings(){
+        $post = $this->input->post();
+        $id = $post['id'];
+        unset($post['csrf_token'], $post['id']);
+        $this->db->where('id', $id);
+        $update = $this->db->update($this->eventsSettingsTable, $post);
+        if($update){
+            $response['success'] = true;
+            $response['message'] = "Event settings has been updated.";
+        }else{
+            $response['success'] = false;
+            $response['message'] = "Failed to update event settings.";
+        }
+        return $response;
+    }
+
+    public function archiveEventSettings(){
+        $post = $this->input->post();
+        $id = $post['id'];
+        $action = $post['action']; 
+    
+        $this->db->where('id', $id);
+        $update = $this->db->update($this->eventsSettingsTable, ['is_archived' => $action]);
+    
+        if ($update) {
+            $message = ($action == 1) ? 'Event settings have been archived successfully.' : 'Event settings have been restored successfully.';
+            return ['success' => true, 'message' => $message];
+        }
+    
+        $message = ($action == 1) ? 'Failed to archive event settings.' : 'Failed to restore event settings.';
+        return ['success' => false, 'message' => $message];
     }
 
 }

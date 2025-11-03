@@ -373,6 +373,43 @@ let editEventVue = new Vue({
                 editEventVue.eventsData.department_array = JSON.parse(JSON.stringify(data.map(item => item.text)));
                 selectedDepartmentsEdit = JSON.parse(JSON.stringify(data.map(item => item.text)));
             });
+
+            $('#edit_training_type').select2({
+                placeholder: "Select an Option",
+                dropdownParent: $('#edit_event_form'),
+                allowClear: false,
+                width: '100%',
+                data: _tempContentData.options.training_type
+            }).on('change', function () {
+                let selectedId = $(this).val();
+                editEventVue.eventsData.training_type = selectedId;
+                select2Training = selectedId;
+            });
+            
+            $('#edit_init_type').select2({
+                placeholder: "Select an Option",
+                dropdownParent: $('#edit_event_form'),
+                allowClear: false,
+                width: '100%',
+                data: _tempContentData.options.initiation_type
+            }).on('change', function () {
+                let selectedId = $(this).val();
+                editEventVue.eventsData.init_type = selectedId;
+                select2Init = selectedId;   
+            });
+            
+            $('#edit_training_category').select2({
+                placeholder: "Select an Option",
+                dropdownParent: $('#edit_event_form'),
+                allowClear: false,
+                width: '100%',
+                data: _tempContentData.options.training_category
+            }).on('change', function () {
+                let selectedId = $(this).val();
+                editEventVue.eventsData.training_category = selectedId;
+                select2Category = selectedId;
+            })
+
         }
     },
 });
@@ -386,6 +423,9 @@ function onEditEvent(id) {
     $("#btnEdit").show();
     $("#company_edit").val(rowData.company_ids).trigger('change');
     $("#department_edit").val(rowData.department_ids).trigger('change');
+    $("#edit_training_type").val(rowData.training_type).trigger('change');
+    $("#edit_init_type").val(rowData.init_type).trigger('change');
+    $("#edit_training_category").val(rowData.training_category).trigger('change');
     $("#edit-events-modal").modal("show");
 }
 
@@ -415,6 +455,9 @@ $.validate({
                     $(form).trigger("reset");
                     $("#company_edit").val(null).trigger("change");
                     $("#department_edit").val(null).trigger("change");
+                    $("#edit_training_type").val(null).trigger('change');
+                    $("#edit_init_type").val(null).trigger('change');
+                    $("#edit_training_category").val(null).trigger('change');
                     selectedCompaniesEdit = null;
                     selectedDepartmentsEdit = null;
                     $("#edit-events-modal").modal('hide');
@@ -541,22 +584,23 @@ const CalendarBasic = function () {
                     },
 
                     eventRender: function(event, element) {
+                        console.log(event);
                         element.find('.fc-time').remove();
                         const speakers = event.speakers || [];
                         const speakerNames = speakers.map(speaker => speaker.speaker_name).join(', ');
                         const customContent = `
                             <div class="m-widget4__item-wrapper">
-                                <div class="m-widget4__item-title m--font-boldest mb-1" style="color: white; font-size: 1.2em;">
+                                <div class="m-widget4__item-title m--font-boldest mb-1" style="color: black; font-size: 1.2em;">
                                     ${event.title}
                                 </div>
-                                <div class="m-widget4__item-desc mb-1" style="color: rgba(255,255,255,0.8); font-size: 1em;">
+                                <div class="m-widget4__item-desc mb-1" style="color: black; font-size: 1em;">
                                     <span class=" m--margin-right-5">
                                         <i class="la la-map-marker"></i> ${event.venue}
                                     </span>
                                    
                                 </div>
                                 ${speakers.length > 0 ? `
-                                <div class="m-widget4__item-desc mb-1" style="color: rgba(255,255,255,0.7); font-size: 1em;">
+                                <div class="m-widget4__item-desc mb-1" style="color: black; font-size: 1em;">
                                     <span class="m--margin-right-5">
                                         <i class="la la-user"></i> ${speakerNames}
                                     </span>
@@ -580,13 +624,24 @@ const CalendarBasic = function () {
                             'border': 'none'
                         });
                         
-                        if (speakers.length > 0) {
-                            element.css('background', 'linear-gradient(135deg, #6c7ae0 0%, #9baaf3 100%)');
-                            element.addClass('m-badge--brand');
-                        } else {
-                            element.css('background', 'linear-gradient(135deg, #fd397a 0%, #fb5581 100%)');
-                            element.addClass('m-badge--danger');
+                        let background = '';
+                        console.log(event.training_category,typeof event.training_category);
+                        switch (event.training_category) {
+                            case "5":
+                                background = 'linear-gradient(135deg, #36b37e 0%, #57d9a3 100%)';
+                                break;
+                            case "6":
+                                background = 'linear-gradient(135deg, #00b8d9 0%, #4cc9f0 100%)';
+                                break;
+                            case "7":
+                                background = 'linear-gradient(135deg, #ffab00 0%, #ffc94d 100%)';
+                                break;
+                            default:
+                                background = 'linear-gradient(135deg, #6c7ae0 0%, #9baaf3 100%)';
+                                break;
                         }
+                    
+                        element.css('background', background);
                     },
                 });
             calendarInitialized = true;
@@ -620,11 +675,17 @@ function openEditHolidayModal(event) {
         description: event.description || "",
         event_venue: event.venue || "",
         speakers: event.speakers || [],
+        training_type: event.training_type || null,
+        init_type: event.init_type || null,
+        training_category: event.training_category || null
     };
 
     editEventVue.eventsData = JSON.parse(JSON.stringify(data));
     $("#company_edit").val(data.company_ids).trigger('change');
     $("#department_edit").val(data.department_ids).trigger('change');
+    $("#edit_training_type").val(data.training_type).trigger('change');
+    $("#edit_init_type").val(data.init_type).trigger('change');
+    $("#edit_training_category").val(data.training_category).trigger('change');
     $("#edit-events-modal").modal("show");
     $("#btnEdit").hide();
 }
@@ -735,5 +796,3 @@ $('#training_category').select2({
     width: '100%',
     data: _tempContentData.options.training_category
 });
-
-console.log(_tempContentData);

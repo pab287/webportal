@@ -218,7 +218,7 @@
                                 <input name="event_venue" type="text" class="form-control m-input" placeholder="event venue" data-validation="required">
                             </div>
                             <div class="form-group">
-                                <label for="" class="form-control-label required">Event Speakers</label>
+                                <label for="" class="form-control-label required">Resource Persons</label>
                                 <template v-for="(speaker, index) in speakers" :key="speaker.id">
                                     <div class="border rounded p-3 mb-3 position-relative">
                                         <button type="button" class="close" :class="{ 'd-none': speakers.length === 1 }" @click="removeSpeaker(speaker.id)">
@@ -292,9 +292,35 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-12">
+                        <div class="col-12">
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="form-group">
+                                        <label for="training_type" class="form-control-label required">Training Type</label>
+                                            <select name="training_type" class="form-control m-input" id="edit_training_type" data-validation="required" :disabled="disabled">
+                                                <option value=""></option>
+                                            </select>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="form-group">
+                                        <label for="init_type" class="form-control-label required">Initiation Type</label>
+                                            <select name="init_type" class="form-control m-input" id="edit_init_type" data-validation="required" :disabled="disabled">
+                                                <option value=""></option>
+                                            </select>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="form-group">
+                                        <label for="training_category" class="form-control-label required">Training Category</label>
+                                            <select name="training_category" class="form-control m-input" id="edit_training_category" data-validation="required" :disabled="disabled">
+                                                <option value=""></option>
+                                            </select>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="form-group">
-                                <label for="event_title" class="form-control-label required">Event Title</label>
+                                <label for="event_title" class="form-control-label required">Training Title</label>
                                 <input name="event_title" type="text" class="form-control m-input" placeholder="event title" v-model="eventsData.event_title" data-validation="required" :disabled="disabled">
                             </div>
                             <div class="form-group">
@@ -314,7 +340,7 @@
                                 <input name="event_venue" type="text" class="form-control m-input" placeholder="event venue" v-model="eventsData.event_venue" data-validation="required" :disabled="disabled">
                             </div>
                             <div class="form-group">
-                                <label for="" class="form-control-label required">Event Speakers</label>
+                                <label for="" class="form-control-label required">Resource Persons</label>
                                 <template v-for="(item, index) in eventsData.speakers" :key="index">
                                     <div class="bg-light border rounded p-3 mb-3 position-relative">
                                         <button type="button" class="close" :class="{ 'd-none': eventsData.speakers.length === 1 }" @click="removeSpeaker(index)" v-if="!disabled">

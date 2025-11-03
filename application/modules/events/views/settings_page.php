@@ -6,10 +6,15 @@
                     <span class="m-portlet__head-icon">
                         <i class="flaticon-calendar-2"></i>
                     </span>
-                    <h3 class="m-portlet__head-text">
+                    <h3 class="m-portlet__head-text" id="page_title">
                         EVENTS PAGE SETTINGS
                     </h3>
                 </div>
+            </div>
+            <div class="m-portlet__head-tools">
+                <a href="javascript:void(0)" class="custom-btn-link" onclick="openArchive()">
+                    <span class="m--font-bolder" id="archive_text">Archive</span>
+                </a>
             </div>
         </div>
         <div class="m-portlet__body">
@@ -55,13 +60,13 @@
                                 <div class="col-12">
                                     <div class="form-group">
                                         <label for="option_name">OPTION NAME</label>
-                                        <input type="text" class="form-control" id="option_name" name="name">
+                                        <input type="text" class="form-control" name="name">
                                     </div>
                                 </div>
                                 <div class="col-12">
                                     <div class="form-group">
                                         <label for="option_name">OPTION TYPE</label>
-                                        <input type="text" class="form-control" id="option_name" name="type">
+                                        <input type="text" class="form-control" name="type">
                                     </div>
                                 </div>
                             </div>
@@ -79,14 +84,36 @@
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">EDIT OPTIONs</h5>
+                        <h5 class="modal-title">EDIT OPTIONS</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
+                    <form id="update_option_form" onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
+                        <input type="hidden" name="id" v-model="optionSelected.id">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label for="option_name">OPTION NAME</label>
+                                        <input type="text" class="form-control" name="name" v-model="optionSelected.name">
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label for="option_name">OPTION TYPE</label>
+                                        <input type="text" class="form-control" name="type" v-model="optionSelected.type">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-success btn-submit btnSave" type="submit"></i>UPDATE</button>
+                            <button class="btn btn-danger text-white btnBack" data-dismiss="modal"></i>CLOSE</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
-
     </div>
 </div>

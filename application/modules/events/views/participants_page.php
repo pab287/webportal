@@ -137,6 +137,21 @@
                                 </div>
                             </div>
                             <div class="m-separator m-separator--dashed d-xl-12"></div>
+                                <div class="row text-center bg-light rounded p-3 mx-1 mb-4 text-uppercase">
+                                    <div class="col-4">
+                                        <small class="text-uppercase text-muted m--font-boldest d-block">Training Type</small>
+                                        <div class="m--font-boldest text-dark" v-text="eventsData.training_type"></div>
+                                    </div>
+                                    <div class="col-4">
+                                        <small class="text-uppercase text-muted m--font-boldest d-block">Initiation Type</small>
+                                        <div class="m--font-boldest text-dark" v-text="eventsData.init_type"></div>
+                                    </div>
+                                    <div class="col-4">
+                                        <small class="text-uppercase text-muted m--font-boldest d-block">Training Category</small>
+                                        <div class="m--font-boldest text-dark" v-text="eventsData.training_category"></div>
+                                    </div>
+                                </div>
+                            <div class="m-separator m-separator--dashed d-xl-12"></div>
                             <div class="row">
                                 <div class="col-12">
                                     <div class="d-flex flex-column align-items-center text-uppercase">

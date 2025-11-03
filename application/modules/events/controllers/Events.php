@@ -73,6 +73,8 @@ class Events extends MX_Controller {
     public function settings(){
         $this->core_layout->setPageTitle("Settings");
         $this->core_layout->setPrivilegeName("event_settings");
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
         $this->core_layout->addJs("js/events/event_settings.js",true);
         $this->load->view("core/templates/header");
         $this->load->view("settings_page");
@@ -217,6 +219,16 @@ class Events extends MX_Controller {
 
     public function new_events_settings(){
         $data = $this->em->newEventsSettings();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function update_events_settings(){
+        $data = $this->em->updateEventsSettings();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function archive_event_settings(){
+        $data = $this->em->archiveEventSettings();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
