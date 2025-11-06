@@ -196,6 +196,11 @@
                                             Attachments
                                         </a>
                                     </li>
+                                    <li class="nav-item m-tabs__item">
+                                        <a class="nav-link m-tabs__link" data-toggle="tab" href="#expenseTab" role="tab">
+                                            Expenses
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -440,6 +445,9 @@
                                             </template>
                                         </div>
                                     </div>
+                                </div>
+                                <div  class="tab-pane" id="expenseTab">
+                                    EXPENSES AND BUDGET HERE
                                 </div>
                             </div>
                         </div>
