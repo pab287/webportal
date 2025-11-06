@@ -716,6 +716,8 @@ class User_model extends CI_Model{
             return $resultset;
         }
         $resultset['status'] = true;
+        $resultset['mobile_no'] = $sendOtp['mobile_no'] ?? null;
+        $resultset['email_to'] = $sendOtp['email_to'] ?? null;
         $resultset['message'] = "Account unlocked successfully.";
         $resultset['success'] = "success";
         $resultset['action'] = 'user';
@@ -783,6 +785,7 @@ class User_model extends CI_Model{
         }
         if($result->email){
             $response['sent_email'] = $this->core_layout->send_email('core','GC & C Conyx PH','Account Recovery',$email_content,$mailer);
+            $response['email_to'] = $result->email;
         }
         return $response;
     }
