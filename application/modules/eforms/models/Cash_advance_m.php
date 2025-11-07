@@ -2001,7 +2001,7 @@ class Cash_advance_m extends CI_Model {
         $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
         $this->db->where("a.created_dt >=", $date);
         $this->db->where("a.status !=","Cancelled");  
-        $this->db->where("a.status","Awaiting Approval");  
+        $this->db->where("a.status","For Final Approval");
      
         if($limit != -1){
             $this->db->limit($limit, $offset);
@@ -2033,8 +2033,8 @@ class Cash_advance_m extends CI_Model {
         $this->db->from("gcceforms.cash_advance a");
         $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
         $this->db->where("a.created_dt >=", $date);
+        $this->db->where("a.status","For Final Approval");  
         $this->db->where("a.status !=","Cancelled");  
-        $this->db->where("a.status","Awaiting Approval");  
         $query = $this->db->get();
         return $query->num_rows();
     }
@@ -2048,17 +2048,20 @@ class Cash_advance_m extends CI_Model {
             $this->db->from("gcceforms.cash_advance a");
             $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
             //$this->db->where("(a.status!='Cancelled' AND a.created_dt>='$date' AND a.status='Awaiting Approval')");
-            $this->db->where("a.status",'Awaiting Approval');  
             $this->db->where("a.created_dt >=", $date);
-            $this->db->where("a.status !=","Cancelled");  
+            $this->db->where("a.status","For Final Approval");  
+            $this->db->where("a.status !=","Cancelled"); 
  
             if($limit != -1){
                 $this->db->limit($limit, $offset);
             }
-            foreach($filterFields as $key => $field){
-                if($key == 0){ $this->db->like($field, $search, "both"); }
-                else{ $this->db->or_like($field, $search, "both"); $this->db->or_like("CONCAT(b.firstname,' ',b.lastname )", $search, "both");}
-            }
+            $this->db->group_start();
+                foreach($filterFields as $key => $field){
+                    if($key == 0){ $this->db->like($field, $search, "both"); }
+                    else{ $this->db->or_like($field, $search, "both"); $this->db->or_like("CONCAT(b.firstname,' ',b.lastname )", $search, "both");}
+                }
+            $this->db->group_end();
+            
             $i = $sortOrder[0]['column'];
             $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
             $query = $this->db->get();
@@ -2095,12 +2098,16 @@ class Cash_advance_m extends CI_Model {
             $this->db->from("gcceforms.cash_advance a");
             $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
             $this->db->where("a.created_dt >=", $date);
+            $this->db->where("a.status","For Final Approval");  
             $this->db->where("a.status !=","Cancelled");  
-            $this->db->where("a.status","Awaiting Approval");  
-            foreach($filterFields as $key => $field){
-                if($key == 0){ $this->db->like($field, $search, "both"); }
-                else{ $this->db->or_like($field, $search, "both"); $this->db->or_like("CONCAT(b.firstname,' ',b.lastname )", $search, "both");}
-            }
+
+            $this->db->group_start();
+                foreach($filterFields as $key => $field){
+                    if($key == 0){ $this->db->like($field, $search, "both"); }
+                    else{ $this->db->or_like($field, $search, "both"); $this->db->or_like("CONCAT(b.firstname,' ',b.lastname )", $search, "both");}
+                }
+            $this->db->group_end();
+
             $query = $this->db->get();
             $rowCount = $query->num_rows();
         }

@@ -66,25 +66,40 @@ function renderStatusHtml(data){
     switch(data){
         case "HR Recommendation Pending":
             return '<div class="m-badge m-badge--warning text-white m-badge--wide" role="alert"><strong>Sup Recommendation</strong></div>';
-        break;
+            break;
         case "Approved":
             return '<div class="m-badge m-badge--success m-badge--wide" role="alert"><strong>Approved</strong></div>';
-        break;
+            break;
         case "Disapproved":
             return '<div class="m-badge m-badge--danger m-badge--wide" role="alert"><strong>Disapproved</strong></div>';
-        break;
+            break;
         case "HR Balance Pending":
-            return '<div class="m-badge m-badge--info m-badge--wide" role="alert"><strong>HR Balance Pending</strong></div>';
-        break;
+            return '<div class="m-badge m-badge--info m-badge--wide" role="alert"><strong>Payroll Balance Pending</strong></div>';
+            break;
+        case "Payroll Balance Pending":
+            return '<div class="m-badge m-badge--info m-badge--wide" role="alert"><strong>Payroll Balance Pending</strong></div>';
+            break;    
         case "Accounting Balance Pending":
             return '<div class="m-badge m-badge--primary m-badge--wide" role="alert"><strong>Accounting Balance</strong></div>';
-        break;
+            break;
         case "Awaiting Approval":
             return '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>Awaiting Approval</strong></div>';
-        break;
+            break;
+        case "For Posting":
+            return '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>For Posting</strong></div>';
+            break;
+        case "Posted":
+            return '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>Posted</strong></div>';
+            break;
+        case "For Final Approval":
+            return '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>For Final Approval</strong></div>';
+            break;
+        case 'Released': 
+            return '<div class="m-badge m-badge--focus m-badge--wide" role="alert"><strong>Released</strong></div>';
+            break;
         default:
             return '<div class="m-badge m-badge--info m-badge--wide" role="alert"><strong>Cancelled</strong></div>';
-        break;
+            break;
     }
 }
 
