@@ -385,17 +385,17 @@ let editEventVue = new Vue({
                 select2Training = selectedId;
             });
             
-            $('#edit_init_type').select2({
-                placeholder: "Select an Option",
-                dropdownParent: $('#edit_event_form'),
-                allowClear: false,
-                width: '100%',
-                data: _tempContentData.options.initiation_type
-            }).on('change', function () {
-                let selectedId = $(this).val();
-                editEventVue.eventsData.init_type = selectedId;
-                select2Init = selectedId;   
-            });
+            // $('#edit_init_type').select2({
+            //     placeholder: "Select an Option",
+            //     dropdownParent: $('#edit_event_form'),
+            //     allowClear: false,
+            //     width: '100%',
+            //     data: _tempContentData.options.initiation_type
+            // }).on('change', function () {
+            //     let selectedId = $(this).val();
+            //     editEventVue.eventsData.init_type = selectedId;
+            //     select2Init = selectedId;   
+            // });
             
             $('#edit_training_category').select2({
                 placeholder: "Select an Option",
@@ -423,7 +423,7 @@ function onEditEvent(id) {
     $("#company_edit").val(rowData.company_ids).trigger('change');
     $("#department_edit").val(rowData.department_ids).trigger('change');
     $("#edit_training_type").val(rowData.training_type).trigger('change');
-    $("#edit_init_type").val(rowData.init_type).trigger('change');
+    // $("#edit_init_type").val(rowData.init_type).trigger('change');
     $("#edit_training_category").val(rowData.training_category).trigger('change');
     $("#edit-events-modal").modal("show");
 }
@@ -455,7 +455,7 @@ $.validate({
                     $("#company_edit").val(null).trigger("change");
                     $("#department_edit").val(null).trigger("change");
                     $("#edit_training_type").val(null).trigger('change');
-                    $("#edit_init_type").val(null).trigger('change');
+                    // $("#edit_init_type").val(null).trigger('change');
                     $("#edit_training_category").val(null).trigger('change');
                     selectedCompaniesEdit = null;
                     selectedDepartmentsEdit = null;
@@ -681,7 +681,7 @@ function openEditHolidayModal(event) {
     $("#company_edit").val(data.company_ids).trigger('change');
     $("#department_edit").val(data.department_ids).trigger('change');
     $("#edit_training_type").val(data.training_type).trigger('change');
-    $("#edit_init_type").val(data.init_type).trigger('change');
+    // $("#edit_init_type").val(data.init_type).trigger('change');
     $("#edit_training_category").val(data.training_category).trigger('change');
     $("#edit-events-modal").modal("show");
     $("#btnEdit").hide();

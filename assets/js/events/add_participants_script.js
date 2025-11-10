@@ -417,6 +417,7 @@ let eventVue = new Vue({
             });
         },
         takeAttendance(sched) {
+            console.log(sched);
             const btn = $(event.currentTarget);
             btn.prop("disabled", true);
             $.ajax({
@@ -1145,12 +1146,17 @@ function confirmParticipant(id) {
                     event_id: eventsDetails.id,
                     fullname: fullname,
                     event_title: eventsDetails.event_title,
-                    id: id },
+                    id: id,
+                    schedule : schedule,
+                },
                 dataType: "json",
                 success: function(res) {
                     if(res.success){
                         toastr.success(res.message, 'Success', 5000);
                         setParticipantsData(res.participants,true);
+                        if(res.schedule){
+                            eventVue.schedule = res.schedule;
+                        }
                     }else{
                         toastr.error(res.message, 'Error', 5000);
                     }

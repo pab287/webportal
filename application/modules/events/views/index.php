@@ -172,7 +172,7 @@
                         </div>
                         <div class="col-12">
                             <div class="row">
-                                <div class="col-4">
+                                <div class="col-6">
                                     <div class="form-group">
                                         <label for="training_type" class="form-control-label required">Training Type</label>
                                             <select name="training_type" class="form-control m-input" id="training_type" data-validation="required">
@@ -180,15 +180,15 @@
                                             </select>
                                     </div>
                                 </div>
-                                <div class="col-4">
+                                <!-- <div class="col-4">
                                     <div class="form-group">
                                         <label for="init_type" class="form-control-label required">Initiation Type</label>
                                             <select name="init_type" class="form-control m-input" id="init_type" data-validation="required">
                                                 <option value=""></option>
                                             </select>
                                     </div>
-                                </div>
-                                <div class="col-4">
+                                </div> -->
+                                <div class="col-6">
                                     <div class="form-group">
                                         <label for="training_category" class="form-control-label required">Training Category</label>
                                             <select name="training_category" class="form-control m-input" id="training_category" data-validation="required">
@@ -199,23 +199,23 @@
                             </div>
                             <div class="form-group">
                                 <label for="event_title" class="form-control-label required">Training Title</label>
-                                <input name="event_title" type="text" class="form-control m-input" placeholder="event title" data-validation="required">
+                                <input name="event_title" type="text" class="form-control m-input" placeholder="Training title" data-validation="required">
                             </div>
                             <div class="form-group">
-                                <label for="event_description" class="form-control-label required">Event description</label>
-                                <input name="event_description" type="text" class="form-control m-input" placeholder="event description" data-validation="required">
+                                <label for="event_description" class="form-control-label required">description</label>
+                                <input name="event_description" type="text" class="form-control m-input" placeholder="description" data-validation="required">
                             </div>
                             <div class="form-group">
                                 <label for="events_by" class="form-control-label required">Institution</label>
                                 <input name="events_by" type="text" class="form-control m-input" placeholder="Institution" data-validation="required">
                             </div>
                             <div class="form-group">
-                                <label for="date" class="form-control-label required">Event Schedule</label>
+                                <label for="date" class="form-control-label required">Schedule</label>
                                 <input name="date" type="text" id="event_date" class="form-control m-input" placeholder="Select date" data-validation="required" readonly>
                             </div>
                             <div class="form-group">
-                                <label for="event_venue" class="form-control-label required">Event Venue</label>
-                                <input name="event_venue" type="text" class="form-control m-input" placeholder="event venue" data-validation="required">
+                                <label for="event_venue" class="form-control-label required">Venue</label>
+                                <input name="event_venue" type="text" class="form-control m-input" placeholder="venue" data-validation="required">
                             </div>
                             <div class="form-group">
                                 <label for="" class="form-control-label required">Resource Persons</label>
@@ -294,7 +294,7 @@
                         </div>
                         <div class="col-12">
                             <div class="row">
-                                <div class="col-4">
+                                <div class="col-6">
                                     <div class="form-group">
                                         <label for="training_type" class="form-control-label required">Training Type</label>
                                             <select name="training_type" class="form-control m-input" id="edit_training_type" data-validation="required" :disabled="disabled">
@@ -302,15 +302,15 @@
                                             </select>
                                     </div>
                                 </div>
-                                <div class="col-4">
+                                <!-- <div class="col-4">
                                     <div class="form-group">
                                         <label for="init_type" class="form-control-label required">Initiation Type</label>
                                             <select name="init_type" class="form-control m-input" id="edit_init_type" data-validation="required" :disabled="disabled">
                                                 <option value=""></option>
                                             </select>
                                     </div>
-                                </div>
-                                <div class="col-4">
+                                </div> -->
+                                <div class="col-6">
                                     <div class="form-group">
                                         <label for="training_category" class="form-control-label required">Training Category</label>
                                             <select name="training_category" class="form-control m-input" id="edit_training_category" data-validation="required" :disabled="disabled">
@@ -324,19 +324,19 @@
                                 <input name="event_title" type="text" class="form-control m-input" placeholder="event title" v-model="eventsData.event_title" data-validation="required" :disabled="disabled">
                             </div>
                             <div class="form-group">
-                                <label for="event_description" class="form-control-label required">Event description</label>
-                                <textarea name="event_description" type="text" class="form-control m-input" placeholder="event description" v-model="eventsData.description" data-validation="required" :disabled="disabled"></textarea>
+                                <label for="event_description" class="form-control-label required">description</label>
+                                <textarea name="event_description" type="text" class="form-control m-input" placeholder="description" v-model="eventsData.description" data-validation="required" :disabled="disabled"></textarea>
                             </div>
                             <div class="form-group">
                                 <label for="events_by" class="form-control-label required">Institution</label>
                                 <input name="events_by" type="text" class="form-control m-input" placeholder="Institution" v-model="eventsData.events_by" data-validation="required" :disabled="disabled">
                             </div>
                             <div class="form-group">
-                                <label for="date" class="form-control-label required">Event Schedule</label>
+                                <label for="date" class="form-control-label required">Schedule</label>
                                 <input name="date" type="text" id="edit_event_date" class="form-control m-input" placeholder="Select date" :value="formatSchedule(eventsData.event_from,eventsData.event_to)" data-validation="required" :disabled="disabled">
                             </div>
                             <div class="form-group">
-                                <label for="event_venue" class="form-control-label required">Event Venue</label>
+                                <label for="event_venue" class="form-control-label required">Venue</label>
                                 <input name="event_venue" type="text" class="form-control m-input" placeholder="event venue" v-model="eventsData.event_venue" data-validation="required" :disabled="disabled">
                             </div>
                             <div class="form-group">

@@ -370,18 +370,19 @@ class Events_model extends MX_Controller {
             "events_by"         => $post['events_by'] ?? null,
             "training_type"     => $post['training_type'] ?? null,
             "training_category" => $post['training_category'] ?? null,
-            "init_type"         => $post['init_type'] ?? null,
+            // "init_type"         => $post['init_type'] ?? null,
             "event_from"        => $start_date,
             "event_to"          => $end_date,
             "company_ids"       => serialize($companyIds),
             "department_ids"    => serialize($departmentIds), 
             "company_array"     => !empty($companyArray) ? implode(", ", $companyArray) : null,
             "department_array"  => !empty($departmentArray) ? implode(", ", $departmentArray) : null,
+            "created_by"        => $this->user_data['emp_id'],
         ];
     
         $this->db->trans_start();
     
-        $this->db->insert($this->eventsCalendarTable, $event_data);
+        $save = $this->db->insert($this->eventsCalendarTable, $event_data);
         $event_id = $this->db->insert_id();
     
         if (!empty($post['speakers']) && is_array($post['speakers'])) {
@@ -394,6 +395,19 @@ class Events_model extends MX_Controller {
                 ];
                 $this->db->insert($this->eventsSpeakersTable, $speaker_data);
             }
+        }
+
+        if($save && $start_date == $end_date){
+            $sched = [
+                'title'      => $post['event_title'],
+                'event_id'   => $event_id,
+                'description'=> $post['event_description'],
+                'location'   => $post['event_venue'],
+                'event_date' => date("Y-m-d", strtotime($start_date)),
+                'start'      => '08:00:00',
+                'end'        => '17:00:00',
+            ];
+            $this->db->insert($this->eventsSched, $sched);
         }
 
         // if(!empty($post['company_id']) && is_array($post['company_id'])){
@@ -454,7 +468,7 @@ class Events_model extends MX_Controller {
             "event_venue" => $post['event_venue'],
             "training_type" => $post['training_type'],
             "training_category" => $post['training_category'],
-            "init_type" => $post['init_type'],
+            // "init_type" => $post['init_type'],
             "event_from"  => $event_from,
             "event_to"    => $event_to,
             "events_by"  => $events_by,
@@ -624,23 +638,49 @@ class Events_model extends MX_Controller {
 
 
     public function confirmParticipant(){
-        $post  = $this->input->post();
-        $id    = $post['id'];
-        $name  = $post['fullname'];
+        $post = $this->input->post();
+        $id = $post['id'];
+        $name = $post['fullname'];
         $event_name = $post['event_title'];
-        $update = $this->db->where('id', $id)->update($this->eventsParticipantsTable, ['status' => "confirmed"]);
-        if($update){
+        $this->db->trans_start();
+        $this->db->where('id', $id)->update($this->eventsParticipantsTable, ['status' => "confirmed"]);
+        if (isset($post['schedule']) && !empty($post['schedule']) && count($post['schedule']) === 1) {
+            $schedule = $post['schedule'][0][0] ?? null;
+            if ($schedule && isset($schedule['id'])) {
+                $schedule_id = $schedule['id'];
+                $data = [
+                    'participant_id' => $id,
+                    'schedule_id'    => $schedule_id,
+                    'created_by'     => $this->user_data['emp_id'],
+                ];
+    
+                $this->db->insert($this->events_attendance, $data);
+                $resultArray['schedule'] = $this->getEventSchedule($post['event_id']);
+            }
+        }
+    
+        $this->db->trans_complete();
+    
+        if ($this->db->trans_status() === FALSE) {
+            $resultArray['success'] = false;
+            $resultArray['message'] = "Failed to confirm participant.";
+            $this->core_layout->setEventLog(
+                "Failed to confirm participant $name for event: $event_name.",
+                "update", "error", "gcchris", "system"
+            );
+        } else {
             $resultArray['participants'] = $this->getEventParticipants($post['event_id']);
             $resultArray['success'] = true;
             $resultArray['message'] = "Participant has been successfully confirmed.";
-            $this->core_layout->setEventLog("Participant $name has been confirmed for event: $event_name.","update", "success", "gcchris", "user");
-        }else{
-            $resultArray['success'] = false;
-            $resultArray['message'] = "Failed to confirm participant.";
-            $this->core_layout->setEventLog("Failed to confirm participant $name for event: $event_name.","update", "error", "gcchris", "system");
+            $this->core_layout->setEventLog(
+                "Participant $name has been confirmed for event: $event_name.",
+                "update", "success", "gcchris", "user"
+            );
         }
+    
         return $resultArray;
     }
+    
 
 
     public function declineParticipant(){
@@ -891,6 +931,8 @@ class Events_model extends MX_Controller {
     public function newEventSched(){
         $resultset = array();
         $post = $this->input->post();
+        $post['start'] = date("H:i", strtotime($post['start']));
+        $post['end'] = date("H:i", strtotime($post['end']));
         $post['event_date'] = date("Y-m-d", strtotime($post['event_date']));
         $insert = $this->db->insert($this->eventsSched, $post);
         if ($insert){

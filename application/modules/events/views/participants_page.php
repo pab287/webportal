@@ -138,15 +138,15 @@
                             </div>
                             <div class="m-separator m-separator--dashed d-xl-12"></div>
                                 <div class="row text-center bg-light rounded p-3 mx-1 mb-4 text-uppercase">
-                                    <div class="col-4">
+                                    <div class="col-6">
                                         <small class="text-uppercase text-muted m--font-boldest d-block">Training Type</small>
                                         <div class="m--font-boldest text-dark" v-text="eventsData.training_type"></div>
                                     </div>
-                                    <div class="col-4">
+                                    <!-- <div class="col-4">
                                         <small class="text-uppercase text-muted m--font-boldest d-block">Initiation Type</small>
                                         <div class="m--font-boldest text-dark" v-text="eventsData.init_type"></div>
-                                    </div>
-                                    <div class="col-4">
+                                    </div> -->
+                                    <div class="col-6">
                                         <small class="text-uppercase text-muted m--font-boldest d-block">Training Category</small>
                                         <div class="m--font-boldest text-dark" v-text="eventsData.training_category"></div>
                                     </div>
@@ -196,11 +196,11 @@
                                             Attachments
                                         </a>
                                     </li>
-                                    <li class="nav-item m-tabs__item">
+                                    <!-- <li class="nav-item m-tabs__item">
                                         <a class="nav-link m-tabs__link" data-toggle="tab" href="#expenseTab" role="tab">
                                             Expenses
                                         </a>
-                                    </li>
+                                    </li> -->
                                 </ul>
                             </div>
                         </div>
@@ -446,9 +446,9 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div  class="tab-pane" id="expenseTab">
+                                <!-- <div  class="tab-pane" id="expenseTab">
                                     EXPENSES AND BUDGET HERE
-                                </div>
+                                </div> -->
                             </div>
                         </div>
                     </div>
