@@ -278,7 +278,10 @@
         public function timeLogOffline() {
             $rawInput = $_POST['logs'];
             $decoded = json_decode(urldecode($rawInput), true);
-        
+
+            // prevent user from syncing empty logs
+            return json_encode(["summary" => ["success" => 0, "failed" => "0", "data" => [] ]]);
+
             if ($decoded === null) {
                 return json_encode(["status" => false,"msg" => "JSON Decode Error: " . json_last_error_msg()]);
             }
@@ -384,6 +387,9 @@
             $msg = "";
             $status = 2;
             
+            // prevent user to log time
+            return json_encode(array("logs" => "", "num" => 0, "status" => 5, "insertId" => 0, "date" => $dateTime));
+
             $required = ['biometric_id', 'emp_id', 'coords'];
             $missing = array_filter($required, fn($f) => empty($_POST[$f]));
             if ($missing) {
