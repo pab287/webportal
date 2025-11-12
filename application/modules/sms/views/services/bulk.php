@@ -82,7 +82,7 @@
                                     Message
                                 </label>
                                 <div class="col-10">
-                                    <textarea id="msg" name="msg" placeholder="" rows="6" class="form-control" style="text-transform: none !important;" type="text"></textarea>
+                                    <textarea id="msg" name="msg" placeholder="" rows="6" class="form-control" style="text-transform: none !important;" type="text" maxlength="700"></textarea>
                                 </div>
                             </div>
                             <div class="form-group m-form__group row">
