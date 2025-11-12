@@ -832,6 +832,7 @@ class Core_model extends CI_Model{
             $bccToData = ($sendBcc && is_array($sendBcc)) ? implode(",", $sendBcc) : "";
             $sendToData = ($sendToData) ? $sendToData : "seniordeveloper01@gccaggregates.com";
             $emailSender = $this->doMailer($email_title, $overrideMailer);
+
             if ($emailSender) {
                 $emailSender->to($sendToData);
                 if ($ccToData) {
@@ -845,15 +846,50 @@ class Core_model extends CI_Model{
                 $content = ($content) ? $content : "This is a sample Content";
                 $emailSender->subject($content_title);
                 $emailSender->message($content);
-                $sent = $emailSender->send();
-                if(!$sent){ $coreLogs->logNotification($emailSender->print_debugger(), "error"); }
 
-                return $sent ? true : false;
-            } else { return false; }
-        } else { return false; }
+                $maxAttempt = 3;
+                $attempt = 0;
+                $sent = false;
+                while (!$sent && $attempt < $maxAttempt) {
+                    $attempt++;
+                    $sent = $emailSender->send();
+                    if(!$sent){
+                        $error = $emailSender->print_debugger(['headers']);
+                        $coreLogs->logNotification("Attempt {$attempt} failed: " . $error, "error");
+                        if (strpos($error, '421 4.7.0') !== false || strpos($error, 'Try again later') !== false) { sleep(5); }
+                        else { break; }
+                    }else{
+                        $coreLogs->logNotification("Email sent successfully to {$sendToData}", "success");
+                    }
+                }
+                sleep(3);
+                return $sent;
+            }
+        }
+        return false;
     }
 
-    private function doMailer($email_title = null, $overrideMailer = array()){
+    protected function failOverProtocol(){
+        $overrideMailer = [];
+        $qMailer = $this->db->get_where($this->emailProtocolTable, ['site_unique_code' => 'mailgun']);
+        if($qMailer->num_rows() == 1){
+            $mailgunRow = $qMailer->row();
+            $overrideMailer = [
+                'email_user' => $mailgunRow->smtp_user,
+                'email_pass' => $mailgunRow->smtp_pass
+                'config' => [
+                    'protocol' => $mailgunRow->protocol,
+                    'smtp_host' => $mailgunRow->smtp_host,
+                    'smtp_port' => intval($mailgunRow->smtp_port),
+                    'smtp_crypto' => $mailgunRow->smtp_crypto
+                ]
+            ];
+        }
+
+        return $overrideMailer;
+    }
+
+    private function oldCode11122025_doMailer($email_title = null, $overrideMailer = array()){
         $serverName = $_SERVER['SERVER_NAME'];
         $serverName = strtolower($serverName);
         $siteCode = $this->config->item('site_unique_code');
@@ -902,6 +938,69 @@ class Core_model extends CI_Model{
             }
         }else{ return false; }
     }
+
+    private function doMailer($email_title = null, $overrideMailer = array()){
+        static $emailSender = null;
+        if ($emailSender !== null) {
+            $emailSender->from($emailSender->smtp_user, $email_title);
+            return $emailSender;
+        }
+
+        $serverName = strtolower($_SERVER['SERVER_NAME']);
+        $siteCode = $this->config->item('site_unique_code');
+
+        if (!$siteCode) return false;
+
+        $arrDevelopmentSite = array("localhost", "dev.gccph.com", "192.168.7.78");
+        $qTemp = $this->db->get_where($this->emailProtocolTable, [
+            "unique_code" => $siteCode,
+            "server_name" => $serverName
+        ]);
+
+        if ($qTemp->num_rows() != 1) return false;
+
+        $tempRow = $qTemp->row();
+        $email_title = (in_array($serverName, $arrDevelopmentSite))
+            ? $email_title . " [ DEVELOPMENT SERVER ] "
+            : $email_title;
+
+        $smtpUser = isset($overrideMailer["email_user"]) && $overrideMailer["email_user"]
+            ? $overrideMailer["email_user"]
+            : $tempRow->smtp_user;
+
+        $smtpPassword = isset($overrideMailer["email_pass"]) && $overrideMailer["email_pass"]
+            ? $overrideMailer["email_pass"]
+            : $tempRow->smtp_pass;
+
+        $config = array(
+            'protocol'    => $tempRow->protocol,
+            'smtp_host'   => $tempRow->smtp_host,
+            'smtp_port'   => intval($tempRow->smtp_port),
+            'smtp_crypto' => $tempRow->smtp_crypto,
+            'smtp_user'   => $smtpUser,
+            'smtp_pass'   => $smtpPassword,
+            'mailtype'    => 'html',
+            'charset'     => 'utf-8',
+            'wordwrap'    => true,
+            'newline'     => "\r\n",
+            'crlf'        => "\r\n"
+        );
+
+        if (isset($overrideMailer["config"]) && $overrideMailer["config"]) {
+            foreach ($overrideMailer["config"] as $key => $value) {
+                $config[$key] = $value;
+            }
+        }
+
+        $this->email->initialize($config);
+        $this->email->set_newline("\r\n");
+        $this->email->set_mailtype("html");
+        $this->email->from($smtpUser, $email_title);
+
+        $emailSender = $this->email;
+        return $emailSender;
+    }
+
 
     private function getEmailModule($module = null){
         if ($module) {
