@@ -197,6 +197,7 @@ Class Login_m extends CI_Model
                 'password' => md5($new_password),
                 'force_update' => 0,
                 'waive_password_update' => 1,
+                'remember_token'=> null,
                 'next_update' => $next_update,
             );
 

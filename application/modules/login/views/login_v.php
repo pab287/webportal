@@ -18,86 +18,6 @@
             }
         });
     </script>
-    <style type="text/css">
-        @font-face {
-            font-family: "Flaticon";
-            src: url("fonts/flaticon/Flaticon.eot");
-            src: url("fonts/flaticon/Flaticon.eot?#iefix") format("embedded-opentype"), url("fonts/flaticon/Flaticon.woff") format("woff"), url("fonts/flaticon/Flaticon.ttf") format("truetype"), url("fonts/flaticon/Flaticon.svg#Flaticon") format("svg");
-            font-weight: normal;
-            font-style: normal;
-        }
-        .passwordgroup {
-            position: relative;
-            margin-bottom: 50px;
-            width: 100%;
-            height: 62px;
-            font-family: sans-serif, Arial;
-        }
-
-        .passwordgroup input:focus {
-            outline: none;
-        }
-
-        ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
-            color: #9699a2;
-            opacity: 1; /* Firefox */
-        }
-
-        .passwordgroup input {
-            padding: 1.5rem;
-            height: 100%;
-            width: 100%;
-            border: none;
-            background-color: #f7f6f9 !important;
-            -webkit-border-radius: 50px;
-            border-radius: 50px;
-            color: #91899f;
-        }
-
-        .passwordgroup text {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            z-index: 1;
-            padding: 0 30px;
-            height: 48px;
-            text-transform: uppercase;
-            line-height: 48px;
-            color: #91899f;
-            -webkit-border-radius: 50px;
-            border-radius: 50px;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            font-size: 24px;
-        }
-        #gcc_logo{
-            width: 85%;
-        }
-
-        .m-login__wrapper{
-            padding-top: 50px !important;
-        }
-
-        /* .contact-details .contact-item label {
-            color: #495057;
-            font-size: 14px;
-        }
-
-        .contact-details .contact-item span {
-            font-size: 15px;
-            font-family: 'Courier New', monospace;
-        }
-
-        .contact-details .alert {
-            font-size: 13px;
-        } */
-
-    </style>
-    <!--end::Web font -->
-    <!--begin::Base Styles -->
-
-
     <!--end::Base Styles -->
     <link rel="shortcut icon" href="<?php echo base_url("assets/favicon.ico"); ?>"/>
 
@@ -157,57 +77,123 @@
             }
         }
     ?>
+
+<style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 500px;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .login-container img {
+      width: 400px;
+      margin-bottom: 20px;
+    }
+
+    .login-container h2 {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 25px;
+    }
+
+    .login-container form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .input-group {
+      position: relative;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px 15px;
+      border: none;
+      border-radius: 25px;
+      background: #f5f5f5;
+      outline: none;
+      font-size: 14px;
+    }
+
+    .input-group input[type="password"] {
+      padding-right: 40px;
+    }
+
+    .input-group .toggle-password {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 16px;
+      color: #888;
+    }
+
+    .options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .options label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .options a {
+      color: #8e2de2;
+      text-decoration: none;
+    }
+    @media (max-width: 550px) {
+      .login-container {
+        padding: 20px;
+      }
+    }
+  </style>
+
 </head>
-<body class="m-grid__item m-grid__item--fluid m-grid m-grid--hor m-login m-login--singin m-login--2" id="m_login">
-    <div class="m-grid__item m-login__wrapper ">
-        <div class="m-login__container">
-            <div class="m-login__logo">
-                <a href="#">
-                    <img id="gcc_logo" src="<?php echo base_url("assets/logo.png"); ?>">
-                </a>
+<body id="m_login">
+    <div class="login-container">
+        <img src="<?php echo base_url("assets/logo.png"); ?>" alt="GC&C Logo"> 
+        <h2>Sign In To GC&C</h2>
+        <form method="post" action="<?php echo site_url('login/verifylogin/index'); ?>">
+            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+            <?php echo(validation_errors()); ?>
+            <div class="input-group">
+                <input type="text" name="username" placeholder="Username" autocomplete="off" maxlength="50">
             </div>
-            <div class="m-login__signin">
-                <div class="m-login__head">
-                    <h3 class="m-login__title"> Sign In To GC&amp;C </h3>
-                </div>
-                <?php echo(validation_errors()); ?>
-                <form class="m-login__form m-form" method="post"
-                        action="<?php echo site_url("login/verifylogin/index"); ?>">
-                    <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-                    <div class="form-group m-form__group passwordgroup">
-                        <input class="form-control m-input" type="text" placeholder="Username" name="username" autocomplete="off">
-                    </div>
-                    <br>
-                    <div class="passwordgroup">
-                        <input id="password-field" type="password" name="password" placeholder="Password" autocomplete="off">
-                        <text class="glyph-icon flaticon-visible" id="showpassword" onmousedown="showpass()"
-                                onclick="togglepass()"></text>
-                    </div>
-                    <div class="row m-login__form-sub">
-                        <div class="col m--align-left m-login__form-left">
-                            <label class="m-checkbox  m-checkbox--focus">
-                                <input type="checkbox"
-                                        name="remember" <?= $tokenMatched ? "checked" : "" ?>>
-                                Remember me
-                                <span></span>
-                            </label>
-                        </div>
-                        <div class="col m--align-right m-login__form-right" id="m_login_forget_password">
-                            <a href="<?php echo base_url('login/forgotpassword'); ?>" 
-                                class="m-link">
-                                Forgot Password ?
-                            </a>
-                        </div>
-                    </div>
-                    <div class="m-login__form-action">
-                        <button id="m_login_signin_submit"
-                                class="btn btn-focus m-btn m-btn--pill m-btn--custom m-btn--air m-login__btn m-login__btn--primary">
-                            Sign In
-                        </button>
-                    </div>
-                </form>
+            <div class="input-group">
+                <input type="password" name="password" placeholder="Password" autocomplete="off" maxlength="50" id="password">
+                <span class="toggle-password" onclick="togglepass()">👁</span>
             </div>
-        </div>
+            
+            <div class="options">
+                <label class="m-checkbox  m-checkbox--focus"><input type="checkbox" name="remember" <?= $tokenMatched ? "checked" : "" ?> > Remember me  <span></span></label>
+                <a href="<?php echo base_url('login/forgotpassword'); ?>" class="m-link" id="m_login_forget_password">Forgot Password?</a>
+            </div>
+
+            <button type="submit" class="btn btn-focus m-btn m-btn--pill m-btn--custom m-btn--air m-login__btn m-login__btn--primary">Sign In</button>
+        </form>
     </div>
     <div class="modal fade" id="m_modal_unlock" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered" role="document">
@@ -273,10 +259,8 @@
         window.location.href = '<?php echo base_url("login/authentication"); ?>';
     }
     function togglepass() {
-        var x = document.getElementById("password-field");
-        var y = document.getElementById("showpassword");
-        if (x.type === "password") { x.type = "text"; y.style.color = "#bbb5c6"; } 
-        else { x.type = "password"; y.style.color = "#91899f"; }
+        const input = document.getElementById('password');
+        input.type = input.type === 'password' ? 'text' : 'password';
     }
     const tempData = "<?php echo sha1($sh1); ?>";
 
