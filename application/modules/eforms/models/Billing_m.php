@@ -6780,70 +6780,152 @@ class Billing_m extends CI_Model {
     // =================================== Remittance ===================================
 
     public function remittance_date_payments_selected() {
-        $resultarray = array();
+        $resultarray = [];
         $post = $this->input->post();
 
-        if (isset($post['date'])) {
+        // Parse date range
+        if (!empty($post['date'])) {
             $date = explode("-", $post['date']);
+            $start_date = date("Y-m-d", strtotime(trim($date[0])));
+            $end_date   = date("Y-m-d", strtotime(trim($date[1])));
         } else {
-            $date = date("Y-m-d");
+            $start_date = $end_date = date("Y-m-d");
         }
 
+        // Query for totals per day
         $this->db->select("
-            p.id as payment_id,
-            UPPER(CONCAT(a.firstname, ' ', a.lastname)) as account, 
-            b.ref_no as bill_ref, 
-            p.acknowledgement_receipt, 
-            p.ref_no as payment_ref, 
-            p.payment_type as type, 
-            p.received_amount, 
-            p.balance_covered, 
+            DATE(p.created_date) AS payment_date,
+            ROUND(SUM(p.received_amount), 2) AS total_payments,
+            ROUND(SUM(p.balance_covered), 2) AS total_balance_covered,
             CONCAT(e.firstname, ' ', e.lastname) as cashier, 
-            p.payment_date
+            GROUP_CONCAT(p.id ORDER BY p.id ASC) AS payment_ids
         ");
         $this->db->from("hydra_billing.payments p");
-        $this->db->join("hydra_billing.accounts a", "a.id = p.account_id", "LEFT");
-        $this->db->join("hydra_billing.bills b", "b.id = p.bill_id", "LEFT");
         $this->db->join("gccmaster.tblemployees e", "e.id = p.created_by", "LEFT");
-        // $this->db->join("hydra_billing.deposited_payment dp", "dp.payment_id = p.id AND dp.is_archive = 0", "LEFT");
+
+        $this->db->where("p.id NOT IN (SELECT payment_id FROM hydra_billing.deposited_payment WHERE is_archive = 0)");
+
         $this->db->where("p.created_by", $post['id']);
-        // $this->db->where("dp.payment_id IS NULL");
-        
-        if ($date[0] == $date[1]) {
-            // Single day filter
-            $this->db->where("DATE(p.created_date)", date("Y-m-d", strtotime($date[0])));
-        } else {
-            // Range filter
-            $this->db->where("p.created_date >=", date("Y-m-d 00:00:00", strtotime($date[0])));
-            $this->db->where("p.created_date <=", date("Y-m-d 23:59:59", strtotime($date[1])));
-        }
+        $this->db->where("DATE(p.created_date) >=", $start_date);
+        $this->db->where("DATE(p.created_date) <=", $end_date);
+        $this->db->where("p.is_archive", 0);
+        $this->db->group_by("DATE(p.created_date)");
+        $this->db->order_by("payment_date", "ASC");
 
         $query = $this->db->get();
 
         if ($query->num_rows() > 0) {
             foreach ($query->result_array() as $row) {
-
-                // =====================================================================================
-                // Check if payment_id exists in deposit table and get deposit_date if exists
-                // $deposit_row = $this->db->select('r.deposit_date')
-                //     ->from('hydra_billing.remittance r')
-                //     ->join('hydra_billing.deposited_payment dp', 'dp.remittance_id = r.id')
-                //     ->where('dp.payment_id', $row["payment_id"])
-                //     ->where('dp.is_archive', 0)
-                //     ->get()
-                //     ->row_array();
-
-                // $deposit_exists = !empty($deposit_row);
-                // $deposit_date = $deposit_exists ? date("Y-m-d", strtotime($deposit_row['deposit_date'])) : null;
-
-                // $row["deposit_exists"] = $deposit_exists;
-                // $row["deposit_date"] = $deposit_date;
-                // =====================================================================================
-
-                $row["received_amount"] = $row["received_amount"];
-                $row["payment_date"] = date("Y-m-d", strtotime($row["payment_date"]));
+                $row["payment_date"] = date("M d, Y", strtotime($row["payment_date"]));
+                $row["total_payments"] = (float)$row["total_payments"];
+                $row["total_balance_covered"] = (float)$row["total_balance_covered"];
+                $row["cashier"] = $row["cashier"];
+                $row["payment_ids"] = explode(',', $row["payment_ids"]);
                 $resultarray[] = $row;
             }
+
+            return [
+                "data" => $resultarray,
+                "recordsTotal" => $query->num_rows(),
+                "recordsFiltered" => $query->num_rows()
+            ];
+            
+        } else {
+            // No results found
+            return [
+                "data" => [],
+                "recordsTotal" => 0,
+                "recordsFiltered" => 0
+            ];
+        }
+    }
+
+    public function save_remit() {
+        $data = array();
+        $post = $this->input->post();
+
+        $current_date = date("Y-m-d H:i:s");
+        $code = 'KBH';
+        $ref_no = $this->series($current_date, 'hydra_billing.remittance', $code);
+        $ref_series = explode("-",$ref_no)[2];
+        $ref_month = explode("-",$ref_no)[1];
+        $ref_yr = explode($code,explode("-",$ref_no)[0])[1];
+
+        // Payload Start
+        $data['ref_no'] = $ref_no;
+        $data['ref_series'] = $ref_series;
+        $data['ref_month'] = $ref_month;
+        $data['ref_yr'] = $ref_yr;
+        $data['emp_id'] = $post['cashier'];
+        $data['deposit'] = preg_replace('/[^0-9a-zA-Z.]/', '', $post['deposit_amount']);
+        $data['variance'] = preg_replace('/[^0-9a-zA-Z.\\-]/', '', $post['variance']);
+        $data['payment_collected'] = preg_replace('/[^0-9a-zA-Z.]/', '', $post['payment_collected']);
+        $data['deposit_date'] = date('Y-m-d', strtotime($post['deposit_date']));
+        $data['date_range_selected'] = $post['date_range_selected'];
+        $data['date_from'] = date('Y-m-d 00:00:00', strtotime($post['date_range_from']));
+        $data['date_to'] = date('Y-m-d 23:59:59', strtotime($post['date_range_to']));
+        $data['remarks'] = $post['remarks'];
+        $data['created_by'] = $this->getUserdata()['emp_id'];
+        $data['created_date'] = $current_date;
+        $payment_ids = $post['payment_ids'];
+        // Payload End
+
+        $query = $this->db->insert('hydra_billing.remittance', $data);
+        $remittance_id = $this->db->insert_id();
+
+        if ($query && $remittance_id) {
+            $inserted_count = 0;
+            $total = count($payment_ids);
+
+            foreach ($payment_ids as $payment) {
+                $payment_data = [
+                    'remittance_id' => $remittance_id,
+                    'payment_id' => $payment,
+                ];
+
+                if ($this->db->insert('hydra_billing.deposited_payment', $payment_data)) {
+                    $inserted_count++;
+                }
+            }
+
+            if ($inserted_count === $total) {
+                return [
+                    'status' => true,
+                    'message' => 'All selected deposit payments inserted successfully.',
+                    'remittance_id' => $remittance_id
+                ];
+            } else {
+                return [
+                    'status' => false,
+                    'message' => "Only {$inserted_count} out of {$total} deposit payments inserted.",
+                    'remittance_id' => $remittance_id
+                ];
+            }
+        } else {
+            return [
+                'status' => false,
+                'message' => 'Failed to insert knockoff record.'
+            ];
+        }
+    }
+
+    public function remittance_records() {
+        $resultarray = array();
+
+        $this->db->select("r.id, r.ref_no, CONCAT(cashier.firstname, ' ', cashier.lastname) as cashier, r.deposit, r.variance, r.payment_collected, r.date_range_selected, r.date_from, r.date_to, r.deposit_date, r.remarks, CONCAT(depositor.firstname, ' ', depositor.lastname) as depositor, r.created_date");
+        $this->db->from("hydra_billing.remittance r");
+        $this->db->join("gccmaster.tblemployees cashier", "cashier.id = r.emp_id", "LEFT");
+        $this->db->join("gccmaster.tblemployees depositor", "depositor.id = r.created_by", "LEFT");
+        $this->db->where("r.is_archive", 0);
+        $this->db->order_by("r.id", "DESC");
+
+        $query = $this->db->get();
+
+        foreach ($query->result_array() as $_query) {
+            $_query["created_date"] = date('Y-m-d', strtotime($_query['created_date']));
+            $_query["date_from"] = date('Y-m-d', strtotime($_query['date_from']));
+            $_query["date_to"] = date('Y-m-d', strtotime($_query['date_to']));
+            $resultarray[] = $_query;
         }
 
         return array(
@@ -6851,5 +6933,118 @@ class Billing_m extends CI_Model {
             "recordsTotal" => $query->num_rows(), 
             "recordsFiltered" => $query->num_rows()
         );
+    }
+
+    public function get_remittance_details() {
+        $post = $this->input->post();
+
+        $this->db->select("r.id, r.ref_no, r.deposit, r.variance, r.payment_collected, r.remarks, r.deposit_date, r.date_range_selected, r.date_from, r.date_to, r.created_by, r.created_date, CONCAT(e.firstname, ' ', e.lastname) as depositor, CONCAT(c.firstname, ' ', c.lastname) as cashier, ");
+        $this->db->from("hydra_billing.remittance r");
+        $this->db->join("gccmaster.tblemployees e", "e.id = r.created_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees c", "c.id = r.emp_id", "LEFT");
+        $this->db->where("r.is_archive", 0);
+        $this->db->where("r.id", $post['remittance_id']);
+        $row = $this->db->get()->row_array();
+
+        $row["deposit_date"] = date('Y-m-d', strtotime($row['deposit_date']));
+        $row["date_start"] = date('Y-m-d', strtotime($row['date_from']));
+        $row["date_end"] = date('Y-m-d', strtotime($row['date_to']));
+        $row["daily_collection"] = $this->get_remittance_payment_deposited($post['remittance_id']);
+
+        return $row;
+    }
+
+    public function get_remittance_payment_deposited($remittance_id) {
+        $res = [];
+
+        // Get remittance date range
+        $remittance = $this->db->select("date_from, date_to")
+            ->from("hydra_billing.remittance")
+            ->where("id", $remittance_id)
+            ->where("is_archive", 0)
+            ->get()
+            ->row();
+
+        if (!$remittance) {
+            return [
+                "data" => [],
+                "recordsTotal" => 0,
+                "recordsFiltered" => 0
+            ];
+        }
+
+        $start_date = $remittance->date_from;
+        $end_date = $remittance->date_to;
+
+        $this->db->select("
+            DATE(p.created_date) AS payment_date,   
+            ROUND(SUM(p.received_amount), 2) AS total_payments,
+            ROUND(SUM(p.balance_covered), 2) AS total_balance_covered,
+            CONCAT(e.firstname, ' ', e.lastname) as cashier, 
+            GROUP_CONCAT(p.id ORDER BY p.id ASC) AS payment_ids
+        ");
+        $this->db->from("hydra_billing.deposited_payment dp");
+        $this->db->join("hydra_billing.payments p", "p.id = dp.payment_id", "LEFT");
+        $this->db->join("gccmaster.tblemployees e", "e.id = p.created_by", "LEFT");
+        $this->db->where("dp.remittance_id", $remittance_id);
+        $this->db->where("dp.is_archive", 0);
+        $this->db->where("DATE(p.created_date) >=", $start_date);
+        $this->db->where("DATE(p.created_date) <=", $end_date);
+        $this->db->group_by("DATE(p.created_date)");
+        $this->db->order_by("payment_date", "ASC");
+        $query = $this->db->get();
+
+        foreach ($query->result_array() as $row) {
+            $row["payment_date"] = date("M d, Y", strtotime($row["payment_date"]));
+            $row["total_payments"] = (float)$row["total_payments"];
+            $row["total_balance_covered"] = (float)$row["total_balance_covered"];
+            $result[] = $row;
+        }
+
+        return [
+            "data" => $result,
+            "recordsTotal" => $query->num_rows(),
+            "recordsFiltered" => $query->num_rows()
+        ];
+    }
+
+    public function archive_remittance() {
+        $post = $this->input->post();
+        $id = $post["id"];
+        $post["is_archive"] = 1;
+
+        // Update remittance table
+        $this->db->where("id", $id);
+        $query = $this->db->update('hydra_billing.remittance', $post);
+
+        // Update deposited_payment table
+        $this->db->where("remittance_id", $id);
+        $update_deposited = $this->db->update('hydra_billing.deposited_payment', ['is_archive' => 1]);
+
+        if ($query && $update_deposited) {
+            $resultarray["status"] = true;
+            $resultarray["msg"] = "Archive successfully saved.";
+
+            $this->core_layout->setEventLog(
+                "Remittance - Archived remittance of " . $post["ref_no"],
+                "archived",
+                "success",
+                "hydra_billing",
+                "user"
+            );
+        } else {
+            $resultarray["status"] = false;
+            $resultarray["msg"] = "Error archiving remittance.";
+
+            $this->core_layout->setEventLog(
+                "Remittance - Error archiving remittance of " . $post["ref_no"],
+                "archived",
+                "error",
+                "hydra_billing",
+                "user"
+            );
+        }
+
+        return $resultarray;
     }
 }

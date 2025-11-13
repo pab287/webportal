@@ -14,10 +14,6 @@
 		vertical-align: middle!important;
 	}
 
-    /* #remittance_details .col-3 {
-        max-width: 24.5%;
-    } */
-
     .created_by_group span {
         font-size: 12px;
     }
@@ -48,9 +44,7 @@
 
     /* Remittance View Design */
     .remittance_details {
-        background: #F4F5F9;
-        padding: 30px;
-        border-radius: 10px;
+        padding: 10px 0px;
     }
 
     .remittance_details .d-label {
@@ -63,6 +57,20 @@
     .remittance_details .d-val {
         font-size: 13px;
         font-weight: 600;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .remittance_details .col-3 {
+        max-width: 24%;
+    }
+
+    .remittance_details .info_block {
+        background: #F4F5F9;
+        padding: 15px;
+        border-radius: 10px;
     }
 
     /* New remit modal datatable */
@@ -72,6 +80,29 @@
 
     #tbl-payment_collection_wrapper table.dataTable {
         width: 100% !important;
+    }
+
+    #remit_daily_collection_wrapper .dataTables_scrollHead table {
+        min-width: max-content!important;
+    }
+
+    .r-widget .r-widget_legend-bullet {
+        width: 15px;
+        height: 15px;
+        display: inline-block;
+        border-radius: 1.1rem;
+        margin: 0 1rem 0.1rem 0;
+    }
+
+    tr.short-dep td,
+    tr.has-variance td .btn.m-btn--hover-accent:not(.btn-secondary):not(.btn-outline-light) i {
+        color: #fff;
+    }
+
+    .r-widget .r-widget_legend-text {
+        font-weight: 600;
+        color: #5b5d67;
+        font-size: 11px;
     }
 </style>
 
@@ -87,50 +118,67 @@
 
         <div class="m-portlet__body">
             <div class="row justify-content-between mb-4">
-                <div class="col-6">
-                    <button class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--pill btnNew text-white" id="new_remit_modal" data-toggle="modal" data-target="#modal_new_remittance">
-                      <span><i class="la la-plus"></i><span>New</span></span>
+                <div class="col-6 d-flex align-items-center">
+                    <button class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--pill btnNew text-white mr-4" id="new_remit_modal" data-toggle="modal" data-target="#modal_new_remittance">
+                        <span><i class="la la-plus"></i><span>New</span></span>
                     </button>
+
+                    <div class="r-widget mr-4">
+                        <div class="r-widget_legend d-flex align-items-center mb-1">
+                            <span class="r-widget_legend-bullet m--bg-accent"></span>
+                            <span class="r-widget_legend-text">EXCESS DEPOSIT</span>
+                        </div>
+                        <div class="r-widget_legend d-flex align-items-center">
+                            <span class="r-widget_legend-bullet m--bg-danger"></span>
+                            <span class="r-widget_legend-text">SHORT DEPOSIT</span>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning alert-dismissible fade show m-alert m-alert--air m-alert--outline m-alert--outline-2x mb-0">
+                        <strong>Total Collection - Deposit = <span class="m-badge m-badge--warning m-badge--wide text-white">VARIANCE</span></strong>
+                    </div>
                 </div>
             </div>
 
-            <table class="table table-bordered table-sm" id="tbl-remittance" width="100%" style="font-family: roboto;">
-                <thead>
-                    <tr>
-                        <th class="text-center py-3 px-2">Ref #</th>
-                        <th class="text-center py-3 px-2">Date Range</th>
-                        <th class="text-center py-3 px-2">Total Collection</th>
-                        <th class="text-center py-3 px-2">Deposit</th>
-                        <th class="text-center py-3 px-2">Variance</th>
-                        <th class="text-center py-3 px-2">Cashier</th>
-                        <th class="text-center py-3 px-2">Depositor</th>
-                        <th class="text-center py-3 px-2">Date Deposit</th>
-                        <th class="text-center py-3 px-2">Action</th>
-                    </tr>
-                </thead>
+            <div id="remittance_table_wrapper">
+                <table class="table table-bordered table-sm" id="tbl-remittance" width="100%" style="font-family: roboto;">
+                    <thead>
+                        <tr>
+                            <th class="text-center py-3 px-2">Ref #</th>
+                            <th class="text-center py-3 px-2">Date Range</th>
+                            <th class="text-center py-3 px-2">Total Collection</th>
+                            <th class="text-center py-3 px-2">Deposit</th>
+                            <th class="text-center py-3 px-2">Variance</th>
+                            <th class="text-center py-3 px-2">Cashier</th>
+                            <th class="text-center py-3 px-2">Depositor</th>
+                            <th class="text-center py-3 px-2">Date Deposit</th>
+                            <th class="text-center py-3 px-2">Action</th>
+                        </tr>
+                    </thead>
 
-                <tbody></tbody>
+                    <tbody></tbody>
 
-                <tfoot>
-                    <tr>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                </tfoot>
-            </table>
+                    <tfoot>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
 
     </div>
 </div>
 
-<div class="modal fade" id="modal_new_remittance" tabindex="-1">
+<div class="modal fade" id="modal_new_remittance">
 	<div class="modal-dialog modal-dialog-centered" style="min-width: 75%">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -138,8 +186,8 @@
                     <div class="col-6">
                         <h5 class="modal-title">New Remit</h5>
                     </div>
-                    <div class="col-6">
-                        <button type="button" class="close" data-dismiss="modal">
+                    <div class="col-6 pr-0">
+                        <button type="button" class="close pr-0" data-dismiss="modal">
                             <span>×</span>
                         </button>
                     </div>
@@ -149,11 +197,11 @@
             <div class="modal-body">
                 <div class="row justify-content-between align-items-end mx-0 mb-4">
                     <div id="remit_filter" class="remit_inputs_wrapper row flex-wrap justify-content-between align-items-end mb-0 mx-0 w-100">
-                        <div class="col-8 px-0 emp-filter mb-4">
+                        <div class="col-8 px-0 emp-filter">
                             <div class="row justify-content-between align-items-end alert m-alert m-alert--default mx-0 mb-0">
                                 <div class="col-5 p-0">
                                     <label for="employee" class="mb-2">Employee: <span class="text-danger">*</span></label>
-                                    <select v-model="selectedEmployee" id="employee" class="form-control" data-validation="required"></select>
+                                    <select v-model="selectedEmployee" id="employee" class="form-control"></select>
                                 </div>
 
                                 <div class="col-5 p-0">
@@ -164,7 +212,6 @@
                                             class="form-control m-input" 
                                             placeholder="MMM DD, YYYY - MMM DD, YYYY" 
                                             v-model="date_range_picked"
-                                            data-validation="required" 
                                             autocomplete='off' 
                                             style="height: 35.13px;"
                                         >
@@ -179,49 +226,17 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="col-12 px-0 remit-inputs">
-                            <form id="remittance_form" method="POST" onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
-                                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-
-                                <div class="row justify-content-between align-items-end alert m-alert m-alert--default mx-0 mb-0">
-                                    <div class="col-3 col p-0 form-group m-form__group mb-0">
-                                        <label for="deposit" class="mb-2">Deposit: <span class="text-danger">*</span></label>
-                                        <input type="text" name="deposit" id="deposit" class="form-control h-35_13 deposit bg-white">
-                                    </div>
-
-                                    <div class="col-3 col p-0 form-group m-form__group mb-0">
-                                        <label for="payment_collected" class="mb-2">Payment Collected: </label>
-                                        <input type="text" name="payment_collected" id="payment_collected" class="payment_collected form-control h-35_13 bg-white" readonly>
-                                    </div>
-
-                                    <div class="col-3 col p-0 form-group m-form__group mb-0">
-                                        <label for="variance" class="mb-2">Variance: </label>
-                                        <input type="text" name="variance" id="variance" class="form-control h-35_13 variance bg-white" readonly>
-                                    </div>
-
-                                    <div class="col-3 col p-0 form-group m-form__group mb-0">
-                                        <label for="deposit_date" class="mb-2">Deposit Date: <span class="text-danger">*</span></label>
-                                        <input type="text" name="deposit_date" id="deposit_date" placeholder="MMM DD, YYYY" class="form-control h-35_13 deposit_date bg-white">
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
                     </div>
                 </div>
 
-                <div id="payment_table_wrapper">
-                    <table class="table table-striped table-bordered" id="tbl-payment_collection" width="100%" style="font-family: roboto;">
+                <div id="payment_table_wrapper" class="mb-4">
+                    <table class="table" id="tbl-payment_collection" width="100%" style="font-family: roboto;">
                         <thead>
                             <tr>
-                                <th class="text-center" width="20%">Account</th>
-                                <th class="text-center" width="10%">Bill #</th>
-                                <th class="text-center">AR #</th>
-                                <th class="text-center">Payment #</th>
-                                <th class="text-center">Type</th>
-                                <th class="text-center">Amount</th>
-                                <th class="text-center">Collected Date</th>
-                                <th class="text-center">Collected By</th>
+                                <th class="text-center" width="25%">Date Collected</th>
+                                <th class="text-center" width="25%">Payment Collected</th>
+                                <th class="text-center" width="25%">Total Balance Covered</th>
+                                <th class="text-center" width="25%">Collected By</th>
                             </tr>
                         </thead>
 
@@ -233,19 +248,45 @@
                                 <td></td>
                                 <td></td>
                                 <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
+
+                <div id="remit_inputs" class="remit_inputs_wrapper row flex-wrap justify-content-between align-items-end mb-0 mx-0 w-100">   
+                    <div class="col-12 px-0 remit-inputs">
+                        <form id="remittance_form" method="POST">
+                            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+
+                            <div class="row justify-content-between align-items-end alert m-alert m-alert--default mx-0 mb-0">
+                                <div class="col-3 col p-0 form-group m-form__group mb-0">
+                                    <label for="deposit" class="mb-2">Deposit: <span class="text-danger">*</span></label>
+                                    <input type="text" v-model="deposit_amount" id="deposit" class="form-control h-35_13 deposit bg-white text-right" placeholder="0.00">
+                                </div>
+
+                                <div class="col-3 col p-0 form-group m-form__group mb-0">
+                                    <label for="payment_collected" class="mb-2">Payment Collected: </label>
+                                    <input type="text" v-model="payment_collected" id="payment_collected" class="payment_collected form-control h-35_13 bg-white text-right" placeholder="0.00" readonly>
+                                </div>
+
+                                <div class="col-3 col p-0 form-group m-form__group mb-0">
+                                    <label for="variance" class="mb-2">Variance: </label>
+                                    <input type="text" v-model="variance" id="variance" class="form-control h-35_13 variance bg-white text-right" placeholder="0.00" readonly>
+                                </div>
+
+                                <div class="col-3 col p-0 form-group m-form__group mb-0">
+                                    <label for="deposit_date" class="mb-2">Deposit Date: <span class="text-danger">*</span></label>
+                                    <input type="text" v-model="deposit_date" id="deposit_date" placeholder="MMM DD, YYYY" class="form-control h-35_13 deposit_date bg-white">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
 
             <div class="modal-footer">
-                <div class="row align-items-center justify-content-end w-100 mx-0">
-                    <button id="remit_form_btn" type="submit" class="btnSave btn btn-info">
+                <div id="remit_form_btn" class="row align-items-center justify-content-end w-100 mx-0">
+                    <button @click="save_remittance()" type="submit" class="btnSave btn btn-info">
                         <span><i class="fa fa-save pr-2"></i>Save</span>
                     </button>
                 </div>
@@ -254,7 +295,7 @@
 	</div>
 </div>
 
-<div class="modal fade" id="modal_view_remittance" tabindex="-1">
+<div class="modal fade" id="modal_view_remittance">
 	<div class="modal-dialog modal-dialog-centered" style="min-width: 70%">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -270,63 +311,64 @@
                 </div>
 			</div>
 
-            <div class="modal-body">
+            <div id="remittance_details" class="modal-body">
                 <div class="remittance_details mb-4">
-                    <div class="row mb-3">
-                        <div class="col-3">
+                    <div class="row justify-content-between mb-3 mx-0">
+                        <div class="col-3 info_block">
                             <p class="d-label">Reference No.</p>
-                            <p class="d-val r_ref_no"></p>
+                            <p class="d-val r_ref_no" :title="ref_no">{{ ref_no }}</p>
                         </div>
-                        <div class="col-3">
+                        <div class="col-3 info_block">
                             <p class="d-label">Cashier</p>
-                            <p class="d-val r_cashier"></p>
+                            <p class="d-val r_cashier" :title="cashier">{{ cashier }}</p>
                         </div>
-                        <div class="col-3">
+                        <div class="col-3 info_block">
                             <p class="d-label">Depositor</p>
-                            <p class="d-val r_depositor"></p>
+                            <p class="d-val r_depositor" :title="depositor">{{ depositor }}</p>
                         </div>
-                        <div class="col-3">
+                        <div class="col-3 info_block">
                             <p class="d-label">Date Deposit</p>
-                            <p class="d-val r_date_deposit"></p>
+                            <p class="d-val r_date_deposit" :title="date_deposit">{{ date_deposit }}</p>
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-3">
+                    <div class="row justify-content-between mb-3 mx-0">
+                        <div class="col-3 info_block">
                             <p class="d-label">Total Collection</p>
-                            <p class="d-val r_total_collection"></p>
+                            <p class="d-val r_total_collection" :title="total_collection">{{ total_collection }}</p>
                         </div>
-                        <div class="col-3">
+                        <div class="col-3 info_block">
                             <p class="d-label">Deposit</p>
-                            <p class="d-val r_deposit"></p>
+                            <p class="d-val r_deposit" :title="deposit">{{ deposit }}</p>
                         </div>
-                        <div class="col-3">
-                            <p class="d-label">Variance</p>
-                            <p class="d-val r_variance"></p>
+                        <div class="col-3 info_block" :style="{backgroundColor: variance_color}">
+                            <p class="d-label" :style="{color: variance_label_text_color}">Variance</p>
+                            <p class="d-val r_variance" :style="{color: variance_value_text_color}" :title="variance">{{ variance }}</p>
                         </div>
-                        <div class="col-3">
+                        <div class="col-3 info_block">
                             <p class="d-label">Date Range</p>
-                            <p class="d-val r_date_range"></p>
+                            <p class="d-val r_date_range" :title="date_range">{{ date_range }}</p>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <p class="d-label">Remarks</p>
-                            <p class="d-val r_remarks_text mb-0"></p>
+
+                    <template v-if="remarks_text != ''">
+                        <div id="remarks_wrap" class="row mx-0">
+                            <div class="col-12 m-alert m-alert--icon m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
+                                <div class="m-alert__icon">
+                                    <i class="la la-warning"></i>
+                                </div>
+                                <div class="m-alert__text r_remarks_text" :title="remarks_text">{{ remarks_text }}</div>	  			  	
+                            </div>
                         </div>
-                    </div>
+                    </template>
                 </div>
 
-                <table class="table table-striped table-bordered" id="remit_payment_collection" width="100%" style="font-family: roboto;">
+                <table class="table" id="remit_daily_collection" style="font-family: roboto;">
                     <thead>
                         <tr>
-                            <th class="text-center" width="20%">Account</th>
-                            <th class="text-center" width="10%">Bill #</th>
-                            <th class="text-center">AR #</th>
-                            <th class="text-center">Payment #</th>
-                            <th class="text-center">Type</th>
-                            <th class="text-center">Amount</th>
-                            <th class="text-center">Collected Date</th>
-                            <th class="text-center">Collected By</th>
+                            <th class="text-center" width="25%">Date Collected</th>
+                            <th class="text-center" width="25%">Payment Collected</th>
+                            <th class="text-center" width="25%">Total Balance Covered</th>
+                            <th class="text-center" width="25%">Collected By</th>
                         </tr>
                     </thead>
 
@@ -334,10 +376,6 @@
 
                     <tfoot>
                         <tr>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
                             <td></td>
                             <td></td>
                             <td></td>
@@ -375,6 +413,26 @@
                     <input type="button" id="remarks-modal-save" class="btn btn-primary" value="SAVE">
                 </div>
             </div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="m_archived">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<input type="hidden" name="id" id="archive_id">
+			<input type="hidden" name="archive_ref_no" id="archive_ref_no">
+
+			<div class="modal-header">
+				<h5 class="modal-title">Archive Remittance</h5>
+			</div>
+
+			<div class="modal-body" id="archive_text"></div>
+
+			<div class="modal-footer">
+				<button type="submit" class="btn btn-danger btnArchive" onclick="archiveBill()">Archive</button>
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+			</div>
 		</div>
 	</div>
 </div>

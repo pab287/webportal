@@ -1095,5 +1095,25 @@ class Billing extends MY_Controller {
         $data = $this->billing->remittance_date_payments_selected();
         $this->output->set_content_type('json')->set_output(json_encode($data));  
     }
+
+    public function save_remit(){
+        $data = $this->billing->save_remit();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function remittance_records() {
+        $data = $this->billing->remittance_records();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_remittance_details(){
+        $data = $this->billing->get_remittance_details();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function archive_remittance(){
+        $data = $this->billing->archive_remittance();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
 }
 
