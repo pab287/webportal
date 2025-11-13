@@ -813,70 +813,123 @@ class Core_model extends CI_Model{
     /*** email function ***/
     public function send_email($module, $email_title, $content_title, $content, $overrideMailer = array()){
         $email_module = $this->getEmailModule($module);
-        if ($email_module) {
-            $coreLogs = $this->coreLogs();
-            $coreLogs->setLogModule("core");
-            $coreLogs->setLogTable("gccmaster.email_template");
-            $coreLogs->setLogFieldId($email_module->id);
+        if(!$email_module){ return false; }
 
-            $sendTo = unserialize($email_module->send_to);
-            $sendCc = unserialize($email_module->cc_to);
-            $sendBcc = unserialize($email_module->bcc_to);
+        $coreLogs = $this->coreLogs();
+        $coreLogs->setLogModule("core");
+        $coreLogs->setLogTable("gccmaster.email_template");
+        $coreLogs->setLogFieldId($email_module->id);
 
-            $sendTo = (isset($overrideMailer["send_to"]) && $overrideMailer["send_to"]) ? $overrideMailer["send_to"] : $sendTo;
-            $sendCc = (isset($overrideMailer["send_cc"]) && $overrideMailer["send_cc"]) ? $overrideMailer["send_cc"] : $sendCc;
-            $sendBcc = (isset($overrideMailer["send_bcc"]) && $overrideMailer["send_bcc"]) ? $overrideMailer["send_bcc"] : $sendBcc;
+        $sendTo = unserialize($email_module->send_to);
+        $sendCc = unserialize($email_module->cc_to);
+        $sendBcc = unserialize($email_module->bcc_to);
 
-            $sendToData = ($sendTo && is_array($sendTo)) ? implode(",", $sendTo) : "";
-            $ccToData = ($sendCc && is_array($sendCc)) ? implode(",", $sendCc) : "";
-            $bccToData = ($sendBcc && is_array($sendBcc)) ? implode(",", $sendBcc) : "";
-            $sendToData = ($sendToData) ? $sendToData : "seniordeveloper01@gccaggregates.com";
-            $emailSender = $this->doMailer($email_title, $overrideMailer);
+        $sendTo = (isset($overrideMailer["send_to"]) && $overrideMailer["send_to"]) ? $overrideMailer["send_to"] : $sendTo;
+        $sendCc = (isset($overrideMailer["send_cc"]) && $overrideMailer["send_cc"]) ? $overrideMailer["send_cc"] : $sendCc;
+        $sendBcc = (isset($overrideMailer["send_bcc"]) && $overrideMailer["send_bcc"]) ? $overrideMailer["send_bcc"] : $sendBcc;
 
-            if ($emailSender) {
-                $emailSender->to($sendToData);
-                if ($ccToData) {
-                    $emailSender->cc($ccToData);
+        $sendToData = ($sendTo && is_array($sendTo)) ? implode(",", $sendTo) : "";
+        $ccToData = ($sendCc && is_array($sendCc)) ? implode(",", $sendCc) : "";
+        $bccToData = ($sendBcc && is_array($sendBcc)) ? implode(",", $sendBcc) : "";
+        $sendToData = ($sendToData) ? $sendToData : "seniordeveloper01@gccaggregates.com";
+
+        /** recipients checker **/
+        $recipientsTo = $this->validateEmails($sendToData);
+        $recipientsCc = $this->validateEmails($ccToData);
+        $recipientsBcc = $this->validateEmails($bccToData);
+        
+        if (empty($recipientsTo)){ return false; }
+        
+        $sendToData = is_array($recipientsTo) ? implode(",", $recipientsTo) : $sendToData;
+        $ccToData = is_array($recipientsCc) ? implode(",", $recipientsCc) : $ccToData;
+        $bccToData = is_array($recipientsBcc) ? implode(",", $recipientsBcc) : $bccToData;
+        /** recipients checker **/
+
+        $emailSender = $this->doMailer($email_title, $overrideMailer);
+
+        $sent = false;
+        $error = '';
+
+        if ($emailSender) {
+            $emailSender->to($sendToData);
+            if ($ccToData) { $emailSender->cc($ccToData); }
+            if ($bccToData) { $emailSender->bcc($bccToData); }
+
+            $content_title = ($content_title) ? $content_title : "This is a sample title";
+            $content = ($content) ? $content : "This is a sample Content";
+            $emailSender->subject($content_title);
+            $emailSender->message($content);
+
+            for ($attempt = 1; $attempt <= 3; $attempt++) {
+                $coreLogs->logNotification("Gmail attempt #{$attempt}...", "info");
+                $sent = $emailSender->send();
+
+                if ($sent) {
+                    $coreLogs->logNotification("Email sent successfully via Gmail on attempt #{$attempt}.", "success");
+                    break;
                 }
-                if ($bccToData) {
-                    $emailSender->bcc($bccToData);
-                }
 
-                $content_title = ($content_title) ? $content_title : "This is a sample title";
-                $content = ($content) ? $content : "This is a sample Content";
-                $emailSender->subject($content_title);
-                $emailSender->message($content);
+                $error = $emailSender->print_debugger(['headers']);
+                $coreLogs->logNotification("Gmail attempt #{$attempt} failed:\n{$error}", "warning");
 
-                $maxAttempt = 3;
-                $attempt = 0;
-                $sent = false;
-                while (!$sent && $attempt < $maxAttempt) {
-                    $attempt++;
-                    $sent = $emailSender->send();
-                    if(!$sent){
-                        $error = $emailSender->print_debugger(['headers']);
-                        $coreLogs->logNotification("Attempt {$attempt} failed: " . $error, "error");
-                        if (strpos($error, '421 4.7.0') !== false || strpos($error, 'Try again later') !== false) { sleep(5); }
-                        else { break; }
-                    }else{
-                        $coreLogs->logNotification("Email sent successfully to {$sendToData}", "success");
-                    }
-                }
-                sleep(3);
-                return $sent;
+                if (preg_match('/421\s4\.7\.0/i', $error) || preg_match('/Try again later/i', $error)) {
+                    $coreLogs->logNotification("Gmail throttling detected. Waiting 10 seconds before retry...", "warning");
+                    sleep(10);
+                } else { sleep(3); }
             }
         }
-        return false;
+
+        if (!$sent) {
+            $failOverMailer = $this->failOverProtocol();
+            $updatedMailer = array_merge($failOverMailer, $overrideMailer);
+            if(!empty($updatedMailer)){
+                $failOverSender = $this->doMailer($email_title, $updatedMailer, true);
+                if($failOverSender){
+                    $failOverSender->to($sendToData);
+                    if ($ccToData) { $failOverSender->cc($ccToData); }
+                    if ($bccToData) { $failOverSender->bcc($bccToData); }
+                    $content_title = ($content_title) ? $content_title : "This is a sample title";
+                    $content = ($content) ? $content : "This is a sample Content";
+                    $failOverSender->subject($content_title);
+                    $failOverSender->message($content);
+
+                    for ($mgAttempt = 1; $mgAttempt <= 2; $mgAttempt++) {
+                        $coreLogs->logNotification("Mailgun attempt #{$mgAttempt}...", "info");
+                        $sent = $failOverSender->send();
+
+                        if ($sent) {
+                            $coreLogs->logNotification("Email sent successfully via Mailgun on attempt #{$mgAttempt}.", "success");
+                            break;
+                        }
+
+                        $msgError = $failOverSender->print_debugger(['headers']);
+                        $coreLogs->logNotification("Mailgun attempt #{$mgAttempt} failed:\n{$msgError}", "warning");
+                        sleep(5);
+                    }
+
+                    if (!$sent) {
+                        $coreLogs->logNotification("Mailgun failover fully failed after 2 attempts.", "error");
+                    }
+                }else{
+                    $coreLogs->logNotification("Mailgun mailer initialization failed.", "error");
+                }
+            }else{
+                $coreLogs->logNotification("No Mailgun SMTP config found in database.", "error");
+            }
+        }
+
+        sleep(2);
+        return $sent;
     }
 
     protected function failOverProtocol(){
         $overrideMailer = [];
-        $qMailer = $this->db->get_where($this->emailProtocolTable, ['site_unique_code' => 'mailgun']);
+        $qMailer = $this->db->get_where($this->emailProtocolTable, ['unique_code' => 'mailgun']);
         if($qMailer->num_rows() == 1){
             $mailgunRow = $qMailer->row();
             $overrideMailer = [
                 'email_user' => $mailgunRow->smtp_user,
-                'email_pass' => $mailgunRow->smtp_pass
+                'email_pass' => $mailgunRow->smtp_pass,
                 'config' => [
                     'protocol' => $mailgunRow->protocol,
                     'smtp_host' => $mailgunRow->smtp_host,
@@ -889,7 +942,7 @@ class Core_model extends CI_Model{
         return $overrideMailer;
     }
 
-    private function oldCode11122025_doMailer($email_title = null, $overrideMailer = array()){
+    private function original__doMailer($email_title = null, $overrideMailer = array()){
         $serverName = $_SERVER['SERVER_NAME'];
         $serverName = strtolower($serverName);
         $siteCode = $this->config->item('site_unique_code');
@@ -939,8 +992,10 @@ class Core_model extends CI_Model{
         }else{ return false; }
     }
 
-    private function doMailer($email_title = null, $overrideMailer = array()){
+    private function doMailer($email_title = null, $overrideMailer = array(), $nullableSender = false){
         static $emailSender = null;
+        if ($nullableSender === true){ $emailSender = null; }
+
         if ($emailSender !== null) {
             $emailSender->from($emailSender->smtp_user, $email_title);
             return $emailSender;
@@ -949,7 +1004,7 @@ class Core_model extends CI_Model{
         $serverName = strtolower($_SERVER['SERVER_NAME']);
         $siteCode = $this->config->item('site_unique_code');
 
-        if (!$siteCode) return false;
+        if (!$siteCode) { return false; }
 
         $arrDevelopmentSite = array("localhost", "dev.gccph.com", "192.168.7.78");
         $qTemp = $this->db->get_where($this->emailProtocolTable, [
@@ -957,7 +1012,7 @@ class Core_model extends CI_Model{
             "server_name" => $serverName
         ]);
 
-        if ($qTemp->num_rows() != 1) return false;
+        if ($qTemp->num_rows() != 1) { return false; }
 
         $tempRow = $qTemp->row();
         $email_title = (in_array($serverName, $arrDevelopmentSite))
@@ -986,10 +1041,8 @@ class Core_model extends CI_Model{
             'crlf'        => "\r\n"
         );
 
-        if (isset($overrideMailer["config"]) && $overrideMailer["config"]) {
-            foreach ($overrideMailer["config"] as $key => $value) {
-                $config[$key] = $value;
-            }
+        if (!empty($overrideMailer["config"]) && is_array($overrideMailer["config"])) {
+            $config = array_merge($config, $overrideMailer["config"]);
         }
 
         $this->email->initialize($config);
@@ -998,6 +1051,7 @@ class Core_model extends CI_Model{
         $this->email->from($smtpUser, $email_title);
 
         $emailSender = $this->email;
+
         return $emailSender;
     }
 
@@ -1392,5 +1446,29 @@ class Core_model extends CI_Model{
             unset($_COOKIE[$cookieName]); // Remove the cookie from the $_COOKIE array
         }
     }
+
+    private function isValidEmail($email){
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+
+        $domain = substr(strrchr($email, "@"), 1);
+        return checkdnsrr($domain, "MX");
+    }
+
+    private function validateEmails($emails){
+        if (is_string($emails)) { $emails = preg_split('/[,;]+/', $emails); }
+        if (!is_array($emails)) { return []; }
+
+        $validEmails = [];
+
+        foreach ($emails as $email) {
+            $email = trim(strtolower($email));
+            if ($this->isValidEmail($email)) { $validEmails[] = $email; }
+        }
+
+        return $validEmails;
+    }
+
     
 }
