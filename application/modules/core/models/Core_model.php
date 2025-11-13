@@ -837,8 +837,11 @@ class Core_model extends CI_Model{
         $recipientsTo = $this->validateEmails($sendToData);
         $recipientsCc = $this->validateEmails($ccToData);
         $recipientsBcc = $this->validateEmails($bccToData);
-        
-        if (empty($recipientsTo)){ return false; }
+
+        if (empty($recipientsTo)){
+            $coreLogs->logNotification("Email Sending, No valid recipients found", "error");
+            return false;
+        }
         
         $sendToData = is_array($recipientsTo) ? implode(",", $recipientsTo) : $sendToData;
         $ccToData = is_array($recipientsCc) ? implode(",", $recipientsCc) : $ccToData;
