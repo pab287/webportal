@@ -90,15 +90,15 @@ function itemDatatableActions(id) {
             <a href="javascript:void(0)" 
                 class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnEdit" 
                 onclick="onEditEvent(${id})" 
-                title="View Event">
-                <i class="la la-eye"></i>
+                title="Edit Settings">
+                <i class="la la-edit"></i>
             </a>`;
 
         _actionButton += `
             <a href="javascript:void(0)" 
                 class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
                 onclick="archiveOption(${id})" 
-                title="Archive Event">
+                title="Archive Settings">
                 <i class="la la-file-archive-o"></i>
             </a>`;
     }
