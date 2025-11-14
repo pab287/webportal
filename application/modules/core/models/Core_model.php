@@ -853,6 +853,8 @@ class Core_model extends CI_Model{
         $sent = false;
         $error = '';
 
+        $emailSender = false;
+
         if ($emailSender) {
             $emailSender->to($sendToData);
             if ($ccToData) { $emailSender->cc($ccToData); }
@@ -877,7 +879,7 @@ class Core_model extends CI_Model{
 
                 if (preg_match('/421\s4\.7\.0/i', $error) || preg_match('/Try again later/i', $error)) {
                     $coreLogs->logNotification("Gmail throttling detected. Waiting 10 seconds before retry...", "warning");
-                    sleep(10);
+                    break;
                 } else { sleep(3); }
             }
         }
@@ -896,22 +898,43 @@ class Core_model extends CI_Model{
                     $failOverSender->subject($content_title);
                     $failOverSender->message($content);
 
-                    for ($mgAttempt = 1; $mgAttempt <= 2; $mgAttempt++) {
-                        $coreLogs->logNotification("Mailgun attempt #{$mgAttempt}...", "info");
-                        $sent = $failOverSender->send();
-
-                        if ($sent) {
-                            $coreLogs->logNotification("Email sent successfully via Mailgun on attempt #{$mgAttempt}.", "success");
-                            break;
+                    $skip = false;
+                    if ($skip) {
+                        for ($mgAttempt = 1; $mgAttempt <= 2; $mgAttempt++) {
+                            $coreLogs->logNotification("Mailgun attempt #{$mgAttempt}...", "info");
+                            $sent = $failOverSender->send();
+    
+                            if ($sent) {
+                                $coreLogs->logNotification("Email sent successfully via Mailgun on attempt #{$mgAttempt}.", "success");
+                                break;
+                            }
+    
+                            $msgError = $failOverSender->print_debugger(['headers']);
+                            $coreLogs->logNotification("Mailgun attempt #{$mgAttempt} failed:\n{$msgError}", "warning");
+                            sleep(5);
                         }
-
-                        $msgError = $failOverSender->print_debugger(['headers']);
-                        $coreLogs->logNotification("Mailgun attempt #{$mgAttempt} failed:\n{$msgError}", "warning");
-                        sleep(5);
                     }
 
                     if (!$sent) {
-                        $coreLogs->logNotification("Mailgun failover fully failed after 2 attempts.", "error");
+                        $coreLogs->logNotification("Mailgun SMTP fully failed. Switching to Mailgun API...", "warning");
+                        if (!empty($failOverMailer)) {
+                            $sent = $this->sendMailgunAPI(
+                                $failOverMailer,
+                                $sendToData,
+                                $ccToData,
+                                $bccToData,
+                                $content_title,
+                                $content
+                            );
+
+                            if ($sent) {
+                                $coreLogs->logNotification("Email sent successfully via Mailgun API.", "success");
+                            } else {
+                                $coreLogs->logNotification("Mailgun API send failed. No more fallbacks available.", "error");
+                            }
+                        } else {
+                            $coreLogs->logNotification("Mailgun API credentials not found. Cannot send email.", "error");
+                        }
                     }
                 }else{
                     $coreLogs->logNotification("Mailgun mailer initialization failed.", "error");
@@ -933,6 +956,8 @@ class Core_model extends CI_Model{
             $overrideMailer = [
                 'email_user' => $mailgunRow->smtp_user,
                 'email_pass' => $mailgunRow->smtp_pass,
+                'domain' => $mailgunRow->domain,
+                'api_key' => $mailgunRow->api_key,
                 'config' => [
                     'protocol' => $mailgunRow->protocol,
                     'smtp_host' => $mailgunRow->smtp_host,
@@ -1473,5 +1498,43 @@ class Core_model extends CI_Model{
         return $validEmails;
     }
 
-    
+    public function sendMailgunAPI($mailgunRow, $to, $cc, $bcc, $subject, $html_message){
+        $mailgunRow = (object) $mailgunRow;
+        if (!$mailgunRow || empty($mailgunRow->api_key) || empty($mailgunRow->domain)) {
+            return false;
+        }
+
+        $mgApiKey   = trim($mailgunRow->api_key);
+        $mgDomain   = trim($mailgunRow->domain);
+        $mgEndpoint = "https://api.mailgun.net/v3/{$mgDomain}/messages";
+
+        // Prepare POST data
+        $apiData = [
+            'from'    => "email <{$mailgunRow->email_user}>",
+            'to'      => $to,
+            'subject' => $subject,
+            'html'    => $html_message
+        ];
+
+        if (!empty($cc)) { $apiData['cc'] = $cc; }
+        if (!empty($bcc)) { $apiData['bcc'] = $bcc; }
+
+        // cURL request
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $mgEndpoint);
+        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($ch, CURLOPT_USERPWD, "api:{$mgApiKey}");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $apiData);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode == 200) {
+            return true;
+        }
+        return false;
+    }
 }
