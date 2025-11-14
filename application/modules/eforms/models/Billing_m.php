@@ -6911,13 +6911,74 @@ class Billing_m extends CI_Model {
 
     public function remittance_records() {
         $resultarray = array();
+        $post = $this->input->post();
+        $current_date = date("Y-m-d");
+        $current_year = date('Y');
 
-        $this->db->select("r.id, r.ref_no, CONCAT(cashier.firstname, ' ', cashier.lastname) as cashier, r.deposit, r.variance, r.payment_collected, r.date_range_selected, r.date_from, r.date_to, r.deposit_date, r.remarks, CONCAT(depositor.firstname, ' ', depositor.lastname) as depositor, r.created_date");
+        $order_val = array(array("column"=>"1", "dir"=>"desc"));
+        $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
+        $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
+        $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+        $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+        $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
+
+        $filterFields = [
+            "c.firstname",
+            "c.middlename",
+            "c.lastname",
+            "CONCAT(TRIM(c.firstname), ' ', LEFT(TRIM(c.middlename), 1), '.', ' ', TRIM(c.lastname))",  
+            "CONCAT(TRIM(c.firstname), ' ', TRIM(c.lastname))",  
+            "CONCAT(TRIM(c.lastname), ' ', TRIM(c.firstname))",  
+            "CONCAT(TRIM(c.firstname), ' ', TRIM(c.middlename), ' ', TRIM(c.lastname))",  
+            "d.firstname",
+            "d.middlename",
+            "d.lastname",
+            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))",  
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))",  
+            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))",  
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))",  
+            "r.ref_no",
+            "r.deposit",
+            "r.payment_collected",
+            "r.variance",
+            "r.date_range_selected",
+        ];
+
+        $this->db->select("r.id, r.ref_no, CONCAT(c.firstname, ' ', c.lastname) as cashier, r.deposit, r.variance, r.payment_collected, r.date_range_selected, r.date_from, r.date_to, r.deposit_date, r.remarks, CONCAT(d.firstname, ' ', d.lastname) as depositor, r.created_date");
         $this->db->from("hydra_billing.remittance r");
-        $this->db->join("gccmaster.tblemployees cashier", "cashier.id = r.emp_id", "LEFT");
-        $this->db->join("gccmaster.tblemployees depositor", "depositor.id = r.created_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees c", "c.id = r.emp_id", "LEFT");
+        $this->db->join("gccmaster.tblemployees d", "d.id = r.created_by", "LEFT");
         $this->db->where("r.is_archive", 0);
         $this->db->order_by("r.id", "DESC");
+
+        $has_valid_date = !empty($post['startDate']) && !empty($post['endDate']) && $post['startDate'] != 'Invalid date' && $post['endDate'] != 'Invalid date';
+        $has_search = !empty($search);
+
+        if ($has_valid_date) {
+            $start_date = date('Y-m-d 00:00:00', strtotime($post['startDate']));
+            $end_date = date('Y-m-d 23:59:59', strtotime($post['endDate']));
+            $this->db->where("r.deposit_date >=", $start_date);
+            $this->db->where("r.deposit_date <=", $end_date);
+        } elseif (!$has_search) {
+            $this->db->where("YEAR(r.deposit_date)", $current_year); // Defaults to the current year
+        }
+
+        if ($has_search) {
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            $search = preg_replace('/[^a-zA-Z0-9\s\.,-]/', '', $search); // Remove special characters except for comma, dot & dashes
+
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        } else {
+            $this->db->where("YEAR(r.created_date)", $current_year);
+        }
 
         $query = $this->db->get();
 

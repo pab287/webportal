@@ -697,8 +697,14 @@ $('#modal_new_remittance').on('hidden.bs.modal', function () {
 
 // Remittance table
 // Datatable start    
+const initReadingStartDate = moment();
+const initReadingEndDate = moment();
+let selectedReadingStartDate = null;
+let selectedReadingEndDate = null;
+
+let search_val = "";
 const tbl_remittance = $('#tbl-remittance').DataTable({
-    dom: 't',
+    dom: 'tlip',
     destroy: true,
     serverSide: true,
     processing: true,
@@ -710,6 +716,15 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
         dataType: "json",
         data: function(d) {
             d.csrf_token = _csrf_hash;
+            d.search['value'] = search_val;
+
+            if (selectedReadingStartDate && selectedReadingEndDate) {
+                d.startDate = moment(selectedReadingStartDate).format("YYYY-MM-DD");
+                d.endDate = moment(selectedReadingEndDate).format("YYYY-MM-DD");
+            } else {
+                d.startDate = '';
+                d.endDate = '';
+            }
         },
         error: function (xhr, error, code) {
             console.log(error);
@@ -719,7 +734,7 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
         { data: "ref_no" },
         { 
             data: null, width: "15%", render: function(data, type, row) {
-                if (row.date_from === row.date_to) {
+                if (row.date_from === row.date_to) {+
                     return moment(row.date_from).format('MMM DD, YYYY');
                 } else {
                     return `${moment(row.date_from).format('MMM DD, YYYY')} - ${moment(row.date_to).format('MMM DD, YYYY')}`;
@@ -894,4 +909,33 @@ $(document).on('click', '#view_remit_modal', function() {
             console.log("XHR:", xhr.responseText);
         }
     });
+});
+
+$('#generalSearch').donetyping(function(callback) {
+    search_val = $(this).val();
+    tbl_remittance.ajax.reload();
+});
+
+$('#billing-date-picker').daterangepicker({
+    buttonClasses: 'm-btn btn',
+    applyClass: 'btn-primary',
+    cancelClass: 'btn-secondary',
+    startDate: initReadingStartDate,
+    endDate: initReadingEndDate,
+    format: "MMM. DD, YYYY"
+}, function (start, end, label) {
+    selectedReadingStartDate = start;
+    selectedReadingEndDate = end;
+
+    let _label = "<strong>" + start.format("MMM. DD, YYYY") + "</strong> to <strong>" + end.format("MMM. DD, YYYY") + "</strong>";
+
+    $(".selected-filter", $('#billing-date-picker')).html(_label);
+    tbl_remittance.ajax.reload();
+}).on('cancel.daterangepicker', function(ev, picker) {
+    $(".selected-filter", $('#billing-date-picker')).text('Date Filter');
+
+    selectedReadingStartDate = null;
+    selectedReadingEndDate = null;
+
+    tbl_remittance.ajax.reload();
 });

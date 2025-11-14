@@ -117,10 +117,17 @@
         </div>
 
         <div class="m-portlet__body">
-            <div class="row justify-content-between mb-4">
-                <div class="col-6 d-flex align-items-center">
-                    <button class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--pill btnNew text-white mr-4" id="new_remit_modal" data-toggle="modal" data-target="#modal_new_remittance">
+            <div class="row align-items-center justify-content-between mb-4">
+                <div class="col-8 d-flex align-items-center">
+                    <button class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--pill btnNew text-white mr-1" id="new_remit_modal" data-toggle="modal" data-target="#modal_new_remittance">
                         <span><i class="la la-plus"></i><span>New</span></span>
+                    </button>
+
+                    <button class="btn btn-brand m-btn m-btn--icon m-btn--pill mr-4" id="billing-date-picker">
+                        <span>
+                            <em class="fa fa-calendar"></em>
+                            <span class="selected-filter pl-3 pr-2 text-uppercase">Date Filter</span>
+                        </span>
                     </button>
 
                     <div class="r-widget mr-4">
@@ -136,6 +143,17 @@
 
                     <div class="alert alert-warning alert-dismissible fade show m-alert m-alert--air m-alert--outline m-alert--outline-2x mb-0">
                         <strong>Total Collection - Deposit = <span class="m-badge m-badge--warning m-badge--wide text-white">VARIANCE</span></strong>
+                    </div>
+                </div>
+
+                <div class="col-4">
+                    <div class="m-input-icon m-input-icon--left" style="border: 1px solid #c3c3c3;">
+                        <input type="text" class="form-control m-input m-input--solid" placeholder="Search..." id="generalSearch">
+                        <span class="m-input-icon__icon m-input-icon__icon--left">
+                            <span>
+                                <i class="la la-search"></i>
+                            </span>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -312,7 +330,7 @@
 			</div>
 
             <div id="remittance_details" class="modal-body">
-                <div class="remittance_details mb-4">
+                <div class="remittance_details">
                     <div class="row justify-content-between mb-3 mx-0">
                         <div class="col-3 info_block">
                             <p class="d-label">Reference No.</p>
