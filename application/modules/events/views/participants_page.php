@@ -65,11 +65,8 @@
             line-height: 50px; /* Match the height of the parent */
         }
 
-        .btn-xs {
-            padding: 0.15rem 0.3rem;
-            font-size: 0.65rem;
-            line-height: 1;
-            border-radius: 0.2rem;
+        #portlet_body {
+            transition: height 0.3s ease;
         }
 </style>
 <div class="row" id="events-content">
@@ -247,25 +244,18 @@
                                             <div class="m-portlet__head-tools">
                                                 <ul class="m-portlet__nav">
                                                     <li class="m-portlet__nav-item">
-                                                        <a href="javascript:void(0);"  data-portlet-tool="toggle" class="m-portlet__nav-link m-portlet__nav-link--icon">
-                                                            <i class="la la-angle-down"></i>
+                                                        <a id="toggle_schedule" href="javascript:void(0);" style="text-decoration: none !important;">
+                                                            <i id="toggle_schedule_icon" class="la la-plus"></i>
                                                         </a>
                                                     </li>
                                                 </ul>
                                             </div>
                                         </div>
-                                        <div class="m-portlet__body">
+                                        <div class="m-portlet__body" id="portlet_body" >
                                             <div class="row">
                                                 <div class="col-12">
                                                     <form  id="new_event_sched" onsubmit="return false;" onkeydown="return event.key !== 'Enter';">
                                                         <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-                                                        <div class="row">
-                                                            <div class="col-2">
-                                                                <button type="submit" class="btn m-btn m-btn--sm btn-success mb-2 btnNew">
-                                                                    ADD SCHEDULE
-                                                                </button>
-                                                            </div>
-                                                        </div>
                                                         <div class="row">
                                                             <div class="col-12">
                                                                 <div class="form-group m-form__group">
@@ -319,6 +309,13 @@
                                                                         <input id="schedule_end" name="end" type="text" class="form-control m-input" data-validation="required" readonly>
                                                                     </div>
                                                                 </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-2 ml-auto">
+                                                                <button type="submit" class="btn m-btn m-btn--sm btn-success mb-2 btnNew">
+                                                                    ADD SCHEDULE
+                                                                </button>
                                                             </div>
                                                         </div>
                                                     </form>

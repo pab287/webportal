@@ -1214,6 +1214,11 @@ expandedButtons.each(function (i, el) {
     $(el).css('transform', 'rotate(90deg)');
 })
 
+$('#toggle_schedule').on('click', function() {
+    $('#toggle_schedule_icon').toggleClass('la-plus la-minus');
+    $('#m_portlet_schedule').toggleClass('m-portlet--collapsed');
+});
+
 $('.accordion').on('hide.bs.collapse', function (e) {
     const el = $(e.target)
         .prev('.accordion-header')
@@ -1233,6 +1238,7 @@ $('#fileupload').on('change', function(e) {
 });
 
 function handleFiles(fileList) {
+    eventVue.uploadedFiles = [];
     $.each(fileList, function(index, file) {
         if (validateFile(file)) {
             addFile(file);
