@@ -911,6 +911,12 @@ class Core_model extends CI_Model{
     
                             $msgError = $failOverSender->print_debugger(['headers']);
                             $coreLogs->logNotification("Mailgun attempt #{$mgAttempt} failed:\n{$msgError}", "warning");
+
+                            if (strpos($msgError, 'AUTH LOGIN') !== false) {
+                                $coreLogs->logNotification("SMTP Authentication failed: AUTH LOGIN error detected.", "error");
+                                break;
+                            }
+
                             sleep(5);
                         }
                     }
@@ -1531,7 +1537,7 @@ class Core_model extends CI_Model{
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        
+
         if ($httpCode == 200) {
             return true;
         }
