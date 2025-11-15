@@ -734,7 +734,7 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
         { data: "ref_no" },
         { 
             data: null, width: "15%", render: function(data, type, row) {
-                if (row.date_from === row.date_to) {+
+                if (row.date_from === row.date_to) {
                     return moment(row.date_from).format('MMM DD, YYYY');
                 } else {
                     return `${moment(row.date_from).format('MMM DD, YYYY')} - ${moment(row.date_to).format('MMM DD, YYYY')}`;
