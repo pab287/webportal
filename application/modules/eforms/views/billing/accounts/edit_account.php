@@ -1,7 +1,6 @@
 <div class="m-content">
     <div class="row">
         <div class="col-lg-12">
-            <!--begin::Portlet-->
             <div class="m-portlet m-portlet--mobile">
                 <div class="m-portlet__head">
                     <div class="m-portlet__head-caption">
@@ -15,14 +14,16 @@
                             <h3 class="m-portlet__head-text">Edit Account</h3>
                         </div>
                     </div>
+
                     <div class="m-portlet__head-tools">
                         
                     </div>
                 </div>
-                <!--begin::Form-->
+
                 <form class="m-form m-form--fit" id="formEditAccount" method="POST" action="<?php echo site_url('eforms/billing/updateaccount');?>">
                     <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                     <input type="hidden" name="id" value="">
+
                     <div class="m-portlet__body">
                         <div class="m-form m-form--label-align-right m--margin-top-10 m--margin-bottom-10">
                                 <div class="m-form__heading">
@@ -270,8 +271,7 @@
                         </div>
                     </div>
                 </form>
-                <!--end::Form-->
-            <!--end::Portlet-->
+            </div>
         </div>
     </div>
 </div>
@@ -280,28 +280,23 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <input type="hidden" name="id" value="">
+
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">
-                    Account Notification!
-                </h5>
+                <h5 class="modal-title" id="exampleModalLabel">Account Notification!</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">
-                        ×
-                    </span>
+                    <span aria-hidden="true">×</span>
                 </button>
             </div>
+
             <div class="modal-body">
                 <div class="alert alert-danger alert-dismissible fade show m-alert m-alert--square m-alert--air" role="alert">
                     Are you sure to archive this account?
                 </div>
             </div>
+
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger btnArchive" id="btnConfirmArchive">
-                    Archive
-                </button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    Cancel
-                </button>
+                <button type="button" class="btn btn-danger btnArchive" id="btnConfirmArchive">Archive</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
             </div>
         </div>
     </div>
@@ -311,25 +306,17 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">
-                    Water Connection
-                </h5>
+                <h5 class="modal-title">Water Connection</h5>
                 <button type="button" class="close btnWaterConnection_cancel" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">
-                        ×
-                    </span>
+                    <span aria-hidden="true">×</span>
                 </button>
             </div>
-            <div class="modal-body body_title">
-                Are you sure to archive this account?
-            </div>
+
+            <div class="modal-body body_title">Are you sure to archive this account?</div>
+
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary btnArchive btnWaterConnection" id="btnWaterConnection">
-                    Yes
-                </button>
-                <button type="button" class="btn btn-secondary btnWaterConnection_cancel" data-dismiss="modal" id="btnWaterConnection_cancel">
-                    No
-                </button>
+                <button type="button" class="btn btn-primary btnArchive btnWaterConnection" id="btnWaterConnection">Yes</button>
+                <button type="button" class="btn btn-secondary btnWaterConnection_cancel" data-dismiss="modal" id="btnWaterConnection_cancel">No</button>
             </div>
         </div>
     </div>
