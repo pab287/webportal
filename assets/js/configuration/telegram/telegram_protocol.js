@@ -127,6 +127,7 @@ $(function() {
         dom: '<"toolbar">frtlip',
         serverSide: true,
         processing: true,
+        rowId: 'id',
         ajax: {
             url: baseUrl("configuration/telegram_protocol_datatable_request"),
             type: "post",
@@ -225,11 +226,14 @@ $(function() {
                         $.each(tempActions, function(ii, vv){
                             switch(vv){
                                 case "edit":
-                                tempHtml += `<a class="dropdown-item btnEdit" data-toggle='modal' data-target='#edit_modal' href="javascript:void(0);" onclick='edit_protocol(`+row.id+`)'><i class="la la-edit"></i> Edit</a>`;
-                                break;
+                                    tempHtml += `<a class="dropdown-item btnEdit" href="javascript:void(0);" onclick='test_protocol(`+row.id+`)'><i class="la la-envelope"></i> Test</a>`;
+                                    break;
+                                case "edit":
+                                    tempHtml += `<a class="dropdown-item btnEdit" data-toggle='modal' data-target='#edit_modal' href="javascript:void(0);" onclick='edit_protocol(`+row.id+`)'><i class="la la-edit"></i> Edit</a>`;
+                                    break;
                                 case "delete":
-                                tempHtml += `<a class="dropdown-item btnArchive" data-toggle='modal' data-target='#delete_modal' href="javascript:void(0);" onclick='delete_telegram_bot(`+row.id+`)'><i class="la la-trash"></i> Remove</a>`;
-                                break;
+                                    tempHtml += `<a class="dropdown-item btnArchive" data-toggle='modal' data-target='#delete_modal' href="javascript:void(0);" onclick='delete_telegram_bot(`+row.id+`)'><i class="la la-trash"></i> Remove</a>`;
+                                    break;
                                 case "connect":
                                     var tempLabel = "Deactivate";
                                     var tempIconClass = "la la-unlink";
@@ -289,6 +293,31 @@ var edit_protocol = function (id) {
             success: function (json) {
                 vmEditModal.row = Object.assign({}, json.response);
                 initializeSelect2Elements(vmEditModal.row);
+            }
+        });
+    } else {
+        return false;
+    }
+};
+
+var test_protocol = function (id) {
+    let rowData = dtTableProtocol.row('#' + id).data();
+    if (id) {
+        $.ajax({
+            url: siteUrl("configuration/test_telegram_protocol"),
+            type: "POST",
+            data: {
+                csrf_token: _csrf_hash,
+                bot_token: rowData.telegram_bot_token,
+            },
+            dataType: "json",
+            success: function (json) {
+                console.log(json);
+                if (json.response) {
+                    toastr.success(json.message,"SUCCESS", 5000);
+                }else{
+                    toastr.error(json.message,"ERROR", 5000);
+                }
             }
         });
     } else {

@@ -320,5 +320,60 @@ class Telegram_bot_config extends CI_Model{
 		return $changesString;
 	}
 
+    public function testTelegramProtocol(){
+        $result = array(
+            "response" => false,
+            "user" => "user",
+            "success" => "error",
+            "message" => "Test error",
+        );
+        
+        $post = $this->input->post();
+        $bot_token = $post['bot_token'];
+        $emp_id = $this->user_data['emp_id'];
+        
+        $user = $this->db->select('telegram_chat_id')->where('emp_id', $emp_id)->get('gccmaster.tblusers')->row();
+        
+        if(!$user || !$user->telegram_chat_id){
+            $result['message'] = "Your user does not have a Telegram Chat ID configured.";
+            return $result;
+        }
+        
+        $telegram_chat_id = $user->telegram_chat_id;
+        $message = "Test message from your system.";
+        $url = "https://api.telegram.org/bot{$bot_token}/sendMessage";
+    
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+            'chat_id' => $telegram_chat_id,
+            'text'    => $message,
+        ]));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    
+        $response = curl_exec($ch);
+        $curl_error = curl_error($ch);
+        curl_close($ch);
+    
+        if($curl_error){
+            $result['message'] = "cURL Error: " . $curl_error;
+            return $result;
+        }
+    
+        $telegram_response = json_decode($response, true);
+        
+        if($telegram_response && $telegram_response['ok'] == true){
+            $result['response'] = true;
+            $result['success'] = "success";
+            $result['message'] = "Test message sent successfully to Telegram.";
+        } else {
+            $error_msg = isset($telegram_response['description']) ? $telegram_response['description'] : "Unknown error from Telegram API";
+            $result['message'] = "Telegram API Error: " . $error_msg;
+        }
+    
+        return $result;
+    }
+
     
 }
