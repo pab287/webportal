@@ -50,7 +50,7 @@ const changeEmployeeCompanyDialog = $("#change-employee-company-dialog");
 const classificationDropdown = $('select[name="employee_status"]');
 const status = $('select[name="work_status"]');
 let dtWorkExperience = null;
-
+let currentResignDate = "";
 loadEmployees();
 let selectedTable="";
 let _user = [];
@@ -527,7 +527,7 @@ if (typeof _tempContentData !== "undefined") {
         data: { vm_tab3: tempData, multiple_position: [] },
         mounted: function () {
             var vmData = this.vm_tab3;
-
+            currentResignDate = JSON.stringify(vmData.resignation_effective_date);
             const employee_status = vmData.employee_status ? vmData.employee_status.toLowerCase() : "";
             const work_status = vmData.work_status ? vmData.work_status.toLowerCase() : "";
             const activateRehireStatuses = ["inactive", "resign",
@@ -4832,11 +4832,37 @@ var validatePersonalEmployeeData = function () {
         form: "#frmEditEmploymentData",
         lang: "en",
         onSuccess: function (form) {
+
             var currentForm = form[0];
             var formUrl = currentForm.action;
             var formData = $(currentForm).serialize();
 
             const isMultiple = $("#is_multiple_position").is(":checked");
+            let formDataObj = {};
+            $(currentForm).serializeArray().forEach(function (item) {
+                formDataObj[item.name] = item.value;
+            });
+            let oldDate = (currentResignDate && currentResignDate !== "null") ? currentResignDate : "";
+            let newDate = formDataObj.resignation_effective_date ?? ""
+            console.log("OLD:",oldDate, "new:",newDate);
+            if (oldDate != newDate) {
+                const table = $("#tbl-loans").DataTable();
+            
+                const loans = table.data().toArray().filter(row => row.active === "1")         
+                    .filter(row => {
+                        const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
+                        return balance !== 0;
+                    })
+                    .map(row => {
+                        const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
+                        return {
+                            ...row,
+                            balance: balance
+                        };
+                    });
+            
+                console.log(loans);
+            }
 
             if (isMultiple && vmPrimary.positions.length > 0 && !vmPrimary.isSortOnly) {
                 $("#set_primary_position").modal('show');
