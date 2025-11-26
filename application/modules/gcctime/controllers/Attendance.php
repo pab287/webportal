@@ -1551,8 +1551,129 @@
 
         }
 
-        function generate_attendance_record(){
-            
+        public function generate_attendance_record(){
+            $this->core_layout->setPrivilegeName("gcctime_attendance");
+
+            $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
+            $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
+            $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
+            $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
+
+            $arrData = array();
+            $this->load->view('core/templates/header');
+            $this->load->view('attendance/generate_attendance_record', $arrData);
+            $this->load->view('core/templates/footer');
+        }
+
+        public function generate_attendance_logs(){
+            $resultset = array();
+            $post = $this->input->post();
+
+            if (isset($_FILES['files']) && $_FILES['files']['error'] === UPLOAD_ERR_OK) {
+            $filename = $_FILES['files']['tmp_name'];
+
+            if (($handle = fopen($filename, "r")) !== false) {
+                while (($line = fgets($handle)) !== false) {
+                    // Process each line of the file
+                    $line = trim($line, "\" \n\r\t");
+                    if(empty($line)){ continue; }
+
+                    $parts = explode(',', $line);
+                    if (!isset($parts[0]) || !is_numeric($parts[0])){ continue; }
+                    if (!isset($parts[2]) || !preg_match('/^\d{4}\/\d{2}\/\d{2}/', $parts[2])){ continue; }
+                    $datePart = date('Y-m-d', strtotime($parts[2]));
+                    if (!isset($dateIndex[$datePart])) {
+                        $dateIndex[$datePart] = [];
+                    }
+                    $dateIndex[$datePart][] = $parts;
+                }
+                fclose($handle);
+            }
+
+            $results = $dateIndex[$searchDate] ?? [];
+            // Optional: process results in batches
+            $batches = array_chunk($results, $batchSize);
+            foreach ($batches as $batch) {
+                foreach ($batch as $row) {
+                    $filtered[] = $row;
+                }
+            }
+
+            $resultset["response"] = true;
+            $resultset["message"] = "Success";
+            $resultset["file"] = $filtered;
+
+            var_dump($resultset);
+        } else {
+            echo "File upload error.";
+        }
+    die();
+            if (isset($_FILES['files']['name']) && $_FILES['files']['name'] != '') {
+                $fileName = $_FILES['files']['name'];
+                $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
+                if(strtolower($fileExt) !== 'dat') {
+                    $resultset["response"] = false;
+                    $resultset["message"] = "Invalid File Format";
+                }else{
+                    $searchDate = '2025-11-11';
+                    $filename = $_FILES['files']['tmp_name'];
+                    $batchSize  = 500;
+                    $filtered = [];
+
+                    if($handle = fopen($filename, "r") !== false) {
+                        var_dump($handle, fgets($handle));
+                        while (($line = fgets($handle)) !== false) {
+                            $line = trim($line, "\" \n\r\t");
+                            if(empty($line)){ continue; }
+
+                            $parts = explode(',', $line);
+                            if (!isset($parts[0]) || !is_numeric($parts[0])){ continue; }
+                            if (!isset($parts[2]) || !preg_match('/^\d{4}\/\d{2}\/\d{2}/', $parts[2])){ continue; }
+                            $datePart = date('Y-m-d', strtotime($parts[2]));
+                            if (!isset($dateIndex[$datePart])) {
+                                $dateIndex[$datePart] = [];
+                            }
+                            $dateIndex[$datePart][] = $parts;
+                        }
+                        fclose($handle);
+                    }
+
+                    $results = $dateIndex[$searchDate] ?? [];
+                    // Optional: process results in batches
+                    $batches = array_chunk($results, $batchSize);
+                    foreach ($batches as $batch) {
+                        foreach ($batch as $row) {
+                            $filtered[] = $row;
+                        }
+                    }
+
+                    $resultset["response"] = true;
+                    $resultset["message"] = "Success";
+                    $resultset["file"] = $filtered;
+
+                    /*** $content = file_get_contents($_FILES['files']['tmp_name']);
+                    $data = explode("\n", trim($content));
+                    
+                     $filtered = [];
+                    foreach ($data as $line) {
+                        $line = trim($line, "\" \n\r\t");
+                        $parts = explode(',', $line);
+                        if (!is_numeric($parts[0])) {
+                            continue;
+                        }
+                        if (isset($parts[2]) && preg_match('/^\d{4}\/\d{2}\/\d{2}/', $parts[2])) {
+                            $tempRecord = [$parts[0], $parts[2]];
+                            $filtered[] = $tempRecord; 
+                        }
+                    }
+
+                    $resultset["response"] = true;
+                    $resultset["message"] = "Success";
+                    $resultset["file"] = $filtered; ***/
+                }
+            }
+
+            echo json_encode($resultset);
         }
 
         function geneate_attendance_log_file(){
