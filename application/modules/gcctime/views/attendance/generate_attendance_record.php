@@ -1,3 +1,6 @@
+<style>
+tr.bg-danger.text-white td { font-weight: 500; }
+</style>
 <div class="m-content">
 	<!--Begin::Main Portlet-->
 	<div class="row">
@@ -22,16 +25,41 @@
 				<div class="m-portlet__body">
                     <div class="row">
                         <div class="col-md-12">
+                            <div id="statusFilter" class="mb-2 m-animate-fade-in" v-if="count > 0">
+                                <div class="m-form__group form-group row">
+                                    <label for="" class="col-2 col-form-label">
+                                        Attendance Status
+                                    </label>
+                                    <div class="col-10">
+                                        <div class="m-radio-inline">
+                                            <label class="m-radio">
+                                                <input type="radio" value="all" v-model="status">
+                                                All
+                                                <span></span>
+                                            </label>
+                                            <label class="m-radio">
+                                                <input type="radio" value="true" v-model="status">
+                                                <label for="" class="m--font-success">LATE</label>
+                                                <span></span>
+                                            </label>
+                                            <label class="m-radio">
+                                                <input type="radio" value="false" v-model="status">
+                                                <label for="" class="m--font-danger">ON TIME</label>
+                                                <span></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="table-responsive">
                                 <table class="table table-striped table-bordered table-hover" id="tbl_attendance_record">
                                     <colgroup>
-                                        <col width="8%">
-                                        <col width="25%">
-                                        <col width="15%">
-                                        <col width="25%">
-                                        <col width="12%">
-                                        <col width="12%">
-                                        <col width="8%">
+                                        <col style="width: 8%"></col>
+                                        <col></col>
+                                        <col style="width: 15%"></col>
+                                        <col style="width: 25%"></col>
+                                        <col style="width: 12%"></col>
+                                        <col style="width: 12%"></col>
                                     </colgroup>
                                     <thead>
                                         <tr>
@@ -41,7 +69,6 @@
                                             <th>Department</th>
                                             <th>Shift Schedule</th>
                                             <th>Logged Time</th>
-                                            <th>Late</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -88,9 +115,44 @@
 </div>
 
 <script>
+    const vmFilter = new Vue({
+        el: "#statusFilter",
+        data: { status: "all", count: 0 },
+        watch: {
+            status() {
+                mapBlockUI();
+                setTimeout(()=>{ 
+                    dtTable.draw();
+                    mapUnblockUI();
+                }, 100);
+            }
+        }
+    });
+
     const dtTable = $('#tbl_attendance_record').DataTable({
-        searching: false,
+        dom: '<"row"<"lateNotification col-sm-12 col-md-8 col-lg-8"><"col-sm-12 col-md-4 col-lg-4"<"dt-buttons--custom btn-group float-right ml-2 m--hide"B>f>>rtlip',
+        destroy: true,
+        serverSide: false,
+        processing: false,
+        autoWidth: false,
         ordering: false,
+        buttons: [{ extend: 'excelHtml5',
+            text: 'Export Excel',
+            title: 'Generated Attendance Log Record',
+            exportOptions: { columns: [0,1,2,3,4,5] },
+            action: function (e, dt, button, config) {
+                // perform the default Excel export
+                $.fn.dataTable.ext.buttons.excelHtml5.action.call(this, e, dt, button, config);
+                Swal.fire({
+                    icon: 'success',
+                    type: 'success',
+                    title: 'Excel file has been exported successfully.',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            }
+        }],
         columns: [
             { data: "biometricno" },
             { data: "employee_name" },
@@ -98,8 +160,21 @@
             { data: "department" },
             { data: "shift_start" },
             { data: "log_time" },
-            { data: "is_late" },
-        ]
+            { data: "is_late", visible: false }
+        ], createdRow: function (row, data) {
+            const { is_late } = data;
+            console.log(is_late);
+            if(is_late){ $(row).addClass('bg-danger text-white'); }
+        }, initComplete: function () {
+            $("#tbl_attendance_record_filter input[type='search']").removeClass("form-control-sm");
+        }
+    });
+
+    $.fn.dataTable.ext.search.push(function(_settings, data, _dataIndex) {
+        const filter = vmFilter.status;
+        const isLate = data[6];
+        if (filter === "all") return true;
+        return isLate === filter;
     });
 
     $.validate({
@@ -116,14 +191,25 @@
                 processData: false,
                 beforeSend: function () {
                     $(".btnAdvance_search").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    vmFilter.count = 0;
                 },
                 success: function (json) {
                     $(".btnAdvance_search").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    vmFilter.count = json.late_ctr;
                     if (json.response) {
+                        $("#m_generate_attendance_modal").modal("hide");
+                        $(".dt-buttons--custom").hasClass("m--hide") ? $(".dt-buttons--custom").removeClass("m--hide") : "";
+                        vmFilter.status = "all";
                         toastr.success(json.message);
+                        if(json.logs.length > 0){
+                            const tempHtml = json.late_ctr > 0 ? `A total of <b>${json.late_ctr}</b> late attendance record(s) detected.`
+                                : `A total of <b>${json.data.length}</b> attendance record(s) found.`;
+                            $(".lateNotification").html(tempHtml).addClass("text-uppercase m-animate-fade-in");
+                        }
                         dtTable.clear();
                         dtTable.rows.add(json.logs).draw(false);
                     } else {
+                        $(".dt-buttons--custom").hasClass("m--hide") ? "" : $(".dt-buttons--custom").addClass("m--hide");
                         toastr.error(json.message);
                     }
                 }

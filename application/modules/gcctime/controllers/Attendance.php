@@ -1559,6 +1559,18 @@
             $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
             $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
 
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+            
+            $this->core_layout->addJs("js/dataTables.buttons.min.js", true);
+            $this->core_layout->addJs("js/buttons.flash.min.js", true);
+            $this->core_layout->addJs("js/jszip.min.js", true);
+            $this->core_layout->addJs("js/pdfmake.min.js", true);
+            $this->core_layout->addJs("js/vfs_fonts.js", true);
+            $this->core_layout->addJs("js/buttons.html5.min.js", true);
+            $this->core_layout->addJs("js/buttons.print.min.js", true);
+            $this->core_layout->addCss("css/buttons.dataTables.min.css", true);
+
             $arrData = array();
             $this->load->view('core/templates/header');
             $this->load->view('attendance/generate_attendance_record', $arrData);
@@ -1568,10 +1580,9 @@
         public function generate_attendance_logs($alteredDate = null){
             $this->load->model("timesheet_model", "ts_model");
             $resultset = [];
-            $alteredDate = $alteredDate ?? "2025-11-11";
+            //$alteredDate = $alteredDate ?? "2025-10-10";
             $alteredDate = $alteredDate ?? date("Y-m-d");
             $searchDate = $alteredDate;
-            $weekday = date("l", strtotime($alteredDate));
 
             if (!isset($_FILES['files']['name']) || $_FILES['files']['name'] == '') {
                 $resultset["response"] = false;
@@ -1591,24 +1602,33 @@
 
             $filename = $_FILES['files']['tmp_name'];
             $dateIndex = [];
+            $dates = [];
+
             if (($handle = fopen($filename, "r")) !== false) {
                 while (($line = fgets($handle)) !== false) {
                     $line = trim($line, "\" \n\r\t");
                     if (empty($line)){ continue; }
                     $parts = explode(',', $line);
+                    if(!empty($parts) && count($parts) > 1){
+                        $empId = $parts[0];
+                        $timestamp = $parts[2];
+                        $datePart = date('Y-m-d', strtotime($timestamp));
+                        $dateIndex[$datePart][] = [$empId, $timestamp];
+                        if(!in_array($datePart, $dates)){
+                            $dates[] = $datePart;
+                        }
+                    } elseif(!empty($parts) && count($parts) == 1){
+                        $nextLine = trim($parts[0], "\" \n\r\t");
+                        $nextParts = explode("\t", $nextLine);
 
-                    // Skip header or malformed rows
-                    if (!isset($parts[0]) || !is_numeric($parts[0])) { continue; }
-                    if (!isset($parts[2]) || !preg_match('/^\d{4}\/\d{2}\/\d{2}/', $parts[2])){ continue; }
-
-                    $empId = $parts[0];
-                    $timestamp = $parts[2];
-
-                    // Convert to Y-m-d for fast comparison
-                    $datePart = date('Y-m-d', strtotime($timestamp));
-
-                    // Index logs by date
-                    $dateIndex[$datePart][] = [$empId, $timestamp];
+                        $empId = $nextParts[0];
+                        $timestamp = $nextParts[1];
+                        $datePart = date('Y-m-d', strtotime($timestamp));
+                        $dateIndex[$datePart][] = [$empId, $timestamp];
+                        if(!in_array($datePart, $dates)){
+                            $dates[] = $datePart;
+                        }
+                    }
                 }
 
                 fclose($handle);
@@ -1633,6 +1653,7 @@
             }
 
             $rawData = [];
+            $isLateCtr = 0;
             if(!empty($structured)){
                 $searchDate = date("Y-m-d", strtotime($searchDate));
                 foreach ($structured as $bionum => $logs) {
@@ -1674,9 +1695,11 @@
                             $attRecord->is_late = false;
                             if($rowData->is_flexi == 0 || $rowData->is_flexi == 2){
                                 $attRecord->is_late = strtotime($logtime) > strtotime($shiftScheduleTime);
+                                if($attRecord->is_late){ $isLateCtr++; }
                             } elseif ($rowData->is_flexi == 1 || $rowData->is_flexi == 3){
                                 $plus30 = date("Y-m-d H:i:s", strtotime("+30 minutes", strtotime($shiftScheduleTime)));
                                 $attRecord->is_late = strtotime($logtime) > strtotime($plus30);
+                                if($attRecord->is_late){ $isLateCtr++; }
                             }
                             $rawData[] = $attRecord;
                         }
@@ -1685,15 +1708,21 @@
                 }
             }
 
-            //$data = json_decode($rawData, true);
             usort($rawData, function($a, $b) {
                 return strcasecmp($a->employee_name, $b->employee_name);
             });
 
-            // Final response
-            $resultset["response"] = true;
-            $resultset["message"] = "Success";
+            $resultset["dates"] = $dates;
             $resultset["logs"] = $rawData;
+            $resultset["count"] = count($rawData);
+            $resultset["late_ctr"] = $isLateCtr;
+            if(!empty($rawData)){
+                $resultset["response"] = true;
+                $resultset["message"] = "Success";
+            }else{
+                $resultset["response"] = false;
+                $resultset["message"] = "No logs found";
+            }
 
             echo json_encode($resultset);
         }
