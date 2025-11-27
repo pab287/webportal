@@ -40,18 +40,6 @@
                     <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                     <div class="row">
                         <div class="col-md-12">
-                            <div class="form-group">
-                                <label for="name">Select Date Range</label>
-                                <div class="input-group" id="date-picker">
-                                    <input type="text" class="form-control m-input" readonly="" placeholder=""
-                                            name="date-range" id="date-range" data-validation="required">
-                                    <span class="input-group-addon">
-                                        <i class="la la-calendar-check-o"></i>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-12">
                             <div class="form-group m-form__group">
                                 <label for="">File to Upload</label>
                                 <div>
@@ -72,28 +60,11 @@
 </div>
 
 <script>
-    const defaultDate = moment();
-    const datePicker = $('#date-picker');
-    datePicker.daterangepicker({
-        buttonClasses: 'm-btn btn',
-        applyClass: 'btn-primary',
-        cancelClass: 'btn-secondary',
-        endDate: defaultDate,
-        maxDate: defaultDate,
-        /*startDate: defaultDate,
-        endDate: defaultDate*/
-    }, function (start, end, label) {
-        $('#cut-offs').val(null).trigger('change');
-        $('.form-control', datePicker).val(start.format('MMM DD, YYYY') + ' / ' + end.format('MMM DD, YYYY'));
-    });
-
     $.validate({
         form: '#frmGenerateAttendance',
         lang: 'en',
         onSuccess: function (form) {
             const formData = new FormData(form[0]);
-            console.log(formData);
-
             $.ajax({
                 url: form[0].action,
                 type: "POST",
@@ -104,13 +75,12 @@
                 beforeSend: function () {
                     $(".btnAdvance_search").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
                 },
-                success: function (data) {
+                success: function (json) {
                     $(".btnAdvance_search").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                    var result = $.parseJSON(data);
-                    if (result.status) {
-                        toastr.success(result.message);
+                    if (json.response) {
+                        toastr.success(json.message);
                     } else {
-                        toastr.error(result.message);
+                        toastr.error(json.message);
                     }
                 }
             })

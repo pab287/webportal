@@ -1565,49 +1565,139 @@
             $this->load->view('core/templates/footer');
         }
 
-        public function generate_attendance_logs(){
-            $resultset = array();
-            $post = $this->input->post();
+        public function generate_attendance_logs($alteredDate = null){
+            $this->load->model("timesheet_model", "ts_model");
+            $resultset = [];
+            $alteredDate = $alteredDate ?? "2025-11-11";
+            $alteredDate = $alteredDate ?? date("Y-m-d");
+            $searchDate = $alteredDate;
+            $weekday = date("l", strtotime($alteredDate));
 
-            if (isset($_FILES['files']) && $_FILES['files']['error'] === UPLOAD_ERR_OK) {
+            if (!isset($_FILES['files']['name']) || $_FILES['files']['name'] == '') {
+                $resultset["response"] = false;
+                $resultset["message"] = "No file uploaded.";
+                echo json_encode($resultset);
+                return;
+            }
+
+            // Validate file extension
+            $fileExt = strtolower(pathinfo($_FILES['files']['name'], PATHINFO_EXTENSION));
+            if ($fileExt !== 'dat') {
+                $resultset["response"] = false;
+                $resultset["message"] = "Invalid File Format";
+                echo json_encode($resultset);
+                return;
+            }
+
             $filename = $_FILES['files']['tmp_name'];
-
+            $dateIndex = [];
             if (($handle = fopen($filename, "r")) !== false) {
                 while (($line = fgets($handle)) !== false) {
-                    // Process each line of the file
                     $line = trim($line, "\" \n\r\t");
-                    if(empty($line)){ continue; }
-
+                    if (empty($line)){ continue; }
                     $parts = explode(',', $line);
-                    if (!isset($parts[0]) || !is_numeric($parts[0])){ continue; }
+
+                    // Skip header or malformed rows
+                    if (!isset($parts[0]) || !is_numeric($parts[0])) { continue; }
                     if (!isset($parts[2]) || !preg_match('/^\d{4}\/\d{2}\/\d{2}/', $parts[2])){ continue; }
-                    $datePart = date('Y-m-d', strtotime($parts[2]));
-                    if (!isset($dateIndex[$datePart])) {
-                        $dateIndex[$datePart] = [];
-                    }
-                    $dateIndex[$datePart][] = $parts;
+
+                    $empId = $parts[0];
+                    $timestamp = $parts[2];
+
+                    // Convert to Y-m-d for fast comparison
+                    $datePart = date('Y-m-d', strtotime($timestamp));
+
+                    // Index logs by date
+                    $dateIndex[$datePart][] = [$empId, $timestamp];
                 }
+
                 fclose($handle);
             }
 
-            $results = $dateIndex[$searchDate] ?? [];
-            // Optional: process results in batches
-            $batches = array_chunk($results, $batchSize);
-            foreach ($batches as $batch) {
-                foreach ($batch as $row) {
-                    $filtered[] = $row;
+            // Logs found for selected date
+            $dailyLogs = $dateIndex[$searchDate] ?? [];
+
+            // Build structured logs
+            $structured = [];
+            foreach ($dailyLogs as $row) {
+                [$empId, $ts] = $row;
+                if (!isset($structured[$empId])) { $structured[$empId] = []; }
+                // If last entry for employee has only 1 timestamp → append as OUT
+                $lastIndex = count($structured[$empId]) - 1;
+                if ($lastIndex >= 0 && count($structured[$empId][$lastIndex]) === 1) {
+                    $structured[$empId][$lastIndex][] = $ts;
+                } else {
+                    // Create new IN (or standalone) record
+                    $structured[$empId][] = [$ts];
                 }
             }
 
+            $rawData = [];
+            if(!empty($structured)){
+                $searchDate = date("Y-m-d", strtotime($searchDate));
+                foreach ($structured as $bionum => $logs) {
+                    if(isset($logs[0]) && !empty($logs[0])){
+                        $firstShiftLogs = $logs[0];
+                        $this->db->select("UCASE(
+                            TRIM(
+                                CONCAT(
+                                    emp.firstname,
+                                    IF(emp.middlename IS NOT NULL AND emp.middlename != '', CONCAT(' ', LEFT(emp.middlename,1), '.'), ''),
+                                    ' ',
+                                    emp.lastname,
+                                    IF(emp.suffix IS NOT NULL AND emp.suffix != '' AND emp.suffix NOT IN ('N/A','NONE'),
+                                    CONCAT(' ', emp.suffix),
+                                    ''
+                                    )
+                                )
+                            )
+                        ) AS employee_name, UPPER(comp.code) as company, UPPER(dept.code) as department, pn.shift_id, pn.is_flexi, emp.id");
+                        $this->db->from("gccmaster.tblemployees as emp");
+                        $this->db->join("gcchris.tblcompanies as comp", "comp.id = emp.company_id", "LEFT");
+                        $this->db->join("gcchris.tbldepartments as dept", "dept.id = emp.department_id", "LEFT");
+                        $this->db->join("gcctimeutility.personnel as pn", "pn.biometric_id = emp.biometricno OR pn.biometricno = emp.biometricno", "left");
+                        $this->db->where("emp.biometricno", $bionum);
+                        $qData = $this->db->get();
+                        if($qData->num_rows() == 1){
+                            $rowData = $qData->row();
+                            $schedule = $this->ts_model->getCurrentShiftSchedule($searchDate, $rowData);
+                            $shiftScheduleTime = date("Y-m-d H:i:s", strtotime($searchDate . " ". $schedule->schedule->am_start));
+                            $logtime = date("Y-m-d H:i:s", strtotime($firstShiftLogs[0]));
+
+                            $attRecord = new stdClass();
+                            $attRecord->biometricno = $bionum;
+                            $attRecord->employee_name = $rowData->employee_name;
+                            $attRecord->company = $rowData->company;
+                            $attRecord->department = $rowData->department;
+                            $attRecord->log_time = $logtime;
+                            $attRecord->shift_start = $shiftScheduleTime;
+                            $attRecord->is_late = false;
+                            if($rowData->is_flexi == 0 || $rowData->is_flexi == 2){
+                                $attRecord->is_late = strtotime($logtime) > strtotime($shiftScheduleTime);
+                            } elseif ($rowData->is_flexi == 1 || $rowData->is_flexi == 3){
+                                $plus30 = date("Y-m-d H:i:s", strtotime("+30 minutes", strtotime($shiftScheduleTime)));
+                                $attRecord->is_late = strtotime($logtime) > strtotime($plus30);
+                            }
+                            $rawData[] = $attRecord;
+                        }
+                        
+                    }
+                }
+            }
+
+            // Final response
             $resultset["response"] = true;
             $resultset["message"] = "Success";
-            $resultset["file"] = $filtered;
+            $resultset["logs"] = $rawData;
 
-            var_dump($resultset);
-        } else {
-            echo "File upload error.";
+            echo json_encode($resultset);
         }
-    die();
+
+
+        public function ___generate_attendance_logs($alteredDate=null){
+            $resultset = array();
+            $alteredDate = $alteredDate ?? "2025-11-11";
+            $searchDate = $alteredDate ?? date("Y-m-d");
             if (isset($_FILES['files']['name']) && $_FILES['files']['name'] != '') {
                 $fileName = $_FILES['files']['name'];
                 $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
@@ -1615,13 +1705,11 @@
                     $resultset["response"] = false;
                     $resultset["message"] = "Invalid File Format";
                 }else{
-                    $searchDate = '2025-11-11';
                     $filename = $_FILES['files']['tmp_name'];
                     $batchSize  = 500;
                     $filtered = [];
 
-                    if($handle = fopen($filename, "r") !== false) {
-                        var_dump($handle, fgets($handle));
+                    if(($handle = fopen($filename, "r")) !== false) {
                         while (($line = fgets($handle)) !== false) {
                             $line = trim($line, "\" \n\r\t");
                             if(empty($line)){ continue; }
@@ -1633,13 +1721,13 @@
                             if (!isset($dateIndex[$datePart])) {
                                 $dateIndex[$datePart] = [];
                             }
-                            $dateIndex[$datePart][] = $parts;
+                            $filteredParts = [$parts[0], $parts[2]];
+                            $dateIndex[$datePart][] = $filteredParts;
                         }
                         fclose($handle);
                     }
 
                     $results = $dateIndex[$searchDate] ?? [];
-                    // Optional: process results in batches
                     $batches = array_chunk($results, $batchSize);
                     foreach ($batches as $batch) {
                         foreach ($batch as $row) {
@@ -1650,26 +1738,6 @@
                     $resultset["response"] = true;
                     $resultset["message"] = "Success";
                     $resultset["file"] = $filtered;
-
-                    /*** $content = file_get_contents($_FILES['files']['tmp_name']);
-                    $data = explode("\n", trim($content));
-                    
-                     $filtered = [];
-                    foreach ($data as $line) {
-                        $line = trim($line, "\" \n\r\t");
-                        $parts = explode(',', $line);
-                        if (!is_numeric($parts[0])) {
-                            continue;
-                        }
-                        if (isset($parts[2]) && preg_match('/^\d{4}\/\d{2}\/\d{2}/', $parts[2])) {
-                            $tempRecord = [$parts[0], $parts[2]];
-                            $filtered[] = $tempRecord; 
-                        }
-                    }
-
-                    $resultset["response"] = true;
-                    $resultset["message"] = "Success";
-                    $resultset["file"] = $filtered; ***/
                 }
             }
 
