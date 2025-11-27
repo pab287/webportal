@@ -1685,6 +1685,11 @@
                 }
             }
 
+            //$data = json_decode($rawData, true);
+            usort($rawData, function($a, $b) {
+                return strcasecmp($a->employee_name, $b->employee_name);
+            });
+
             // Final response
             $resultset["response"] = true;
             $resultset["message"] = "Success";

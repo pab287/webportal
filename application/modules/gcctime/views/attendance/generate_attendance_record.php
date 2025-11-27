@@ -20,7 +20,35 @@
 					</div>
 				</div>
 				<div class="m-portlet__body">
-                    test
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered table-hover" id="tbl_attendance_record">
+                                    <colgroup>
+                                        <col width="8%">
+                                        <col width="25%">
+                                        <col width="15%">
+                                        <col width="25%">
+                                        <col width="12%">
+                                        <col width="12%">
+                                        <col width="8%">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th>Biometric #</th>
+                                            <th>Name</th>
+                                            <th>Company</th>
+                                            <th>Department</th>
+                                            <th>Shift Schedule</th>
+                                            <th>Logged Time</th>
+                                            <th>Late</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -60,6 +88,20 @@
 </div>
 
 <script>
+    const dtTable = $('#tbl_attendance_record').DataTable({
+        searching: false,
+        ordering: false,
+        columns: [
+            { data: "biometricno" },
+            { data: "employee_name" },
+            { data: "company" },
+            { data: "department" },
+            { data: "shift_start" },
+            { data: "log_time" },
+            { data: "is_late" },
+        ]
+    });
+
     $.validate({
         form: '#frmGenerateAttendance',
         lang: 'en',
@@ -79,6 +121,8 @@
                     $(".btnAdvance_search").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
                     if (json.response) {
                         toastr.success(json.message);
+                        dtTable.clear();
+                        dtTable.rows.add(json.logs).draw(false);
                     } else {
                         toastr.error(json.message);
                     }
