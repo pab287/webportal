@@ -875,7 +875,7 @@ class Timesheet_model extends CI_Model{
         return $resultSet;
     }
 
-    protected function getCurrentShiftSchedule($date=null, $employee=null){
+    public function getCurrentShiftSchedule($date=null, $employee=null){
         $updatedSchedule = new StdClass();
         $updatedSchedule->schedule = array();
         $updatedSchedule->custom_shift_id = 0;

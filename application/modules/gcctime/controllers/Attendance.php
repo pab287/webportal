@@ -1551,8 +1551,231 @@
 
         }
 
-        function generate_attendance_record(){
+        public function generate_attendance_record(){
+            $this->core_layout->setPrivilegeName("gcctime_attendance");
+
+            $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
+            $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
+            $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
+            $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
+
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
             
+            $this->core_layout->addJs("js/dataTables.buttons.min.js", true);
+            $this->core_layout->addJs("js/buttons.flash.min.js", true);
+            $this->core_layout->addJs("js/jszip.min.js", true);
+            $this->core_layout->addJs("js/pdfmake.min.js", true);
+            $this->core_layout->addJs("js/vfs_fonts.js", true);
+            $this->core_layout->addJs("js/buttons.html5.min.js", true);
+            $this->core_layout->addJs("js/buttons.print.min.js", true);
+            $this->core_layout->addCss("css/buttons.dataTables.min.css", true);
+
+            $arrData = array();
+            $this->load->view('core/templates/header');
+            $this->load->view('attendance/generate_attendance_record', $arrData);
+            $this->load->view('core/templates/footer');
+        }
+
+        public function generate_attendance_logs($alteredDate = null){
+            $this->load->model("timesheet_model", "ts_model");
+            $resultset = [];
+            //$alteredDate = $alteredDate ?? "2025-10-10";
+            $alteredDate = $alteredDate ?? date("Y-m-d");
+            $searchDate = $alteredDate;
+
+            if (!isset($_FILES['files']['name']) || $_FILES['files']['name'] == '') {
+                $resultset["response"] = false;
+                $resultset["message"] = "No file uploaded.";
+                echo json_encode($resultset);
+                return;
+            }
+
+            // Validate file extension
+            $fileExt = strtolower(pathinfo($_FILES['files']['name'], PATHINFO_EXTENSION));
+            if ($fileExt !== 'dat') {
+                $resultset["response"] = false;
+                $resultset["message"] = "Invalid File Format";
+                echo json_encode($resultset);
+                return;
+            }
+
+            $filename = $_FILES['files']['tmp_name'];
+            $dateIndex = [];
+            $dates = [];
+
+            if (($handle = fopen($filename, "r")) !== false) {
+                while (($line = fgets($handle)) !== false) {
+                    $line = trim($line, "\" \n\r\t");
+                    if (empty($line)){ continue; }
+                    $parts = explode(',', $line);
+                    if(!empty($parts) && count($parts) > 1){
+                        $empId = $parts[0];
+                        $timestamp = $parts[2];
+                        $datePart = date('Y-m-d', strtotime($timestamp));
+                        $dateIndex[$datePart][] = [$empId, $timestamp];
+                        if(!in_array($datePart, $dates)){
+                            $dates[] = $datePart;
+                        }
+                    } elseif(!empty($parts) && count($parts) == 1){
+                        $nextLine = trim($parts[0], "\" \n\r\t");
+                        $nextParts = explode("\t", $nextLine);
+
+                        $empId = $nextParts[0];
+                        $timestamp = $nextParts[1];
+                        $datePart = date('Y-m-d', strtotime($timestamp));
+                        $dateIndex[$datePart][] = [$empId, $timestamp];
+                        if(!in_array($datePart, $dates)){
+                            $dates[] = $datePart;
+                        }
+                    }
+                }
+
+                fclose($handle);
+            }
+
+            // Logs found for selected date
+            $dailyLogs = $dateIndex[$searchDate] ?? [];
+
+            // Build structured logs
+            $structured = [];
+            foreach ($dailyLogs as $row) {
+                [$empId, $ts] = $row;
+                if (!isset($structured[$empId])) { $structured[$empId] = []; }
+                // If last entry for employee has only 1 timestamp → append as OUT
+                $lastIndex = count($structured[$empId]) - 1;
+                if ($lastIndex >= 0 && count($structured[$empId][$lastIndex]) === 1) {
+                    $structured[$empId][$lastIndex][] = $ts;
+                } else {
+                    // Create new IN (or standalone) record
+                    $structured[$empId][] = [$ts];
+                }
+            }
+
+            $rawData = [];
+            $isLateCtr = 0;
+            if(!empty($structured)){
+                $searchDate = date("Y-m-d", strtotime($searchDate));
+                foreach ($structured as $bionum => $logs) {
+                    if(isset($logs[0]) && !empty($logs[0])){
+                        $firstShiftLogs = $logs[0];
+                        $this->db->select("UCASE(
+                            TRIM(
+                                CONCAT(
+                                    emp.firstname,
+                                    IF(emp.middlename IS NOT NULL AND emp.middlename != '', CONCAT(' ', LEFT(emp.middlename,1), '.'), ''),
+                                    ' ',
+                                    emp.lastname,
+                                    IF(emp.suffix IS NOT NULL AND emp.suffix != '' AND emp.suffix NOT IN ('N/A','NONE'),
+                                    CONCAT(' ', emp.suffix),
+                                    ''
+                                    )
+                                )
+                            )
+                        ) AS employee_name, UPPER(comp.code) as company, UPPER(dept.code) as department, pn.shift_id, pn.is_flexi, emp.id");
+                        $this->db->from("gccmaster.tblemployees as emp");
+                        $this->db->join("gcchris.tblcompanies as comp", "comp.id = emp.company_id", "LEFT");
+                        $this->db->join("gcchris.tbldepartments as dept", "dept.id = emp.department_id", "LEFT");
+                        $this->db->join("gcctimeutility.personnel as pn", "pn.biometric_id = emp.biometricno OR pn.biometricno = emp.biometricno", "left");
+                        $this->db->where("emp.biometricno", $bionum);
+                        $qData = $this->db->get();
+                        if($qData->num_rows() == 1){
+                            $rowData = $qData->row();
+                            $schedule = $this->ts_model->getCurrentShiftSchedule($searchDate, $rowData);
+                            $shiftScheduleTime = date("Y-m-d H:i:s", strtotime($searchDate . " ". $schedule->schedule->am_start));
+                            $logtime = date("Y-m-d H:i:s", strtotime($firstShiftLogs[0]));
+
+                            $attRecord = new stdClass();
+                            $attRecord->biometricno = $bionum;
+                            $attRecord->employee_name = $rowData->employee_name;
+                            $attRecord->company = $rowData->company;
+                            $attRecord->department = $rowData->department;
+                            $attRecord->log_time = $logtime;
+                            $attRecord->shift_start = $shiftScheduleTime;
+                            $attRecord->is_late = false;
+                            if($rowData->is_flexi == 0 || $rowData->is_flexi == 2){
+                                $attRecord->is_late = strtotime($logtime) > strtotime($shiftScheduleTime);
+                                if($attRecord->is_late){ $isLateCtr++; }
+                            } elseif ($rowData->is_flexi == 1 || $rowData->is_flexi == 3){
+                                $plus30 = date("Y-m-d H:i:s", strtotime("+30 minutes", strtotime($shiftScheduleTime)));
+                                $attRecord->is_late = strtotime($logtime) > strtotime($plus30);
+                                if($attRecord->is_late){ $isLateCtr++; }
+                            }
+                            $rawData[] = $attRecord;
+                        }
+                        
+                    }
+                }
+            }
+
+            usort($rawData, function($a, $b) {
+                return strcasecmp($a->employee_name, $b->employee_name);
+            });
+
+            $resultset["dates"] = $dates;
+            $resultset["logs"] = $rawData;
+            $resultset["count"] = count($rawData);
+            $resultset["late_ctr"] = $isLateCtr;
+            if(!empty($rawData)){
+                $resultset["response"] = true;
+                $resultset["message"] = "Success";
+            }else{
+                $resultset["response"] = false;
+                $resultset["message"] = "No logs found";
+            }
+
+            echo json_encode($resultset);
+        }
+
+
+        public function ___generate_attendance_logs($alteredDate=null){
+            $resultset = array();
+            $alteredDate = $alteredDate ?? "2025-11-11";
+            $searchDate = $alteredDate ?? date("Y-m-d");
+            if (isset($_FILES['files']['name']) && $_FILES['files']['name'] != '') {
+                $fileName = $_FILES['files']['name'];
+                $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
+                if(strtolower($fileExt) !== 'dat') {
+                    $resultset["response"] = false;
+                    $resultset["message"] = "Invalid File Format";
+                }else{
+                    $filename = $_FILES['files']['tmp_name'];
+                    $batchSize  = 500;
+                    $filtered = [];
+
+                    if(($handle = fopen($filename, "r")) !== false) {
+                        while (($line = fgets($handle)) !== false) {
+                            $line = trim($line, "\" \n\r\t");
+                            if(empty($line)){ continue; }
+
+                            $parts = explode(',', $line);
+                            if (!isset($parts[0]) || !is_numeric($parts[0])){ continue; }
+                            if (!isset($parts[2]) || !preg_match('/^\d{4}\/\d{2}\/\d{2}/', $parts[2])){ continue; }
+                            $datePart = date('Y-m-d', strtotime($parts[2]));
+                            if (!isset($dateIndex[$datePart])) {
+                                $dateIndex[$datePart] = [];
+                            }
+                            $filteredParts = [$parts[0], $parts[2]];
+                            $dateIndex[$datePart][] = $filteredParts;
+                        }
+                        fclose($handle);
+                    }
+
+                    $results = $dateIndex[$searchDate] ?? [];
+                    $batches = array_chunk($results, $batchSize);
+                    foreach ($batches as $batch) {
+                        foreach ($batch as $row) {
+                            $filtered[] = $row;
+                        }
+                    }
+
+                    $resultset["response"] = true;
+                    $resultset["message"] = "Success";
+                    $resultset["file"] = $filtered;
+                }
+            }
+
+            echo json_encode($resultset);
         }
 
         function geneate_attendance_log_file(){
