@@ -15,8 +15,13 @@ tr.bg-danger.text-white td { font-weight: 500; }
 					<div class="m-portlet__head-tools">
                         <ul class="m-portlet__nav">
                             <li class="m-portlet__nav-item">
+                                <a href="javascript:void(0);" class="m-portlet__nav-link m-portlet__nav-link--icon" data-toggle="modal" data-target="#m_generate_app_attendance_modal">
+                                    <i class="fa fa-mobile mr-2"></i> App Attendance
+                                </a>
+                            </li>
+                            <li class="m-portlet__nav-item">
                                 <a href="javascript:void(0);" class="m-portlet__nav-link m-portlet__nav-link--icon" data-toggle="modal" data-target="#m_generate_attendance_modal">
-                                    <i class="fa fa-upload"></i>
+                                    <i class="fa fa-upload mr-2"></i> Upload
                                 </a>
                             </li>
                         </ul>
@@ -81,11 +86,49 @@ tr.bg-danger.text-white td { font-weight: 500; }
         </div>
     </div>
 
+    <div class="modal fade" id="m_generate_app_attendance_modal" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate App Attendance Record</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="frmGenerateAppAttendance" action="<?php echo site_url("gcctime/attendance/generate_app_attendance_logs"); ?>" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group m-form__group">
+                                <label for="">Filter by Date</label>
+                                <div class="input-group date" id="datepicker_container">
+                                    <input id="datepicker" type="text" name="search_date" class="form-control" required autocomplete="off" />
+                                    <span class="input-group-addon">
+                                        <span class="fa fa-calendar"></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <span class="m--font-danger"><span class="fa fa-exclamation-triangle"></span> <span class="m--font-bolder">Caution:</span> This will generate logs for all employees that are using GCCTIME Mobile App.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success btnGenerateAppAttendance btnAdvance_search"><i class="m-nav__link-icon fa fa-gears mr-2"></i> Generate</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="m_generate_attendance_modal" tabindex="-1">
         <div class="modal-dialog modal-md">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Generate Attendance Record</h5>
+                    <h5 class="modal-title">Generate Attendance Record</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -98,7 +141,7 @@ tr.bg-danger.text-white td { font-weight: 500; }
                             <div class="form-group m-form__group">
                                 <label for="">File to Upload</label>
                                 <div>
-                                    <input type="file" name="files" data-validation="required" />
+                                    <input type="file" name="files[]" multiple data-validation="required" />
                                 </div>
                             </div>
                         </div>
@@ -112,9 +155,19 @@ tr.bg-danger.text-white td { font-weight: 500; }
             </div>
         </div>
     </div>
+
+
 </div>
 
 <script>
+    const dpicker = $("#datepicker").datepicker({
+        format: "yyyy-mm-dd",
+        autoclose: true,
+        startDate: "-1d",
+        endDate: new Date(),
+        todayHighlight: true
+    });
+
     const vmFilter = new Vue({
         el: "#statusFilter",
         data: { status: "all", count: 0 },
@@ -163,7 +216,6 @@ tr.bg-danger.text-white td { font-weight: 500; }
             { data: "is_late", visible: false }
         ], createdRow: function (row, data) {
             const { is_late } = data;
-            console.log(is_late);
             if(is_late){ $(row).addClass('bg-danger text-white'); }
         }, initComplete: function () {
             $("#tbl_attendance_record_filter input[type='search']").removeClass("form-control-sm");
@@ -175,6 +227,49 @@ tr.bg-danger.text-white td { font-weight: 500; }
         const isLate = data[6];
         if (filter === "all") return true;
         return isLate === filter;
+    });
+
+    $.validate({
+        form: "#frmGenerateAppAttendance",
+        lang: "en",
+        onSuccess: function (form) {
+            const currentForm = $(form[0]);
+            $.ajax({
+                url: form[0].action,
+                type: "POST",
+                data: currentForm.serialize(),
+                dataType: "json",
+                beforeSend: function () {
+                    $(".btnGenerateAppAttendance").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    vmFilter.count = 0;
+                },
+                success: function (json) {
+                    $(".btnGenerateAppAttendance").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    vmFilter.count = json.late_ctr;
+                    if (json.response) {
+                        $("#m_generate_app_attendance_modal").modal("hide");
+
+                        $(".dt-buttons--custom").hasClass("m--hide") ? $(".dt-buttons--custom").removeClass("m--hide") : "";
+                        vmFilter.status = "all";
+                        toastr.success(json.message);
+                        if(json.logs.length > 0){
+                            const tempHtml = json.late_ctr > 0 ? `A total of <b>${json.late_ctr}</b> late attendance record(s) detected.`
+                                : `A total of <b>${json.logs.length}</b> attendance record(s) found.`;
+                            $(".lateNotification").html(tempHtml).addClass("text-uppercase m-animate-fade-in");
+                        }
+                        dtTable.clear();
+                        dtTable.rows.add(json.logs).draw(false);
+                    }else{
+                        dtTable.clear();
+                        dtTable.rows.add([]).draw(false);
+                        $(".lateNotification").html("").removeClass("text-uppercase m-animate-fade-in");
+                        $(".dt-buttons--custom").hasClass("m--hide") ? "" : $(".dt-buttons--custom").addClass("m--hide");
+                        toastr.error(json.message);
+                    }
+                },
+            });
+            return false;
+        }
     });
 
     $.validate({
@@ -203,12 +298,15 @@ tr.bg-danger.text-white td { font-weight: 500; }
                         toastr.success(json.message);
                         if(json.logs.length > 0){
                             const tempHtml = json.late_ctr > 0 ? `A total of <b>${json.late_ctr}</b> late attendance record(s) detected.`
-                                : `A total of <b>${json.data.length}</b> attendance record(s) found.`;
+                                : `A total of <b>${json.logs.length}</b> attendance record(s) found.`;
                             $(".lateNotification").html(tempHtml).addClass("text-uppercase m-animate-fade-in");
                         }
                         dtTable.clear();
                         dtTable.rows.add(json.logs).draw(false);
                     } else {
+                        dtTable.clear();
+                        dtTable.rows.add([]).draw(false);
+                        $(".lateNotification").html("").removeClass("text-uppercase m-animate-fade-in");
                         $(".dt-buttons--custom").hasClass("m--hide") ? "" : $(".dt-buttons--custom").addClass("m--hide");
                         toastr.error(json.message);
                     }
