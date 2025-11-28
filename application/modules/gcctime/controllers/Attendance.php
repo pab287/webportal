@@ -1684,30 +1684,32 @@
                         if($qData->num_rows() == 1){
                             $rowData = $qData->row();
                             $schedule = $this->ts_model->getCurrentShiftSchedule($searchDate, $rowData);
-                            $shiftScheduleTime = date("Y-m-d H:i:s", strtotime($searchDate . " ". $schedule->schedule["am_start"]));
-                            $logtime = date("Y-m-d H:i:s", strtotime($firstShiftLogs[0]));
-                            $base1HourTime = date("Y-m-d H:i:s", strtotime("+1 hour", strtotime($shiftScheduleTime)));
-
-                            $attRecord = new stdClass();
-                            $attRecord->biometricno = $bionum;
-                            $attRecord->employee_name = $rowData->employee_name;
-                            $attRecord->company = $rowData->company;
-                            $attRecord->department = $rowData->department;
-                            $attRecord->log_time = $logtime;
-                            $attRecord->shift_start = $shiftScheduleTime;
-                            $attRecord->is_late = false;
-
-                            if($rowData->is_flexi == 0 || $rowData->is_flexi == 2){
-                                $attRecord->is_late = strtotime($logtime) > strtotime($base1HourTime);
-                                /*** $attRecord->is_late = strtotime($logtime) > strtotime($shiftScheduleTime); ***/
-                                if($attRecord->is_late){ $isLateCtr++; }
-                            } elseif ($rowData->is_flexi == 1 || $rowData->is_flexi == 3){
-                                $attRecord->is_late = strtotime($logtime) > strtotime($base1HourTime);
-                                /*** $plus30 = date("Y-m-d H:i:s", strtotime("+30 minutes", strtotime($shiftScheduleTime)));
-                                $attRecord->is_late = strtotime($logtime) > strtotime($plus30); ***/
-                                if($attRecord->is_late){ $isLateCtr++; }
+                            if (!empty($schedule->schedule)) {
+                                $shiftScheduleTime = date("Y-m-d H:i:s", strtotime($searchDate . " ". $schedule->schedule->am_start));
+                                $logtime = date("Y-m-d H:i:s", strtotime($firstShiftLogs[0]));
+                                $base1HourTime = date("Y-m-d H:i:s", strtotime("+1 hour", strtotime($shiftScheduleTime)));
+    
+                                $attRecord = new stdClass();
+                                $attRecord->biometricno = $bionum;
+                                $attRecord->employee_name = $rowData->employee_name;
+                                $attRecord->company = $rowData->company;
+                                $attRecord->department = $rowData->department;
+                                $attRecord->log_time = $logtime;
+                                $attRecord->shift_start = $shiftScheduleTime;
+                                $attRecord->is_late = false;
+    
+                                if($rowData->is_flexi == 0 || $rowData->is_flexi == 2){
+                                    $attRecord->is_late = strtotime($logtime) > strtotime($base1HourTime);
+                                    /*** $attRecord->is_late = strtotime($logtime) > strtotime($shiftScheduleTime); ***/
+                                    if($attRecord->is_late){ $isLateCtr++; }
+                                } elseif ($rowData->is_flexi == 1 || $rowData->is_flexi == 3){
+                                    $attRecord->is_late = strtotime($logtime) > strtotime($base1HourTime);
+                                    /*** $plus30 = date("Y-m-d H:i:s", strtotime("+30 minutes", strtotime($shiftScheduleTime)));
+                                    $attRecord->is_late = strtotime($logtime) > strtotime($plus30); ***/
+                                    if($attRecord->is_late){ $isLateCtr++; }
+                                }
+                                $rawData[] = $attRecord;
                             }
-                            $rawData[] = $attRecord;
                         }
                         
                     }
@@ -1771,36 +1773,38 @@
                         if($qData->num_rows() == 1){
                             $rowData = $qData->row();
                             $schedule = $this->ts_model->getCurrentShiftSchedule($searchDate, $rowData);
-                            $shiftScheduleTime = date("Y-m-d H:i:s", strtotime($searchDate . " ". $schedule->schedule["am_start"]));
-                            $logtime = date("Y-m-d H:i:s", strtotime($firstShiftLogs[0]));
-                            $base1HourTime = date("Y-m-d H:i:s", strtotime("+1 hour", strtotime($shiftScheduleTime)));
+                            if (!empty($schedule->schedule)) {
+                                $shiftScheduleTime = date("Y-m-d H:i:s", strtotime($searchDate . " ". $schedule->schedule->am_start));
+                                $logtime = date("Y-m-d H:i:s", strtotime($firstShiftLogs[0]));
+                                $base1HourTime = date("Y-m-d H:i:s", strtotime("+1 hour", strtotime($shiftScheduleTime)));
 
-                            $shiftDateTime = new DateTime($shiftScheduleTime);
-                            $logDateTime   = new DateTime($logtime);
+                                $shiftDateTime = new DateTime($shiftScheduleTime);
+                                $logDateTime   = new DateTime($logtime);
 
-                            $diff = $shiftDateTime->diff($logDateTime);
-                            if($diff->h > 1 && count($firstShiftLogs) > 1){ $logtime = date("Y-m-d H:i:s", strtotime($firstShiftLogs[1])); }
-                            elseif($diff->h > 1 && count($firstShiftLogs) == 1 && count($logs) > 1){ $logtime = date("Y-m-d H:i:s", strtotime($logs[1][0])); }
+                                $diff = $shiftDateTime->diff($logDateTime);
+                                if($diff->h > 1 && count($firstShiftLogs) > 1){ $logtime = date("Y-m-d H:i:s", strtotime($firstShiftLogs[1])); }
+                                elseif($diff->h > 1 && count($firstShiftLogs) == 1 && count($logs) > 1){ $logtime = date("Y-m-d H:i:s", strtotime($logs[1][0])); }
 
-                            $attRecord = new stdClass();
-                            $attRecord->biometricno = $bionum;
-                            $attRecord->employee_name = $rowData->employee_name;
-                            $attRecord->company = $rowData->company;
-                            $attRecord->department = $rowData->department;
-                            $attRecord->log_time = $logtime;
-                            $attRecord->shift_start = $shiftScheduleTime;
-                            $attRecord->is_late = false;
-                            if($rowData->is_flexi == 0 || $rowData->is_flexi == 2){
-                                $attRecord->is_late = strtotime($logtime) > strtotime($base1HourTime);
-                                /*** $attRecord->is_late = strtotime($logtime) > strtotime($shiftScheduleTime); ***/
-                                if($attRecord->is_late){ $isLateCtr++; }
-                            } elseif ($rowData->is_flexi == 1 || $rowData->is_flexi == 3){
-                                $attRecord->is_late = strtotime($logtime) > strtotime($base1HourTime);
-                                /*** $plus30 = date("Y-m-d H:i:s", strtotime("+30 minutes", strtotime($shiftScheduleTime)));
-                                $attRecord->is_late = strtotime($logtime) > strtotime($plus30); ***/
-                                if($attRecord->is_late){ $isLateCtr++; }
+                                $attRecord = new stdClass();
+                                $attRecord->biometricno = $bionum;
+                                $attRecord->employee_name = $rowData->employee_name;
+                                $attRecord->company = $rowData->company;
+                                $attRecord->department = $rowData->department;
+                                $attRecord->log_time = $logtime;
+                                $attRecord->shift_start = $shiftScheduleTime;
+                                $attRecord->is_late = false;
+                                if($rowData->is_flexi == 0 || $rowData->is_flexi == 2){
+                                    $attRecord->is_late = strtotime($logtime) > strtotime($base1HourTime);
+                                    /*** $attRecord->is_late = strtotime($logtime) > strtotime($shiftScheduleTime); ***/
+                                    if($attRecord->is_late){ $isLateCtr++; }
+                                } elseif ($rowData->is_flexi == 1 || $rowData->is_flexi == 3){
+                                    $attRecord->is_late = strtotime($logtime) > strtotime($base1HourTime);
+                                    /*** $plus30 = date("Y-m-d H:i:s", strtotime("+30 minutes", strtotime($shiftScheduleTime)));
+                                    $attRecord->is_late = strtotime($logtime) > strtotime($plus30); ***/
+                                    if($attRecord->is_late){ $isLateCtr++; }
+                                }
+                                $rawData[] = $attRecord;
                             }
-                            $rawData[] = $attRecord;
                         }
                         
                     }
