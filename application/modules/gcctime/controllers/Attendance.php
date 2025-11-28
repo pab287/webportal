@@ -1552,7 +1552,7 @@
         }
 
         public function generate_attendance_record(){
-            $this->core_layout->setPrivilegeName("gcctime_attendance");
+            $this->core_layout->setPrivilegeName("gcctime_generate_attendance_record");
 
             $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
             $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
