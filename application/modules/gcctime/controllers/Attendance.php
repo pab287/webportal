@@ -1684,7 +1684,7 @@
                         if($qData->num_rows() == 1){
                             $rowData = $qData->row();
                             $schedule = $this->ts_model->getCurrentShiftSchedule($searchDate, $rowData);
-                            $shiftScheduleTime = date("Y-m-d H:i:s", strtotime($searchDate . " ". $schedule->schedule->am_start));
+                            $shiftScheduleTime = date("Y-m-d H:i:s", strtotime($searchDate . " ". $schedule->schedule["am_start"]));
                             $logtime = date("Y-m-d H:i:s", strtotime($firstShiftLogs[0]));
                             $base1HourTime = date("Y-m-d H:i:s", strtotime("+1 hour", strtotime($shiftScheduleTime)));
 
@@ -1771,7 +1771,7 @@
                         if($qData->num_rows() == 1){
                             $rowData = $qData->row();
                             $schedule = $this->ts_model->getCurrentShiftSchedule($searchDate, $rowData);
-                            $shiftScheduleTime = date("Y-m-d H:i:s", strtotime($searchDate . " ". $schedule->schedule->am_start));
+                            $shiftScheduleTime = date("Y-m-d H:i:s", strtotime($searchDate . " ". $schedule->schedule["am_start"]));
                             $logtime = date("Y-m-d H:i:s", strtotime($firstShiftLogs[0]));
                             $base1HourTime = date("Y-m-d H:i:s", strtotime("+1 hour", strtotime($shiftScheduleTime)));
 
