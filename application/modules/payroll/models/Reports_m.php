@@ -5417,4 +5417,110 @@ class Reports_m extends CI_Model{
 
         return $result;
     }
+
+    public function cashAdvanceReport(){
+        $rowCount = 0;
+        $rowData = array();
+        $resultset = array();
+        $post = $this->input->post();
+        $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+        $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
+        $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+        $sortBy = (isset($post["columns"]) && $post["columns"]) ? $post["columns"] : 1;
+        $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : null;
+        $filterFields = array(
+            "c.reference", 
+            "d.firstname",
+            "d.middlename",
+            "d.lastname",
+            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))",
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))",
+            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))",
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))"
+        );
+        $date_range = isset($post['date_range']) ? $post['date_range'] : null;
+        $rowData = $this->getCAReportData($search, $limit, $offset, $sortBy, $sortOrder,$filterFields,$date_range );
+        $total = $this->getCAReportDataCount($search,$filterFields,$date_range );
+        $resultset["recordsTotal"] = $total;
+        $resultset["recordsFiltered"] =  $total;
+        $resultset["data"] = isset($rowData) && $rowData ? $rowData: array();
+        return $resultset;
+    }
+
+    private function getCAReportData($search, $limit, $offset, $sortBy, $sortOrder, $filterFields,$date_range){
+        $this->db->select("b.pay_date, c.remarks, d.middlename, d.lastname, CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname)) AS fullname, TRIM(d.firstname) AS firstname, a.id as payment_id, c.reference, c.id as loan_id, ROUND(c.amount, 2) as loan_amount, ROUND(a.amount_due, 2) as amount_due, ROUND(SUM(a.amount_due), 2) as total_deducted, ROUND(c.amount - SUM(a.amount_due), 2) as remaining_balance");
+        $this->db->from("payroll.payroll_sheet_loan_payments as a");
+        $this->db->join("payroll.payroll_sheet as b", "b.id = a.payroll_sheet_id", "left");
+        $this->db->join("gcchris.loans as c", "c.id = a.loan_id", "left");
+        $this->db->join("gccmaster.tblemployees as d", "d.id = b.emp_id", "left");
+        $this->db->where("c.loan_id", 1);
+        $this->db->where_in("c.active", [1,2]);
+        $this->db->where("b.posted", 1);
+        $this->db->where("b.is_bonus", 0);
+
+        $startDate = $date_range['start'] ?? null;
+        $endDate   = $date_range['end'] ?? null;
+        if (!empty($startDate) && !empty($endDate)) {
+            $this->db->where("b.pay_date >=", $startDate);
+            $this->db->where("b.pay_date <=", $endDate);
+        }
+        if ($search) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both", false);
+                } else {
+                    $this->db->or_like($field, $search, "both", false);
+                }
+            }
+            $this->db->group_end();
+        }
+        $this->db->group_by("c.id, c.reference, c.amount");
+
+        if ($limit != -1) {
+            $this->db->limit($limit, $offset);
+        }
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+
+
+        $query = $this->db->get();
+        $result = $query->result_array();
+        return $result;
+    }
+
+    private function getCAReportDataCount($search,$filterFields,$date_range){
+        $this->db->select("b.pay_date, c.remarks, d.middlename, d.lastname, CONCAT(d.firstname, ' ', d.middlename, ' ', d.lastname) as fullname, d.firstname, a.id as payment_id, c.reference, c.id as loan_id, ROUND(c.amount, 2) as loan_amount, ROUND(a.amount_due, 2) as amount_due, ROUND(SUM(a.amount_due), 2) as total_deducted, ROUND(c.amount - SUM(a.amount_due), 2) as remaining_balance");
+        $this->db->from("payroll.payroll_sheet_loan_payments as a");
+        $this->db->join("payroll.payroll_sheet as b", "b.id = a.payroll_sheet_id", "left");
+        $this->db->join("gcchris.loans as c", "c.id = a.loan_id", "left");
+        $this->db->join("gccmaster.tblemployees as d", "d.id = b.emp_id", "left");
+        $this->db->where("c.loan_id", 1);
+        $this->db->where_in("c.active", [1,2]);
+        $this->db->where("b.posted", 1);
+        $this->db->where("b.is_bonus", 0);
+
+        $startDate = $date_range['start'] ?? null;
+        $endDate   = $date_range['end'] ?? null;
+        if (!empty($startDate) && !empty($endDate)) {
+            $this->db->where("b.pay_date >=", $startDate);
+            $this->db->where("b.pay_date <=", $endDate);
+        }
+        
+        if ($search) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+        $this->db->group_by("c.id, c.reference, c.amount");
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+
 }
