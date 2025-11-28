@@ -61,6 +61,9 @@ let ca_report_table = $('#payroll-cash-advance-report').DataTable({
     // rowId: 'id',
     serverSide: true,
     processing: true,
+    language: {
+        processing: "Loading data, please wait..."  
+    },
     searching: false,
     ordering: true,
     order: [[0, 'desc']],
@@ -183,6 +186,8 @@ $('#search-payroll-cash-advance-report')
 $('#date_range').daterangepicker({
     showDropdowns: true,
     autoUpdateInput: false,
+    minDate: moment('2020-01-01'),
+    maxDate: moment(),  
     locale: {
         format: 'MMM DD, YYYY',
         cancelLabel: 'Clear'
