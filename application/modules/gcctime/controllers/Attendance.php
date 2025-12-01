@@ -1699,7 +1699,7 @@
                                 $attRecord->is_late = false;
     
                                 if($rowData->is_flexi == 0 || $rowData->is_flexi == 2){
-                                    $attRecord->is_late = strtotime($logtime) >- strtotime($base1HourTime);
+                                    $attRecord->is_late = strtotime($logtime) >= strtotime($base1HourTime);
                                     /*** $attRecord->is_late = strtotime($logtime) > strtotime($shiftScheduleTime); ***/
                                     if($attRecord->is_late){ $isLateCtr++; }
                                 } elseif ($rowData->is_flexi == 1 || $rowData->is_flexi == 3){
