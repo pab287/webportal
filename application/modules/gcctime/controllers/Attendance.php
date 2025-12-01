@@ -1687,7 +1687,7 @@
                             if (!empty($schedule->schedule)) {
                                 $shiftScheduleTime = date("Y-m-d H:i:s", strtotime($searchDate . " ". $schedule->schedule->am_start));
                                 $logtime = date("Y-m-d H:i:s", strtotime($firstShiftLogs[0]));
-                                $base1HourTime = date("Y-m-d H:i:s", strtotime("+1 hour 1 minute", strtotime($shiftScheduleTime)));
+                                $base1HourTime = date("Y-m-d H:i:s", strtotime("+1 hour +1 minute", strtotime($shiftScheduleTime)));
     
                                 $attRecord = new stdClass();
                                 $attRecord->biometricno = $bionum;
@@ -1776,7 +1776,7 @@
                             if (!empty($schedule->schedule)) {
                                 $shiftScheduleTime = date("Y-m-d H:i:s", strtotime($searchDate . " ". $schedule->schedule->am_start));
                                 $logtime = date("Y-m-d H:i:s", strtotime($firstShiftLogs[0]));
-                                $base1HourTime = date("Y-m-d H:i:s", strtotime("+1 hour 1 minute", strtotime($shiftScheduleTime)));
+                                $base1HourTime = date("Y-m-d H:i:s", strtotime("+1 hour +1 minute", strtotime($shiftScheduleTime)));
 
                                 $shiftDateTime = new DateTime($shiftScheduleTime);
                                 $logDateTime   = new DateTime($logtime);
