@@ -1668,30 +1668,34 @@ class Overtime_m extends CI_Model {
                                         $qTempEmployee = $this->db->get();
                                         $empRecordCount = $qTempEmployee->num_rows();
 
+                                        $isValidEmployee = false;
                                         if($empRecordCount == 1){
                                             $row = $qTempEmployee->row();
-                                            $displayName = $row->employee_name ? $row->employee_name : "No assigned name";
-                                            $isValid = strtotime(trim($filteredData[1])) > strtotime(trim($row->max_date));
-
-                                            $qSearchOt = $this->db->get_where("gcceforms.overtime",
-                                                array(
-                                                    "employee"=>$row->id,
-                                                    "date_from"=>date("Y-m-d H:i:s", strtotime($dateFrom)),
-                                                    "date_to"=>date("Y-m-d H:i:s", strtotime($dateTo)),
-                                                    "status"=>"Approved",
-                                                )
-                                            );
-                                            if($qSearchOt->num_rows() > 0){
-                                                $reference_no = array();
-                                                foreach ($qSearchOt->result() as $value) { $reference_no[] = $value->reference_no; }
-                                                $isRecorded = true;
-                                                $_isRecorded[] = array(
-                                                    "emp_id"=>$row->id, 
-                                                    "reference_no"=>$reference_no, 
-                                                    "display_name"=>$displayName, 
-                                                    "date_from"=>date("Y-m-d H:i:s", strtotime($dateFrom)), 
-                                                    "date_to"=>date("Y-m-d H:i:s", strtotime($dateTo)), 
+                                            if(intval($row->id) > 0){
+                                                $isValidEmployee = true;
+                                                $displayName = $row->employee_name ? $row->employee_name : "No assigned name";
+                                                $isValid = strtotime(trim($filteredData[1])) > strtotime(trim($row->max_date));
+    
+                                                $qSearchOt = $this->db->get_where("gcceforms.overtime",
+                                                    array(
+                                                        "employee"=>$row->id,
+                                                        "date_from"=>date("Y-m-d H:i:s", strtotime($dateFrom)),
+                                                        "date_to"=>date("Y-m-d H:i:s", strtotime($dateTo)),
+                                                        "status"=>"Approved",
+                                                    )
                                                 );
+                                                if($qSearchOt->num_rows() > 0){
+                                                    $reference_no = array();
+                                                    foreach ($qSearchOt->result() as $value) { $reference_no[] = $value->reference_no; }
+                                                    $isRecorded = true;
+                                                    $_isRecorded[] = array(
+                                                        "emp_id"=>$row->id, 
+                                                        "reference_no"=>$reference_no, 
+                                                        "display_name"=>$displayName, 
+                                                        "date_from"=>date("Y-m-d H:i:s", strtotime($dateFrom)), 
+                                                        "date_to"=>date("Y-m-d H:i:s", strtotime($dateTo)), 
+                                                    );
+                                                }
                                             }
                                         }else{
                                             if($filteredData[0]){ $bioNotFound[] = $biometricNo; }
@@ -1708,7 +1712,7 @@ class Overtime_m extends CI_Model {
                                         $tempDatax["purpose"] = $purpose;
                                         $tempDatax["is_existing"] = $empRecordCount;
                                         $tempDatax["is_valid"] = $isValid;
-                                        if($isRecorded === false && $employeeExist){
+                                        if($isRecorded === false && $employeeExist && $isValidEmployee){
                                             $arrData[] = $tempDatax;
                                         }
 
