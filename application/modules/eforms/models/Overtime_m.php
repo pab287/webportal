@@ -1716,8 +1716,8 @@ class Overtime_m extends CI_Model {
                                             $arrData[] = $tempDatax;
                                         }
 
-                                        if($isValid === false && $empRecordCount == 1 && $isRecorded === false){ $invalidCtr++; }
-                                        elseif($isValid === true && $empRecordCount == 1 && $isRecorded === false){ $validCtr++; }
+                                        if($isValid === false && $empRecordCount == 1 && $isRecorded === false && $isValidEmployee === false){ $invalidCtr++; }
+                                        elseif($isValid === true && $empRecordCount == 1 && $isRecorded === false && $isValidEmployee){ $validCtr++; }
                                     }
                                 }
                                 $tempIndex++;
