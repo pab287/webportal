@@ -51,6 +51,8 @@ const classificationDropdown = $('select[name="employee_status"]');
 const status = $('select[name="work_status"]');
 let dtWorkExperience = null;
 let currentResignDate = "";
+let currentClassification = "";
+
 loadEmployees();
 let selectedTable="";
 let _user = [];
@@ -528,6 +530,7 @@ if (typeof _tempContentData !== "undefined") {
         mounted: function () {
             var vmData = this.vm_tab3;
             currentResignDate = JSON.stringify(vmData.resignation_effective_date);
+            currentClassification = vmData.employee_status;
             const employee_status = vmData.employee_status ? vmData.employee_status.toLowerCase() : "";
             const work_status = vmData.work_status ? vmData.work_status.toLowerCase() : "";
             const activateRehireStatuses = ["inactive", "resign",
@@ -821,7 +824,9 @@ if (typeof _tempContentData !== "undefined") {
                         $("#m_datepicker-date_end").prop('disabled', true);
                         $("#m_datepicker-date_end_prob").val('0000-00-00');
                         $("#m_datepicker-date_end").val('0000-00-00');
+                        $("#m_datepicker-date_resign").prop("disabled", true);
                     } else if (data.text === 'INACTIVE') {
+                        $("#m_datepicker-date_resign").prop("disabled", false);
                         status.append(inactiveStatusOptions);
                         $("#reason_row").attr("hidden", false);
 
@@ -4843,25 +4848,33 @@ var validatePersonalEmployeeData = function () {
                 formDataObj[item.name] = item.value;
             });
             let oldDate = (currentResignDate && currentResignDate !== "null") ? currentResignDate : "";
+            let oldClassification = (currentClassification && currentClassification !== "null") ? currentClassification : "";
+
             let newDate = formDataObj.resignation_effective_date ?? ""
-            console.log("OLD:",oldDate, "new:",newDate);
-            if (oldDate != newDate) {
+            let newClassification = formDataObj.employee_status ?? ""
+            
+            console.log(oldClassification, newClassification, oldDate, newDate);
+            if(oldClassification != newClassification && newClassification.toLowerCase() == 'inactive' || oldDate != newDate){
+                $("#m_datepicker-date_resign").attr("readonly", true);
                 const table = $("#tbl-loans").DataTable();
-            
                 const loans = table.data().toArray().filter(row => row.active === "1")         
-                    .filter(row => {
-                        const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
-                        return balance !== 0;
-                    })
-                    .map(row => {
-                        const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
-                        return {
-                            ...row,
-                            balance: balance
-                        };
-                    });
-            
-                console.log(loans);
+                .filter(row => {
+                    const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
+                    return balance !== 0;
+                })
+                .map(row => {
+                    const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
+                    return {
+                        ...row,
+                        balance: balance
+                    };
+                });
+
+                if (loans.length > 0) {
+                    console.log(loans);
+                    $("#currentLoan").modal("show");   // Show modal
+                }
+                
             }
 
             if (isMultiple && vmPrimary.positions.length > 0 && !vmPrimary.isSortOnly) {
@@ -4875,7 +4888,7 @@ var validatePersonalEmployeeData = function () {
                 return false;
             } else {
                 saveEmploymentData(formUrl, formData, currentForm);
-
+                currentClassification = newClassification;
                 vmPrimary.isSortOnly = false;
                 return false;
             }
