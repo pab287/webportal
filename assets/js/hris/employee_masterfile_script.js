@@ -4857,23 +4857,65 @@ var validatePersonalEmployeeData = function () {
             if(oldClassification != newClassification && newClassification.toLowerCase() == 'inactive' || oldDate != newDate){
                 $("#m_datepicker-date_resign").attr("readonly", true);
                 const table = $("#tbl-loans").DataTable();
-                const loans = table.data().toArray().filter(row => row.active === "1")         
-                .filter(row => {
-                    const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
-                    return balance !== 0;
-                })
+                const loans = table.data().toArray()
                 .map(row => {
                     const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
-                    return {
-                        ...row,
-                        balance: balance
-                    };
-                });
+                    return { ...row, balance };
+                })
+                .filter(row => row.active === "1" || row.balance !== 0);
 
                 if (loans.length > 0) {
-                    console.log(loans);
-                    $("#currentLoan").modal("show");   // Show modal
+                    $("#currentLoan").modal("show");
+                    $('#current_loan_table').DataTable({
+                        data: loans,
+                        destroy: true,
+                        searching: false,
+                        paging: false,
+                        ordering: false,
+                        info: false,
+                        columns: [
+                            { data: 'loan_name' },
+                            { 
+                                data: 'amount',
+                                render: (data) => `₱${parseFloat(data).toLocaleString()}`
+                            },
+                            { 
+                                data: 'total_amount_paid',
+                                render: (data) => `₱${parseFloat(data).toLocaleString()}`
+                            },
+                            { 
+                                data: 'balance',
+                                render: (data) => `₱${parseFloat(data).toLocaleString()}`
+                            },
+                            { 
+                                data: 'remarks',
+                                defaultContent: ''
+                            }
+                        ],
+                        columnDefs: [
+                            { targets: [1,2,3], className: "text-right" }
+                        ]
+                    });
+
+                    $('#currentLoan').data('formUrl', formUrl);
+                    $('#currentLoan').data('formData', formData);
+                    $('#currentLoan').data('formElement', currentForm);
+                    $('#currentLoan').data('newClassification', newClassification);
+                    $('#currentLoan').data('newDate', newDate);
+
+                    $("#btnConfirmLoan").off("click").on("click", function () {
+                        const url = $('#currentLoan').data('formUrl');
+                        const data = $('#currentLoan').data('formData');
+                        const formEl = $('#currentLoan').data('formElement');
+                        $("#currentLoan").modal("hide");
+                        saveEmploymentData(url, data, formEl);
+                        currentClassification = $('#currentLoan').data('newClassification');
+                        currentResignDate = $('#currentLoan').data('newDate');
+                        vmPrimary.isSortOnly = false;
+                    });
+                    return false; 
                 }
+                
                 
             }
 
@@ -4889,6 +4931,7 @@ var validatePersonalEmployeeData = function () {
             } else {
                 saveEmploymentData(formUrl, formData, currentForm);
                 currentClassification = newClassification;
+                currentResignDate = newDate;
                 vmPrimary.isSortOnly = false;
                 return false;
             }

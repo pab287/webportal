@@ -286,7 +286,30 @@
                 </button>
             </div>
             <div class="modal-body">
-                
+                <div class="alert alert-warning">
+                    <strong>Notice:</strong> This employee currently has <strong>active loan(s)</strong> on their account.
+                    <br>
+                    Are you sure you want to <strong>set this employee to Inactive</strong>?
+                </div>
+                <table id="current_loan_table" class="table table-striped table-bordered" width="100%">
+                    <thead>
+                        <tr>
+                            <th>Loan Name</th>
+                            <th>Amount</th>
+                            <th>Total Paid</th>
+                            <th>Balance</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    Cancel
+                </button>
+                <button id="btnConfirmLoan" class="btn btn-primary">
+                    Yes, Inactivate Employee
+                </button>
             </div>
         </div>
     </div>
