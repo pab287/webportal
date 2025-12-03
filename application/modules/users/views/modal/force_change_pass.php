@@ -94,6 +94,19 @@
                     $("#changePasswordLater").hide();
                     $("#waiveNull").show();
                 }
+                <?php
+                    $included = array("id", "name");
+                    $privCheckAction = $this->acl_model->getAccessControlMenu($included, 1);
+                ?>
+                const privCheckAction = <?php echo json_encode($privCheckAction); ?>;
+                const hasPayroll = privCheckAction.some(item =>
+                    item.name && item.name.toLowerCase().includes("payroll")
+                );
+                if (hasPayroll) {
+                    $(document).ready(function () {
+                        $("#changePasswordLater").remove();
+                    });
+                }
             }
         }
 

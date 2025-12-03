@@ -47,6 +47,16 @@ class Verifylogin extends MY_Controller{
                     redirect('login/change_password', );
                     return;
                 }
+
+                $included = array("id", "name");
+                $privCheckAction = $this->acl_model->getAccessControlMenu($included, 1);
+                foreach ($privCheckAction as $item) {
+                    if (isset($item['name']) && stripos($item['name'], 'payroll') !== false) {
+                        $query['auth'] = 1;
+                        break;
+                    }
+                }
+                
                 if (isset($query['auth']) && $query['auth'] == 1) {
 
                     $userDetails = $this->db->select('u.email, u.telegram_chat_id, e.mobile_no')
