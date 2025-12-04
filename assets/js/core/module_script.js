@@ -5,6 +5,7 @@ var _tableModule = $("#table-modules"),
   modalModuleList = $("#modal-module-list"),
   modalModuleAction = $("#modal-module-actions");
 
+const allowedIpSelect2 = $("#ip_restrictions");
 var search_val = "";
 
 var dtModule = $("#table-modules").DataTable({
@@ -271,7 +272,7 @@ jQuery(document).on("click", "#module-list", function () {
           .on("ready.jstree", function () {
             $(this).jstree("open_all");
           });
-
+            
         jQuery(modalModuleList).modal("show");
       }
       if (typeof _self !== "undefined") {
@@ -439,7 +440,54 @@ jQuery(document).on("click", "#table-modules .btnModuleAction", function () {
                 jsTreeCheckbox.css("margin-right", "15px");
               }
             });
-
+          
+          let isInitializing = true;
+          modalModuleAction.find("#ip_restrictions").select2({
+            placeholder: "Select IP Address",
+            width: "100%",
+            tags: true
+          }).on("change, select2:select", function (e) {
+            if (isInitializing) return; 
+            const currentSelect = $(this);
+            const currentValue = currentSelect.val();
+            const moduleId = currentSelect.data("module_id");
+            $.ajax({
+              url: siteUrl("core/module/set_allowed_ip"),
+              type: "POST",
+              dataType: "json",
+              data: { module_id: moduleId, allowed_ip: currentValue, csrf_token: _csrf_hash },
+              success: function (json) {
+                if(json.response){
+                  toastr.success("Allowed IP has been updated", "Module Configuration", 5000);
+                }
+              }
+            })
+          }).on("select2:unselect", function (e) {
+            if (isInitializing) return; 
+            const currentSelect = $(this);
+            const currentValue = currentSelect.val();
+            const moduleId = currentSelect.data("module_id");
+            $.ajax({
+              url: siteUrl("core/module/set_allowed_ip"),
+              type: "POST",
+              dataType: "json",
+              data: { module_id: moduleId, allowed_ip: currentValue, csrf_token: _csrf_hash },
+              success: function (json) {
+                if(json.response){
+                  toastr.success("Allowed IP has been updated", "Module Configuration", 5000);
+                }
+              }
+            })
+          });
+          
+          $.each(json.allowed_ip, function (_i, v) {
+            modalModuleAction.find("#ip_restrictions").append(
+              new Option(v, v, true, true)
+            );
+          });
+          modalModuleAction.find("#ip_restrictions").trigger("change");
+          
+          isInitializing = false;
           $(modalModuleAction).modal("show");
         }
       }

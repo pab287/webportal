@@ -100,4 +100,15 @@ class Module extends MY_Controller {
 		->set_content_type('json')
 		->set_output(json_encode($resultset));
 	}
+
+	public function set_allowed_ip(){
+		$resultset = array();
+		$resultset = $this->module_model->setAllowedIp();
+		
+		$this->output
+		->set_content_type('json')
+		->set_output(json_encode($resultset));
+	}
+
+
 }
