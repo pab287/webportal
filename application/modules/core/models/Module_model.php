@@ -526,7 +526,8 @@ class Module_model extends CI_Model{
 		$response = false;
 		if(isset($post["module_id"]) && $post["module_id"]){
 			unset($post["csrf_token"]);
-			$post["allowed_ip"] = serialize($post["allowed_ip"]);
+			$allowedIp = isset($post["allowed_ip"]) ? $post["allowed_ip"] : array();
+			$post["allowed_ip"] = serialize($allowedIp);
 			$allMods = $this->db->get_where($this->allowedModulesTable, array("module_id"=>$post["module_id"]));
 			if($allMods->num_rows() === 1){
 				unset($post["module_id"]);
