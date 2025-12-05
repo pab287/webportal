@@ -445,7 +445,9 @@ if(typeof dtTableLateAbsentee !== "undefined" && dtTableLateAbsentee.length > 0)
             { title: "Position", data: "position", width: "*" },
             { title: "Total", data: "reports_total", width: "8%", className: "text-right" },
             { title: "", width: "6%", className: "text-center", render: function(_data, _type, row){
-                const objResponse = JSON.stringify(row);
+                let cleanedRow = {};
+                for (let key in row) { cleanedRow[key] = String(row[key]).replace(/[^a-zA-Z0-9 \.,\-\_:]/g, ''); }
+                const objResponse = JSON.stringify(cleanedRow);
                 return `<button class='btn btn-secondary m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill btnView btnLateAbsenteePreview' data-raw='${objResponse}'>
                     <i class='fa fa-hourglass-half'></i>
                 </button>`;
