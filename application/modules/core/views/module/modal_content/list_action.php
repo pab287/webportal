@@ -19,6 +19,20 @@
 		</div>
 	</div>
 	<div class="col-md-8">
+		<div>
+			<div class="form-group m-form__group">
+				<label for="example_input_full_name">
+					Allowed IP:
+				</label>
+				<select class="form-control" id="ip_restrictions" multiple name="allowed_ip" data-module_id="<?php echo (isset($row["id"]) && $row["id"])? $row["id"]: 0; ?>">
+				</select>
+				<span class="m-form__help">
+					<small>
+						Please enter the IP addresses that are allowed to access this module
+					</small>
+				</span>
+			</div>
+		</div>
 		<label class="form-control-label">Actions</label>
 		<div id="tree_module-action"></div>
 	</div>

@@ -853,6 +853,8 @@ class Core_model extends CI_Model{
         $sent = false;
         $error = '';
 
+        $emailSender = false;
+
         if ($emailSender) {
             $emailSender->to($sendToData);
             if ($ccToData) { $emailSender->cc($ccToData); }
@@ -896,24 +898,27 @@ class Core_model extends CI_Model{
                     $failOverSender->subject($content_title);
                     $failOverSender->message($content);
 
-                    for ($mgAttempt = 1; $mgAttempt <= 2; $mgAttempt++) {
-                        $coreLogs->logNotification("Mailgun attempt #{$mgAttempt}...", "info");
-                        $sent = $failOverSender->send();
+                    $skip = false;
+                    if ($skip) {
+                        for ($mgAttempt = 1; $mgAttempt <= 2; $mgAttempt++) {
+                            $coreLogs->logNotification("Mailgun attempt #{$mgAttempt}...", "info");
+                            $sent = $failOverSender->send();
+    
+                            if ($sent) {
+                                $coreLogs->logNotification("Email sent successfully via Mailgun on attempt #{$mgAttempt}.", "success");
+                                break;
+                            }
+    
+                            $msgError = $failOverSender->print_debugger(['headers']);
+                            $coreLogs->logNotification("Mailgun attempt #{$mgAttempt} failed:\n{$msgError}", "warning");
 
-                        if ($sent) {
-                            $coreLogs->logNotification("Email sent successfully via Mailgun on attempt #{$mgAttempt}.", "success");
-                            break;
+                            if (strpos($msgError, 'AUTH LOGIN') !== false) {
+                                $coreLogs->logNotification("SMTP Authentication failed: AUTH LOGIN error detected.", "error");
+                                break;
+                            }
+
+                            sleep(5);
                         }
-
-                        $msgError = $failOverSender->print_debugger(['headers']);
-                        $coreLogs->logNotification("Mailgun attempt #{$mgAttempt} failed:\n{$msgError}", "warning");
-
-                        if (strpos($msgError, 'AUTH LOGIN') !== false) {
-                            $coreLogs->logNotification("SMTP Authentication failed: AUTH LOGIN error detected.", "error");
-                            break;
-                        }
-
-                        sleep(5);
                     }
 
                     if (!$sent) {

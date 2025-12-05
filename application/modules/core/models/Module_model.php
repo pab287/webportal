@@ -1,6 +1,7 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 class Module_model extends CI_Model{
 	protected $moduleTable = "modules";
+	protected $allowedModulesTable = "allowed_modules";
 	protected $modulePrivilegeTable = "module_privilege";
 	protected $archiveTable = "archived_items";
 
@@ -420,13 +421,15 @@ class Module_model extends CI_Model{
 			
 			$module_id = $this->getAssignedAclModuleList($post["id"]);
 			$data = $this->acl_model->aclJson();
-			
+			$allowedIp = $this->getAllowedModuleIps($post["id"]);
+
 			$resultset["response"] = true;
 			$resultset["html"] = $html;
 			$resultset["data"] = $data;
 			$resultset["module_id"] = $module_id;
+			$resultset["allowed_ip"] = $allowedIp;
 		}else{
-			$resultset["response"] = false;			
+			$resultset["response"] = false;		
 		}
 		
 		return $resultset;
@@ -516,5 +519,35 @@ class Module_model extends CI_Model{
 		}
 		
 		return $resultset;
+	}
+
+	public function setAllowedIp(){
+		$post = $this->input->post();
+		$response = false;
+		if(isset($post["module_id"]) && $post["module_id"]){
+			unset($post["csrf_token"]);
+			$allowedIp = isset($post["allowed_ip"]) ? $post["allowed_ip"] : array();
+			$post["allowed_ip"] = serialize($allowedIp);
+			$allMods = $this->db->get_where($this->allowedModulesTable, array("module_id"=>$post["module_id"]));
+			if($allMods->num_rows() === 1){
+				unset($post["module_id"]);
+				$response = $this->db->update($this->allowedModulesTable, $post, array("id"=>$allMods->row()->id));
+			}else{
+				$response = $this->db->insert($this->allowedModulesTable, $post);
+			}
+		}
+		return array("response"=>$response);
+	}
+
+	protected function getAllowedModuleIps($id=null){
+		$arrIps = array();
+		if($id){
+			$query = $this->db->get_where($this->allowedModulesTable, array("module_id"=>$id));
+			if($query->num_rows() == 1){
+				$row = $query->row_array();
+				$arrIps = @unserialize($row["allowed_ip"]) ?? array();
+			}
+		}
+		return $arrIps;
 	}
 }
