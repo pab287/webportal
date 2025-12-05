@@ -105,7 +105,7 @@ class Forgotpassword extends MY_Controller {
 	function processchangepassword(){
 		$result = array();
 		$post = $this->input->post();
-		$updatepassword = $this->crud->update(array("password"=>md5($post["password"])),array("email"=>$post["email"]),array("remember_token",null),"gccmaster.tblusers");
+		$updatepassword = $this->crud->update(array("password"=>md5($post["password"]),"remember_token"=>null),array("email"=>$post["email"]),"gccmaster.tblusers");
 		if($updatepassword){
 			$updateredirectlink = $this->crud->update(array("status"=>0),array("redirectlink"=>$post["redirectlink"]),"gccmaster.passwordrequest");
 			if($updateredirectlink){
