@@ -426,7 +426,7 @@ class User_model extends CI_Model{
         $this->db->reset_query();
 
         if ($validatePin >= 1) {
-            $field = array("password" => MD5($data->password));
+            $field = array("password" => MD5($data->password),"remember_token" => null);
             $this->db->where(array("emp_id" => $id))->update("gccmaster.tblusers", $field);
             $this->core_layout->setEventLog("User ".$emp_name." has changed his/her password.","change webportal password", "success", "gcchris", "user");
             $resultSet["success"] = true;
