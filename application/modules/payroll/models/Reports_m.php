@@ -2578,6 +2578,7 @@ class Reports_m extends CI_Model{
                 $adjustmentsTotal = 0;
                 $otAmountTotal = 0;
                 $otNdiffAmountTotal = 0;
+                $regNdiffAmountTotal = 0;
                 $holidayAmountTotal = 0;
                 $regularNightDiffTotal = 0;
                 
@@ -2721,6 +2722,7 @@ class Reports_m extends CI_Model{
                         $allowancesTotal = floatval($allowancesTotal) + floatval($value->total_allowances);
                         $otAmountTotal = floatval($otAmountTotal) + floatval($value->ot_amount);
                         $otNdiffAmountTotal = floatval($otNdiffAmountTotal) + floatval($value->ot_ndiff_amount);
+                        $regNdiffAmountTotal = floatval($regNdiffAmountTotal) + floatval($value->total_ndiff_amount);
                         $holidayAmountTotal = floatval($holidayAmountTotal) + floatval($value->total_holiday_amount);
                         $regularNightDiffTotal = floatval($regularNightDiffTotal) + floatval($value->total_ndiff_amount);
 
@@ -2739,6 +2741,7 @@ class Reports_m extends CI_Model{
                 "allowances"=>round($allowancesTotal, 2),
                 "ot_amount"=>round($otAmountTotal, 2),
                 "ot_ndiff_amount"=>round($otNdiffAmountTotal, 2),
+                "regular_ndiff_amount"=>round($regNdiffAmountTotal, 2),
                 "holiday_amount"=>round($holidayAmountTotal, 2),
                 "total_ndiff_amount"=>round($regularNightDiffTotal, 2),
                 "adjustments"=>round($adjustmentsTotal, 2),
@@ -2778,7 +2781,7 @@ class Reports_m extends CI_Model{
                         elseif (in_array($vvx, $tempHeaderColumns)){ $insertFlag = true; }
                         if ($insertFlag){
                             $tempValueData = $value[$vvx];
-                            if (isset($grandTotalFooter[$vvx]) && $grandTotalFooter[$vvx]){ 
+                            if (isset($grandTotalFooter[$vvx]) && $grandTotalFooter[$vvx]){
                                 $nTotalValue = floatval($grandTotalFooter[$vvx]) + $tempValueData;
                                 $grandTotalFooter[$vvx] = round($nTotalValue, 2);
                             }
