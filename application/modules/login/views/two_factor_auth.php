@@ -345,9 +345,13 @@ $(document).ready(function() {
                 if(response.method == 'sms'){
                     const mobileLastFourDigits = send_to.replace(/\D/g, '').slice(-4);
                     $('#otp_info').text(`A verification code has been sent to *** **** ${mobileLastFourDigits}`);
-                    }else if(response.method == 'email'){
-                        $('#otp_info').text('A verification code has been sent to your registered email address');
-                    }
+                }
+                else if(response.method == 'email'){
+                    $('#otp_info').text('A verification code has been sent to your registered email address');
+                }
+                else if(response.method == 'telegram'){
+                    $('#otp_info').text('A verification code has been sent to your telegram account');
+                }
                 $('#m_modal_1').modal({
                     backdrop: 'static',
                     keyboard: false
@@ -400,11 +404,9 @@ $(document).ready(function() {
             data: formData,
             dataType: 'json',
             beforeSend: function() {
-            // Show loading state
             $('#two_factor_auth').addClass('loading');
             },
             complete: function() {
-            // Remove loading state
             $('#two_factor_auth')
                 .removeClass('loading')
                 .find('button[type="submit"]')
@@ -421,6 +423,9 @@ $(document).ready(function() {
                         $('#otp_info').text(`A verification code has been sent to *** **** ${mobileLastFourDigits}`);
                     }else if(response.method == 'email'){
                         $('#otp_info').text('A verification code has been sent to your registered email address');
+                    }
+                    else if(response.method == 'telegram'){
+                        $('#otp_info').text('A verification code has been sent to your telegram account');
                     }
                     $('#m_modal_1').modal({
                         backdrop: 'static',
