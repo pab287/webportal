@@ -253,7 +253,7 @@
                             <tr>
                                 <th class="text-center" width="25%">Date Collected</th>
                                 <th class="text-center" width="25%">Payment Collected</th>
-                                <th class="text-center" width="25%">Total Balance Covered</th>
+                                <!-- <th class="text-center" width="25%">Total Balance Covered</th> -->
                                 <th class="text-center" width="25%">Collected By</th>
                             </tr>
                         </thead>
@@ -264,7 +264,7 @@
                             <tr>
                                 <td></td>
                                 <td></td>
-                                <td></td>
+                                <!-- <td></td> -->
                                 <td></td>
                             </tr>
                         </tfoot>
@@ -385,7 +385,7 @@
                         <tr>
                             <th class="text-center" width="25%">Date Collected</th>
                             <th class="text-center" width="25%">Payment Collected</th>
-                            <th class="text-center" width="25%">Total Balance Covered</th>
+                            <!-- <th class="text-center" width="25%">Total Balance Covered</th> -->
                             <th class="text-center" width="25%">Collected By</th>
                         </tr>
                     </thead>
@@ -396,7 +396,7 @@
                         <tr>
                             <td></td>
                             <td></td>
-                            <td></td>
+                            <!-- <td></td> -->
                             <td></td>
                         </tr>
                     </tfoot>

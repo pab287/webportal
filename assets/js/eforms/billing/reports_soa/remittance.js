@@ -159,19 +159,19 @@ const vm_payment_table = new Vue({
                 columns: [
                     { data: "payment_date" },
                     { data: "total_payments", render: data => vm.numberWithCommas(parseFloat(data).toFixed(2))},
-                    { data: "total_balance_covered", render: data => vm.numberWithCommas(parseFloat(data).toFixed(2))},
+                    // { data: "total_balance_covered", render: data => vm.numberWithCommas(parseFloat(data).toFixed(2))},
                     { data: "cashier"},
                 ],
                 columnDefs: [
                     { orderable: false, targets: '_all' },
                     {
-                        targets: [0, 3],
+                        targets: [0, 2],
                         createdCell: function (td) {
                             $(td).addClass('text-center');
                         }
                     },
                     {
-                        targets: [1, 2],
+                        targets: [1],
                         createdCell: function (td) {
                             $(td).addClass('text-right');
                         }
@@ -195,7 +195,7 @@ const vm_payment_table = new Vue({
                 // Clear footer when no data
                 $('#tbl-payment_collection tfoot th').eq(0).html('<b>Total</b>');
                 $('#tbl-payment_collection tfoot th').eq(1).html('');
-                $('#tbl-payment_collection tfoot th').eq(2).html('');
+                // $('#tbl-payment_collection tfoot th').eq(2).html('');
                 $('.payment_collected').val('0.00');
                 return;
             }
@@ -211,7 +211,7 @@ const vm_payment_table = new Vue({
 
             $(api.column(0).footer()).removeClass().addClass('text-center').html('<b>Total</b>');
             $(api.column(1).footer()).removeClass().addClass('text-right footer-total').html(`<b>${this.numberWithCommas(totalPayment.toFixed(2))}</b>`);
-            $(api.column(2).footer()).removeClass().addClass('text-right footer-total').html(`<b>${this.numberWithCommas(totalBalanceCovered.toFixed(2))}</b>`);
+            // $(api.column(2).footer()).removeClass().addClass('text-right footer-total').html(`<b>${this.numberWithCommas(totalBalanceCovered.toFixed(2))}</b>`);
 
             // Emit to remit data collection
             DataCollection.$emit('payment_collected', totalPayment.toFixed(2));
@@ -607,19 +607,19 @@ const vm_remittance_view = new Vue({
                 columns: [
                     { data: "payment_date" },
                     { data: "total_payments", render: data => vm.numberWithCommas(parseFloat(data).toFixed(2))},
-                    { data: "total_balance_covered", render: data => vm.numberWithCommas(parseFloat(data).toFixed(2))},
+                    // { data: "total_balance_covered", render: data => vm.numberWithCommas(parseFloat(data).toFixed(2))},
                     { data: "cashier"},
                 ],
                 columnDefs: [
                     { orderable: false, targets: '_all' },
                     {
-                        targets: [0, 3],
+                        targets: [0, 2],
                         createdCell: function (td) {
                             $(td).addClass('text-center');
                         }
                     },
                     {
-                        targets: [1, 2],
+                        targets: [1],
                         createdCell: function (td) {
                             $(td).addClass('text-right');
                         }
@@ -643,7 +643,7 @@ const vm_remittance_view = new Vue({
                 // Clear footer when no data
                 $('#remit_daily_collection tfoot th').eq(0).html('<b>Total</b>');
                 $('#remit_daily_collection tfoot th').eq(1).html('');
-                $('#remit_daily_collection tfoot th').eq(2).html('');
+                // $('#remit_daily_collection tfoot th').eq(2).html('');
                 $('.payment_collected').val('0.00');
                 return;
             }
@@ -659,7 +659,7 @@ const vm_remittance_view = new Vue({
 
             $(api.column(0).footer()).removeClass().addClass('text-center').html('<b>Total</b>');
             $(api.column(1).footer()).removeClass().addClass('text-right footer-total').html(`<b>${this.numberWithCommas(totalPayment.toFixed(2))}</b>`);
-            $(api.column(2).footer()).removeClass().addClass('text-right footer-total').html(`<b>${this.numberWithCommas(totalBalanceCovered.toFixed(2))}</b>`);
+            // $(api.column(2).footer()).removeClass().addClass('text-right footer-total').html(`<b>${this.numberWithCommas(totalBalanceCovered.toFixed(2))}</b>`);
         },
     }
 });
