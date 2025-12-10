@@ -82,6 +82,16 @@ class Users extends MY_Controller{
         $this->load->view('core/templates/footer');
     }
 
+    public function itmar(){
+        $this->core_layout->setPrivilegeName("it_mobile_application_request");
+        $this->core_layout->setHeaderTitle("IT MOBIILE APPLICATION REQUEST");
+        $this->core_layout->addJs("js/users/it_mar.js", true);
+
+        $this->load->view('core/templates/header');
+        $this->load->view('users/itmar');
+        $this->load->view('core/templates/footer');
+    }
+
     function get_group(){
         $data = $this->user->getGroup();
         $this->output
