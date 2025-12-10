@@ -383,23 +383,6 @@
                             </div>
                         </div>
                     </template>
-                    <!-- div class="row">
-                        <div class="col-md-5 text-right">
-                            <small class="m--font-bold">WORKING DAYS </small>
-                        </div>
-                        <div class="col-md-7 text-left">
-                            <span class="m--font-bold">{{row.ewd_decimal}}</span>
-                        </div>
-                    </div -->
-
-                    <!-- div class="row">
-                        <div class="col-md-5 text-right">
-                            <small class="m--font-bold">WORKING HOURS </small>
-                        </div>
-                        <div class="col-md-7 text-left">
-                            <span class="m--font-bold">{{row.target_hours}}</span>
-                        </div>
-                    </div -->
                     <template v-if="parseInt(row.is_bonus) === 0">
                         <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
                         <div class="row m--margin-bottom-5 m--margin-top-5">
@@ -421,13 +404,13 @@
                         </div>
 
                         <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
-
+                        
+                        <template v-if="row.total_allowances && parseFloat(row.total_allowances) > 0">
                         <div class="row">
                             <div class="col-md-8">
                                 <span class="m--font-bolder">ALLOWANCES </span>
                             </div>
                             <div class="col-md-4 text-right">
-                                <!-- span class="m--font-boldest">{{row.psa_total}}</span -->
                                 <span class="m--font-boldest">{{row.total_allowances}}</span>
                             </div>
                         </div>
@@ -452,17 +435,15 @@
                             </div>
                         </div>
                     
-                    <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+                        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+                        </template>
 
                         <template v-if="row.ot_amount > 0">
                         <div class="row m--margin-top-5">
                             <div class="col-md-5">
                                 <span class="m--font-bolder">OVERTIME </span>
                             </div>
-                            <div class="col-md-3 text-left">
-                                <span class="m--font-bold">{{ ot_hrs }}</span>
-                            </div>
-                            <div class="col-md-4 text-right">
+                            <div class="col-md-7 text-right">
                                 <span class="m--font-boldest">{{ ot_computation }}</span>
                             </div>
                         </div>
@@ -472,6 +453,22 @@
                             </div>
                             <div class="col-md-6 text-left">
                                 <small class="m--font-bold">OT NDIFF HRS:</small>&nbsp;<span class="m--font-bolder">{{ ot_ndiff_hrs }}</span>
+                            </div>
+                        </div>
+                        </template>
+
+                        <template v-if="row.total_ndiff_amount > 0">
+                        <div class="row m--margin-top-5">
+                            <div class="col-md-5">
+                                <span class="m--font-bolder">REGULAR NDIFF. </span>
+                            </div>
+                            <div class="col-md-7 text-right">
+                                <span class="m--font-boldest">{{ regndiff_computation }}</span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 text-right">
+                                <small class="m--font-bold">NDIFF HRS:</small>&nbsp;<span class="m--font-bolder">{{ regndiff_hrs }}</span>
                             </div>
                         </div>
                         </template>

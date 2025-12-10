@@ -31,7 +31,7 @@ const vmPayslip = new Vue({
 const vmPayslipContent = new Vue({
     el: "#temp-payslip_content",
     data: { row: {}, ot_computation: {}, 
-    total_ot_hrs: 0, ot_hrs: 0, ot_ndiff_hrs: 0, ot_ndiff_computation: 0,
+    total_ot_hrs: 0, ot_hrs: 0, ot_ndiff_hrs: 0, ot_ndiff_computation: 0, regndiff_hrs: 0, regndiff_computation: 0,
     total_ndiff_hrs: 0, total_ndiff_computation: 0, raw_tl: 0, raw_tod: 0, raw_tli: 0 },
     methods: {
         printCurrentPayslip: function (id) {
@@ -1078,6 +1078,9 @@ function viewPayslip(rowId) {
                     vmPayslipContent.ot_computation = numberFormat(totalOT);
                     vmPayslipContent.ot_ndiff_hrs = numberFormat(parseFloat(vmPayslipContent.row.ot_ndiff_minutes) / 60);
                     vmPayslipContent.ot_ndiff_computation = numberFormat(parseFloat(vmPayslipContent.row.ot_ndiff_amount));
+
+                    vmPayslipContent.regndiff_hrs = numberFormat(parseFloat(vmPayslipContent.row.total_ndiff_minutes) / 60);
+                    vmPayslipContent.regndiff_computation = numberFormat(parseFloat(vmPayslipContent.row.total_ndiff_amount));
                     
                     vmPayslipContent.total_ndiff_hrs = numberFormat(parseFloat(vmPayslipContent.row.total_ndiff_minutes) / 60);
                     vmPayslipContent.total_ndiff_computation = numberFormat(parseFloat(vmPayslipContent.row.total_ndiff_amount));
@@ -1503,10 +1506,10 @@ function triggerPrintable(ids = []) {
                         const printableContainer = printWindow.document.getElementById('append_printable-container');
                         if (printableContainer) {
                             printableContainer.innerHTML = tempHtml;
-                            setTimeout(() => {
+                            /*** setTimeout(() => {
                                 printWindow.print();
                                 printWindow.close();
-                            }, 250);
+                            }, 250); ***/
                         } else {
                             toastr.info('Print detail(s) is still in progress!', 'Payroll / Payslip');
                             printWindow.close();

@@ -166,26 +166,17 @@
                         
                         <?php if(floatval($item->unpaid_holiday_amount) > 0): ?>
                         <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
-<<<<<<< HEAD
-                        <?php if(floatval($item->total_unrendered_amount) > 0): ?>
-=======
->>>>>>> updates on payslip preview on telegram and email
                         <div class="row m--margin-top-5">
                             <div class="col-md-8 printable-width-8">
                                 <h5 class="m--font-bolder m--marginless">UNPAID HOLIDAY</h5>
                             </div>
                             <div class="col-md-4 printable-width-4 text-right">
-<<<<<<< HEAD
-                                <h5 class="m--font-boldest m--marginless">( <?php echo $item->total_unrendered_amount; ?> )</h5>
-=======
                                 <h5 class="m--font-boldest m--marginless">( <?php echo $item->unpaid_holiday_amount; ?> )</h5>
                                 <h5 class="m--font-boldest m--marginless">&nbsp;</h5>
->>>>>>> updates on payslip preview on telegram and email
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 printable-width-6 text-right">
-<<<<<<< HEAD
                                 <h5 class="m--marginless"><span class="m--font-bolder">ABSENT HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo floatval($item->absent_hours) > 0 ? $item->absent_hours : "0.00"; ?></span></h5>
                             </div>
                             <div class="col-md-6 printable-width-6 text-left">
@@ -196,18 +187,6 @@
                         <?php endif; ?>
 
                         <?php if(floatval($item->total_allowances) > 0): ?>
-=======
-                                <h5 class="m--marginless"><span class="m--font-bolder">DAYS:</span>&nbsp;<span class="m--font-bolder"><?php echo floatval($item->unpaid_holiday_hours) / 8; ?></span></h5>
-                            </div>
-                            <div class="col-md-6 printable-width-6 text-left">
-                                <h5 class="m--marginless"><span class="m--font-bolder">HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo $item->unpaid_holiday_hours; ?></span></h5>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <?php if(floatval($item->total_allowances) > 0): ?>
-                        <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
->>>>>>> updates on payslip preview on telegram and email
                         <div class="row m--margin-top-5 m--margin-bottom-5">
                             <div class="col-md-8 printable-width-8">
                                 <h5 class="m--font-bolder m--marginless">ALLOWANCES </h5>
@@ -216,17 +195,10 @@
                                 <h5 class="m--font-boldest m--marginless"><?php echo number_format($item->total_allowances, 2); ?></h5>
                             </div>
                         </div>
-<<<<<<< HEAD
                         <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                         <?php endif; ?>
 
                         <?php if($item->ot_amount > 0): ?>
-=======
-                        <?php endif; ?>
-
-                        <?php if($item->ot_amount > 0): ?>
-                            <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
->>>>>>> updates on payslip preview on telegram and email
                             <div class="row m--margin-top-5">
                                 <div class="col-md-6 printable-width-6">
                                     <h5 class="m--font-bolder m--marginless">OVERTIME </h5>
@@ -249,7 +221,6 @@
                                 </div>
                                 <?php endif; ?>
                             </div>
-<<<<<<< HEAD
                             <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                         <?php endif; ?>
                         
@@ -269,9 +240,6 @@
                             </div>
                             <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                         <?php endif; ?>
-=======
-                        <?php endif; ?>
->>>>>>> updates on payslip preview on telegram and email
                     <?php endif; ?>
 
                     <?php if($item->adjustment_e_count > 0): ?>
@@ -311,8 +279,8 @@
                     <?php if(intval($item->is_bonus) == 0): ?>
                         <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--margin-bottom-5"></div>
                         <?php if(floatval($item->sss) != 0 || floatval($item->sss_prov) != 0 || floatval($item->ph) != 0 || floatval($item->hdmf) != 0 || floatval($item->tax) != 0 || floatval($item->sss_loan) != 0 || floatval($item->hdmf_loan) != 0) { ?>
-                           <h5 class="m--marginless mt-3"><span class="">DEDUCTIONS</span></h5>
-                           <?php if($item->sss && floatval($item->sss) > 0): ?>
+                        <h5 class="m--marginless mt-3"><span class="">DEDUCTIONS</span></h5>
+                            <?php if($item->sss && floatval($item->sss) > 0): ?>
                             <div class="row text-right">
                                 <div class="col-md-5 printable-width-5">
                                     <h5 class="m--font-bolder m--marginless">SSS </h5>
@@ -386,6 +354,7 @@
                                         ( <?=number_format($_tempDeductions, 2) ?> )
                                     </h5>
                                 </div>
+                            </div>
                             <?php endif; ?>
                         <?php } ?>
 
