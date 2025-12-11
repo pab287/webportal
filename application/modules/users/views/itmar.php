@@ -25,15 +25,13 @@
                             <div class="col-xl-8 order-2 order-xl-1">
                                 <div class="form-group m-form__group row align-items-center">
                                     <div class="col-md-4">
-                                        <a href="<?php echo site_url("ticket/index"); ?>"
-                                            class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill btnNew">
-                                            <span> 
-                                                <i class="la la-plus"></i>
-                                                <span>
-                                                    New
-                                                </span>
-                                            </span>
-                                        </a>
+                                    <a href="javascript:void(0);" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill btnNew" data-toggle="modal" data-target="#newITMARModal">
+                                        <span>
+                                            <i class="la la-plus"></i>
+                                            <span>New</span>
+                                        </span>
+                                    </a>
+
                                     </div>
                                     <div class="col-4">
                                         <div id="filter-by-date-range" class="form-group m-0">
@@ -80,6 +78,76 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="newITMARModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="exampleModalLabel">
+                    IT MOBILE APPLICATION FORM
+                </h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">
+                        ×
+                    </span>
+                </button>
+            </div>
+            <form id="new_itmar" method="post" onsubmit="event.preventDefault();">
+                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                <div class="modal-body">
+                    <div class="form-group m-form__group row col">
+                        <div class="col-6 d-flex align-items-center">
+                            <label class="m-radio m-radio--brand">
+                                <input type="radio" name="app_type" value="TGCloudBAS">
+                                TG CloudBAS
+                                <span></span>
+                            </label>
+                        </div>
+                        <div class="col-6 d-flex align-items-center">
+                            <label class="m-radio m-radio--brand">
+                                <input type="radio" name="app_type" value="GCCTIME" checked>
+                                GCCTIME Mobile APP
+                                <span></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row col">
+                        <label for="employee" class="col-sm-12 col-xs-12 col-md-3 form-label required">Requested By:</label>
+                        <div class="col-sm-12 col-xs-12 col-md-9">
+                            <select name="employee" id="employee" data-validation="required">
+                                <option></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row col">
+                        <label for="position" class="col-2 form-label">POSITION: </label>
+                        <input type="text" name="position" id="position" class="col-4 form-control m-input" readonly>
+                        <label for="department" class="col-2 form-label">DEPARTMENT: </label>
+                        <input type="text" name="department" id="department" class="col-4 form-control m-input" style="padding-right: 15px;" readonly>
+                    </div>
+                    <div class="m-separator m-separator--dashed"></div>
+                    <div class="form-group m-form__group row col">
+                        <label for="purpose" class="col-12 form-label">PURPOSE: </label>
+                        <textarea name="purpose" class="col-12 form-control" id=""></textarea>
+                    </div>
+                    <div class="m-separator m-separator--dashed"></div>
+                    <div class="form-group m-form__group row col">
+                        <label for="ass_loc" class="col-12 form-label">ASSIGNED LOCATION/S: </label>
+                        <textarea name="ass_loc" class="col-12 form-control" id="ass_loc"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-submit btn-primary btnNew">
+                        SAVE
+                    </button>
+                    <button type="button" class="btn btn-danger btnNew" data-dismiss="modal">
+                        CANCEL
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

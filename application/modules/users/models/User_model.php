@@ -833,4 +833,69 @@ class User_model extends CI_Model{
         $this->db->where('status', 1);
         return $this->db->get()->result();
     }
+
+    public function select2Employee(){
+        $arrData = array();
+        $this->db->select("id, lastname, firstname, middlename, suffix");
+        $this->db->from('gccmaster.tblemployees');
+        $this->db->where("employee_status", "Active");
+        $this->db->order_by("id", "DESC");
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result() as $key => $rs) {
+                $tempRs = (array)$rs;
+                $fullname = $this->core_layout->getDisplayName($tempRs);
+                $tempFullname = (object)$fullname;
+                $row = array();
+                $row["id"] = $rs->id;
+                $row["text"] = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+                $arrData[] = $row;
+            }
+        }
+
+        return $arrData;
+    }
+
+    public function select2Supervisor(){
+        $arrData = array();
+        $this->db->select("id, lastname, firstname, middlename, suffix");
+        $this->db->from('gccmaster.tblemployees');
+        $this->db->where("employee_status", "Active");
+        $this->db->group_start();
+        $this->db->where("level", "SUPERVISORY");
+        $this->db->or_where("level", "MANAGERIAL");
+        $this->db->or_where("level", "Top Management");
+        $this->db->group_end();
+        $this->db->order_by("firstname", "ASC");
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result() as $key => $rs) {
+                $tempRs = (array)$rs;
+                $fullname = $this->core_layout->getDisplayName($tempRs);
+                $tempFullname = (object)$fullname;
+                $row = array();
+                $row["id"] = $rs->id;
+                $row["text"] = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+                $arrData[] = $row;
+            }
+        }
+
+        return $arrData;
+    }
+
+    public function select2Installer(){
+        $query = $this->db->query("SELECT  c.id, CONCAT(c.firstname,' ',c.lastname) as emp_name FROM gccmaster.tblusers b, gccmaster.tblemployees c WHERE b.emp_id=c.id AND b.group_id='1' AND c.employee_status = 'Active' AND b.group_id=1 ORDER BY c.firstname ASC");
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $data = array();
+                $data["id"] = $_query["id"];
+                $data["text"] = $_query["emp_name"];
+                $resultarray[] = $data;
+            }
+        }
+        return  $resultarray;
+    }
+
 }

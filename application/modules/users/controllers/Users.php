@@ -83,9 +83,13 @@ class Users extends MY_Controller{
     }
 
     public function itmar(){
+        $data = array();
+        $data['employee'] = $this->user->select2Employee();
+        $data['supervisor'] = $this->user->select2Supervisor();
+        $data['installer'] = $this->user->select2Installer();
         $this->core_layout->setPrivilegeName("it_mobile_application_request");
         $this->core_layout->setHeaderTitle("IT MOBIILE APPLICATION REQUEST");
-        $this->core_layout->addJs("js/users/it_mar.js", true);
+        $this->core_layout->addJs("js/users/it_mar.js", true, $data);
 
         $this->load->view('core/templates/header');
         $this->load->view('users/itmar');
