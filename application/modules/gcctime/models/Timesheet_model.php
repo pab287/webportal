@@ -4866,6 +4866,24 @@ class Timesheet_model extends CI_Model{
                 $tempHolidays[$row->id] = $row->is_holiday;
             }
 
+            // checks if cut-off is posted in payrollsheet
+            $this->db->where('DATE(date_start) >=', $start);
+            $this->db->where('DATE(date_end) <=', $end);
+            $this->db->where('posted', 1);
+            $this->db->from($this->tbl_payroll_sheet);
+            $checkPostedCutOff = $this->db->get();
+
+            if ($checkPostedCutOff->num_rows() > 0) {
+                $resultSet["success"] = false;
+                $resultSet["message"] = "Timesheet entry already been Posted!";
+                $resultSet["title"] = "Posted Payroll Sheet";
+
+                return $resultSet;
+            }
+
+            $this->db->reset_query();
+            // checks if cut-off is posted in payrollsheet
+
             foreach ($emp_ids as $index => $row) {
                 $timesheets = $this->db
                     ->where(
