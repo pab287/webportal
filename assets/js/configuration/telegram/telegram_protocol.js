@@ -213,7 +213,7 @@ $(function() {
                 render: function (data, type, row, meta) {
                     var tempHtml = "---";
                     var tempActions = [];
-                    var currentActions = ["edit", "delete", "connect", "exclude"];
+                    var currentActions = ["test","edit", "delete", "connect", "exclude"];
                     $.each(currentActions, function(index, value){
                         tempActions.push(value);
                     });
@@ -225,7 +225,7 @@ $(function() {
                             <div class="dropdown-menu dropdown-menu-right">`;
                         $.each(tempActions, function(ii, vv){
                             switch(vv){
-                                case "edit":
+                                case "test":
                                     tempHtml += `<a class="dropdown-item btnEdit" href="javascript:void(0);" onclick='test_protocol(`+row.id+`)'><i class="la la-envelope"></i> Test</a>`;
                                     break;
                                 case "edit":
