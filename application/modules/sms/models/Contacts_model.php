@@ -477,7 +477,7 @@
             if (substr($phone, 0, 1) === '9') {
                 $phone = '0' . $phone;
             }
-
+            $msg = $this->cleanMessageForSMS($msg);
             $user = $sms['sms_user'];
             $password = $sms['sms_pass'];
             $playsms_url = "https://" . $sms['sms_ip'] . ":" . $sms['sms_port'] . "/index.php?app=ws";
@@ -509,6 +509,21 @@
     
         return($response);
     }
+
+        private function cleanMessageForSMS($msg){
+            $replacements = array(
+                '—' => '-',
+                '–' => '-',
+            );
+            
+            $msg = str_replace(array_keys($replacements), array_values($replacements), $msg);
+            
+            if (!mb_check_encoding($msg, 'UTF-8')) {
+                $msg = mb_convert_encoding($msg, 'UTF-8', 'auto');
+            }
+            $msg = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $msg);
+            return $msg;
+        }
 
         private function sms_settings(){
             $this->db->select("modem, sms_ip, sms_port, sms_user, sms_pass, department_id, exclude");
