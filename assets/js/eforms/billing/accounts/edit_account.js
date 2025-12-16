@@ -89,7 +89,7 @@ function change_disconnection() {
 
 function showConfirmationDisconnect() {
     var connected = document.getElementById('connected').checked;
-    $(".body_title").html("Are you sure you wan't to " + (connected ? "Connect?" : "Disconnect?"));
+    $(".body_title").html("Are you sure you want to " + (connected ? "Connect?" : "Disconnect?"));
     $("#m_waterConnection").modal("show");
 }
 
