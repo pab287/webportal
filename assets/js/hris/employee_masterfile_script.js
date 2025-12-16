@@ -4912,6 +4912,7 @@ var validatePersonalEmployeeData = function () {
                         currentClassification = $('#currentLoan').data('newClassification');
                         currentResignDate = $('#currentLoan').data('newDate');
                         vmPrimary.isSortOnly = false;
+                        sendEmail();
                     });
                     return false; 
                 }
@@ -7037,3 +7038,14 @@ const vmJobDesc = new Vue({
         }
     }
 });
+
+function sendEmail(){
+    $.ajax({
+        type: 'POST',
+        global: true,
+        // url: '<?= base_url('login/authenticate')?>',
+        data: formData,
+        dataType: 'json',
+        beforeSend: function() {}
+    });
+}

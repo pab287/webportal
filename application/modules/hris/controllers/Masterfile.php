@@ -2060,4 +2060,10 @@
             $data = $this->payroll_employee->getEmployeeLoanInterestChargeHistory($id);
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
+
+        public function send_head_email(){
+            $data = $this->employee_model->sendHeadEmail();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
     }
