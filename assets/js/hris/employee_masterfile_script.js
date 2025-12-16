@@ -7043,8 +7043,8 @@ function sendEmail(){
     $.ajax({
         type: 'POST',
         global: true,
-        // url: '<?= base_url('login/authenticate')?>',
-        data: formData,
+        url: baseUrl("hris/masterfile/send_head_email"),
+        data: [],
         dataType: 'json',
         beforeSend: function() {}
     });
