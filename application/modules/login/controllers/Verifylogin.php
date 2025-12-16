@@ -32,7 +32,7 @@ class Verifylogin extends MY_Controller{
                 $this->db->set('lockout_dt', 'NULL', false);
                 $this->db->update('gccmaster.tblusers');
 
-                $query = $this->db->select('force_update, password, auth, emp_id,resend_attempts')
+                $query = $this->db->select('force_update, password, auth, emp_id, resend_attempts, is_important')
                 ->from('gccmaster.tblusers')
                 ->where('username', $post['username'])
                 ->get()->row_array();
@@ -48,14 +48,11 @@ class Verifylogin extends MY_Controller{
                     return;
                 }
 
-                $included = array("id", "name");
-                $privCheckAction = $this->acl_model->getAccessControlMenu($included, 1);
-                foreach ($privCheckAction as $item) {
-                    if (isset($item['name']) && stripos($item['name'], 'payroll') !== false) {
-                        $query['auth'] = 1;
-                        break;
-                    }
+                
+                if (isset($query['is_important']) && $query['is_important'] == 1) {
+                    $query['auth'] = 1;
                 }
+
                 
                 if (isset($query['auth']) && $query['auth'] == 1) {
 
