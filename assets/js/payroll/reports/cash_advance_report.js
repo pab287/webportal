@@ -65,7 +65,7 @@ let ca_report_table = $('#payroll-cash-advance-report').DataTable({
     },
     searching: false,
     ordering: true,
-    order: [[0, 'desc']],
+    order: [[6, 'desc']],
     ajax: {
         url: baseUrl('payroll/reports/cash_advance_report'),
         type: 'post',
@@ -78,7 +78,7 @@ let ca_report_table = $('#payroll-cash-advance-report').DataTable({
         },
     },
     columns: [
-        { data: 'payment_id', visible: false },
+        { data: null, visible: false },
         { 
             data: 'reference',
             render: function (data, type, row) {
@@ -171,7 +171,7 @@ $('#date_range').daterangepicker({
     showDropdowns: true,
     autoUpdateInput: false,
     minDate: moment().subtract(3, 'years').startOf('day'),
-    maxDate: moment(),  
+    // maxDate: moment(),  
     locale: {
         format: 'MMM DD, YYYY',
         cancelLabel: 'Clear'
