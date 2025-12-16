@@ -5454,7 +5454,7 @@ class Reports_m extends CI_Model{
         $this->db->join("gcchris.loans as c", "c.id = a.loan_id", "left");
         $this->db->join("gccmaster.tblemployees as d", "d.id = b.emp_id", "left");
         $this->db->where("c.loan_id", 1);
-        $this->db->where_in("c.active", [1,2]);
+        // $this->db->where_in("c.active", [1,2]); 
         $this->db->where("b.posted", 1);
         $this->db->where("b.is_bonus", 0);
 
@@ -5496,7 +5496,7 @@ class Reports_m extends CI_Model{
         $this->db->join("gcchris.loans as c", "c.id = a.loan_id", "left");
         $this->db->join("gccmaster.tblemployees as d", "d.id = b.emp_id", "left");
         $this->db->where("c.loan_id", 1);
-        $this->db->where_in("c.active", [1,2]);
+        // $this->db->where_in("c.active", [1,2]);
         $this->db->where("b.posted", 1);
         $this->db->where("b.is_bonus", 0);
 
