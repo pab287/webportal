@@ -174,6 +174,28 @@ class Reports extends MY_Controller {
         $this->load->view("core/templates/footer");
     }
 
+    public function cash_advance() {
+        $this->core_layout->setPageTitle("Payroll - Cash Advance Report");
+        $this->core_layout->setPrivilegeName("payroll_cash_advance_report");
+
+        $tempData = array();
+        // $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
+        // $tempData["company"] = $this->payroll->select2CompanyData();
+
+        // $this->core_layout->addJs("js/buttons.print.min.js", true);
+        // $this->core_layout->addJs("global/js/jquery.table2excel.min.js", true);
+        $this->core_layout->addJs("js/payroll/reports/cash_advance_report.js", true, $tempData);
+
+        $this->load->view("core/templates/header");
+        $this->load->view("payroll/reports/cash_advance_report");
+        $this->load->view("core/templates/footer");
+    }
+
+    public function cash_advance_report(){
+        $data = $this->reports->cashAdvanceReport();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
     function get_remittance_report_request(){
         $data = $this->reports->getRemittanceReportRequest();
             $this->output
