@@ -227,19 +227,23 @@
         public function getEmployeesWithBirthDay($date = null) {
             $date = empty($date) ? date('Y-m-d') : $date;
             $select = "UCASE(
-                           CONCAT(
-                               emp.firstname, ' ', 
-                               CASE 
-                                   WHEN emp.middlename IS NOT NULL AND emp.suffix != '' AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.middlename)
-                                   ELSE ''
-                               END,
-                               ' ', emp.lastname, 
-                               CASE 
-                                   WHEN emp.suffix IS NOT NULL AND emp.suffix != '' AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix)
-                                   ELSE ''
-                               END
-                           )
-                        ) employee_name,
+                            TRIM(
+                                CONCAT(
+                                    emp.firstname,
+                                    IF(emp.middlename IS NOT NULL AND emp.middlename != '',
+                                        CONCAT(' ', SUBSTRING(emp.middlename, 1, 1), '.'),
+                                        ''
+                                    ),
+                                    ' ',
+                                    emp.lastname,
+                                    IF(emp.suffix IS NOT NULL 
+                                    AND emp.suffix NOT IN ('', 'N/A', 'NONE'),
+                                    CONCAT(' ', emp.suffix),
+                                    ''
+                                    )
+                                )
+                            )
+                        ) AS employee_name,
                         DATE_FORMAT(emp.bday, '%M %d') bday,
                         IF(DAY(emp.bday) = DAY(DATE('$date')), 1, 0) highlight,
                         emp.pic_filename,
@@ -255,19 +259,23 @@
 
         public function getNewlyHiredEmployees() {
             $select = "UCASE(
-                         CONCAT(
-                             emp.firstname, ' ', 
-                             CASE 
-                                 WHEN emp.middlename IS NOT NULL AND emp.suffix != '' AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.middlename)
-                                 ELSE ''
-                             END,
-                             ' ', emp.lastname, 
-                             CASE 
-                                 WHEN emp.suffix IS NOT NULL AND emp.suffix != '' AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix)
-                                 ELSE ''
-                             END
-                         )
-                      ) employee_name,
+                            TRIM(
+                                CONCAT(
+                                    emp.firstname,
+                                    IF(emp.middlename IS NOT NULL AND emp.middlename != '',
+                                        CONCAT(' ', SUBSTRING(emp.middlename, 1, 1), '.'),
+                                        ''
+                                    ),
+                                    ' ',
+                                    emp.lastname,
+                                    IF(emp.suffix IS NOT NULL 
+                                    AND emp.suffix NOT IN ('', 'N/A', 'NONE'),
+                                    CONCAT(' ', emp.suffix),
+                                    ''
+                                    )
+                                )
+                            )
+                        ) AS employee_name,
                       DATE_FORMAT(emp.date_start, '%b %d, %Y') date_start,
                       emp.pic_filename,
                       emp.id";
@@ -286,15 +294,23 @@
             $pageOptions = $this->utilities->getDatatablesConfigForPagination($tableConfigStd);
 
             $select = "UCASE(
-                           CONCAT(
-                               emp.firstname, ' ', 
-                               ' ', emp.lastname, 
-                               CASE 
-                                   WHEN emp.suffix IS NOT NULL AND emp.suffix != '' AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix)
-                                   ELSE ''
-                               END
-                           )
-                        ) employee_name,
+                            TRIM(
+                                CONCAT(
+                                    emp.firstname,
+                                    IF(emp.middlename IS NOT NULL AND emp.middlename != '',
+                                        CONCAT(' ', SUBSTRING(emp.middlename, 1, 1), '.'),
+                                        ''
+                                    ),
+                                    ' ',
+                                    emp.lastname,
+                                    IF(emp.suffix IS NOT NULL 
+                                    AND emp.suffix NOT IN ('', 'N/A', 'NONE'),
+                                    CONCAT(' ', emp.suffix),
+                                    ''
+                                    )
+                                )
+                            )
+                        ) AS employee_name,
                        loa.reference_no, 
                        loa.`status`, 
                        loa.nature, 
