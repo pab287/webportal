@@ -13068,11 +13068,13 @@ class Employee_model extends CI_Model {
     }
 
     public function sendHeadEmail(){
-        
-        $send_email[] = $send_to;
-        $email_content = $this->load->view("two_factor_email_template.php",array("data" => $data), true);
-        $mailer['send_to'] = $send_email;
-        $result['status'] = $this->core->send_email('core','GC & C Conyx PH','Two Factor Authentication',$email_content,$mailer);
+        $post = $this->input->post();
+        $data = $post['data'];
+        $email_content = $this->load->view("email_templates/email-active_ca.php",array("data" => $data), true);
+        var_dump();
+        die();
+        // $mailer['send_to'] = $send_email;
+        // $result['status'] = $this->core->send_email('core','GC & C Conyx PH','Two Factor Authentication',$email_content,$mailer);
     }
     
 

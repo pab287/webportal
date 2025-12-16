@@ -529,7 +529,7 @@ if (typeof _tempContentData !== "undefined") {
         data: { vm_tab3: tempData, multiple_position: [] },
         mounted: function () {
             var vmData = this.vm_tab3;
-            currentResignDate = JSON.stringify(vmData.resignation_effective_date);
+            currentResignDate = vmData.resignation_effective_date;
             currentClassification = vmData.employee_status;
             const employee_status = vmData.employee_status ? vmData.employee_status.toLowerCase() : "";
             const work_status = vmData.work_status ? vmData.work_status.toLowerCase() : "";
@@ -589,6 +589,7 @@ if (typeof _tempContentData !== "undefined") {
             if(vmData.employee_status) {
                 if (vmData.employee_status.toLowerCase() === 'active') {
                     status.append(activeStatusOptions);
+                    currentResignDate = "";
                 } else if (vmData.employee_status.toLowerCase() === 'inactive') {
                     status.append(inactiveStatusOptions);
                 } else {
@@ -4853,8 +4854,8 @@ var validatePersonalEmployeeData = function () {
             let newDate = formDataObj.resignation_effective_date ?? ""
             let newClassification = formDataObj.employee_status ?? ""
             
-            console.log(oldClassification, newClassification, oldDate, newDate);
-            if(oldClassification != newClassification && newClassification.toLowerCase() == 'inactive' || oldDate != newDate){
+            console.log(oldClassification, newClassification, oldDate, newDate,newClassification.toLowerCase() == 'inactive');
+            if((oldClassification !== newClassification && newClassification.toLowerCase() === 'inactive') || oldDate !== newDate){
                 $("#m_datepicker-date_resign").attr("readonly", true);
                 const table = $("#tbl-loans").DataTable();
                 const loans = table.data().toArray()
@@ -4912,7 +4913,7 @@ var validatePersonalEmployeeData = function () {
                         currentClassification = $('#currentLoan').data('newClassification');
                         currentResignDate = $('#currentLoan').data('newDate');
                         vmPrimary.isSortOnly = false;
-                        sendEmail();
+                        sendEmail(data);
                     });
                     return false; 
                 }
@@ -7039,12 +7040,12 @@ const vmJobDesc = new Vue({
     }
 });
 
-function sendEmail(){
+function sendEmail(data){
     $.ajax({
         type: 'POST',
         global: true,
         url: baseUrl("hris/masterfile/send_head_email"),
-        data: [],
+        data: data,
         dataType: 'json',
         beforeSend: function() {}
     });
