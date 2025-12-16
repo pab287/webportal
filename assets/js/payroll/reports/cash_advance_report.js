@@ -186,7 +186,7 @@ $('#search-payroll-cash-advance-report')
 $('#date_range').daterangepicker({
     showDropdowns: true,
     autoUpdateInput: false,
-    minDate: moment('2020-01-01'),
+    minDate: moment().subtract(3, 'years').startOf('day'),
     maxDate: moment(),  
     locale: {
         format: 'MMM DD, YYYY',
