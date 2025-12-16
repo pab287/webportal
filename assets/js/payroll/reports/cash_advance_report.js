@@ -58,7 +58,6 @@ let ca_report_table = $('#payroll-cash-advance-report').DataTable({
             
         },
     ],
-    // rowId: 'id',
     serverSide: true,
     processing: true,
     language: {
@@ -160,21 +159,6 @@ let ca_report_table = $('#payroll-cash-advance-report').DataTable({
 
     $(dropdown).appendTo("#payroll-cash-advance-report_wrapper .exportDropdown");
     dropdownEl = $(".m-dropdown__toggle.export-as");
-    // const filterDiv = $('<div>').addClass('dataTables_filter');
-    // const searchInput = $('<input>').attr('type', 'text').addClass('form-control').attr('placeholder', 'Search...').attr('id', 'generalSearch');
-    // filterDiv.append(searchInput);
-    // $(filterDiv).appendTo("#payroll-cash-advance-report_wrapper .exportSearch");
-    // $('#generalSearch').donetyping(function(callback) {
-    //     search_val = $(this).val();
-    //     tblHrisAgeReport.ajax.reload();
-    //   },1000,3);
-    //   $("#generalSearch").on('keyup', function (e) {
-    //     var val = $(this).val();
-    //     if (val == ""){
-    //         search_val="";
-    //         ca_report_table.ajax.reload();
-    //     }
-    // });
     },
 });
 
