@@ -13069,24 +13069,52 @@ class Employee_model extends CI_Model {
 
     public function sendHeadEmail(){
         $post = $this->input->post();
-        $loans = $this->getEmployeeLoansData($post['employee_id']);
-        $email_content = $this->load->view("email_templates/email-active_ca.php",array("data" => $post), true);
-        var_dump($email_content);
+        $loans = $this->getEmployeeLoansData($post['emp_id']);
+        $email_content = $this->load->view("email_templates/email-active_ca.php",array("data" => $post, "loans" => $loans), true);
+        var_dump($email_content, $loans);
         die();
         // $mailer['send_to'] = $send_email;
         // $result['status'] = $this->core->send_email('core','GC & C Conyx PH','Two Factor Authentication',$email_content,$mailer);
     }
 
+    public function getEmployeeLoansDataCall(){
+        $post = $this->input->post();
+        $loans = $this->getEmployeeLoansData($post['emp_id']);
+        return $loans;
+    }
+
     private function getEmployeeLoansData($employee_id){
-        $data = array();
-        $this->db->select("*");
-        $this->db->from("gcchris.tblemployee_loans");
-        $this->db->where("employee_id", $employee_id);
-        $query = $this->db->get();
-        if ($query->num_rows() > 0) {
-            $data = $query->result_array();
+        $this->db->select("emp_loans.amount,emp_loans.active, master_loans.loan_name, emp_loans.remarks, emp_loans.loan_id as loan_code, 
+            ROUND(SUM(IFNULL(psloanpayments.amount_due, 0)),2) as total_amount_paid, 
+            GROUP_CONCAT(DISTINCT psloanpayments.amount_due, '||', ps.id) as temp_amount_paid, emp_loans.reference as ref");
+        $this->db->where("emp_loans.emp_id", $employee_id);
+        $this->db->where("emp_loans.is_archived", 0);
+        $this->db->where("emp_loans.active !=", 3);
+        $this->db->join("payroll.loans master_loans", "master_loans.id = emp_loans.loan_id");
+        $this->db->join("payroll.payroll_sheet_loan_payments psloanpayments", "psloanpayments.loan_id = emp_loans.id", "LEFT");
+        $this->db->join("payroll.payroll_sheet ps", "ps.id = psloanpayments.payroll_sheet_id AND ps.posted = 1", "LEFT");
+        $this->db->group_by("emp_loans.id, emp_loans.loan_id");
+        $this->db->order_by("emp_loans.id", "DESC");
+        $query = $this->db->get("gcchris.loans emp_loans");
+
+        if($query->num_rows() > 0){
+            foreach ($query->result() as $key => $value) {
+                $tempTotal = 0;
+                $tempAmount = $value->temp_amount_paid;
+                $tempAmount = explode(",", $tempAmount);
+                foreach ($tempAmount as $kk => $vv) {
+                    $tempDD = explode("||", $vv);
+                    $tempTotal += floatval($tempDD[0]);
+                }
+                $tempTotal = round($tempTotal, 2);
+                if($tempTotal !== floatval($value->total_amount_paid)){ $value->total_amount_paid = $tempTotal; }
+                // $tempCreatedBy = $value->created_by ? $this->core_layout->getEmployeeData($value->created_by)['display_name_1']: "[ System Generated: Cash Advance ]"; 
+                // $value->created_by = $tempCreatedBy;
+                // $value->created_at = date('Y-m-d', strtotime($value->created_at));
+                $arrData[$key] = $value;
+            }
         }
-        return $data;
+        return $arrData;
     }
     
 

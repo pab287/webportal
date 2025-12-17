@@ -39,6 +39,13 @@
     #modal-rehire .select2-results__option {
         border-bottom: 1px solid #efefef;
     }
+
+    #current_loan_table {
+        display: block;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
 </style>
 
 <div class="m-content">
@@ -287,11 +294,11 @@
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
-                    <strong>Notice:</strong> This employee currently has <strong>active loan(s)</strong> on their account.
+                    <strong>Notice:</strong> This employee currently has <strong class="font-weight-bold">active/unpaid loan(s)</strong> on their account.
                     <br>
                     Are you sure you want to <strong>set this employee to Inactive</strong>?
                 </div>
-                <table id="current_loan_table" class="table table-striped table-bordered" width="100%">
+                <table id="current_loan_table" class="table table-striped table-bordered">
                     <thead>
                         <tr>
                             <th>Loan Name</th>

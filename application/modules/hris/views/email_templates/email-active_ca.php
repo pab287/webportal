@@ -1,14 +1,14 @@
 <?php
 $data = $data ?? [];
-
-// helpers to avoid undefined index notices
-function val($arr, $key, $default = 'N/A') {
-    return isset($arr[$key]) && $arr[$key] !== '' ? htmlspecialchars($arr[$key]) : $default;
+$loans = $loans ?? [];
+function val($item, $key, $default = 'N/A') {
+    if (is_array($item)) {
+        return isset($item[$key]) && $item[$key] !== '' ? htmlspecialchars($item[$key]) : $default;
+    } elseif (is_object($item)) {
+        return isset($item->$key) && $item->$key !== '' ? htmlspecialchars($item->$key) : $default;
+    }
+    return $default;
 }
-
-$workStations = isset($data['work_station']) && is_array($data['work_station'])
-    ? implode(', ', $data['work_station'])
-    : 'N/A';
 ?>
 
 <!DOCTYPE html>
@@ -30,7 +30,7 @@ $workStations = isset($data['work_station']) && is_array($data['work_station'])
     <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
             <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:6px; overflow:hidden;">
+                <table width="800" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:6px; overflow:hidden;">
                     
                     <!-- Header -->
                     <tr>
@@ -45,71 +45,102 @@ $workStations = isset($data['work_station']) && is_array($data['work_station'])
                             <p>Good day,</p>
 
                             <p>
-                                Please be informed that the following employee record has been updated with the details below:
+                                Please be informed that the following employee record has been set to inactive:
                             </p>
 
                             <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse; font-size:14px;">
                                 <tr>
-                                    <td width="35%" style="border:1px solid #ddd;"><strong>Employee ID No.</strong></td>
-                                    <td style="border:1px solid #ddd;"><?php echo val($data, 'idno'); ?></td>
+                                    <td width="35%" style="border:1px solid #ddd;"><strong>EMPLOYEE NAME</strong></td>
+                                    <td style="border:1px solid #ddd;"><?php echo val($data, 'fullname'); ?></td>
                                 </tr>
                                 <tr>
-                                    <td style="border:1px solid #ddd;"><strong>Biometric No.</strong></td>
-                                    <td style="border:1px solid #ddd;"><?php echo val($data, 'biometricno'); ?></td>
+                                    <td style="border:1px solid #ddd;"><strong>COMPANY</strong></td>
+                                    <td style="border:1px solid #ddd;"><?php echo val($data, 'company'); ?></td>
                                 </tr>
                                 <tr>
-                                    <td style="border:1px solid #ddd;"><strong>Employee Status</strong></td>
-                                    <td style="border:1px solid #ddd;"><?php echo val($data, 'employee_status'); ?></td>
+                                    <td style="border:1px solid #ddd;"><strong>DEPARTMENT</strong></td>
+                                    <td style="border:1px solid #ddd;"><?php echo val($data, 'department'); ?></td>
                                 </tr>
                                 <tr>
-                                    <td style="border:1px solid #ddd;"><strong>Work Status</strong></td>
-                                    <td style="border:1px solid #ddd;"><?php echo val($data, 'work_status'); ?></td>
-                                </tr>
-                                <tr>
-                                    <td style="border:1px solid #ddd;"><strong>Level</strong></td>
-                                    <td style="border:1px solid #ddd;"><?php echo val($data, 'level'); ?></td>
-                                </tr>
-                                <tr>
-                                    <td style="border:1px solid #ddd;"><strong>Payroll Type</strong></td>
-                                    <td style="border:1px solid #ddd;"><?php echo val($data, 'payroll_type'); ?></td>
-                                </tr>
-                                <tr>
-                                    <td style="border:1px solid #ddd;"><strong>Work Mode</strong></td>
-                                    <td style="border:1px solid #ddd;"><?php echo val($data, 'work_mode'); ?></td>
-                                </tr>
-                                <tr>
-                                    <td style="border:1px solid #ddd;"><strong>Department ID</strong></td>
-                                    <td style="border:1px solid #ddd;"><?php echo val($data, 'department_id'); ?></td>
-                                </tr>
-                                <tr>
-                                    <td style="border:1px solid #ddd;"><strong>Position ID</strong></td>
+                                    <td style="border:1px solid #ddd;"><strong>POSITION</strong></td>
                                     <td style="border:1px solid #ddd;"><?php echo val($data, 'position'); ?></td>
                                 </tr>
                                 <tr>
-                                    <td style="border:1px solid #ddd;"><strong>Date Started</strong></td>
-                                    <td style="border:1px solid #ddd;"><?php echo val($data, 'date_start'); ?></td>
-                                </tr>
-                                <tr>
-                                    <td style="border:1px solid #ddd;"><strong>Date End</strong></td>
-                                    <td style="border:1px solid #ddd;"><?php echo val($data, 'date_end'); ?></td>
-                                </tr>
-                                <tr>
-                                    <td style="border:1px solid #ddd;"><strong>Resignation Reason</strong></td>
-                                    <td style="border:1px solid #ddd;"><?php echo val($data, 'resign_reason'); ?></td>
-                                </tr>
-                                <tr>
-                                    <td style="border:1px solid #ddd;"><strong>Work Station</strong></td>
-                                    <td style="border:1px solid #ddd;"><?php echo htmlspecialchars($workStations); ?></td>
+                                    <td style="border:1px solid #ddd;"><strong>LEVEL</strong></td>
+                                    <td style="border:1px solid #ddd;"><?php echo val($data, 'level'); ?></td>
                                 </tr>
                             </table>
 
-                            <p style="margin-top:20px;">
-                                If you find any discrepancies in the information above, please coordinate with the HR department immediately.
-                            </p>
+                            <?php if (!empty($loans)): ?>
+                                <div style="margin-top: 30px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                                    <p style="margin: 0 0 10px 0; font-weight: bold; color: #856404;">
+                                        ⚠️ IMPORTANT: This employee has active/unpaid loans
+                                    </p>
+                                </div>
 
-                            <p>
-                                Thank you.
-                            </p>
+                                <h3 style="margin-top: 25px; margin-bottom: 15px; color: #1f3c88;">Active Loans</h3>
+
+                                <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse; font-size:13px; table-layout:fixed;">
+                                    <thead>
+                                        <tr style="background:#1f3c88; color:#ffffff;">
+                                            <th style="border:1px solid #1f3c88; text-align:left; width:34%;">Loan Name</th>
+                                            <th style="border:1px solid #1f3c88; text-align:right; width:16%;">Loan Amount</th>
+                                            <th style="border:1px solid #1f3c88; text-align:right; width:16%;">Amount Paid</th>
+                                            <th style="border:1px solid #1f3c88; text-align:right; width:16%;">Balance</th>
+                                            <th style="border:1px solid #1f3c88; text-align:left; width:18%;">Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php 
+                                        $totalAmount = 0;
+                                        $totalPaid = 0;
+                                        $totalBalance = 0;
+
+                                        foreach ($loans as $loan): 
+                                            $amount   = floatval(val($loan, 'amount', 0));
+                                            $paid     = floatval(val($loan, 'total_amount_paid', 0));
+                                            $active   = intval(val($loan, 'active', 0));
+                                            $remarks  = val($loan, 'remarks', '');
+                                            $balance  = $amount - $paid;
+
+                                            if ($balance <= 0) {
+                                                continue;
+                                            }
+
+                                            // ✅ Loan name logic
+                                            $loanName = (intval(val($loan, 'loan_code')) === 1)
+                                                ? val($loan, 'ref')
+                                                : val($loan, 'loan_name');
+
+                                            $totalAmount  += $amount;
+                                            $totalPaid    += $paid;
+                                            $totalBalance += $balance;
+                                        ?>
+                                        <tr>
+                                            <td style="border:1px solid #ddd; text-transform:uppercase; white-space:normal; word-wrap:break-word;">
+                                                <strong><?php echo htmlspecialchars($loanName); ?></strong>
+                                            </td>
+                                            <td style="border:1px solid #ddd; text-align:right;">
+                                                ₱ <?php echo number_format($amount, 2); ?>
+                                            </td>
+                                            <td style="border:1px solid #ddd; text-align:right;">
+                                                ₱ <?php echo number_format($paid, 2); ?>
+                                            </td>
+                                            <td style="border:1px solid #ddd; text-align:right; font-weight:bold; color:#dc3545;">
+                                                ₱ <?php echo number_format($balance, 2); ?>
+                                            </td>
+                                            <td style="border:1px solid #ddd; text-transform:uppercase; white-space:normal; word-wrap:break-word;">
+                                                <?php echo !empty($remarks) ? htmlspecialchars($remarks) : '-'; ?>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+
+                                <p style="margin-top: 15px; font-size: 13px; color: #666; font-style: italic;">
+                                    Note: Please ensure proper settlement arrangements are made for outstanding loan balances before finalizing the employee's separation.
+                                </p>
+                            <?php endif; ?>
 
                             <p style="margin-top:30px;">
                                 <strong>Human Resources Department</strong><br>

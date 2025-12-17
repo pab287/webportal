@@ -52,7 +52,7 @@ const status = $('select[name="work_status"]');
 let dtWorkExperience = null;
 let currentResignDate = "";
 let currentClassification = "";
-
+let currentLoansData = [];
 loadEmployees();
 let selectedTable="";
 let _user = [];
@@ -1008,6 +1008,7 @@ if (typeof _tempContentData !== "undefined") {
                 const data = e.params.data;
                 vmTab3.vm_tab3 = Object.assign({}, vmTab3.vm_tab3, { work_schedule: data.id });
             });
+            getEmployeeLoans(tempDataId);
         },
         methods: {
             supervisorySelect2(target, destroy = false, data = {}, id = 0){
@@ -4838,7 +4839,6 @@ var validatePersonalEmployeeData = function () {
         form: "#frmEditEmploymentData",
         lang: "en",
         onSuccess: function (form) {
-
             var currentForm = form[0];
             var formUrl = currentForm.action;
             var formData = $(currentForm).serialize();
@@ -4857,46 +4857,55 @@ var validatePersonalEmployeeData = function () {
             const isInactive = (newClassification || '').toLowerCase() === 'inactive';
             if ( isInactive && (oldClassification !== newClassification || oldDate !== newDate) ) {
                 $("#m_datepicker-date_resign").attr("readonly", true);
-                const table = $("#tbl-loans").DataTable();
-                const loans = table.data().toArray()
-                .map(row => {
-                    const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
-                    return { ...row, balance };
-                })
-                .filter(row => row.active === "1" || row.balance !== 0);
+                const loans = currentLoansData;
+                console.log(loans);
+                // .map(row => {
+                //     const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
+                //     return { ...row, balance };
+                // }).filter(row => row.balance > 0 && row.active != 3 );
 
                 if (loans.length > 0) {
+                    console.log(loans);
                     $("#currentLoan").modal("show");
-                    $('#current_loan_table').DataTable({
-                        data: loans,
-                        destroy: true,
-                        searching: false,
-                        paging: false,
-                        ordering: false,
-                        info: false,
-                        columns: [
-                            { data: 'loan_name' },
-                            { 
-                                data: 'amount',
-                                render: (data) => `₱${parseFloat(data).toLocaleString()}`
-                            },
-                            { 
-                                data: 'total_amount_paid',
-                                render: (data) => `₱${parseFloat(data).toLocaleString()}`
-                            },
-                            { 
-                                data: 'balance',
-                                render: (data) => `₱${parseFloat(data).toLocaleString()}`
-                            },
-                            { 
-                                data: 'remarks',
-                                defaultContent: ''
-                            }
-                        ],
-                        columnDefs: [
-                            { targets: [1,2,3], className: "text-right" }
-                        ]
+                    $('#currentLoan').on('shown.bs.modal', function () {
+                        $('#current_loan_table').DataTable({
+                            data: loans,
+                            destroy: true,
+                            searching: false,
+                            paging: false,
+                            ordering: false,
+                            info: false,
+                            columns: [
+                                {
+                                    data: 'loan_name', width: '30%',
+                                    render: function (data, type, row) {
+                                        const status = row.active === "1" ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Suspended</span>';
+                                        return `<span>${data}</span></br> ${status}`;
+                                    }
+                                },
+                                { 
+                                    data: 'amount', width: '15%',
+                                    render: (data) => `₱${parseFloat(data).toLocaleString()}`
+                                },
+                                { 
+                                    data: 'total_amount_paid', width: '15%',
+                                    render: (data) => `₱${parseFloat(data).toLocaleString()}`
+                                },
+                                { 
+                                    data: 'balance', width: '15%',
+                                    render: (data) => `₱${parseFloat(data).toLocaleString()}`
+                                },
+                                { 
+                                    data: 'remarks', width: '25%',
+                                    defaultContent: ''
+                                }
+                            ],
+                            columnDefs: [
+                                { targets: [1,2,3], className: "text-right" }
+                            ],
+                        });
                     });
+
 
                     $('#currentLoan').data('formUrl', formUrl);
                     $('#currentLoan').data('formData', formData);
@@ -4906,14 +4915,14 @@ var validatePersonalEmployeeData = function () {
 
                     $("#btnConfirmLoan").off("click").on("click", function () {
                         const url = $('#currentLoan').data('formUrl');
-                        const data = $('#currentLoan').data('formData');
+                        let data = $('#currentLoan').data('formData');
                         const formEl = $('#currentLoan').data('formElement');
                         $("#currentLoan").modal("hide");
                         saveEmploymentData(url, data, formEl);
                         currentClassification = $('#currentLoan').data('newClassification');
                         currentResignDate = $('#currentLoan').data('newDate');
                         vmPrimary.isSortOnly = false;
-                        sendEmail(data);
+                        sendEmail();
                     });
                     return false; 
                 }
@@ -7040,7 +7049,17 @@ const vmJobDesc = new Vue({
     }
 });
 
-function sendEmail(data){
+function sendEmail(){
+    let data = {
+        csrf_token: _csrf_hash,
+        emp_id: tempDataId,
+        fullname: vmTab3.vm_tab3.display_name,
+        company: vmTab3.vm_tab3.company,
+        department: vmTab3.vm_tab3.department,
+        level: vmTab3.vm_tab3.level,
+        position: vmTab3.vm_tab3._position,
+    };
+
     $.ajax({
         type: 'POST',
         global: true,
@@ -7048,5 +7067,18 @@ function sendEmail(data){
         data: data,
         dataType: 'json',
         beforeSend: function() {}
+    });
+}
+
+
+function getEmployeeLoans(empId) {
+    $.ajax({
+        url: baseUrl("hris/masterfile/get_employee_loans_data"),
+        type: "POST",
+        dataType: "json",
+        data: { csrf_token: _csrf_hash, emp_id: empId },
+        success: function(response) {
+            currentLoansData = response;
+        },
     });
 }

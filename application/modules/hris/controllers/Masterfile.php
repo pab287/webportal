@@ -2066,4 +2066,9 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
+        public function get_employee_loans_data(){
+            $data = $this->employee_model->getEmployeeLoansDataCall();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
     }
