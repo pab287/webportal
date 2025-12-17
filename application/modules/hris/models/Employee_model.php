@@ -13069,12 +13069,24 @@ class Employee_model extends CI_Model {
 
     public function sendHeadEmail(){
         $post = $this->input->post();
-        $data = $post['data'];
-        $email_content = $this->load->view("email_templates/email-active_ca.php",array("data" => $data), true);
-        var_dump();
+        $loans = $this->getEmployeeLoansData($post['employee_id']);
+        $email_content = $this->load->view("email_templates/email-active_ca.php",array("data" => $post), true);
+        var_dump($email_content);
         die();
         // $mailer['send_to'] = $send_email;
         // $result['status'] = $this->core->send_email('core','GC & C Conyx PH','Two Factor Authentication',$email_content,$mailer);
+    }
+
+    private function getEmployeeLoansData($employee_id){
+        $data = array();
+        $this->db->select("*");
+        $this->db->from("gcchris.tblemployee_loans");
+        $this->db->where("employee_id", $employee_id);
+        $query = $this->db->get();
+        if ($query->num_rows() > 0) {
+            $data = $query->result_array();
+        }
+        return $data;
     }
     
 

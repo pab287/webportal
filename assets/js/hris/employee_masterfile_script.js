@@ -4854,8 +4854,8 @@ var validatePersonalEmployeeData = function () {
             let newDate = formDataObj.resignation_effective_date ?? ""
             let newClassification = formDataObj.employee_status ?? ""
             
-            console.log(oldClassification, newClassification, oldDate, newDate,newClassification.toLowerCase() == 'inactive');
-            if((oldClassification !== newClassification && newClassification.toLowerCase() === 'inactive') || oldDate !== newDate){
+            const isInactive = (newClassification || '').toLowerCase() === 'inactive';
+            if ( isInactive && (oldClassification !== newClassification || oldDate !== newDate) ) {
                 $("#m_datepicker-date_resign").attr("readonly", true);
                 const table = $("#tbl-loans").DataTable();
                 const loans = table.data().toArray()
