@@ -46,6 +46,10 @@ class Timesheet extends MY_Controller {
         $this->core_layout->setPrivilegeName("gcctime_timesheet_time_adjustments");
         $this->core_layout->addCss("css/time/timesheet/timesheet.styles.css", TRUE);
         $this->core_layout->addJs("demo/default/custom/components/forms/widgets/bootstrap-switch.js", TRUE);
+
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+        
         $this->core_layout->addJs("js/time/timesheet/time_adjustment.script.js", TRUE);
 
         $data = array();

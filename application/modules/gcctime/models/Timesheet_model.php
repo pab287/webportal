@@ -3128,6 +3128,7 @@ class Timesheet_model extends CI_Model{
             $this->db->select("emp_id");
             $this->db->from("payroll.payroll_sheet");
             $this->db->where("posted", 1);
+            $this->db->where('is_bonus', 0);
             $this->db->group_start();
             $this->db->where("DATE(date_start) <=", $tempDate);
             $this->db->where("DATE(date_end) >=", $tempDate);
@@ -4111,6 +4112,7 @@ class Timesheet_model extends CI_Model{
 
                 $this->db->from("payroll.payroll_sheet");
                 $this->db->where("posted", 1);
+                $this->db->where("is_bonus", 0);
                 $this->db->where("emp_id", $timesheet->_emp_id);
                 $this->db->group_start();
                 $this->db->where("DATE(date_start) <=", $timesheet->_date);
@@ -4828,7 +4830,6 @@ class Timesheet_model extends CI_Model{
             $currentYear = intval(date('Y'));
             $currentMonth = intval(date('m'));
 
-
             if (empty($cut_off)) {
                 $dates_arr = explode("/", $dates);
                 $start = date("Y-m-d", strtotime($dates_arr[0]));
@@ -4855,6 +4856,61 @@ class Timesheet_model extends CI_Model{
                 }
             }
 
+            // checks if verifying date is posted in payrollsheet
+            $_empIds = array_column($emp_ids, 'emp_id');
+            $start_latest_posted = null;
+            $end_latest_posted = null;
+
+            $this->db->select("MAX(ps.date_start) as min_date, MAX(ps.date_end) as max_date");
+            $this->db->from($this->tbl_employees." emp");
+            $this->db->join($this->tbl_payroll_sheet." ps", "ps.emp_id = emp.id AND ps.posted = 1 AND ps.is_bonus = 0", "LEFT");
+            $this->db->where_in("emp.id", $_empIds);
+            $this->db->group_by("emp.id");
+            $qTemp = $this->db->get();
+
+            if ($qTemp->num_rows() > 0) {
+                $_row = $qTemp->row();
+                $start_latest_posted = date('Y-m-d', strtotime($_row->min_date));
+                $end_latest_posted = date('Y-m-d', strtotime($_row->max_date));
+            }
+
+            $this->db->reset_query();
+
+            if ($start_latest_posted && $end_latest_posted) {
+                $this->db->select('emp_id, date as timesheet_date');
+                $this->db->where_in("id", $post->id);
+                $this->db->from($this->tbl_timesheet);
+                $_q = $this->db->get();
+    
+                $this->db->reset_query();
+    
+                if ($_q->num_rows() > 0) {
+                    foreach($_q->result() as $key => $rs) {
+                        $_currDate = date('Y-m-d', strtotime($rs->timesheet_date));
+
+                        if ($_currDate >=  $start_latest_posted && $_currDate <= $end_latest_posted) {
+                            $msg = count($post->id) > 1 ? 'Multiple Timesheet entries' : 'Timesheet entry';
+                            $resultSet["success"] = false;
+                            $resultSet["message"] = "$msg already been Posted!";
+                            $resultSet["title"] = "Posted Payroll Sheet";
+                            $resultSet['is_posted'] = true;
+                            return $resultSet;
+                        }
+
+                        if ($_currDate < $start_latest_posted) {
+                            $resultSet["success"] = false;
+                            $resultSet["message"] = "Invalid Adjustment date! Timesheet date is below the current Payroll sheet date.";
+                            $resultSet["title"] = "Posted Payroll Sheet";
+                            $resultSet['is_below_latest_posted'] = true;
+                            return $resultSet;
+                        }
+                    }
+                }
+            }
+
+            $this->db->reset_query();
+            // checks if verifying date is posted in payrollsheet
+
             $this->db->where_in("id", $post->id);
             $this->db->set("verified", 1);
             $this->db->set("verified_by", $logged_in_user_emp_id);
@@ -4865,24 +4921,6 @@ class Timesheet_model extends CI_Model{
             foreach ($emp_holidays as $index => $row) {
                 $tempHolidays[$row->id] = $row->is_holiday;
             }
-
-            // checks if cut-off is posted in payrollsheet
-            $this->db->where('DATE(date_start) >=', $start);
-            $this->db->where('DATE(date_end) <=', $end);
-            $this->db->where('posted', 1);
-            $this->db->from($this->tbl_payroll_sheet);
-            $checkPostedCutOff = $this->db->get();
-
-            if ($checkPostedCutOff->num_rows() > 0) {
-                $resultSet["success"] = false;
-                $resultSet["message"] = "Timesheet entry already been Posted!";
-                $resultSet["title"] = "Posted Payroll Sheet";
-
-                return $resultSet;
-            }
-
-            $this->db->reset_query();
-            // checks if cut-off is posted in payrollsheet
 
             foreach ($emp_ids as $index => $row) {
                 $timesheets = $this->db
@@ -5370,6 +5408,72 @@ class Timesheet_model extends CI_Model{
         $resultSet = array();
         $this->db->trans_begin();
 
+        // checks if verifying date is posted in payrollsheet
+        if ($status === 1) {
+            $this->db->select("adj.timesheet_id");
+            $this->db->join($this->tbl_time_adjustments . " adj", "adj.id = meta.time_adjustments_id", "INNER");
+            $this->db->where_in("adj.id", $id);
+            $timesheetId = $this->db->get($this->tbl_time_adjustments_meta . " meta")->result();
+
+            if (count($timesheetId) > 0) {
+                $_timesheetIds = array_column($timesheetId, 'timesheet_id');
+                $_empIds = $this->get_timesheet_empid($_timesheetIds);
+
+                if (count($_empIds) > 0) {
+                    $start_latest_posted = null;
+                    $end_latest_posted = null;
+
+                    $this->db->select("MAX(ps.date_start) as min_date, MAX(ps.date_end) as max_date");
+                    $this->db->from($this->tbl_employees." emp");
+                    $this->db->join($this->tbl_payroll_sheet." ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+                    $this->db->where_in("emp.id", $_empIds);
+                    $this->db->group_by("emp.id");
+                    $qTemp = $this->db->get();
+        
+                    $this->db->reset_query();
+        
+                    if ($qTemp->num_rows() > 0) {
+                        $_row = $qTemp->row();
+                        $start_latest_posted = date("Y-m-d", strtotime($_row->min_date));
+                        $end_latest_posted = date("Y-m-d", strtotime($_row->max_date));
+                    }
+        
+                    if ($start_latest_posted && $end_latest_posted) {
+                        $this->db->select('emp_id, date as timesheet_date');
+                        $this->db->where_in("id", $_timesheetIds);
+                        $this->db->from($this->tbl_timesheet);
+                        $_q = $this->db->get();
+        
+                        $this->db->reset_query();
+
+                        if ($_q->num_rows() > 0) {
+                            foreach($_q->result() as $k => $v) {
+                                $_currDate = date("Y-m-d", strtotime($v->timesheet_date));
+
+                                if ($_currDate >=  $start_latest_posted && $_currDate <= $end_latest_posted) {
+                                    $msg = count($post->id) > 1 ? 'Multiple Timesheet entries' : 'Timesheet entry';
+                                    $resultSet["success"] = false;
+                                    $resultSet["message"] = "$msg already been Posted!";
+                                    $resultSet["title"] = "Posted Payroll Sheet";
+                                    $resultSet['is_posted'] = true;
+                                    return $resultSet;
+                                }
+
+                                if ($_currDate < $start_latest_posted) {
+                                    $resultSet["success"] = false;
+                                    $resultSet["message"] = "Invalid Adjustment date! Timesheet date is below the current Payroll sheet date.";
+                                    $resultSet["title"] = "Posted Payroll Sheet";
+                                    $resultSet['is_below_latest_posted'] = true;
+                                    return $resultSet;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // checks if verifying date is posted in payrollsheet
+
         foreach ($id as $_id) {
             if ($status === 1) {
                 $total_accredited_ot_hrs = 0;
@@ -5417,11 +5521,11 @@ class Timesheet_model extends CI_Model{
                 $timesheetHourlyPartimer = $this->generatePerHourSlashPartimer($timesheet_id);
                 
                 /*** $this->db->where("id", $timesheet_id);
-                 $this->db->update($this->tbl_timesheet, $timesheetCalculation);
+                $this->db->update($this->tbl_timesheet, $timesheetCalculation);
                  $this->db->reset_query(); ***/
-                 
-                 $qData = $this->db->get_where($this->tbl_timesheet, array("id"=>$timesheet_id));
-                 if($qData->num_rows() == 1){
+                
+                $qData = $this->db->get_where($this->tbl_timesheet, array("id"=>$timesheet_id));
+                if($qData->num_rows() == 1){
                     $qRowData = $qData->row();
                     $toArray = (array) $timesheetHourlyPartimer;
                     if(is_array($toArray) && count($toArray) > 0){ $qRowData->is_tagged_hourly = true; }
@@ -10034,5 +10138,21 @@ class Timesheet_model extends CI_Model{
         }
 
         return $result;
+    }
+
+    public function get_timesheet_empid($id = array()) {
+        $_empIds = array();
+
+        $this->db->select('emp_id');
+        $this->db->where_in('id', $id);
+        $this->db->from($this->tbl_timesheet);
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $row = $query->result();
+            $_empIds = array_column($row, 'emp_id');
+        }
+
+        return $_empIds;
     }
 }
