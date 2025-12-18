@@ -7047,7 +7047,6 @@ const vmJobDesc = new Vue({
 });
 
 function sendEmail(){
-    console.log(vmTab3.vm_tab3);
     let data = {
         csrf_token: _csrf_hash,
         emp_id: tempDataId,
@@ -7065,7 +7064,7 @@ function sendEmail(){
         data: data,
         dataType: 'json',
         success: function (response) {
-            if (response.success) {
+            if (response.status) {
                 toastr.success(response.message, "Success", 10000);
             } else {
                 toastr.error(response.message, "Error", 10000);
