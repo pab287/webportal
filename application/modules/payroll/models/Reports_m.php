@@ -1362,10 +1362,26 @@ class Reports_m extends CI_Model{
                         $this->db->from("payroll.payroll_sheet");
                         $this->db->where("posted", 1);
                         $this->db->where("is_bonus", 0);
-                        $this->db->group_start();
-                        $this->db->where("DATE(date_start) >=", $_tempStartDate);
-                        $this->db->where("DATE(date_end) <=", $_tempEndDate);
-                        $this->db->group_end();
+                        if($isMonthFilter === true){
+                            $_monthStartDate = date("Y-m-d", strtotime("first day of this month", strtotime($tempStartDate)));
+                            $_monthEndDate = date("Y-m-d", strtotime("last day of this month", strtotime($_monthStartDate)));
+                            $this->db->group_start();
+                                $this->db->group_start();
+                                $this->db->where("DATE(date_start) >=", $_tempStartDate);
+                                $this->db->where("DATE(date_end) <=", $_tempEndDate);
+                                $this->db->group_end();
+                                $this->db->or_group_start();
+                                $this->db->where("DATE(date_start) >=", $_monthStartDate);
+                                $this->db->where("DATE(date_end) <=", $_monthEndDate);
+                                $this->db->group_end();
+                            $this->db->group_end();
+                        }else{
+                            $this->db->group_start();
+                            $this->db->where("DATE(date_start) >=", $_tempStartDate);
+                            $this->db->where("DATE(date_end) <=", $_tempEndDate);
+                            $this->db->group_end();
+                        }
+                        
                         if($isPaydate){
                             $this->db->group_start();
                             $this->db->or_where("DATE(pay_date) >=", $_tempPayDateStart);
@@ -1674,10 +1690,26 @@ class Reports_m extends CI_Model{
                         $this->db->from("payroll.payroll_sheet");
                         $this->db->where("posted", 1);
                         if($includedBonus === false){ $this->db->where("is_bonus", 0); }
-                        $this->db->group_start();
-                        $this->db->where("DATE(date_start) >=", $_tempStartDate);
-                        $this->db->where("DATE(date_end) <=", $_tempEndDate);
+                        if($isMonthlyFilter === true){
+                            $_monthStartDate = date("Y-m-d", strtotime("first day of this month", strtotime($tempStartDate)));
+                            $_monthEndDate = date("Y-m-d", strtotime("last day of this month", strtotime($_monthStartDate)));
+                            $this->db->group_start();
+                                $this->db->group_start();
+                                $this->db->where("DATE(date_start) >=", $_tempStartDate);
+                                $this->db->where("DATE(date_end) <=", $_tempEndDate);
+                                $this->db->group_end();
+                                $this->db->or_group_start();
+                                $this->db->where("DATE(date_start) >=", $_monthStartDate);
+                                $this->db->where("DATE(date_end) <=", $_monthEndDate);
+                                $this->db->group_end();
                         $this->db->group_end();
+                        }else{
+                            $this->db->group_start();
+                            $this->db->where("DATE(date_start) >=", $_tempStartDate);
+                            $this->db->where("DATE(date_end) <=", $_tempEndDate);
+                            $this->db->group_end();
+                        }
+                        
                         $this->db->where_in("emp_id", $isWeeklyEmployees);
                         if(isset($post["company"]) && $post["company"]){
                             $this->db->where("company_id", $post["company"]);
@@ -1985,7 +2017,7 @@ class Reports_m extends CI_Model{
                 $date->modify('last day of this month');
                 $tempEndDate = $date->format('Y-m-d');
                 $isMonthlyFilter = true;
-            }else if(isset($post["filter_year"]) && $post["filter_year"]){
+            }elseif(isset($post["filter_year"]) && $post["filter_year"]){
                 $tempStartDate = date("Y-01-01", strtotime("{$post["filter_year"]}"));
                 $tempEndDate = date("Y-12-31", strtotime("{$post["filter_year"]}"));
             }
@@ -2027,10 +2059,24 @@ class Reports_m extends CI_Model{
                         $this->db->from("payroll.payroll_sheet");
                         $this->db->where("posted", 1);
                         $this->db->where("is_bonus", 0);
-                        $this->db->group_start();
-                        $this->db->where("DATE(date_start) >=", $_tempStartDate);
-                        $this->db->where("DATE(date_end) <=", $_tempEndDate);
-                        $this->db->group_end();
+                        if($isMonthlyFilter === true){
+                            $_monthStartDate = date("Y-m-d", strtotime("first day of this month", strtotime($tempStartDate)));
+                            $_monthEndDate = date("Y-m-d", strtotime("last day of this month", strtotime($_monthStartDate)));
+                            $this->db->group_start();
+                                $this->db->group_start();
+                                $this->db->where("DATE(date_start) >=", $_tempStartDate);
+                                $this->db->where("DATE(date_end) <=", $_tempEndDate);
+                                $this->db->or_group_start();
+                                $this->db->where("DATE(date_start) >=", $_monthStartDate);
+                                $this->db->where("DATE(date_end) <=", $_monthEndDate);
+                                $this->db->group_end();
+                            $this->db->group_end();
+                        }else{
+                            $this->db->group_start();
+                            $this->db->where("DATE(date_start) >=", $_tempStartDate);
+                            $this->db->where("DATE(date_end) <=", $_tempEndDate);
+                            $this->db->group_end();
+                        }
                         if($isPaydate){
                             $this->db->group_start();
                             $this->db->or_where("DATE(pay_date) >=", $_tempPayDateStart);
