@@ -74,7 +74,7 @@ function val($item, $key, $default = 'N/A') {
                             <?php if (!empty($loans)): ?>
                                 <div style="margin-top: 30px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
                                     <p style="margin: 0 0 10px 0; font-weight: bold; color: #856404;">
-                                        ⚠️ IMPORTANT: This employee has active/unpaid loans
+                                        IMPORTANT: This employee has active/unpaid loans
                                     </p>
                                 </div>
 
@@ -107,7 +107,6 @@ function val($item, $key, $default = 'N/A') {
                                                 continue;
                                             }
 
-                                            // ✅ Loan name logic
                                             $loanName = (intval(val($loan, 'loan_code')) === 1)
                                                 ? val($loan, 'ref')
                                                 : val($loan, 'loan_name');
