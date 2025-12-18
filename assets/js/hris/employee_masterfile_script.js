@@ -4857,15 +4857,12 @@ var validatePersonalEmployeeData = function () {
             const isInactive = (newClassification || '').toLowerCase() === 'inactive';
             if ( isInactive && (oldClassification !== newClassification || oldDate !== newDate) ) {
                 $("#m_datepicker-date_resign").attr("readonly", true);
-                const loans = currentLoansData;
-                console.log(loans);
-                // .map(row => {
-                //     const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
-                //     return { ...row, balance };
-                // }).filter(row => row.balance > 0 && row.active != 3 );
-
+                let loans = currentLoansData;
+                loans = loans.map(row => {
+                    const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
+                    return { ...row, balance };
+                }).filter(row => row.balance > 0 && row.active != 3 );
                 if (loans.length > 0) {
-                    console.log(loans);
                     $("#currentLoan").modal("show");
                     $('#currentLoan').on('shown.bs.modal', function () {
                         $('#current_loan_table').DataTable({
@@ -7050,6 +7047,7 @@ const vmJobDesc = new Vue({
 });
 
 function sendEmail(){
+    console.log(vmTab3.vm_tab3);
     let data = {
         csrf_token: _csrf_hash,
         emp_id: tempDataId,
@@ -7066,7 +7064,13 @@ function sendEmail(){
         url: baseUrl("hris/masterfile/send_head_email"),
         data: data,
         dataType: 'json',
-        beforeSend: function() {}
+        success: function (response) {
+            if (response.success) {
+                toastr.success(response.message, "Success", 10000);
+            } else {
+                toastr.error(response.message, "Error", 10000);
+            }
+        }
     });
 }
 

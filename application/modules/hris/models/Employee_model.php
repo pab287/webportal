@@ -13070,11 +13070,21 @@ class Employee_model extends CI_Model {
     public function sendHeadEmail(){
         $post = $this->input->post();
         $loans = $this->getEmployeeLoansData($post['emp_id']);
+        $ids = [4,49,8]; // 4 = FINANCE, 49 = FINANCE, 8 = HRD
+        $heads = $this->getHeadEmails($ids);
         $email_content = $this->load->view("email_templates/email-active_ca.php",array("data" => $post, "loans" => $loans), true);
-        var_dump($email_content, $loans);
-        die();
-        // $mailer['send_to'] = $send_email;
-        // $result['status'] = $this->core->send_email('core','GC & C Conyx PH','Two Factor Authentication',$email_content,$mailer);
+        $mailer['send_to'] = $heads['data'];
+        $result['status'] = $this->core_layout->send_email('core','GC & C Conyx PH','INACTIVE EMPLOYEE NOTIFICATION',$email_content,$mailer);
+        if ($result['status']) {
+            $this->core_layout->setEventLog("Email has been sent successfully", "insert", "success", "gcchris", "user");
+            $result['status'] = true;
+            $result['message'] = "Email has been sent successfully";
+        } else {
+            $this->core_layout->setEventLog("Failed to send email", "insert", "error", "gcchris", "system");
+            $result['status'] = false;
+            $result['message'] = "Failed to send email. Please try again later.";
+        }
+        return $result;
     }
 
     public function getEmployeeLoansDataCall(){
@@ -13116,6 +13126,23 @@ class Employee_model extends CI_Model {
         }
         return $arrData;
     }
+
+    private function getHeadEmails($ids){
+        $this->db->select('b.email');
+        $this->db->from($this->departmentTable . ' AS a');
+        $this->db->join($this->tblUsers . ' AS b', 'b.emp_id = a.head_id', 'LEFT');
+        $this->db->where('b.email IS NOT NULL');
+        $this->db->where('b.email !=', '');
+        $this->db->where_in('a.id', $ids); // 4 = FINANCE, 49 = FINANCE, 8 = HRD
+    
+        $query = $this->db->get();
+    
+        return [
+            'success' => $query->num_rows() > 0,
+            'data'    => array_column($query->result_array(), 'email')
+        ];
+    }
+    
     
 
 }
