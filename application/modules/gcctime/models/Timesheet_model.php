@@ -5454,7 +5454,7 @@ class Timesheet_model extends CI_Model{
                                     $msg = count($post->id) > 1 ? 'Multiple Timesheet entries' : 'Timesheet entry';
                                     $resultSet["success"] = false;
                                     $resultSet["message"] = "$msg already been Posted!";
-                                    $resultSet["title"] = "Posted Payroll Sheet";
+                                    $resultSet["title"] = "Posted Payroll Sheet Found!";
                                     $resultSet['is_posted'] = true;
                                     return $resultSet;
                                 }
@@ -5462,7 +5462,7 @@ class Timesheet_model extends CI_Model{
                                 if ($_currDate < $start_latest_posted) {
                                     $resultSet["success"] = false;
                                     $resultSet["message"] = "Posted Payroll Sheet found! Timesheet data is behind the current Payroll sheet date.";
-                                    $resultSet["title"] = "Posted Payroll Sheet";
+                                    $resultSet["title"] = "Invalid Adjustment Date!";
                                     $resultSet['is_below_latest_posted'] = true;
                                     return $resultSet;
                                 }
