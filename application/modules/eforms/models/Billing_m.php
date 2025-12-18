@@ -501,7 +501,7 @@ class Billing_m extends CI_Model {
         $customer_name = $this->nameFormat($post["firstname"], $post["middlename"], $post["lastname"]);
         $notification = "Update Customer details ";
 
-        if($this->getDisconnectionStatus($id) != $post["is_disconnected"]){
+        if(isset($post["is_disconnected"]) && $this->getDisconnectionStatus($id) != $post["is_disconnected"]){
             if($post["is_disconnected"] == 1){
                 $post["disconnect_date"] = $current_date;
                 $notification .= "Water Disconnected, ";
