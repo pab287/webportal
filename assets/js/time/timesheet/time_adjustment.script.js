@@ -1111,7 +1111,7 @@ $.validate({
 
                 if (typeof response.is_posted !== "undefined" && response.is_posted || typeof response.is_below_latest_posted !== "undefined" && response.is_below_latest_posted) {
                     Swal.fire({
-                        title: 'Posted Payroll Sheet Found!',
+                        title: typeof response.is_below_latest_posted !== "undefined" && response.is_below_latest_posted ? 'Invalid Adjustment Date!' : 'Posted Payroll Sheet Found!',
                         text: `${response.message}`,
                         icon: 'warning',
                         showCancelButton: false,

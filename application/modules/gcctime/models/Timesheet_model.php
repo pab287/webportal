@@ -4899,7 +4899,7 @@ class Timesheet_model extends CI_Model{
 
                         if ($_currDate < $start_latest_posted) {
                             $resultSet["success"] = false;
-                            $resultSet["message"] = "Invalid Adjustment date! Timesheet date is below the current Payroll sheet date.";
+                            $resultSet["message"] = "Posted Payroll Sheet found! Timesheet data is behind the current Payroll sheet date.";
                             $resultSet["title"] = "Posted Payroll Sheet";
                             $resultSet['is_below_latest_posted'] = true;
                             return $resultSet;
@@ -5461,7 +5461,7 @@ class Timesheet_model extends CI_Model{
 
                                 if ($_currDate < $start_latest_posted) {
                                     $resultSet["success"] = false;
-                                    $resultSet["message"] = "Invalid Adjustment date! Timesheet date is below the current Payroll sheet date.";
+                                    $resultSet["message"] = "Posted Payroll Sheet found! Timesheet data is behind the current Payroll sheet date.";
                                     $resultSet["title"] = "Posted Payroll Sheet";
                                     $resultSet['is_below_latest_posted'] = true;
                                     return $resultSet;
