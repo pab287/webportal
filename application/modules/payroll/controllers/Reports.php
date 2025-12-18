@@ -20,6 +20,10 @@ class Reports extends MY_Controller {
         $this->core_layout->setPageTitle("Payroll - Netpay Report");
         $this->core_layout->setPrivilegeName("payroll_report_netpay");
         $this->core_layout->addJs("js/buttons.print.min.js", true);
+
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+
         $this->core_layout->addJs("js/payroll/reports/netpay.script.js", true, $tempData);
 
         $this->load->view("core/templates/header");
@@ -1045,5 +1049,12 @@ class Reports extends MY_Controller {
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
+    }
+
+    function update_print_payrollsheet_netpay(){
+        $data = $this->reports->update_print_payrollsheet_netpay();
+        $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
     }
 }
