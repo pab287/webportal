@@ -43,8 +43,12 @@
             }
             curl_close($ch);
             $data = json_decode($output, true);
-
-            if (!in_array($data[0]['status'], ['Failed', 'Refunded'])) {
+            if(str_contains(strtolower($data[0]), 'not sufficient')){
+                $result['status'] = false;
+                $result['output'] = $data;
+                $result['message'] = 'Your current balance of credits is not sufficient. This transaction requires credits.';
+            }
+            elseif (!in_array( $data[0]['status'], ['Failed', 'Refunded']) ) {
                 $result['status'] = true;
                 $result['output'] = $data;
                 $result['message'] = 'Message sent successfully';
