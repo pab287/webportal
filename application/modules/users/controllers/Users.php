@@ -378,4 +378,15 @@ class Users extends MY_Controller{
         $data = $this->user->changePasswordLater();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
+
+    public function get_itmar_list(){
+        $data = $this->user->getItmarList();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function save_itmar(){
+        $data = $this->user->saveItmar();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
 }

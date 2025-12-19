@@ -56,20 +56,16 @@
                         </div>
                     </div>
                     <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll m-datatable--scroll">
-                        <table class="table table-striped table-bordered table-sm" id="table-tickets" width="100%">
+                        <table class="table table-striped table-bordered table-sm" id="itmarTable" width="100%">
                             <thead>
                             <tr>
-                                <th class="notExport"></th>
-                                <th>Reference #</th>
-                                <th>Category</th>
-                                <!-- <th>Sub Category</th> -->
-                                <th>Priority</th>
-                                <th>Status</th>
-                                <th>Date Needed</th>
-                                <th>Created At</th>
-                                <th>Requested by</th>
-                                <th>Performed by</th>
-                                <th class="notExport">Action</th>
+                                <th></th>
+                                <th>Employee</th>
+                                <th>Purpose</th>
+                                <th>App Name</th>
+                                <th></th>
+                                <th></th>
+                                <th>Actions</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -101,42 +97,44 @@
                     <div class="form-group m-form__group row col">
                         <div class="col-6 d-flex align-items-center">
                             <label class="m-radio m-radio--brand">
-                                <input type="radio" name="app_type" value="TGCloudBAS">
+                                <input type="radio" name="app_name" value="TGCloudBAS">
                                 TG CloudBAS
                                 <span></span>
                             </label>
                         </div>
                         <div class="col-6 d-flex align-items-center">
                             <label class="m-radio m-radio--brand">
-                                <input type="radio" name="app_type" value="GCCTIME" checked>
+                                <input type="radio" name="app_name" value="GCCTIME" checked>
                                 GCCTIME Mobile APP
                                 <span></span>
                             </label>
                         </div>
                     </div>
-                    <div class="form-group m-form__group row col">
-                        <label for="employee" class="col-sm-12 col-xs-12 col-md-3 form-label required">Requested By:</label>
+                    <div class="form-group m-form__group row align-items-center col">
+                        <label for="employee" class="col-sm-12 col-xs-12 col-md-3 form-label required mb-0">Requested By:</label>
                         <div class="col-sm-12 col-xs-12 col-md-9">
                             <select name="employee" id="employee" data-validation="required">
                                 <option></option>
                             </select>
                         </div>
                     </div>
+                    <div class="form-group m-form__group row align-items-center col">
+                        <label for="position" class="col-2 form-label mb-0">POSITION: </label>
+                        <input type="text" name="position" id="position" class="col-10 form-control m-input" readonly>
+                    </div>
+                    <div class="m-separator m-separator--dashed"></div>
+                    <div class="form-group m-form__group row align-items-center col">
+                        <label for="department" class="col-2 form-label mb-0">DEPARTMENT: </label>
+                        <input type="text" name="department" id="department" class="col-10 form-control m-input" style="padding-right: 15px;" readonly>
+                    </div>
                     <div class="form-group m-form__group row col">
-                        <label for="position" class="col-2 form-label">POSITION: </label>
-                        <input type="text" name="position" id="position" class="col-4 form-control m-input" readonly>
-                        <label for="department" class="col-2 form-label">DEPARTMENT: </label>
-                        <input type="text" name="department" id="department" class="col-4 form-control m-input" style="padding-right: 15px;" readonly>
+                        <label for="ass_loc" class="col-12 form-label">ASSIGNED LOCATION/S: </label>
+                        <input name="ass_loc" class="col-12 form-control m-input" id="ass_loc" readonly>
                     </div>
                     <div class="m-separator m-separator--dashed"></div>
                     <div class="form-group m-form__group row col">
                         <label for="purpose" class="col-12 form-label">PURPOSE: </label>
-                        <textarea name="purpose" class="col-12 form-control" id=""></textarea>
-                    </div>
-                    <div class="m-separator m-separator--dashed"></div>
-                    <div class="form-group m-form__group row col">
-                        <label for="ass_loc" class="col-12 form-label">ASSIGNED LOCATION/S: </label>
-                        <textarea name="ass_loc" class="col-12 form-control" id="ass_loc"></textarea>
+                        <textarea id="purpose" name="purpose" class="col-12 form-control m-input auto-resize" rows="4" data-validation="required" style="resize:none; overflow-y:auto;"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">

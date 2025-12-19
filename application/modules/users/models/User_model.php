@@ -836,9 +836,14 @@ class User_model extends CI_Model{
 
     public function select2Employee(){
         $arrData = array();
-        $this->db->select("id, lastname, firstname, middlename, suffix");
-        $this->db->from('gccmaster.tblemployees');
-        $this->db->where("employee_status", "Active");
+        $this->db->select("a.id, a.lastname, a.firstname, a.middlename, a.suffix, b.description as department, c.name as position, GROUP_CONCAT(DISTINCT(`e`.`location_name`) ORDER BY `e`.`created_at`, `e`.`id` ASC SEPARATOR '|') as location_name,");
+        $this->db->from('gccmaster.tblemployees as a');
+        $this->db->join("gcchris.tbldepartments as b", "a.department_id = b.id", "LEFT");
+        $this->db->join("gcchris.tblposition as c", "a.position = c.id", "LEFT");
+        $this->db->join('gcctimeutility.personnel as d', 'd.biometricno = a.biometricno', 'left');
+        $this->db->join('gcctimeutility.personnel_locations as e', 'e.personnel_id = d.id', 'left');
+        $this->db->where("a.employee_status", "Active");
+        $this->db->group_by('a.id');
         $this->db->order_by("id", "DESC");
         $query = $this->db->get();
 
@@ -850,6 +855,9 @@ class User_model extends CI_Model{
                 $row = array();
                 $row["id"] = $rs->id;
                 $row["text"] = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+                $row["department"] = $rs->department;
+                $row["position"] = $rs->position;
+                $row["site_locations"] = $rs->location_name;
                 $arrData[] = $row;
             }
         }
@@ -896,6 +904,95 @@ class User_model extends CI_Model{
             }
         }
         return  $resultarray;
+    }
+
+
+    public function getItmarList(){
+        $resultset = array();
+        $post = $this->input->post();
+        $order_val = array(array("column"=>"9", "dir"=>"desc"));
+        $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
+        $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
+        $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+        $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+        $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
+        $rowData = $this->getItmarListData($search, $limit, $offset, $sortBy, $sortOrder);
+        $rowCount = $this->getItmarListDataCount($search);
+        $resultset["recordsTotal"] = $rowCount;
+        $resultset["recordsFiltered"] = $rowCount;
+        $resultset["data"] = $rowData;
+        return $resultset;
+    }
+
+    private function getItmarListData($search, $limit, $offset, $sortBy, $sortOrder){
+        $filterFields = array();
+        $this->db->select("a.*");
+        $this->db->from("gccmaster.it_mobile_application as a");
+
+        if ($search) {
+            $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+            $this->db->group_end();
+        }
+
+        if($limit != -1){
+            $this->db->limit($limit, $offset);
+        }
+
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+
+        $query = $this->db->get();
+        return $query->result_array();
+
+    }
+
+    private function getItmarListDataCount($search){
+        $filterFields = array();
+        $this->db->select("a.*");
+        $this->db->from("gccmaster.it_mobile_application as a");
+        if ($search) {
+            $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+            $this->db->group_end();
+        }
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+
+    public function saveItmar(){
+        $resultArray = array();
+        $post = $this->input->post();
+        $data = array(
+            "emp_id" => $post['emp_id'],
+            "app_name" => $post['app_name'],
+            "purpose" => $post['purpose'],
+            "created_by" => $this->session->userdata('logged_in')["emp_id"],
+        );
+
+        $save = $this->db->insert("gccmaster.it_mobile_application", $data);
+
+        if($save){
+            $resultArray['success'] = true;
+            $resultArray['message'] = "Successfully saved itmar request.";
+        }else{
+            $resultArray['success'] = false;
+            $resultArray['message'] = "Failed to save itmar request.";
+        }
+
+        return $resultArray;
     }
 
 }
