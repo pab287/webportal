@@ -315,7 +315,7 @@
             <div class="modal-body body_title">Are you sure to archive this account?</div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary btnArchive btnWaterConnection" id="btnWaterConnection">Yes</button>
+                <button type="button" class="btn btn-primary btnSave btnWaterConnection" id="btnWaterConnection">Yes</button>
                 <button type="button" class="btn btn-secondary btnWaterConnection_cancel" data-dismiss="modal" id="btnWaterConnection_cancel">No</button>
             </div>
         </div>
