@@ -4113,7 +4113,10 @@ class Reports_m extends CI_Model{
                     $payrateSetting = $this->getPayrateSetting($payrateTemp);
                     $tempPayrateSetting = intval($item->payrate_id) > 0 ? $this->getPayrateSettingById($item->payrate_id) : $payrateSetting;
                     $allowPaidAllowance = $tempPayrateSetting->particulars !== "regular" || intval($item->has_shift) === 0 || intval($tempPayrateSetting->is_holiday) === 1 ? 1 : 0;
-                    
+                    /*** paid holiday allowance ***/
+                    if(intval($tempPayrateSetting->is_holiday) === 1){ $allowPaidAllowance = intval($item->is_paid_holiday) === 1 ? 1 : 0; }
+                    /*** paid holiday allowance ***/
+
                     $otRate = floatval($tempPayrateSetting->ot_rate) > 0 ? floatval($tempPayrateSetting->ot_rate): 1;
                     $otNightDiffRate = floatval($tempPayrateSetting->ot_night_diff_rate) > 0 ? floatval($tempPayrateSetting->ot_night_diff_rate): 0;
                     
