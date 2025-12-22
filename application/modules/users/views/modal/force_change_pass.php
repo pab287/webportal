@@ -92,7 +92,7 @@
         }
     }
 
-    $(document).on('shown.bs.modal', '.password-change-reminder', function () {
+    $(document).on('show.bs.modal', '.password-change-reminder', function () {
         const removeLaterBtn = session.waive_count >= 4 || session.is_important == 1;
         if (removeLaterBtn) {
             $("#changePasswordLater").remove();
