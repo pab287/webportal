@@ -81,27 +81,27 @@
         $(this).find('i').toggleClass('fa-eye fa-eye-slash');
     });
 
-        if (session.next_update == null || session.next_update == "0000-00-00 00:00:00") {
+    if (session.next_update == null || session.next_update == "0000-00-00 00:00:00") {
+        $(".password-change-reminder").modal("show");
+    }
+    else {
+        const next_update = new Date(session.next_update);
+        const currentDate = new Date();
+        if (next_update <= currentDate) {
             $(".password-change-reminder").modal("show");
         }
-        else {
-            const next_update = new Date(session.next_update);
-            const currentDate = new Date();
-            if (next_update <= currentDate) {
-                $(".password-change-reminder").modal("show");
-                
-                if (session.waive_count >= 4) {
-                    $("#changePasswordLater").hide();
-                    $("#waiveNull").show();
-                }
-                const important = session.is_important;
-                if (important == 1) {
-                    $(document).ready(function () {
-                        $("#changePasswordLater").remove();
-                    });
-                }
-            }
+    }
+
+    $(document).on('shown.bs.modal', '.password-change-reminder', function () {
+        const removeLaterBtn = session.waive_count >= 4 || session.is_important == 1;
+        if (removeLaterBtn) {
+            $("#changePasswordLater").remove();
         }
+        if (session.waive_count >= 4) {
+            $("#waiveNull").show();
+        }
+    });
+
 
     // function checkPass(currr){
     //     if (session.next_update == null || session.next_update == "0000-00-00 00:00:00") {
