@@ -836,15 +836,16 @@ class User_model extends CI_Model{
 
     public function select2Employee(){
         $arrData = array();
-        $this->db->select("a.id, a.lastname, a.firstname, a.middlename, a.suffix, b.description as department, c.name as position, GROUP_CONCAT(DISTINCT(`e`.`location_name`) ORDER BY `e`.`created_at`, `e`.`id` ASC SEPARATOR '|') as location_name,");
+        $this->db->select("a.id, a.lastname, a.firstname, a.middlename, a.suffix, b.description as department, c.name as position, GROUP_CONCAT(DISTINCT(`e`.`location_name`) ORDER BY `e`.`created_at`, `e`.`id` ASC SEPARATOR '|') as location_name, GROUP_CONCAT(DISTINCT(`f`.`app_name`) SEPARATOR '|') as app_name");
         $this->db->from('gccmaster.tblemployees as a');
         $this->db->join("gcchris.tbldepartments as b", "a.department_id = b.id", "LEFT");
         $this->db->join("gcchris.tblposition as c", "a.position = c.id", "LEFT");
         $this->db->join('gcctimeutility.personnel as d', 'd.biometricno = a.biometricno', 'left');
         $this->db->join('gcctimeutility.personnel_locations as e', 'e.personnel_id = d.id', 'left');
+        $this->db->join('gccmaster.it_mobile_application as f', 'f.emp_id = a.id', 'left');
         $this->db->where("a.employee_status", "Active");
         $this->db->group_by('a.id');
-        $this->db->order_by("id", "DESC");
+        $this->db->order_by("a.id", "DESC");
         $query = $this->db->get();
 
         if ($query->num_rows() > 0) {
@@ -858,6 +859,7 @@ class User_model extends CI_Model{
                 $row["department"] = $rs->department;
                 $row["position"] = $rs->position;
                 $row["site_locations"] = $rs->location_name;
+                $row["app_name"] = $rs->app_name;
                 $arrData[] = $row;
             }
         }
@@ -916,18 +918,53 @@ class User_model extends CI_Model{
         $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
         $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
         $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
-        $rowData = $this->getItmarListData($search, $limit, $offset, $sortBy, $sortOrder);
-        $rowCount = $this->getItmarListDataCount($search);
+        $app_name =  (isset($post["app_name"]) && $post["app_name"])? $post["app_name"]: '';
+        $filterFields = array(
+            "purpose","app_name",
+            "c.firstname","c.middlename","c.lastname",
+            "CONCAT(c.firstname, ' ', IF(c.middlename IS NOT NULL AND c.middlename != '', CONCAT(LEFT(c.middlename,1), '. '), ''), c.lastname)",
+            "CONCAT(c.firstname, ' ', c.lastname)",
+            "CONCAT(c.lastname, ' ', c.firstname)",
+        
+            "b.firstname","b.middlename","b.lastname",
+            "CONCAT(b.firstname, ' ', IF(b.middlename IS NOT NULL AND b.middlename != '', CONCAT(LEFT(b.middlename,1), '. '), ''), b.lastname)",
+            "CONCAT(b.firstname, ' ', b.lastname)",
+            "CONCAT(b.lastname, ' ', b.firstname)"
+        );
+
+        $rowData = $this->getItmarListData($search, $limit, $offset, $sortBy, $sortOrder, $filterFields, $app_name);
+        $rowCount = $this->getItmarListDataCount($search,$filterFields, $app_name);
         $resultset["recordsTotal"] = $rowCount;
         $resultset["recordsFiltered"] = $rowCount;
         $resultset["data"] = $rowData;
         return $resultset;
     }
 
-    private function getItmarListData($search, $limit, $offset, $sortBy, $sortOrder){
-        $filterFields = array();
-        $this->db->select("a.*");
+    private function getItmarListData($search, $limit, $offset, $sortBy, $sortOrder,$filterFields, $app_name){
+        $this->db->select("a.emp_id,a.id,a.app_name,a.purpose,a.created_at, d.description as department_name, e.name as position_name, CONCAT(
+                b.firstname, ' ',
+                IF(b.middlename IS NOT NULL AND b.middlename != '',
+                    CONCAT(LEFT(b.middlename, 1), '. '),
+                    ''
+                ),
+                b.lastname
+            ) as created_name,
+
+            CONCAT(
+                c.firstname, ' ',
+                IF(c.middlename IS NOT NULL AND c.middlename != '',
+                    CONCAT(LEFT(c.middlename, 1), '. '),
+                    ''
+                ),
+                c.lastname
+            ) as emp_name
+        ");
         $this->db->from("gccmaster.it_mobile_application as a");
+        $this->db->join("gccmaster.tblemployees as b", "b.id = a.created_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees as c", "c.id = a.emp_id", "LEFT");
+        $this->db->join("gcchris.tbldepartments as d", "d.id = c.department_id", "LEFT");
+        $this->db->join("gcchris.tblposition as e", "e.id = c.position", "LEFT");
+        $this->db->where("a.app_name",  $app_name);
 
         if ($search) {
             $this->db->group_start();
@@ -953,21 +990,43 @@ class User_model extends CI_Model{
 
     }
 
-    private function getItmarListDataCount($search){
-        $filterFields = array();
-        $this->db->select("a.*");
+    private function getItmarListDataCount($search,$filterFields, $app_name){
+        $this->db->select("a.emp_id,a.id,a.app_name,a.purpose,a.created_at,    CONCAT(
+                b.firstname, ' ',
+                IF(b.middlename IS NOT NULL AND b.middlename != '',
+                    CONCAT(LEFT(b.middlename, 1), '. '),
+                    ''
+                ),
+                b.lastname
+            ) as created_name,
+    
+            CONCAT(
+                c.firstname, ' ',
+                IF(c.middlename IS NOT NULL AND c.middlename != '',
+                    CONCAT(LEFT(c.middlename, 1), '. '),
+                    ''
+                ),
+                c.lastname
+            ) as emp_name
+        ");
+    
         $this->db->from("gccmaster.it_mobile_application as a");
+        $this->db->join("gccmaster.tblemployees as b", "b.id = a.created_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees as c", "c.id = a.emp_id", "LEFT");
+        $this->db->where("a.app_name",  $app_name);
+
         if ($search) {
             $this->db->group_start();
-                foreach ($filterFields as $key => $field) {
-                    if ($key == 0) {
-                        $this->db->like($field, $search, "both");
-                    } else {
-                        $this->db->or_like($field, $search, "both");
-                    }
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
                 }
+            }
             $this->db->group_end();
         }
+    
         $query = $this->db->get();
         return $query->num_rows();
     }
@@ -983,7 +1042,6 @@ class User_model extends CI_Model{
         );
 
         $save = $this->db->insert("gccmaster.it_mobile_application", $data);
-
         if($save){
             $resultArray['success'] = true;
             $resultArray['message'] = "Successfully saved itmar request.";

@@ -55,6 +55,26 @@
                             </div>
                         </div>
                     </div>
+                    <div class="m-form m-form--label-align-right m--margin-top-20 m--margin-bottom-30">
+                        <div class="row align-items-center">
+                            <div class="form-group m-form__group row col">
+                                <div class="col-3 d-flex align-items-center">
+                                    <label class="m-radio m-radio--brand fs-3">
+                                        <input type="radio" name="app_name_select" value="TGCloudBAS">
+                                        TG CloudBAS
+                                        <span></span>
+                                    </label>
+                                </div>
+                                <div class="col-3 d-flex align-items-center">
+                                    <label class="m-radio m-radio--brand fs-3">
+                                        <input type="radio" name="app_name_select" value="GCCTIME" checked="">
+                                        GCCTIME Mobile APP
+                                        <span></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll m-datatable--scroll">
                         <table class="table table-striped table-bordered table-sm" id="itmarTable" width="100%">
                             <thead>
@@ -63,8 +83,8 @@
                                 <th>Employee</th>
                                 <th>Purpose</th>
                                 <th>App Name</th>
-                                <th></th>
-                                <th></th>
+                                <th>Created At</th>
+                                <th>Created By</th>
                                 <th>Actions</th>
                             </tr>
                             </thead>
