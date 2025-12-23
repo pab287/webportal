@@ -5602,4 +5602,137 @@ class Reports_m extends CI_Model{
         return $query->num_rows();
     }
 
+    public function update_print_payrollsheet_netpay(){
+        $result = array();
+        $post = $this->input->post();
+        $empId = $this->core_layout->getCurrentEmployeeId();
+
+        if (isset($post) && $post) {
+            $tempFilter = array();
+            $tempFilter["is_bonus"] = isset($post['is_bonus']) ? intval($post['is_bonus']) : 0;
+            $payrollGroup = isset($post["payroll_group"]) && $post["payroll_group"] ? strtoupper($post["payroll_group"]): null;
+            $tempRange = "";
+            $empIds = isset($post['serialized_employees']) && $post['serialized_employees'] ? explode(",", $post["serialized_employees"]) : $post['employees'];
+
+            if(isset($post["group"]) && intval($post["group"]) === 1){
+                $tempPayDate = date("Y-m-d", strtotime($post["pay_date"]));
+                $tempFilter["pay_date"] = $tempPayDate;
+                $tempRange = explode("-", $post["date_range"]);
+                if(count($tempRange) === 2){
+                    $tempDateStart = date("Y-m-d", strtotime($tempRange[0]));
+                    $tempDateEnd = date("Y-m-d", strtotime($tempRange[1]));
+                    $tempFilter["date_start"] = $tempDateStart;
+                    $tempFilter["date_end"] = $tempDateEnd;
+                }
+            }else{
+                if(isset($post['filter_month'], $post['filter_year']) && ($post['filter_month'] && $post['filter_year'])){
+                    $tempMonth = date("F", strtotime("{$post['filter_year']}-{$post['filter_month']}-1"));
+                    $tempFilter["month_name"] = strtolower($tempMonth);
+                    $tempFilter["year"] = $post['filter_year'];
+                }
+                if(isset($post['is_bonus']) && $post['is_bonus']){
+                    $tempFilter["is_bonus"] = $post['is_bonus'];
+                }
+            }
+            if(isset($post['payroll_sched']) && $post['payroll_sched']){
+                $tempFilter["payroll_sched"] = $post['payroll_sched'];
+            }
+
+            if(is_array($tempFilter) && count($tempFilter) > 0){
+                $this->db->select("emp_id");
+                $this->db->from($this->tbl_payroll_sheet);
+                $this->db->where('printed_payslip', 0);
+                
+                foreach ($tempFilter as $key => $value) {
+                    if ($key != 'date_start' || $key != 'date_end') {
+                        $this->db->where("{$key}", $value); 
+                    }
+                }
+
+                if(count((array)$tempRange) === 2){
+                    $this->db->where("date_start >=", $tempDateStart); 
+                    $this->db->where("date_end <=", $tempDateEnd); 
+                }
+
+                if(isset($post["company"]) && $post["company"]){ $this->db->where("company_id", $post["company"]);  }
+
+                if (isset($empIds) && $empIds){
+                    $this->db->where_in("emp_id", $empIds);
+                }
+
+                $query = $this->db->get();
+
+                if ($query->num_rows() > 0) {
+                    $data = $query->result();
+                    $ids = array_column($data, 'emp_id');
+
+                    $_data = array(
+                        'printed_payslip' => 1,
+                        'printed_payslip_by' => $empId,
+                        'printed_payslip_date' => date("Y-m-d H:i:s")
+                    );
+
+                    foreach ($tempFilter as $key => $value) {
+                        if ($key != 'date_start' || $key != 'date_end') {
+                            $this->db->where("{$key}", $value); 
+                        }
+                    }
+
+                    if(count((array)$tempRange) === 2){
+                        $this->db->where("date_start >=", $tempDateStart); 
+                        $this->db->where("date_end <=", $tempDateEnd); 
+                    }
+
+                    if(isset($post["company"]) && $post["company"]){ $this->db->where("company_id", $post["company"]);  }
+
+                    $this->db->where_in("emp_id", $ids);
+                    $this->db->where("printed_payslip", 0);
+                    $q = $this->db->update($this->tbl_payroll_sheet, $_data);
+
+                    $empName = $this->getDisplayName($empId);
+                    $_result = implode(', ', array_map(
+                        function ($key) use ($tempFilter) {
+                            $value = $tempFilter[$key];
+                            return is_string($value)
+                                ? "$key => '$value'"
+                                : "$key => $value";
+                        },
+                        array_keys($tempFilter)
+                    ));
+
+                    if ($q) {
+                        $logMessage = "Payrollsheet records printed by `$$empName` in netPay Summary with parameters of company id `".$post["company"]."`, `$_result`";
+                        $this->core_layout->setEventLog($logMessage, "print", "success", "payroll");
+                    } else {
+                        $logMessage = "Failed to print Payrollsheet records in netPay Summary with parameters of company id `".$post["company"]."`, `$_result`";
+                        $this->core_layout->setEventLog($logMessage, "print", "error", "payroll");
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    function getDisplayName($id){
+        $this->db->select("firstname, middlename, lastname, suffix");
+        $this->db->from("gccmaster.tblemployees");
+        $this->db->where("id", $id);
+        $query = $this->db->get();
+        if($query->num_rows() > 0){
+            $arrData = array();
+            foreach($query->result() as $key => $rs){
+                $tempRs = (array) $rs;
+                $fullname = $this->core_layout->getDisplayName($tempRs);
+                $tempFullname = (object) $fullname;
+                $rs->display_name = ($tempFullname->display_name_1)? $tempFullname->display_name_1: "No Assigned Name";
+                $arrData[$key] = $rs;
+            }
+    
+            return $arrData[0]->display_name;
+        }else{
+            return array();
+        }
+    }
+
 }
