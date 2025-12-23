@@ -20,7 +20,7 @@ class Profile extends MY_Controller {
 		$session = $this->session->userdata();
 		$employee_id = $session["logged_in"]["emp_id"];
 		
-	  if (empty($employee_id)) { redirect(base_url(), "refresh"); die(); }
+		if (empty($employee_id)) { redirect(base_url(), "refresh"); die(); }
 		$this->core_layout->setPageTitle("Profile - Employee Data");
 		$this->core_layout->setBodyClass("profile view-employee_data");
 		$this->core_layout->setPrivilegeName("core_profile_employee_data");
@@ -31,6 +31,9 @@ class Profile extends MY_Controller {
 		$this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
 		$this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
 		$this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
+
+		$this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
 
 		$this->core_layout->addCss("css/hris/view_employee_masterfile.css", true);
 		$this->core_layout->addCss("plugins/star-rating/css/star-rating-svg.css", true);
@@ -64,7 +67,7 @@ class Profile extends MY_Controller {
 	protected function get_employee_payroll_data($id=null){
 		$arrData = array();
 		if($id){
-			$this->db->select("id, pay_date, date_start, date_end, gross_pay, net_pay, bonus_code, is_bonus");
+			$this->db->select("id, pay_date, date_start, date_end, gross_pay, net_pay, bonus_code, is_bonus, printed_payslip");
 			$this->db->order_by("pay_date", "DESC");
 			$payrollData = $this->db->get_where("payroll.payroll_sheet", array("emp_id"=>$id, "posted"=>1));
 			$arrData = $payrollData->result_array();
