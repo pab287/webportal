@@ -3339,6 +3339,7 @@ class Employee_model extends CI_Model {
         $work_station = isset($post["work_station"]) && $post["work_station"] ? $post["work_station"]: array();
 
         $allow_ot['id'] = isset($post["auto_overtime_id"]) && $post["auto_overtime_id"] ? $post["auto_overtime_id"]: 0;
+        $allowOT = isset($post["allow_auto_overtime"]);
         $allow_ot['allow_auto_overtime'] = isset($post["allow_auto_overtime"]) && $post["allow_auto_overtime"] ? $post["allow_auto_overtime"]: 0;
         $allow_ot['employee_id'] = $post["id"];
         if (isset($post) && $post) {
@@ -3554,7 +3555,9 @@ class Employee_model extends CI_Model {
                             }
                         }
 
-                        $allow_overtime = $this->insertUpdateAutoOvertime($allow_ot);
+                        if($allowOT){
+                            $allow_overtime = $this->insertUpdateAutoOvertime($allow_ot);
+                        }
                         
                         $resultset["response"] = true;
                         $resultset["data"] = $this->getEmployeeData($employeeId);

@@ -2375,7 +2375,7 @@ public function getEmployeeNightDiffList(){
                     UPPER(TRIM(uemp.suffix !='NONE')) AND uemp.suffix !='' AND
                     uemp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(uemp.suffix))) ELSE ''
                 END)
-            ) as updated_by");
+            ) as last_updated_by");
         $this->db->from($this->employeeTable . " emp");
         $this->db->join($this->companyTable . " cmp", "cmp.id = emp.company_id", "left");
         $this->db->join($this->positionTable . " pos", "pos.id = emp.position OR pos.name = emp.position", "left");
