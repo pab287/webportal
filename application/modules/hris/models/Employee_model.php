@@ -3554,7 +3554,9 @@ class Employee_model extends CI_Model {
                             }
                         }
 
-                        $allow_overtime = $this->insertUpdateAutoOvertime($allow_ot);
+                        if(isset($post["allow_auto_overtime"])){
+                            $allow_overtime = $this->insertUpdateAutoOvertime($allow_ot);
+                        }
                         
                         $resultset["response"] = true;
                         $resultset["data"] = $this->getEmployeeData($employeeId);

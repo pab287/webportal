@@ -166,7 +166,7 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
         { data: 'last_updated_at', title: "Last Updated By", 
             render: function (data, _type, row) {
                 const recordDate = data ? moment(data).format("LLL") : "";
-                const _html = recordDate ? `<p class="m--font-bolder mb-0">${row.updated_by}</p><p class=" mb-0"><small>${recordDate}</small></p>` : `---`;
+                const _html = recordDate ? `<p class="m--font-bolder mb-0">${row.last_updated_by}</p><p class=" mb-0"><small>${recordDate}</small></p>` : `---`;
                 return _html;
         }}, { data: 'allow_auto_overtime', title: "auto overtime", className: 'text-center', width: '10%',
             render: function (data) { return parseInt(data) === 1 ? "<i class='fa fa-check-circle text-success m--icon-font-size-lg3'></i>" : "<i class='fa fa-times-circle text-danger m--icon-font-size-lg3'></i>" } 
