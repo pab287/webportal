@@ -3339,8 +3339,8 @@ class Employee_model extends CI_Model {
         $work_station = isset($post["work_station"]) && $post["work_station"] ? $post["work_station"]: array();
 
         $allow_ot['id'] = isset($post["auto_overtime_id"]) && $post["auto_overtime_id"] ? $post["auto_overtime_id"]: 0;
-        $allow_ot['allow_auto_overtime'] = isset($post["allow_auto_overtime"]) && $post["allow_auto_overtime"] ? $post["allow_auto_overtime"]: 0;
         $allowOT = isset($post["allow_auto_overtime"]);
+        $allow_ot['allow_auto_overtime'] = isset($post["allow_auto_overtime"]) && $post["allow_auto_overtime"] ? $post["allow_auto_overtime"]: 0;
         $allow_ot['employee_id'] = $post["id"];
         if (isset($post) && $post) {
             unset($post["csrf_token"], $post["current_status"], $post["current_company_id"], $post["current_department_id"], $post["current_position_id"], $post["work_station"],$post["current_supervisor"], $post["default_station"], $post["work_schedule"], $post["allow_auto_overtime"], $post["auto_overtime_id"]);
