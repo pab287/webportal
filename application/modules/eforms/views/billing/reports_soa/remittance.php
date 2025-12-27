@@ -25,22 +25,15 @@
         font-weight: 400;
     }
 
-    .remit_inputs_wrapper .col-6 .row.alert {
-        padding: 15px;
-    }
-
     .remit_inputs_wrapper label {
         text-transform: uppercase;
         font-weight: 500;
+        color: #8E8E93;
     }
 
-    .emp-filter .col-5 {
+    /* .emp-filter .col-5 {
         max-width: 40%;
-    }
-
-    .remit-inputs .col-3 {
-        max-width: 24%;
-    }
+    } */
 
     /* Remittance View Design */
     .remittance_details {
@@ -103,6 +96,58 @@
         font-weight: 600;
         color: #5b5d67;
         font-size: 11px;
+    }
+
+    /* Daily cash report css */
+    .dcr-wrap:not(:last-child) {
+        margin-bottom: 20px;
+    }
+    .dcr-wrap {
+        padding: 30px;
+        border-radius: 10px;
+    }
+
+    .cashier-name, .cashier-collected {
+        font-weight: 500;
+        color: #7f7f83;
+    }
+
+    .cashier-wrap div:not(:last-child) {
+        margin: 0 0 10px 0;
+    }
+
+    .total-per-cashier-wrap .dcr-wrap:not(:last-child) {
+        margin: 0 0 15px 0px;
+    }
+
+    .dcr-scroller-wrap, .tpc-scroller-wrap {
+        padding: 0 30px;
+        max-height: 575px;
+        overflow-y: auto;
+        scrollbar-color: #7f7f83 transparent;
+        scrollbar-width: thin;
+    }
+
+    .dcr-payment h5, .tcp-header h5 {
+        margin: 0;
+        color: #7f7f83;
+        font-weight: 800;
+    }
+
+    .tcp-header h5 {
+        font-size: 12px;
+    }
+
+    .total-per-cashier-wrap .dcr-wrap {
+        background: #efeff0;
+        padding: 20px;
+    }
+
+    .remit_inputs_scroll_wrap {
+        max-height: 657px;
+        overflow-y: auto;
+        scrollbar-color: #7f7f83 transparent;
+        scrollbar-width: thin;
     }
 </style>
 
@@ -212,92 +257,110 @@
                 </div>
 			</div>
 
-            <div class="modal-body">
-                <div class="row justify-content-between align-items-end mx-0 mb-4">
-                    <div id="remit_filter" class="remit_inputs_wrapper row flex-wrap justify-content-between align-items-end mb-0 mx-0 w-100">
-                        <div class="col-8 px-0 emp-filter">
-                            <div class="row justify-content-between align-items-end alert m-alert m-alert--default mx-0 mb-0">
-                                <div class="col-5 p-0">
-                                    <label for="employee" class="mb-2">Employee: <span class="text-danger">*</span></label>
-                                    <select v-model="selectedEmployee" id="employee" class="form-control"></select>
-                                </div>
-
-                                <div class="col-5 p-0">
-                                    <label for="date-range" class="mb-2">Date: <span class="text-danger">*</span></label>
-                                    <div class="input-group" id="date-picker">
-                                        <input 
-                                            type="text" 
-                                            class="form-control m-input" 
-                                            placeholder="MMM DD, YYYY - MMM DD, YYYY" 
-                                            v-model="date_range_picked"
-                                            autocomplete='off' 
-                                            style="height: 35.13px;"
-                                        >
-                                        <span class="input-group-addon bg-white"><i class="la la-calendar-check-o"></i></span>
+            <div class="modal-body p-0">
+                <div class="row justify-content-between mx-0">
+                    <div class="col-4 py-5 px-0">
+                        <div class="remit_inputs_scroll_wrap">
+                            <div class="px-5 pb-1">
+                                <div id="remit_filter" class="remit_inputs_wrapper m-alert m-alert--outline alert alert-metal py-4 mb-4">
+                                    <div class="form-group m-form__group w-100 mb-4">
+                                        <label for="employee" class="mb-2">Employee: <span class="text-danger">*</span></label>
+                                        <select id="employee" class="form-control w-100" multiple></select>
                                     </div>
-                                </div>
 
-                                <div class="col-2 p-0">
-                                    <button class="btn btn-info w-100" @click="generateReport()">
+                                    <div class="form-group m-form__group w-100 mb-4">
+                                        <label for="date-range" class="mb-2">Date: <span class="text-danger">*</span></label>
+                                        <div class="input-group" id="date-picker">
+                                            <input type="text" class="form-control m-input" placeholder="MMM DD, YYYY - MMM DD, YYYY" v-model="date_range_picked" autocomplete='off' style="height: 35.13px;">
+                                            <span class="input-group-addon bg-white"><i class="la la-calendar-check-o"></i></span>
+                                        </div>
+                                    </div>
+
+                                    <button class="btn btn-info d-block ml-auto" @click="generateReport()">
                                         <span><i class="fa fa-gears pr-2"></i>GENERATE</span>
                                     </button>
+                                </div>
+
+                                <div id="remit_inputs" class="remit_inputs_wrapper m-alert m-alert--outline alert alert-metal py-4 mb-0">   
+                                    <form id="remittance_form" method="POST" class="w-100">
+                                        <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+
+                                        <div class="form-group m-form__group w-100 mb-4">
+                                            <label for="deposit" class="mb-2">Deposit: <span class="text-danger">*</span></label>
+                                            <input type="text" v-model="deposit_amount" id="deposit" class="form-control h-35_13 deposit text-right w-100" placeholder="0.00">
+                                        </div>
+
+                                        <div class="form-group m-form__group w-100 mb-4">
+                                            <label for="payment_collected" class="mb-2">Payment Collected: </label>
+                                            <input type="text" v-model="payment_collected" id="payment_collected" class="payment_collected form-control h-35_13 text-right w-100" placeholder="0.00" readonly disabled>
+                                        </div>
+
+                                        <div class="form-group m-form__group w-100 mb-4">
+                                            <label for="variance" class="mb-2">Variance: </label>
+                                            <input type="text" v-model="variance" id="variance" class="form-control h-35_13 variance text-right w-100" placeholder="0.00" readonly disabled>
+                                        </div>
+
+                                        <div class="form-group m-form__group w-100">
+                                            <label for="deposit_date" class="mb-2">Deposit Date: <span class="text-danger">*</span></label>
+                                            <input type="text" v-model="deposit_date" id="deposit_date" placeholder="MMM DD, YYYY" class="form-control h-35_13 deposit_date w-100">
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div id="payment_table_wrapper" class="mb-4">
-                    <table class="table" id="tbl-payment_collection" width="100%" style="font-family: roboto;">
-                        <thead>
-                            <tr>
-                                <th class="text-center" width="25%">Date Collected</th>
-                                <th class="text-center" width="25%">Payment Collected</th>
-                                <!-- <th class="text-center" width="25%">Total Balance Covered</th> -->
-                                <th class="text-center" width="25%">Collected By</th>
-                            </tr>
-                        </thead>
+                    <div id="daily_cash_report_app" class="col-8 p-0 d-flex">
+                        <div class="col-6 py-5 px-0 daily-cash-wrap" style="background: #efeff0;">
+                            <h5 class="text-center mb-4" style="font-weight: 700; color: #7f7f83;">Daily Cash</h5>
 
-                        <tbody></tbody>
+                            <div class="dcr-scroller-wrap">
+                                <template v-if="daily_cash_report.length > 0">
+                                    <div v-for="(item, index) in daily_cash_report" :key="index" class="dcr-wrap bg-white">
+                                        <div class="dcr-payment d-flex justify-content-between align-items-center">
+                                            <h5>{{ item.payment_date }}</h5> 
+                                            <h5>₱ {{ numberWithCommas(item.total_payments_per_day.toFixed(2)) }}</h5>
+                                        </div>
 
-                        <tfoot>
-                            <tr>
-                                <td></td>
-                                <td></td>
-                                <!-- <td></td> -->
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
+                                        <hr>
 
-                <div id="remit_inputs" class="remit_inputs_wrapper row flex-wrap justify-content-between align-items-end mb-0 mx-0 w-100">   
-                    <div class="col-12 px-0 remit-inputs">
-                        <form id="remittance_form" method="POST">
-                            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                                        <div class="cashier-wrap">
+                                            <div v-for="(cashier, c_index) in item.cashier" :key="c_index" class="d-flex justify-content-between align-items-center bg-white">
+                                                <span class="cashier-name">{{ cashier.cashier }}</span>
+                                                <span class="cashier-collected">₱ {{ numberWithCommas(cashier.total_payments.toFixed(2)) }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
 
-                            <div class="row justify-content-between align-items-end alert m-alert m-alert--default mx-0 mb-0">
-                                <div class="col-3 col p-0 form-group m-form__group mb-0">
-                                    <label for="deposit" class="mb-2">Deposit: <span class="text-danger">*</span></label>
-                                    <input type="text" v-model="deposit_amount" id="deposit" class="form-control h-35_13 deposit bg-white text-right" placeholder="0.00">
-                                </div>
-
-                                <div class="col-3 col p-0 form-group m-form__group mb-0">
-                                    <label for="payment_collected" class="mb-2">Payment Collected: </label>
-                                    <input type="text" v-model="payment_collected" id="payment_collected" class="payment_collected form-control h-35_13 bg-white text-right" placeholder="0.00" readonly>
-                                </div>
-
-                                <div class="col-3 col p-0 form-group m-form__group mb-0">
-                                    <label for="variance" class="mb-2">Variance: </label>
-                                    <input type="text" v-model="variance" id="variance" class="form-control h-35_13 variance bg-white text-right" placeholder="0.00" readonly>
-                                </div>
-
-                                <div class="col-3 col p-0 form-group m-form__group mb-0">
-                                    <label for="deposit_date" class="mb-2">Deposit Date: <span class="text-danger">*</span></label>
-                                    <input type="text" v-model="deposit_date" id="deposit_date" placeholder="MMM DD, YYYY" class="form-control h-35_13 deposit_date bg-white">
-                                </div>
+                                <template v-else>
+                                    <div class="bg-white p-4 mb-0" style="border-radius: 5px;">
+                                        <p class="text-center text-muted mb-0" style="font-weight: 600;">No Records</p>
+                                    </div>
+                                </template>
                             </div>
-                        </form>
+                        </div>
+
+                        <div class="col-6 py-5 px-0 total-per-cashier-wrap">
+                            <h5 class="text-center mb-4" style="font-weight: 700; color: #7f7f83;">Total per cashier</h5>
+                            
+                            <div class="tpc-scroller-wrap">
+                                <template v-if="total_per_cashier.length > 0">
+                                    <div v-for="(totalPerCashier, index) in total_per_cashier" :key="index" class="dcr-wrap">
+                                        <div class="tcp-header d-flex justify-content-between align-items-center">
+                                            <h5>{{ totalPerCashier.cashier }}</h5> 
+                                            <h5>₱ {{ numberWithCommas(totalPerCashier.total_cash) }}</h5>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <template v-else>
+                                    <div class="alert m-alert--default p-4 mb-0" style="border-radius: 5px; background: #efeff0;">
+                                        <p class="text-center text-muted mb-0" style="font-weight: 600;">No Records</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

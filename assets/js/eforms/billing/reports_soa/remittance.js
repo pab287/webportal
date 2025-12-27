@@ -4,8 +4,7 @@ const DataCollection = new Vue();
 const vm_remit_filter = new Vue({
     el: "#remit_filter",
     data: {
-        first_selected_employee: null,
-        selectedEmployee: null,
+        selectedEmployee: [],
         date_range_picked: null,
         date_range_from: null,
         date_range_to: null,
@@ -23,6 +22,7 @@ const vm_remit_filter = new Vue({
                 dropdownParent: $("#modal_new_remittance"),
                 width: '100%',
                 minimumInputLength: 3,
+                allowClear: true,
                 ajax: {
                     url: baseUrl("eforms/billing/get_employee_collector"),
                     global: false,
@@ -33,14 +33,12 @@ const vm_remit_filter = new Vue({
             }).on('change', function () {
                 vm.selectedEmployee = $(this).val();
 
-                if (vm.first_selected_employee && vm.first_selected_employee !== vm.selectedEmployee) {
-                    vm.clear_new_remit_form_except_cashier();
-                }
-
-                vm.first_selected_employee = vm.selectedEmployee;
-
                 // Emit to remit data collection
                 DataCollection.$emit('cashier', vm.selectedEmployee);
+            }).on('select2:select', function(e) {
+                vm.selectedEmployee = $(this).val() || [];
+            }).on('select2:unselect', function(e) {
+                vm.selectedEmployee = [];
             });
         },
 
@@ -80,7 +78,6 @@ const vm_remit_filter = new Vue({
 
         generateReport() {
             const vm = this;
-            let all_payment_ids = [];
 
             if (!vm.selectedEmployee || !vm.date_range_picked) {
                 toastr.error('Please select Employee and Date Range.', 'Input Required');
@@ -97,131 +94,27 @@ const vm_remit_filter = new Vue({
                     date: vm.date_range_picked
                 },
                 success: function(response) {
-                    const data = response.data || [];
-
-                    if (data.length > 0) {
-                        // Put all payment_ids into a single array
-                        all_payment_ids = data.flatMap(item => item.payment_ids);
-
-                        // Emit to remit data collection
-                        DataCollection.$emit('payment_ids', all_payment_ids);
-                        
-                        vm_payment_table.loadPayments(data);
-                    } else {
-                        vm_payment_table.resetTable_and_inputs();
-                    }
+                    vm_cash_report.daily_cash_report = response.daily_cash_report || [];
+                    vm_cash_report.total_per_cashier = response.grand_total_per_cashier.cashier || [];
+                    vm_remit_data.payment_collected = response.grand_total_per_cashier.totalCash || 0;
                 },
                 error: function (xhr, error, code) {
                     console.log(error);
                 }
             });
         },
-
-        clear_new_remit_form_except_cashier() {
-            const vm = this;
-            // vm.selectedEmployee = null;
-            vm.date_range_picked = null;
-            vm.date_range_from = null;
-            vm.date_range_to = null;
-
-            // Emit to remit data collection
-            DataCollection.$emit('date_range_selected', vm.date_range_picked);
-            DataCollection.$emit('date_range_from', vm.date_range_from);
-            DataCollection.$emit('date_range_to', vm.date_range_to);
-
-            vm_payment_table.resetTable_and_inputs();
-        }
     }
 });
 
-const vm_payment_table = new Vue({
-    el: "#payment_table_wrapper",
+const vm_cash_report = new Vue({
+    el: "#daily_cash_report_app",
     data: {
-        table: null,
-        payments: [], // your main reactive data source
-    },
-    mounted() {
-        this.initializeTable();
+        daily_cash_report: [],
+        total_per_cashier: [],
     },
     methods: {
-        initializeTable() {
-            const vm = this;
-
-            vm.table = $('#tbl-payment_collection').DataTable({
-                dom: 't',
-                serverSide: false,
-                processing: true,
-                deferLoading: 0,
-                paging: false,
-                scrollY: "300px",
-                scrollCollapse: true,
-                data: vm.payments, // ← Vue data
-                columns: [
-                    { data: "payment_date" },
-                    { data: "total_payments", render: data => vm.numberWithCommas(parseFloat(data).toFixed(2))},
-                    // { data: "total_balance_covered", render: data => vm.numberWithCommas(parseFloat(data).toFixed(2))},
-                    { data: "cashier"},
-                ],
-                columnDefs: [
-                    { orderable: false, targets: '_all' },
-                    {
-                        targets: [0, 2],
-                        createdCell: function (td) {
-                            $(td).addClass('text-center');
-                        }
-                    },
-                    {
-                        targets: [1],
-                        createdCell: function (td) {
-                            $(td).addClass('text-right');
-                        }
-                    }
-                ],
-                drawCallback: function () {
-                    vm.updateFooterTotal();
-                }
-            });
-        },
-
         numberWithCommas(data) {
             return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        },
-
-        updateFooterTotal() {
-            const api = this.table;
-
-            // Stop if table is not ready or has no data
-            if (!api || !api.rows || api.rows().data().length === 0) {
-                // Clear footer when no data
-                $('#tbl-payment_collection tfoot th').eq(0).html('<b>Total</b>');
-                $('#tbl-payment_collection tfoot th').eq(1).html('');
-                // $('#tbl-payment_collection tfoot th').eq(2).html('');
-                $('.payment_collected').val('0.00');
-                return;
-            }
-
-            const data = api.rows().data().toArray();
-
-            // Filter out rows with deposit_exists === false
-            // const filteredData = data.filter(row => row.deposit_exists === false);
-
-            // Calculate total
-            const totalPayment = data.reduce((sum, row) => sum + parseFloat(row.total_payments || 0), 0);
-            const totalBalanceCovered = data.reduce((sum, row) => sum + parseFloat(row.total_balance_covered || 0), 0);
-
-            $(api.column(0).footer()).removeClass().addClass('text-center').html('<b>Total</b>');
-            $(api.column(1).footer()).removeClass().addClass('text-right footer-total').html(`<b>${this.numberWithCommas(totalPayment.toFixed(2))}</b>`);
-            // $(api.column(2).footer()).removeClass().addClass('text-right footer-total').html(`<b>${this.numberWithCommas(totalBalanceCovered.toFixed(2))}</b>`);
-
-            // Emit to remit data collection
-            DataCollection.$emit('payment_collected', totalPayment.toFixed(2));
-        },
-
-        // Call this method whenever you fetch new data
-        loadPayments(newData) {
-            this.payments = newData;
-            this.table.clear();
-            this.table.rows.add(this.payments).draw();
         },
 
         // reset table & remittance input fields
@@ -508,7 +401,6 @@ const vm_save_remit = new Vue({
             const b = vm_remit_data.$data;
 
             Object.assign(a, {
-                first_selected_employee: null,
                 selectedEmployee: null,
                 date_range_picked: null,
                 date_range_from: null,
@@ -535,10 +427,6 @@ const vm_save_remit = new Vue({
             $('#remit_filter #date-picker').data('daterangepicker').setStartDate(moment());
             $('#remit_filter #date-picker').data('daterangepicker').setEndDate(moment());
             $('#remit_filter #date-picker').val('');
-
-            // Clear Payment Table
-            vm_payment_table.loadPayments([]);
-            vm_payment_table.table.clear().draw();
 
             $('#tbl-payment_collection_wrapper .dataTables_scrollFoot tfoot td').each(function () {
                 $(this).html('');
