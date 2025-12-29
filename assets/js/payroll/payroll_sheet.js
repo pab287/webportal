@@ -836,8 +836,11 @@ let dtPayrollSheet = _tblPayrollSheet
                             </label>`;
                     }
                     if (lockPosting) {
-                        //here
-                        return `<i class="fa fa-lock" onclick="undoPrinted(${row.id})"></i>`;
+                        if (row.has_latest_payroll == 1) {
+                            return `<i class="locked-payroll fa fa-lock"></i>`;
+                        } else {
+                            return `<i class="locked-payroll fa fa-lock pulse" onclick="undoPrinted(${row.id}, ${row.emp_id})" style="cursor: pointer" title="Undo Printed Status" data-toggle="m-tooltip" data-original-title="Restore Selected" data-skin="dark"></i>`;
+                        }
                     }
                     return `<i class="fa fa-check m--font-primary"></i>`;
                 }
@@ -1874,6 +1877,7 @@ function generate_ps(date_range, employees, company, payout_schedule, payout_seq
             let tempContributionsFields = [];
             let unpostedCounter = 0;
 
+            checkPrintedPayslip(date_range, employees, company, payout_schedule, payout_sequence, pay_date, payroll_group);
             const generatedData = response.data;
             dtPayrollSheet.ajax.reload(function (_e) {
                 try{
@@ -4054,41 +4058,84 @@ const vmToUpdateAction = new Vue({
 });
 
 
-function undoPrinted(ps_id){
+function undoPrinted(ps_id, emp_id){
     Swal.fire({
         title: 'Undo Posted Payroll Sheet?',
         text: "Are you sure you want to undo the posted payroll sheet?",
         icon: 'question',
+        input: "textarea",
+        inputLabel: "Reason for undoing printed payroll sheet",
+        inputValidator: (result) => {
+            return !result && "Reason is required!";
+        },
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
         confirmButtonText: 'Yes, Undo it!'
     }).then((result) => {
-        if (result.isConfirmed) {
+        if (result.isConfirmed && typeof result.value !== "undefined" && result.value) {
             $.ajax({
                 url: baseUrl("payroll/undo_printed_payroll_sheet"),
                 type: "POST",
                 data: { 
                     id: ps_id,
-                    csrf_token: _csrf_hash
+                    emp_id: emp_id,
+                    csrf_token: _csrf_hash,
+                    reason: result.value
                 },
                 dataType: "JSON",
                 success: function(json){
                     if(json.response){
                         Swal.fire({
-                            title: 'Undone!',
-                            text: "Payroll sheet has been undone successfully.",
+                            title: 'Undo Printed Payroll sheet',
+                            text: "Printed Payroll sheet has been undone successfully.",
                             icon: 'success',
+                        }).then(() => {
+                            dtPayrollSheet.ajax.reload(null, false);
                         });
                     }else{
                         Swal.fire({
                             title: 'Undo Failed!',
-                            text: "Failed to undo payroll sheet!",
+                            text: "Failed to undo printed payroll sheet!",
                             icon: 'error',
                         });
                     }
                 }
             });
+        }
+    });
+}
+
+function checkPrintedPayslip(date_range, employees, company, payout_schedule, payout_sequence, pay_date, payroll_group){
+    $.ajax({
+        url: baseUrl("payroll/check_printed_payslip"),
+        type: "POST",
+        data: {
+            csrf_token: _csrf_hash,
+            date_range,
+            employees,
+            company,
+            payout_schedule,
+            payout_sequence,
+            pay_date,
+            payroll_group
+        },
+        dataType: "JSON",
+        success: function(json){
+            if(json.response){
+                if(parseInt(json.count_printed) > 0){
+                    Swal.fire({
+                        title: 'Printed Payslip Found',
+                        html: "A total of <strong>("+json.count_printed+")</strong> printed payslip found after generating payroll sheet records.<br/>"+
+                            "Print reversal is allowed only for the most recent posted payroll.",
+                        icon: 'info',
+                        showCancelButton: false,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            }
         }
     });
 }

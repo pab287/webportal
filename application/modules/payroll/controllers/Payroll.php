@@ -812,4 +812,11 @@ class Payroll extends MY_Controller {
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
+    
+    public function check_printed_payslip(){
+        $data = $this->payroll->check_printed_payslip();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 }
