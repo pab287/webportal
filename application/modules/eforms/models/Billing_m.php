@@ -6961,67 +6961,6 @@ class Billing_m extends CI_Model {
         ];
     }
 
-    public function remittance_date_payments_selected_old() {
-        $resultarray = [];
-        $post = $this->input->post();
-
-        // Parse date range
-        if (!empty($post['date'])) {
-            $date = explode("-", $post['date']);
-            $start_date = date("Y-m-d", strtotime(trim($date[0])));
-            $end_date   = date("Y-m-d", strtotime(trim($date[1])));
-        } else {
-            $start_date = $end_date = date("Y-m-d");
-        }
-
-        // Query for totals per day
-        $this->db->select("
-            DATE(p.created_date) AS payment_date,
-            ROUND(SUM(p.received_amount), 2) AS total_payments,
-            ROUND(SUM(p.balance_covered), 2) AS total_balance_covered,
-            CONCAT(e.firstname, ' ', e.lastname) as cashier, 
-            GROUP_CONCAT(p.id ORDER BY p.id ASC) AS payment_ids
-        ");
-        $this->db->from("hydra_billing.payments p");
-        $this->db->join("gccmaster.tblemployees e", "e.id = p.created_by", "LEFT");
-
-        $this->db->where("p.id NOT IN (SELECT payment_id FROM hydra_billing.deposited_payment WHERE is_archive = 0)");
-
-        $this->db->where("p.created_by", $post['id']);
-        $this->db->where("DATE(p.created_date) >=", $start_date);
-        $this->db->where("DATE(p.created_date) <=", $end_date);
-        $this->db->where("p.is_archive", 0);
-        $this->db->group_by("DATE(p.created_date)");
-        $this->db->order_by("payment_date", "ASC");
-
-        $query = $this->db->get();
-
-        if ($query->num_rows() > 0) {
-            foreach ($query->result_array() as $row) {
-                $row["payment_date"] = date("M d, Y", strtotime($row["payment_date"]));
-                $row["total_payments"] = (float)$row["total_payments"];
-                $row["total_balance_covered"] = (float)$row["total_balance_covered"];
-                $row["cashier"] = $row["cashier"];
-                $row["payment_ids"] = explode(',', $row["payment_ids"]);
-                $resultarray[] = $row;
-            }
-
-            return [
-                "data" => $resultarray,
-                "recordsTotal" => $query->num_rows(),
-                "recordsFiltered" => $query->num_rows()
-            ];
-            
-        } else {
-            // No results found
-            return [
-                "data" => [],
-                "recordsTotal" => 0,
-                "recordsFiltered" => 0
-            ];
-        }
-    }
-
     public function save_remit() {
         $data = array();
         $post = $this->input->post();

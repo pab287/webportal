@@ -122,7 +122,7 @@
 
     .dcr-scroller-wrap, .tpc-scroller-wrap {
         padding: 0 30px;
-        max-height: 575px;
+        max-height: 615px;
         overflow-y: auto;
         scrollbar-color: #7f7f83 transparent;
         scrollbar-width: thin;
