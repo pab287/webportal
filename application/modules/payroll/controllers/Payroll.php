@@ -804,5 +804,12 @@ class Payroll extends MY_Controller {
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
-    }   
+    }
+
+    public function undo_printed_payroll_sheet(){
+        $data = $this->payroll->undo_printed_payroll_sheet();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 }

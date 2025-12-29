@@ -836,7 +836,8 @@ let dtPayrollSheet = _tblPayrollSheet
                             </label>`;
                     }
                     if (lockPosting) {
-                        return `<i class="fa fa-lock"></i>`;
+                        //here
+                        return `<i class="fa fa-lock" onclick="undoPrinted(${row.id})"></i>`;
                     }
                     return `<i class="fa fa-check m--font-primary"></i>`;
                 }
@@ -4051,3 +4052,43 @@ const vmToUpdateAction = new Vue({
     el: "#toUpdateAction",
     data: { show_action: false }
 });
+
+
+function undoPrinted(ps_id){
+    Swal.fire({
+        title: 'Undo Posted Payroll Sheet?',
+        text: "Are you sure you want to undo the posted payroll sheet?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, Undo it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl("payroll/undo_printed_payroll_sheet"),
+                type: "POST",
+                data: { 
+                    id: ps_id,
+                    csrf_token: _csrf_hash
+                },
+                dataType: "JSON",
+                success: function(json){
+                    if(json.response){
+                        Swal.fire({
+                            title: 'Undone!',
+                            text: "Payroll sheet has been undone successfully.",
+                            icon: 'success',
+                        });
+                    }else{
+                        Swal.fire({
+                            title: 'Undo Failed!',
+                            text: "Failed to undo payroll sheet!",
+                            icon: 'error',
+                        });
+                    }
+                }
+            });
+        }
+    });
+}

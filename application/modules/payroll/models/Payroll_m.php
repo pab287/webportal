@@ -8191,4 +8191,41 @@ class Payroll_m extends CI_Model{
 
         return $loans;
     }
+
+    //here
+    public function undo_printed_payroll_sheet(){
+        $post = $this->input->post();
+        $data = array();
+
+        if(isset($post["id"]) && $post["id"]){
+            $maxDate = 
+
+            $this->db->where("id", $post["id"]);
+            $updated = $this->db->update("payroll.payroll_sheet", array("printed"=>0));
+            if($updated && $this->db->affected_rows() > 0){
+                $data["response"] = true;
+                $this->core_layout->setEventLog("Payroll sheet ID `{$post['id']}` printable status is set to undone.", "update", "success", "payroll");
+            }else{
+                $data["response"] = false;
+            }
+        }else{
+            $data["response"] = false;
+        }
+
+        return $data;
+    }
+
+    protected function getPayrollMaxDate_OT($id=null){
+        if($id){
+            $this->db->select("MAX(ps.date_end) as max_date");
+            $this->db->from($this->tbl_employees." emp");
+            $this->db->join($this->tbl_payroll_sheet." ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+            $this->db->where("emp.id", $id);
+            $this->db->group_by("emp.id");
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() == 1){ return $qTemp->row()->max_date; }
+            else{ return false; }
+        }else{ return false; }
+        
+    }
 }
