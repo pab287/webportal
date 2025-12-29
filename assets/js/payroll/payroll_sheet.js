@@ -4060,8 +4060,8 @@ const vmToUpdateAction = new Vue({
 
 function undoPrinted(ps_id, emp_id){
     Swal.fire({
-        title: 'Undo Posted Payroll Sheet?',
-        text: "Are you sure you want to undo the posted payroll sheet?",
+        title: 'Undo Printed Payroll Sheet?',
+        text: "Are you sure you want to undo the printed payroll sheet?",
         icon: 'question',
         input: "textarea",
         inputLabel: "Reason for undoing printed payroll sheet",
