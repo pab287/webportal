@@ -48,6 +48,7 @@ if(window.location == siteUrl("portal/index")){
             vm_shipping : {show:false,},
             vm_ca : {show:false,},
             payslip: {show:false,data:[]},
+            is_loading: true
         },
         mounted(){
             this.getPayslip();
@@ -248,6 +249,10 @@ if(window.location == siteUrl("portal/index")){
                             
                             vmTab1.updateMasonryLayout();
                         }
+
+                        console.log(json.data);
+
+                        vmTab1.is_loading = false;
                     }
                 });
             }, formatDate(date){
