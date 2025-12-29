@@ -108,7 +108,7 @@ class User_model extends CI_Model{
             "message" => $this->db->error()
         );
 
-        $data = array("is_suspended" => 1, "suspended_by" => $employee_id, "suspended_dt" => $this->timestamp->format("Y-m-d"));
+        $data = array("is_suspended" => 1, "suspended_by" => $employee_id, "suspended_dt" => $this->timestamp->format("Y-m-d"), "telegram_chat_id" => "");
         $where = array("id" => $id);
         $updateResult = $this->db->update("gccmaster.tblusers", $data, $where);
 
