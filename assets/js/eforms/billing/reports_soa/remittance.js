@@ -97,6 +97,7 @@ const vm_remit_filter = new Vue({
                     vm_cash_report.daily_cash_report = response.daily_cash_report || [];
                     vm_cash_report.total_per_cashier = response.grand_total_per_cashier.cashier || [];
                     vm_remit_data.payment_collected = response.grand_total_per_cashier.totalCash || 0;
+                    vm_remit_data.payment_ids = response.all_payment_ids || [];
                 },
                 error: function (xhr, error, code) {
                     console.log(error);
@@ -647,7 +648,7 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
                 return g_numberWithCommas(amount);
             }
         },
-        { data: "cashier" },
+        { data: "virtual_cashier" },
         { data: "depositor" },
         { 
             data: "deposit_date", render: function(data, type, row) {
