@@ -569,7 +569,7 @@ $('#empEmploymentInfo-body, #collapseEmployment').on('show.bs.collapse', functio
     } 
 });
 
-$('#jobDescription-body, #collapseEmployment').on('show.bs.collapse', function () {
+$('#jobDescription-body, #collapseEmployment, #collapseJob').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.job_desc)) {
         getJobDescription();
     }
@@ -826,8 +826,7 @@ function getAccountability(){
                                 const returnStatus = parseInt(row.is_returned) === 1 
                                     ? '<span class="m-badge m-badge--success px-2 m--font-bolder">Yes</span>'
                                     : '<span class="m-badge m-badge--danger px-2 m--font-bolder">No</span>';
-                
-     
+
                                 const formattedDate = row.date_returned && row.date_returned !== "0000-00-00" 
                                     ? new Date(row.date_returned).toLocaleDateString('en-US', {
                                         month: 'short',
