@@ -11,8 +11,7 @@
                         </div>
                     </div>
                     <div class="m-portlet__head-tools">
-                        <a href="<?php echo base_url("ticket/archive"); ?>" class="m-nav__link btnArchive">
-                            <i class="m-nav__link-icon flaticon-open-box"></i>
+                        <a href="javascript:void(0);" class="m-nav__link btnArchive">
                             <span class="m-nav__link-text">
                                 Archive
                             </span>
@@ -36,7 +35,7 @@
                                     <div class="col-4">
                                         <div id="filter-by-date-range" class="form-group m-0">
                                             <div id="date-picker" class="input-group">
-                                                <input type="text" readonly="readonly" placeholder="SELECT DATE RANGE" id="date-range" name="date_range" data-validation="required" class="form-control m-input valid"> 
+                                                <input type="text" readonly="readonly" placeholder="SELECT DATE RANGE" id="date_range" name="date_range" data-validation="required" class="form-control m-input valid"> 
                                                 <span class="input-group-addon"><i class="la la-calendar-check-o"></i></span>
                                             </div>
                                         </div>
@@ -67,7 +66,7 @@
                                 </div>
                                 <div class="col-3 d-flex align-items-center">
                                     <label class="m-radio m-radio--brand fs-3">
-                                        <input type="radio" name="app_name_select" value="GCCTIME" checked="">
+                                        <input type="radio" name="app_name_select" value="GCCTIME" checked>
                                         GCCTIME Mobile APP
                                         <span></span>
                                     </label>

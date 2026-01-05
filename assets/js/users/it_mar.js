@@ -1,13 +1,33 @@
-console.log(_tempContentData);
 let _employee = [];
 let ITMar = null;
 let selectedEmpId = null;
+let is_archive = false;
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.employee !== "undefined" && _tempContentData.employee.length > 0){
         _employee = _tempContentData.employee;
     }
 }
 const allEmployees = _employee;
+
+$(document).on('click', '.btnArchive', function (e) {
+    e.preventDefault();
+    is_archive = !is_archive; 
+    const text = is_archive ? 'Masterfile' : 'Archive';
+    const icon = is_archive ? 'flaticon-folder' : 'flaticon-open-box';
+    $(this).find('.m-nav__link-text').text(text);
+    ITMar.ajax.reload();
+});
+
+$(document).on('show.bs.modal', '#newITMARModal', function () {
+    const selectedApp = $('input[name="app_name_select"]:checked').val();
+
+    if (selectedApp) {
+        $('input[name="app_name"][value="' + selectedApp + '"]')
+            .prop('checked', true)
+            .trigger('change');
+    }
+});
+
 $(document).ready(function () {
     const selectedApp = $("input[name='app_name']:checked").val();
     loadEmployeesByApp(selectedApp);
@@ -23,6 +43,10 @@ $(document).ready(function () {
             data: function (d) {
                 d.csrf_token = _csrf_hash;
                 d.app_name = $("input[name='app_name_select']:checked").val();
+                d.search = $("#generalSearch").val();
+                d.date_range = $("#date_range").val();
+                d.is_archive = is_archive;
+                return d;
             },
         },
         columns: [
@@ -56,7 +80,7 @@ $(document).ready(function () {
             
                     return `
                         <button type="button"
-                            class="btn btn-default m-btn m-btn--hover-danger m-btn--icon m-btn--icon-only m-btn--pill btnArchive ml-1"
+                            class="btn btn-default m-btn m-btn--hover-danger m-btn--icon m-btn--icon-only m-btn--pill btnDelete ml-1"
                             data-id="${row.id}"
                             data-toggle="m-tooltip"
                             data-placement="bottom"
@@ -147,3 +171,4 @@ function loadEmployeesByApp(selectedApp) {
 $("input[name='app_name_select']").on("change", function () {
     ITMar.ajax.reload();
 });
+
