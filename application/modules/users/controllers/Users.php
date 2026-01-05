@@ -87,6 +87,8 @@ class Users extends MY_Controller{
         $data['employee'] = $this->user->select2Employee();
         $data['supervisor'] = $this->user->select2Supervisor();
         $data['installer'] = $this->user->select2Installer();
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
         $this->core_layout->setPrivilegeName("it_mobile_application_request");
         $this->core_layout->setHeaderTitle("IT MOBIILE APPLICATION REQUEST");
         $this->core_layout->addJs("js/users/it_mar.js", true, $data);
@@ -386,6 +388,11 @@ class Users extends MY_Controller{
 
     public function save_itmar(){
         $data = $this->user->saveItmar();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function archive_itmar(){
+        $data = $this->user->archiveItmar();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 

@@ -1,7 +1,7 @@
 let _employee = [];
 let ITMar = null;
 let selectedEmpId = null;
-let is_archive = false;
+let is_archive = 0;
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.employee !== "undefined" && _tempContentData.employee.length > 0){
         _employee = _tempContentData.employee;
@@ -11,16 +11,14 @@ const allEmployees = _employee;
 
 $(document).on('click', '.btnArchive', function (e) {
     e.preventDefault();
-    is_archive = !is_archive; 
-    const text = is_archive ? 'Masterfile' : 'Archive';
-    const icon = is_archive ? 'flaticon-folder' : 'flaticon-open-box';
+    is_archive = is_archive == 0 ? 1 : 0;
+    const text = is_archive == 1 ? 'Masterfile' : 'Archive';
     $(this).find('.m-nav__link-text').text(text);
     ITMar.ajax.reload();
 });
 
 $(document).on('show.bs.modal', '#newITMARModal', function () {
     const selectedApp = $('input[name="app_name_select"]:checked').val();
-
     if (selectedApp) {
         $('input[name="app_name"][value="' + selectedApp + '"]')
             .prop('checked', true)
@@ -59,35 +57,32 @@ $(document).ready(function () {
                     `;
                 }
              },
-            { data: "purpose" },
+            { data: "purpose", sortable: false },
             { data: "app_name" },
-            { data: "created_at" },
+            {
+                data: "created_at",
+                render: function (data) {
+                    if (!data) return '';
+                    return moment(data, 'YYYY-MM-DD HH:mm:ss')
+                        .format('MMMM DD, YYYY h:mm A');
+                }
+            },
             { data: "created_name" },
             {
                 data: null,
                 sortable: false,
                 render: function (data, type, row, meta) {
-                        // <button type="button"
-                        //     class="btn btn-default m-btn m-btn--hover-warning m-btn--icon m-btn--icon-only m-btn--pill btnEdit"
-                        //     data-id="${row.id}"
-                        //     data-toggle="m-tooltip"
-                        //     data-placement="bottom"
-                        //     data-skin="dark"
-                        //     data-original-title="Edit"
-                        //     data-delay='{"show":300}'>
-                        //     <i class="la la-pencil"></i>
-                        // </button>
-            
+                    const isRestore = row.is_archive == 1;
                     return `
                         <button type="button"
-                            class="btn btn-default m-btn m-btn--hover-danger m-btn--icon m-btn--icon-only m-btn--pill btnDelete ml-1"
-                            data-id="${row.id}"
+                            class="btn btn-default m-btn m-btn--hover-${isRestore ? 'success' : 'danger'} m-btn--icon m-btn--icon-only m-btn--pill btnDelete ml-1"
                             data-toggle="m-tooltip"
                             data-placement="bottom"
                             data-skin="dark"
-                            data-original-title="Archive"
+                            data-original-title="${isRestore ? 'Restore' : 'Archive'}"
+                            onclick="archiveRow(${row.id})"
                             data-delay='{"show":300}'>
-                            <i class="la la-archive"></i>
+                            <i class="la ${isRestore ? 'la-reply' : 'la-archive'}"></i>
                         </button>
                     `;
                 }
@@ -126,11 +121,12 @@ $.validate({
                 app_name: $('input[name="app_name"]:checked').val(),
             },
             success: function (response) {
-                if(response.success){
+                if (response.success) {
+                    toastr.success(response.message);
                     $('#newITMARModal').modal('hide');
                     ITMar.ajax.reload();
-                }else{
-                    alert(response.message);
+                } else {
+                    toastr.error(response.message);
                 }
             }
         });
@@ -172,3 +168,42 @@ $("input[name='app_name_select']").on("change", function () {
     ITMar.ajax.reload();
 });
 
+function archiveRow(id) {
+    const willArchive = is_archive == 0; 
+    Swal.fire({
+        title: willArchive ? 'Archive record?' : 'Restore record?',
+        text: willArchive
+            ? 'This record will be moved to archive.'
+            : 'This record will be restored to masterfile.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: willArchive ? 'Yes, archive it' : 'Yes, restore it',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: willArchive ? '#d33' : '#28a745',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl("users/archive_itmar"),
+                type: 'POST',
+                data: {
+                    id: id,
+                    is_archive: willArchive ? 1 : 0,
+                    csrf_token: _csrf_hash
+                },
+                success: function (response) {
+                    if (response.success) {
+                        toastr.success(
+                            willArchive
+                                ? 'Record archived successfully.'
+                                : 'Record restored successfully.'
+                        );
+                        ITMar.ajax.reload();
+                    } else {
+                        toastr.error(response.message || 'Action failed.');
+                    }
+                },
+            });
+        }
+    });
+}

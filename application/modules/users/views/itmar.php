@@ -59,15 +59,15 @@
                             <div class="form-group m-form__group row col">
                                 <div class="col-3 d-flex align-items-center">
                                     <label class="m-radio m-radio--brand fs-3">
-                                        <input type="radio" name="app_name_select" value="TGCloudBAS">
-                                        TG CloudBAS
+                                        <input type="radio" name="app_name_select" value="GCCTIME" checked>
+                                        GCCTIME Mobile APP
                                         <span></span>
                                     </label>
                                 </div>
                                 <div class="col-3 d-flex align-items-center">
                                     <label class="m-radio m-radio--brand fs-3">
-                                        <input type="radio" name="app_name_select" value="GCCTIME" checked>
-                                        GCCTIME Mobile APP
+                                        <input type="radio" name="app_name_select" value="TGCloudBAS">
+                                        TG CloudBAS
                                         <span></span>
                                     </label>
                                 </div>
@@ -116,15 +116,15 @@
                     <div class="form-group m-form__group row col">
                         <div class="col-6 d-flex align-items-center">
                             <label class="m-radio m-radio--brand">
-                                <input type="radio" name="app_name" value="TGCloudBAS">
-                                TG CloudBAS
+                                <input type="radio" name="app_name" value="GCCTIME" checked>
+                                GCCTIME Mobile APP
                                 <span></span>
                             </label>
                         </div>
                         <div class="col-6 d-flex align-items-center">
                             <label class="m-radio m-radio--brand">
-                                <input type="radio" name="app_name" value="GCCTIME" checked>
-                                GCCTIME Mobile APP
+                                <input type="radio" name="app_name" value="TGCloudBAS">
+                                TG CloudBAS
                                 <span></span>
                             </label>
                         </div>

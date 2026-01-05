@@ -942,7 +942,7 @@ class User_model extends CI_Model{
     }
 
     private function getItmarListData($search, $limit, $offset, $sortBy, $sortOrder,$filterFields, $app_name, $is_archive){
-        $this->db->select("a.emp_id,a.id,a.app_name,a.purpose,a.created_at, d.description as department_name, e.name as position_name, CONCAT(
+        $this->db->select("a.emp_id,a.is_archive,a.id,a.app_name,a.purpose,a.created_at, d.description as department_name, e.name as position_name, CONCAT(
                 b.firstname, ' ',
                 IF(b.middlename IS NOT NULL AND b.middlename != '',
                     CONCAT(LEFT(b.middlename, 1), '. '),
@@ -1051,6 +1051,26 @@ class User_model extends CI_Model{
         }else{
             $resultArray['success'] = false;
             $resultArray['message'] = "Failed to save itmar request.";
+        }
+
+        return $resultArray;
+    }
+
+    public function archiveItmar(){
+        $resultArray = array();
+        $post = $this->input->post();
+        $data = array(
+            "is_archive" => $post['is_archive'],
+        );
+
+        $this->db->where("id", $post['id']);
+        $update = $this->db->update("gccmaster.it_mobile_application", $data);
+        if($update){
+            $resultArray['success'] = true;
+            $resultArray['message'] = "Successfully updated itmar request.";
+        }else{
+            $resultArray['success'] = false;
+            $resultArray['message'] = "Failed to update itmar request.";
         }
 
         return $resultArray;
