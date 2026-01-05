@@ -332,7 +332,7 @@
                                                             <div class="row mb-3">
                                                                 <div class="col-12">
                                                                     <h5 class="m--font-transform-u font-weight-bold text-center"  v-text="formatDateLocale(date)"></h4>
-                                                                    <h4 class="m--font-transform-u font-weight-bold"  v-text="item.title"></h4>
+                                                                    <h4 class="m--font-transform-u font-weight-bold text-center"  v-text="item.title"></h4>
                                                                 </div>
                                                             </div>
                                                             <div class="row">
