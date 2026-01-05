@@ -3200,6 +3200,7 @@ class Payroll_m extends CI_Model{
 
     function getPayrollSheet($start, $end, $show_posted="_all")
     {
+        $result = array();
         $posted_data = $this->input->post();
         $paydate = date("Y-m-d", strtotime($posted_data["pay_date"]));
         $employee_ids = isset($posted_data["employees"]) ? $posted_data["employees"] : null;
@@ -3278,9 +3279,19 @@ class Payroll_m extends CI_Model{
         $this->db->group_by("ps.id");
         $this->db->order_by($order, $dir);
         $query = $this->db->get("payroll.payroll_sheet ps");
+        $last_query = $this->db->last_query();
+
+        if ($query->num_rows() > 0) {
+            foreach( $query->result() as $row ) {
+                $max_date = $this->getPayrollMaxDate($row->emp_id);
+                $row->has_latest_payroll = date('Y-m-d', strtotime($max_date)) > date('Y-m-d', strtotime($row->date_end)) ? 1 : 0;
+                $result[] = $row;
+            }
+        }
+
         return array(
-            "data" => $query->result(),
-            "sql" => $this->db->last_query(),
+            "data" => $result,
+            "sql" => $last_query,
         );
     }
 
@@ -8190,5 +8201,140 @@ class Payroll_m extends CI_Model{
         }
 
         return $loans;
+    }
+
+    public function undo_printed_payroll_sheet(){
+        $post = $this->input->post();
+        $data = array();
+        $date_start = 'No date start';
+        $date_end = 'No date end';
+        $pay_date = 'No pay date';
+        $emp_id = $post['emp_id'] ?? null;
+        $reason = $post['reason'] ?? 'No reason provided';
+
+        if(isset($post["id"]) && $post["id"]){
+            $maxDate = $this->getPayrollMaxDate($post["emp_id"]);
+            $payrollDate = $this->db->select("b.pay_date, b.date_start, b.date_end, UPPER(TRIM(CONCAT(a.firstname, ' ',
+                CASE WHEN UPPER(TRIM(a.middlename)) != 'N/A' AND UPPER(TRIM(a.middlename)) != 'NONE' AND
+                        TRIM(a.middlename) !='' AND a.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(a.middlename, 1, 1), '.') ELSE ''
+                END,' ', a.lastname,
+                CASE WHEN UPPER(TRIM(a.suffix)) != 'N/A' AND
+                    UPPER(TRIM(a.suffix !='NONE')) AND a.suffix !='' AND
+                        a.suffix IS NOT NULL THEN CONCAT(' ', a.suffix) ELSE ''
+                END))) as employee_name")
+                ->join("gccmaster.tblemployees as a", "a.id = b.emp_id", "LEFT")
+                ->from("payroll.payroll_sheet as b")
+                ->where("b.id", $post["id"])
+                ->where('b.emp_id', $post['emp_id'])
+                ->where('b.printed_payslip', 1)
+                ->where('b.posted', 1)
+                ->get()->row();
+                
+            if ($payrollDate) {
+                $date_start = date("Y-m-d", strtotime($payrollDate->date_start));
+                $date_end = date("Y-m-d", strtotime($payrollDate->date_end));
+                $pay_date = date("Y-m-d", strtotime($payrollDate->pay_date));
+                $employee_name = $payrollDate->employee_name ?? 'No employee name';
+
+                if($maxDate && strtotime($maxDate) > strtotime($date_end)){
+                    $data["response"] = false;
+                    return $data;
+                }
+            }
+
+            $this->db->where("id", $post["id"]);
+            $this->db->where('emp_id', $post['emp_id']);
+            $this->db->where('printed_payslip', 1);
+            $this->db->where('posted', 1);
+            $updated = $this->db->update("payroll.payroll_sheet", array("printed_payslip"=>0));
+            if($updated && $this->db->affected_rows() > 0){
+                $data["response"] = true;
+
+                $this->core_layout->setEventLog("Payroll sheet of employee name `$employee_name` with coverage date of `{$date_start} - {$date_end}` and pay date `{$pay_date}` with reason of `{$reason}` has been set to undone printable status.", "update", "success", "payroll");
+            }else{
+                $data["response"] = false;
+                $this->core_layout->setEventLog("Failed to undo printable status of employee name `$employee_name` with coverage date of `{$date_start} - {$date_end}` and pay date `{$pay_date}` with reason of `{$reason}`.", "update", "success", "payroll");
+            }
+        }else{
+            $data["response"] = false;
+        }
+
+        return $data;
+    }
+
+    protected function getPayrollMaxDate($id=null){
+        if($id){
+            $this->db->select("MAX(ps.date_end) as max_date");
+            $this->db->from($this->tbl_employees." emp");
+            $this->db->join($this->tbl_payroll_sheet." ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+            $this->db->where("emp.id", $id);
+            $this->db->group_by("emp.id");
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() == 1){ return $qTemp->row()->max_date; }
+            else{ return false; }
+        }else{ return false; }
+        
+    }
+
+    public function check_printed_payslip(){
+        $_post = $this->input->post();
+        $result = array();
+
+        if (isset($_post) && !empty($_post)) {
+            $post = (object) $_post;
+            if(isset($post->date_range) && $post->date_range){
+                $date_range = explode("-", $post->date_range);
+                $start = date('Y-m-d', strtotime(trim($date_range[0])));
+                $end = date('Y-m-d', strtotime(trim($date_range[1])));
+            }
+
+            $employee_ids = isset($post->employees) ? $post->employees : null;
+            $payout_sched = $post->payout_schedule;
+            $sequence = $post->payout_sequence;
+            $company_id = $post->company;
+            $maxDate = null;
+            $pay_date = date("Y-m-d", strtotime($post->pay_date));
+            $countPrinted = 0;
+
+            $this->db->select("MAX(ps.date_end) as max_date");
+            $this->db->from($this->tbl_employees." emp");
+            $this->db->join($this->tbl_payroll_sheet." ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+            $this->db->where_in("emp.id", $employee_ids);
+            $this->db->group_by("emp.id");
+            $qTemp = $this->db->get();
+
+            $this->db->reset_query();
+
+            if ($qTemp->num_rows() > 0) {
+                $maxDate = $qTemp->row()->max_date;
+            }
+
+            if ($maxDate && date('Y-m-d', strtotime($maxDate)) > date('Y-m-d', strtotime($end))) {
+                $result['response'] = false;
+            } else {
+                $this->db->select("id");
+                $this->db->from("payroll.payroll_sheet");
+                $this->db->where_in("emp_id", $employee_ids);
+                $this->db->where("company_id", $company_id);
+                $this->db->where("payroll_sched", $payout_sched);
+                $this->db->where("payroll_seq", $sequence);
+                $this->db->where("date_start", $start);
+                $this->db->where("date_end", $end);
+                $this->db->where("pay_date", $pay_date);
+                $this->db->where("posted", 1);
+                $this->db->where("printed_payslip", 1);
+
+                $_qTemp = $this->db->get();
+
+                if ($_qTemp->num_rows() > 0) {
+                    $countPrinted = $_qTemp->num_rows();
+                }
+
+                $result['count_printed'] = $countPrinted;
+                $result['response'] = true;
+            }
+        }
+        return $result;
     }
 }

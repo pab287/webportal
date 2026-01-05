@@ -42,6 +42,28 @@
         }
     }
     table tr.m--bg-ps_existing--posted{ background-color: #ffe0e0 !important; }
+
+    /* HTML: <div class="loader"></div> */
+    .pulse {
+        font-size: 1.1rem;
+        color: #008000; /* lock color */
+        animation: lockPulse 1.5s infinite ease-in-out;
+    }
+
+    @keyframes lockPulse {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.2);
+            opacity: 0.6;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
 </style>
 <div class="m-content">
     <div class="row">
@@ -339,8 +361,9 @@
                                 <thead>
                                 <tr>
                                     <th scope="col" class="no-sort align-middle" rowspan="2">
-                                        <label for="" class="m-checkbox m-checkbox--bold m-checkbox--state-brand table-cb">
-                                            <input type="checkbox" id="cb-select-all"><span></span>
+                                        <label for="cb-select-all" class="m-checkbox m-checkbox--bold m-checkbox--state-brand table-cb">
+                                            <input type="checkbox" id="cb-select-all">
+                                            <span></span>
                                         </label>
                                     </th>
                                     <th scope="col" class="text-center align-middle" rowspan="2">#</th>
