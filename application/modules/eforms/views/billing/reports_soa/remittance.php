@@ -21,7 +21,7 @@
     #remarks_text span {
         max-width: 1300px;
         display: block;
-        font-style: italic;
+        font-style: italic;1
         font-weight: 400;
     }
 

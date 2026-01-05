@@ -6826,6 +6826,7 @@ class Billing_m extends CI_Model {
         if ($query->num_rows() > 0) {
             $grouped = [];
             $all_payment_ids = [];
+            $cashier_ids = [];
 
             foreach ($query->result_array() as $row) {
 
@@ -6847,6 +6848,9 @@ class Billing_m extends CI_Model {
                 // Collect ALL payment IDs into one variable
                 $all_payment_ids = array_merge($all_payment_ids, $payment_ids_array);
 
+                // Collect Cashier ID
+                $cashier_ids[] = (int) $row['cashier_id'];
+
                 $grouped[$formatted_date]["cashier"][] = [
                     "cashier_id" => (int) $row["cashier_id"],
                     "cashier" => $row["cashier"],
@@ -6858,22 +6862,22 @@ class Billing_m extends CI_Model {
 
             // Remove duplicates & cast to int
             $all_payment_ids = array_values(array_unique(array_map('intval', $all_payment_ids)));
+            $cashier_ids = array_values(array_unique($cashier_ids));
 
             return [
                 "daily_cash_report" => array_values($grouped),
-                "recordsTotal" => count($grouped),
-                "recordsFiltered" => count($grouped),
                 "all_payment_ids" => $all_payment_ids,
-                "grand_total_per_cashier" => $this->remittance_grand_total_per_cashier_group_date($post)
+                "grand_total_per_cashier" => $this->remittance_grand_total_per_cashier_group_date($post),
+                "cashier_ids" => $cashier_ids
             ];
             
         } else {
             // No results found
             return [
                 "daily_cash_report" => [],
-                "recordsTotal" => 0,
-                "recordsFiltered" => 0,
+                "all_payment_ids" => [],
                 "grand_total_per_cashier" => $this->remittance_grand_total_per_cashier_group_date($post), // This can display 0 totals 
+                "cashier_ids" => []
             ];
         }
     }
@@ -6979,7 +6983,7 @@ class Billing_m extends CI_Model {
         $post = $this->input->post();
 
         $current_date = date("Y-m-d H:i:s");
-        $code = 'KBH';
+        $code = 'R';
         $ref_no = $this->series($current_date, 'hydra_billing.remittance', $code);
         $ref_series = explode("-",$ref_no)[2];
         $ref_month = explode("-",$ref_no)[1];
@@ -7150,7 +7154,7 @@ class Billing_m extends CI_Model {
         $query = $this->db->get();
 
         foreach ($query->result_array() as $_query) {
-            $_query["deposited_cashier"] = $this->get_deposited_cashier($_query['id']);
+            $_query["deposited_cashier"] = $this->get_deposited_cashier_name($_query['id']);
             $_query["created_date"] = date('Y-m-d', strtotime($_query['created_date']));
             $_query["date_from"] = date('Y-m-d', strtotime($_query['date_from']));
             $_query["date_to"] = date('Y-m-d', strtotime($_query['date_to']));
@@ -7164,7 +7168,7 @@ class Billing_m extends CI_Model {
         );
     }
 
-    public function get_deposited_cashier($remittance_id) {
+    public function get_deposited_cashier_name($remittance_id) {
         $cashiers = [];
 
         $this->db->select("CONCAT(c.firstname, ' ', c.lastname) AS cashier");
@@ -7181,13 +7185,29 @@ class Billing_m extends CI_Model {
         return $cashiers;
     }
 
+    public function get_deposited_cashier_id($remittance_id) {
+        $cashiers = [];
+
+        $this->db->select("dc.emp_id");
+        $this->db->from("hydra_billing.deposited_cashier dc");
+        $this->db->join("gccmaster.tblemployees c", "c.id = dc.emp_id", "LEFT");
+        $this->db->where("dc.remittance_id", $remittance_id);
+
+        $query = $this->db->get();
+
+        foreach ($query->result_array() as $row) {
+            $cashiers[] = (int)$row['emp_id'];
+        }
+
+        return $cashiers;
+    }
+
     public function get_remittance_details() {
         $post = $this->input->post();
 
-        $this->db->select("r.id, r.ref_no, r.deposit, r.variance, r.payment_collected, r.remarks, r.deposit_date, r.date_range_selected, r.date_from, r.date_to, r.created_by, r.created_date, CONCAT(e.firstname, ' ', e.lastname) as depositor, CONCAT(c.firstname, ' ', c.lastname) as cashier, ");
+        $this->db->select("r.id, r.ref_no, r.deposit, r.variance, r.payment_collected, r.virtual_cashier, r.remarks, r.deposit_date, r.date_range_selected, r.date_from, r.date_to, r.created_by, r.created_date, CONCAT(e.firstname, ' ', e.lastname) as depositor");
         $this->db->from("hydra_billing.remittance r");
         $this->db->join("gccmaster.tblemployees e", "e.id = r.created_by", "LEFT");
-        $this->db->join("gccmaster.tblemployees c", "c.id = r.emp_id", "LEFT");
         $this->db->where("r.is_archive", 0);
         $this->db->where("r.id", $post['remittance_id']);
         $row = $this->db->get()->row_array();
@@ -7195,12 +7215,12 @@ class Billing_m extends CI_Model {
         $row["deposit_date"] = date('Y-m-d', strtotime($row['deposit_date']));
         $row["date_start"] = date('Y-m-d', strtotime($row['date_from']));
         $row["date_end"] = date('Y-m-d', strtotime($row['date_to']));
-        $row["daily_collection"] = $this->get_remittance_payment_deposited($post['remittance_id']);
+        $row["collection"] = $this->get_remittance_payment_deposited($post['remittance_id'], $row['date_range_selected']);
 
         return $row;
     }
 
-    public function get_remittance_payment_deposited($remittance_id) {
+    public function get_remittance_payment_deposited($remittance_id, $date_range) {
         $res = [];
 
         // Get remittance date range
@@ -7221,36 +7241,187 @@ class Billing_m extends CI_Model {
 
         $start_date = $remittance->date_from;
         $end_date = $remittance->date_to;
+        $cashier_ids = $this->get_deposited_cashier_id($remittance_id);
 
+        // =============================================================
+
+        // Query for totals per day
         $this->db->select("
-            DATE(p.created_date) AS payment_date,   
+            DATE(p.created_date) AS payment_date,
             ROUND(SUM(p.received_amount), 2) AS total_payments,
             ROUND(SUM(p.balance_covered), 2) AS total_balance_covered,
             CONCAT(e.firstname, ' ', e.lastname) as cashier, 
-            GROUP_CONCAT(p.id ORDER BY p.id ASC) AS payment_ids
+            GROUP_CONCAT(p.id ORDER BY p.id ASC) AS payment_ids,
+            p.created_by AS cashier_id
         ");
-        $this->db->from("hydra_billing.deposited_payment dp");
-        $this->db->join("hydra_billing.payments p", "p.id = dp.payment_id", "LEFT");
+        $this->db->from("hydra_billing.payments p");
         $this->db->join("gccmaster.tblemployees e", "e.id = p.created_by", "LEFT");
+        $this->db->join("hydra_billing.deposited_payment dp", "dp.payment_id = p.id", "LEFT");
+
+        // Must be in deposited_payment table
         $this->db->where("dp.remittance_id", $remittance_id);
-        $this->db->where("dp.is_archive", 0);
+
+        $this->db->where_in("p.created_by", $cashier_ids);
         $this->db->where("DATE(p.created_date) >=", $start_date);
         $this->db->where("DATE(p.created_date) <=", $end_date);
-        $this->db->group_by("DATE(p.created_date)");
+        $this->db->where("p.is_archive", 0);
+
+        $this->db->group_by([
+            "DATE(p.created_date)",
+            "p.created_by"
+        ]);
+
         $this->db->order_by("payment_date", "ASC");
+
         $query = $this->db->get();
 
-        foreach ($query->result_array() as $row) {
-            $row["payment_date"] = date("M d, Y", strtotime($row["payment_date"]));
-            $row["total_payments"] = (float)$row["total_payments"];
-            $row["total_balance_covered"] = (float)$row["total_balance_covered"];
-            $result[] = $row;
+        if ($query->num_rows() > 0) {
+            $grouped = [];
+            $all_payment_ids = [];
+
+            foreach ($query->result_array() as $row) {
+
+                $formatted_date = date("M d, Y", strtotime($row["payment_date"]));
+
+                if (!isset($grouped[$formatted_date])) {
+                    $grouped[$formatted_date] = [
+                        "payment_date" => $formatted_date,
+                        "cashier" => [],
+                        "total_payments_per_day" => 0,
+                    ];
+                }
+
+                $grouped[$formatted_date]["total_payments_per_day"] += (float) $row["total_payments"];
+
+                // Convert payment_ids string to array
+                $payment_ids_array = explode(',', $row["payment_ids"]);
+
+                // Collect ALL payment IDs into one variable
+                $all_payment_ids = array_merge($all_payment_ids, $payment_ids_array);
+
+                $grouped[$formatted_date]["cashier"][] = [
+                    "cashier_id" => (int) $row["cashier_id"],
+                    "cashier" => $row["cashier"],
+                    "total_payments" => (float) $row["total_payments"],
+                    "total_balance_covered" => (float) $row["total_balance_covered"],
+                    "payment_ids" => $payment_ids_array
+                ];
+            }
+
+            // Remove duplicates & cast to int
+            $all_payment_ids = array_values(array_unique(array_map('intval', $all_payment_ids)));
+
+            return [
+                "daily_cash_report" => array_values($grouped),
+                "all_payment_ids" => $all_payment_ids,
+                "grand_total_per_cashier" => $this->view_remittance_grand_total_per_cashier_group_date($cashier_ids, $date_range, $remittance_id)
+            ];
+            
+        } else {
+            // No results found
+            return [
+                "daily_cash_report" => [],
+                "all_payment_ids" => [],
+                "grand_total_per_cashier" => $this->view_remittance_grand_total_per_cashier_group_date($cashier_ids, $date_range, $remittance_id)
+            ];
         }
 
+        // =============================================================
+    }
+
+    public function view_remittance_grand_total_per_cashier_group_date($cashier_ids, $date_range, $remittance_id) {
+        // ==============================
+        // 1. Build Base Query
+        // ==============================
+        $this->db->select("
+            payment.received_amount,
+            payment.balance_covered,
+            CONCAT(emp.firstname, ' ', emp.lastname) as cashier
+        ");
+
+        $this->db->from("hydra_billing.payments payment");
+        $this->db->join("hydra_billing.accounts acct", "acct.id=payment.account_id", "LEFT");
+        $this->db->join("hydra_billing.bills bill", "bill.id=payment.bill_id", "LEFT");
+        $this->db->join("gccmaster.tblemployees emp", "emp.id=payment.created_by", "LEFT");
+        $this->db->join("hydra_billing.deposited_payment dp", "dp.payment_id = payment.id", "LEFT");
+
+        // Must be in deposited_payment table
+        $this->db->where("dp.remittance_id", $remittance_id);
+
+        // ==============================
+        // 2. If date range selected
+        // ==============================
+        if (!empty($date_range)) {
+            $date = explode("-", $date_range);
+            $start = trim($date[0]);
+            $end = trim($date[1]);
+
+            if ($start == $end) {
+                $this->db->where("DATE(payment.created_date)", date("Y-m-d", strtotime($start)));
+            } else {
+                $this->db->where("payment.created_date >=", date("Y-m-d 00:00:00", strtotime($start)));
+                $this->db->where("payment.created_date <=", date("Y-m-d 23:59:59", strtotime($end)));
+            }
+        } else {
+            // Default to current month if no date range provided
+            $firstDay = date("Y-m-01"); // 2025-12-01
+            $lastDay  = date("Y-m-t"); // 2025-12-31
+
+            $this->db->where("payment.created_date >=", $firstDay . " 00:00:00");
+            $this->db->where("payment.created_date <=", $lastDay . " 23:59:59");
+        }
+
+        // Exclude archived payments
+        $this->db->where("payment.is_archive", 0);
+
+        if (!empty($cashier_ids)) {
+            $this->db->where_in("payment.created_by", $cashier_ids);
+        }
+
+        // Sort by cashier then date
+        $this->db->order_by("cashier ASC");
+        $this->db->order_by("payment.created_date DESC");
+
+        $query = $this->db->get();
+
+        // ==============================
+        // 3. GROUP BY CASHIER
+        // ==============================
+        $grouped = [];
+        $totalCash = 0;
+        $totalCount = $query->num_rows();
+
+        if ($totalCount > 0) {
+            foreach ($query->result_array() as $row) {
+
+                $cashier = $row["cashier"];
+
+                // Initialize cashier group if not exist
+                if (!isset($grouped[$cashier])) {
+                    $grouped[$cashier] = [
+                        "cashier"  => $cashier,
+                        "total_cash" => 0.0,
+                    ];
+                }
+
+                $rec_amount       = $row["received_amount"];
+                $balance_covered  = $row["balance_covered"];
+
+                // accumulate totals
+                $grouped[$cashier]["total_cash"] += $rec_amount;
+                $totalCash += $rec_amount;
+            }
+        }
+
+        // format cashier totals
+        foreach ($grouped as &$g) {
+            $g["total_cash"] = number_format($g["total_cash"], 2, '.', '');
+        }
+        unset($g);
+
         return [
-            "data" => $result,
-            "recordsTotal" => $query->num_rows(),
-            "recordsFiltered" => $query->num_rows()
+            "cashier"            => array_values($grouped),
+            "totalCash"       => number_format($totalCash, 2, '.', '')
         ];
     }
 

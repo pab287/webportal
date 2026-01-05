@@ -98,6 +98,10 @@ const vm_remit_filter = new Vue({
                     vm_cash_report.total_per_cashier = response.grand_total_per_cashier.cashier || [];
                     vm_remit_data.payment_collected = response.grand_total_per_cashier.totalCash || 0;
                     vm_remit_data.payment_ids = response.all_payment_ids || [];
+
+                    if (vm.selectedEmployee.length == 0) {
+                        vm_remit_data.cashier = response.cashier_ids;
+                    }
                 },
                 error: function (xhr, error, code) {
                     console.log(error);
@@ -461,7 +465,7 @@ const vm_remittance_view = new Vue({
         const vm = this;
 
         $('#modal_view_remittance').on('shown.bs.modal', function() {
-            vm.initializeTable();
+            // vm.initializeTable();
         });
     },
     methods: {
@@ -791,7 +795,7 @@ $(document).on('click', '#view_remit_modal', function() {
                     vm_remittance_view.variance_value_text_color = '';
             }
 
-            vm_remittance_view.loadCollection(d.daily_collection.data);
+            // vm_remittance_view.loadCollection(d.daily_collection.data);
         },
         error: function(xhr, status, error) {
             console.error("Error:", error);
