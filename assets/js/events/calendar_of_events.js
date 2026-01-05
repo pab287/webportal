@@ -777,6 +777,7 @@ $('#addNewEvent').on('hidden.bs.modal', function () {
 
 $('#training_type').select2({
     placeholder: "Select an Option",
+    dropdownParent: $('#addNewEvent'),
     allowClear: true,
     width: '100%',
     data: _tempContentData.options.training_type
@@ -784,6 +785,7 @@ $('#training_type').select2({
 
 $('#init_type').select2({
     placeholder: "Select an Option",
+    dropdownParent: $('#addNewEvent'),
     allowClear: true,
     width: '100%',
     data: _tempContentData.options.initiation_type
@@ -791,6 +793,7 @@ $('#init_type').select2({
 
 $('#training_category').select2({
     placeholder: "Select an Option",
+    dropdownParent: $('#addNewEvent'),
     allowClear: true,
     width: '100%',
     data: _tempContentData.options.training_category
