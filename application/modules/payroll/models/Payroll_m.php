@@ -2175,20 +2175,25 @@ class Payroll_m extends CI_Model{
                 $updatedSSSLoans = $postedPayrollSheetRecord ? $payroll_sheet_row->sss_loan : 0;
                 $updatedHDMFLoans = $postedPayrollSheetRecord ? $payroll_sheet_row->hdmf_loan : 0;
 
+                $loanId = array();
                 if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false){
                     foreach ($loans as $loan) {
                         if($loan->active == 1 && $loan->loan_type == 0){
                             /*** loan internal ***/
-                            if(floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0){
+                            /*** if(floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0){ ***/
+                            if(floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due){
                                 $updatedTotalLoans += $loan->amount_due;
                                 $_gross_pay = $_gross_pay - $loan->amount_due;
+                                $loanId[] = $loan->id;
                             }
                             /*** loan internal ***/
 
                             /*** loan interest ***/
-                            if(floatval($loan->interest_amount) > 0 && $_gross_pay >= $loan->interest_amount && intval($loan->zero_netpay) == 0){
+                            /*** if(floatval($loan->interest_amount) > 0 && $_gross_pay >= $loan->interest_amount && intval($loan->zero_netpay) == 0){ ***/
+                            if(floatval($loan->interest_amount) > 0 && $_gross_pay >= $loan->interest_amount){
                                 $updatedTotalLoansInterest += $loan->interest_amount;
                                 $_gross_pay = $_gross_pay - $loan->interest_amount;
+                                 $loanId[] = $loan->id;
                             }
                             /*** loan interest ***/
                         }
@@ -2197,19 +2202,25 @@ class Payroll_m extends CI_Model{
                     /*** loans external ***/
                     /*** loans sss ***/
                     foreach ($loans as $loan) {
+                        /*** if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 1) &&
+                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0)){ ***/
                         if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 1) &&
-                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0)){
+                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due)){
                             $updatedSSSLoans += $loan->amount_due;
                             $_gross_pay = $_gross_pay - $loan->amount_due;
+                             $loanId[] = $loan->id;
                         }
                     }
                     /*** loans sss ***/
                     /*** loans hdmf ***/
                     foreach ($loans as $loan) {
+                        /*** if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 2) &&
+                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0)){ ***/
                         if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 2) &&
-                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0)){
+                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due)){
                             $updatedHDMFLoans += $loan->amount_due;
                             $_gross_pay = $_gross_pay - $loan->amount_due;
+                             $loanId[] = $loan->id;
                         }
                     }
                     /*** loans hdmf
@@ -2245,51 +2256,66 @@ class Payroll_m extends CI_Model{
 
                     $this->db->where("id", $payroll_sheet_id)->update("payroll.payroll_sheet", $updatePayrollSheetData);
 
+                    $this->db->select("SUM(amount_due) as amount_due");
+                    $totalLoansAmount = $this->db->get_where("payroll.payroll_sheet_loan_payments", array("payroll_sheet_id"=>$payroll_sheet_id))->row();
+                    $allowResetLoans = ($updatedToDeductLoans > 0 && $totalLoansAmount->amount_due > 0) && $totalLoansAmount->amount_due != $updatedToDeductLoans;
+
                     if (count($loans) <= 0) {
                         $this->db->where("payroll_sheet_id", $payroll_sheet_id)->delete("payroll.payroll_sheet_loan_payments");
                     } else {
+                        if($allowResetLoans){ $this->db->where("payroll_sheet_id", $payroll_sheet_id)->delete("payroll.payroll_sheet_loan_payments"); }
+                        
                         $finalLoanInterest = 0;
                         foreach ($loans as $loan) {
-                            $isZeroNetPay = intval($loan->zero_netpay) == 1;
-                            if(floatval($loan->amount_due) > 0){
-                                $loan_data = array(
-                                    "payroll_sheet_id" => $payroll_sheet_id,
-                                    "loan_id" => $loan->id,
-                                    "amount_due" => $loan->amount_due
-                                );
-    
-                                $loan_row = $this->db
-                                    ->where("loan_id", $loan->id)
-                                    ->where("payroll_sheet_id", $payroll_sheet_id)
-                                    ->get("payroll.payroll_sheet_loan_payments")
-                                    ->row();
-                                
-                                if (intval($loan->active) !== 1 || $isZeroNetPay) {
-                                    if (!empty($loan_row)) {
-                                        $this->db->where("id", $loan_row->id)->delete("payroll.payroll_sheet_loan_payments");
-                                    }
-                                } else {
-                                    if (!empty($loan_row)) {
-                                        unset($loan_data["payroll_sheet_id"], $loan_data["loan_id"]);
-                                        $this->db->where("id", $loan_row->id)->update("payroll.payroll_sheet_loan_payments", $loan_data);
+                            if(is_array($loanId) && in_array($loan->id, $loanId)){
+                                $isZeroNetPay = intval($loan->zero_netpay) == 1;
+                                if(floatval($loan->amount_due) > 0){
+                                    $loan_data = array(
+                                        "payroll_sheet_id" => $payroll_sheet_id,
+                                        "loan_id" => $loan->id,
+                                        "amount_due" => $loan->amount_due
+                                    );
+        
+                                    $loan_row = $this->db
+                                        ->where("loan_id", $loan->id)
+                                        ->where("payroll_sheet_id", $payroll_sheet_id)
+                                        ->get("payroll.payroll_sheet_loan_payments")
+                                        ->row();
+                                    
+                                    if (intval($loan->active) !== 1 && $isZeroNetPay) {
+                                        if (!empty($loan_row)) {
+                                            $this->db->where("id", $loan_row->id)->delete("payroll.payroll_sheet_loan_payments");
+                                        }
                                     } else {
-                                        $this->db->insert("payroll.payroll_sheet_loan_payments", $loan_data);
-                                    }
-                                }
-                            }else{
-                                /*** for zero amount due ***/
-                                if(floatval($loan->amount_due) <= 0){
-                                    $getZeroLoan = $this->db
-                                    ->where("loan_id", $loan->id)
-                                    ->where("payroll_sheet_id", $payroll_sheet_id)
-                                    ->get("payroll.payroll_sheet_loan_payments");
-                                    if($getZeroLoan->num_rows() > 0){
-                                        foreach ($getZeroLoan->result() as $zeroLoan) {
-                                            $this->db->where("id", $zeroLoan->id)->delete("payroll.payroll_sheet_loan_payments");
+                                        if (!empty($loan_row)) {
+                                            unset($loan_data["payroll_sheet_id"], $loan_data["loan_id"]);
+                                            $this->db->where("id", $loan_row->id)->update("payroll.payroll_sheet_loan_payments", $loan_data);
+                                        } else {
+                                            $this->db->insert("payroll.payroll_sheet_loan_payments", $loan_data);
                                         }
                                     }
+    
+                                    /*** hotfix issue zero out ***/
+                                    $loanExist = $this->db->get_where("payroll.payroll_sheet_loan_payments", array("loan_id"=>$loan->id, "payroll_sheet_id"=>$payroll_sheet_id));
+                                    if(intval($loan->active) === 1 && $isZeroNetPay && $loanExist->num_rows() == 0){
+                                        $this->db->insert("payroll.payroll_sheet_loan_payments", $loan_data);
+                                    }
+                                    /*** hotfix issue zero out ***/
+                                }else{
+                                    /*** for zero amount due ***/
+                                    if(floatval($loan->amount_due) <= 0){
+                                        $getZeroLoan = $this->db
+                                        ->where("loan_id", $loan->id)
+                                        ->where("payroll_sheet_id", $payroll_sheet_id)
+                                        ->get("payroll.payroll_sheet_loan_payments");
+                                        if($getZeroLoan->num_rows() > 0){
+                                            foreach ($getZeroLoan->result() as $zeroLoan) {
+                                                $this->db->where("id", $zeroLoan->id)->delete("payroll.payroll_sheet_loan_payments");
+                                            }
+                                        }
+                                    }
+                                    /*** for zero amount due ***/
                                 }
-                                /*** for zero amount due ***/
                             }
 
                             $tempBalance = floatval($loan->amount) - floatval($loan->total_amount_paid);
