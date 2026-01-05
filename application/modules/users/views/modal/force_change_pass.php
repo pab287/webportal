@@ -74,6 +74,17 @@
 <script>
     <?php $session = $this->session;?>
     let session = <?php echo json_encode($session->userdata("logged_in")) ?>;
+
+    $(document).on('show.bs.modal', '.password-change-reminder', function () {
+        const removeLaterBtn = session.waive_count >= 4 || session.is_important == 1;
+        if (removeLaterBtn) {
+            $("#changePasswordLater").remove();
+        }
+        if (session.waive_count >= 4) {
+            $("#waiveNull").show();
+        }
+    });
+
     $('.password-toggle').on('click', function(e) {
         e.preventDefault();
         var $pwd = $(this).siblings('.m-input');
@@ -92,15 +103,6 @@
         }
     }
 
-    $(document).on('show.bs.modal', '.password-change-reminder', function () {
-        const removeLaterBtn = session.waive_count >= 4 || session.is_important == 1;
-        if (removeLaterBtn) {
-            $("#changePasswordLater").remove();
-        }
-        if (session.waive_count >= 4) {
-            $("#waiveNull").show();
-        }
-    });
 
 
     // function checkPass(currr){
