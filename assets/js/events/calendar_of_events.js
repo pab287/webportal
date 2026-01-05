@@ -141,7 +141,7 @@ $('#addNewEvent').on('shown.bs.modal', function () {
     $('#event_date').daterangepicker({
         showDropdowns: true,
         autoUpdateInput: false,
-        maxDate: moment().endOf('year'),
+        maxDate: moment().add(365, 'days'),
         locale: {
             format: 'MMM DD, YYYY',
             cancelLabel: 'Clear'
@@ -500,7 +500,7 @@ $('#edit-events-modal').on('shown.bs.modal', function () {
     $('#edit_event_date').daterangepicker({
         showDropdowns: true,
         autoUpdateInput: false,
-        maxDate: moment().endOf('year'),
+        maxDate: moment().add(365, 'days'),
         locale: {
             format: 'MMM DD, YYYY',
             cancelLabel: 'Clear'
