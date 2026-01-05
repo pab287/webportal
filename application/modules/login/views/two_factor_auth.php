@@ -229,7 +229,7 @@ input[type="radio"]:checked::after {
                                             <span class="label-text">Email</span>
                                         </label>
                                         <div class="radio-description">
-                                            Use your email address to receive a verification code. If you choose to use email, a verification code will be sent to the email address associated with your account.
+                                            Use your email address to receive a verification code. If you choose to use Email, a verification code will be sent to the email address associated with your account.
                                         </div>
                                     </div>
 
@@ -276,7 +276,7 @@ input[type="radio"]:checked::after {
                             </div>
                             <div class="form-group m-form__group">
                                 <input type="text" id="otp" name="key_code" class="form-control m-input text-center otp-input" maxlength="10" placeholder="Enter OTP">
-                                <span class="otp-error col">Invalid One Time Password! You have (<span class="otp-attempts"></span>) remaining tries left before your account is locked.</span>
+                                <span class="otp-error col">Invalid One-Time Password! You have (<span class="otp-attempts"></span>) remaining tries left before your account is locked.</span>
                                 <div id="resend_tag">
                                     <div class="resend-info">
                                         <p class="text-center timer-text">
@@ -345,9 +345,13 @@ $(document).ready(function() {
                 if(response.method == 'sms'){
                     const mobileLastFourDigits = send_to.replace(/\D/g, '').slice(-4);
                     $('#otp_info').text(`A verification code has been sent to *** **** ${mobileLastFourDigits}`);
-                    }else if(response.method == 'email'){
-                        $('#otp_info').text('A verification code has been sent to your registered email address');
-                    }
+                }
+                else if(response.method == 'email'){
+                    $('#otp_info').text('A verification code has been sent to your registered email address');
+                }
+                else if(response.method == 'telegram'){
+                    $('#otp_info').text('A verification code has been sent to your Telegram account');
+                }
                 $('#m_modal_1').modal({
                     backdrop: 'static',
                     keyboard: false
@@ -400,11 +404,9 @@ $(document).ready(function() {
             data: formData,
             dataType: 'json',
             beforeSend: function() {
-            // Show loading state
             $('#two_factor_auth').addClass('loading');
             },
             complete: function() {
-            // Remove loading state
             $('#two_factor_auth')
                 .removeClass('loading')
                 .find('button[type="submit"]')
@@ -421,6 +423,9 @@ $(document).ready(function() {
                         $('#otp_info').text(`A verification code has been sent to *** **** ${mobileLastFourDigits}`);
                     }else if(response.method == 'email'){
                         $('#otp_info').text('A verification code has been sent to your registered email address');
+                    }
+                    else if(response.method == 'telegram'){
+                        $('#otp_info').text('A verification code has been sent to your Telegram account');
                     }
                     $('#m_modal_1').modal({
                         backdrop: 'static',

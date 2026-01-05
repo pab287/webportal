@@ -453,7 +453,7 @@ Class Login_m extends CI_Model
         switch ($method) {
             case 'sms':
                 $msg = "NEVER SHARE YOUR OTP especially on social media, SMS, or email links. " .
-                       "Your GC&C Conyxph One Time Password (OTP) is: {$data['key_code']}. " .
+                       "Your GC&C Conyxph One-Time Password (OTP) is: {$data['key_code']}. " .
                        "If this was not you, please ignore.";
                 
                 // $result = $this->sms->sendSMS($send_to, $msg); this is for playsms
@@ -473,13 +473,13 @@ Class Login_m extends CI_Model
                 }
                 return $result;
                 
-                case 'telegram':
-                    $msg = "🔐 *NEVER SHARE YOUR OTP* especially on social media, SMS, or email links.\n\n" .
-                           "Your GC&C Conyxph One Time Password (OTP) is: `{$data['key_code']}`\n\n" .
-                           "If this was not you, please ignore this message.";
-                    
-                    $result = $this->sendTelegramOTP($send_to, $msg);
-                    return $result;
+            case 'telegram':
+                $msg = "🔐 *NEVER SHARE YOUR OTP* especially on social media, SMS, or email links.\n\n" .
+                        "Your GC&C Conyxph One-Time Password (OTP) is: `{$data['key_code']}`\n\n" .
+                        "If this was not you, please ignore this message.";
+                
+                $result = $this->sendTelegramOTP($send_to, $msg);
+                return $result;
         }
     }
 
