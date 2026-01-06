@@ -9,6 +9,31 @@ const vm_remit_filter = new Vue({
         date_range_from: null,
         date_range_to: null,
     },
+    watch: {
+
+        // This will trigger skeleton loader in new remit
+        selectedEmployee: {
+            handler(newVal, oldVal) {
+                console.log('selectedEmployee changed:', newVal);
+                vm_cash_report.daily_cash_report = null;
+                vm_cash_report.total_per_cashier = null;
+            },
+            deep: true
+        },
+
+        // This will trigger skeleton loader in new remit
+        date_range_picked(newVal, oldVal) {
+            console.log('date_range_picked changed:', newVal);
+
+            if (!newVal) {
+                this.date_range_from = null;
+                this.date_range_to = null;
+
+                vm_cash_report.daily_cash_report = null;
+                vm_cash_report.total_per_cashier = null;
+            }
+        }
+    },
     mounted() {
         this.initializeSelect2('#employee');
         this.initializeDateRangePicker('#date-picker');
@@ -38,7 +63,7 @@ const vm_remit_filter = new Vue({
             }).on('select2:select', function(e) {
                 vm.selectedEmployee = $(this).val() || [];
             }).on('select2:unselect', function(e) {
-                vm.selectedEmployee = [];
+                vm.selectedEmployee = $(this).val() || [];
             });
         },
 
@@ -79,6 +104,9 @@ const vm_remit_filter = new Vue({
         generateReport() {
             const vm = this;
 
+            vm_cash_report.daily_cash_report = null;
+            vm_cash_report.daily_cash_report = null;
+
             if (!vm.selectedEmployee || !vm.date_range_picked) {
                 toastr.error('Please select Employee and Date Range.', 'Input Required');
                 return;
@@ -114,8 +142,8 @@ const vm_remit_filter = new Vue({
 const vm_cash_report = new Vue({
     el: "#daily_cash_report_app",
     data: {
-        daily_cash_report: [],
-        total_per_cashier: [],
+        daily_cash_report: null,
+        total_per_cashier: null,
     },
     methods: {
         numberWithCommas(data) {
@@ -482,6 +510,8 @@ $('#modal_view_remittance').on('hidden.bs.modal', function () {
         variance_color: '',
         date_range: '0000-00-00 to 0000-00-00',
         remarks_text: '',
+        daily_cash_report: [],
+        grand_total_per_cashier: [],
     });
 
     $('#remarks_wrap').hide();

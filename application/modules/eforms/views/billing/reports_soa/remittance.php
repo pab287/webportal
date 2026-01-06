@@ -114,7 +114,7 @@
 
     .dcr-scroller-wrap, .tpc-scroller-wrap {
         padding: 0 30px;
-        max-height: 615px;
+        max-height: 657px;
         overflow-y: auto;
         scrollbar-color: #7f7f83 transparent;
         scrollbar-width: thin;
@@ -146,6 +146,69 @@
     #remittance_details .remit_inputs_scroll_wrap .info_block:not(:last-child) {
         margin: 0 0 10px 0;
     }
+
+
+    /* Skeleton Loader start */
+    .skeleton-box {
+        padding: 16px;
+        margin-bottom: 12px;
+        border-radius: 6px;
+    }
+
+    .skeleton {
+        position: relative;
+        overflow: hidden;
+        background-color: #e2e5e7;
+        border-radius: 4px;
+    }
+
+    /* shimmer effect */
+    .skeleton::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -150px;
+        height: 100%;
+        width: 150px;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.5),
+            transparent
+        );
+        animation: skeleton-loading 1.2s infinite;
+    }
+
+    @keyframes skeleton-loading {
+        0% {
+            left: -150px;
+        }
+        100% {
+            left: 100%;
+        }
+    }
+
+    /* Sizes */
+    .skeleton-title {
+        width: 35%;
+        height: 18px;
+    }
+
+    .skeleton-amount {
+        width: 25%;
+        height: 18px;
+    }
+
+    .skeleton-text {
+        width: 45%;
+        height: 14px;
+        margin: 6px 0;
+    }
+
+    .skeleton-text.small {
+        width: 25%;
+    }
+    /* Skeleton Loader End */
 </style>
 
 <div id="kodc_page" class="m-content">
@@ -257,6 +320,8 @@
             <div class="modal-body p-0">
                 <div class="row justify-content-between mx-0">
                     <div class="col-4 py-5 px-0">
+                        <h5 class="text-center mb-4" style="font-weight: 700; color: #7f7f83;">Remit Details</h5>
+
                         <div class="remit_inputs_scroll_wrap">
                             <div class="px-5 pb-1">
                                 <div id="remit_filter" class="remit_inputs_wrapper m-alert m-alert--outline alert alert-metal py-4 mb-4">
@@ -312,7 +377,8 @@
                             <h5 class="text-center mb-4" style="font-weight: 700; color: #7f7f83;">Daily Cash</h5>
 
                             <div class="dcr-scroller-wrap">
-                                <template v-if="daily_cash_report.length > 0">
+                                <!-- Display Data -->
+                                <template v-if="daily_cash_report && daily_cash_report.length > 0">
                                     <div v-for="(item, index) in daily_cash_report" :key="index" class="dcr-wrap bg-white">
                                         <div class="dcr-payment d-flex justify-content-between align-items-center">
                                             <h5>{{ item.payment_date }}</h5> 
@@ -330,9 +396,31 @@
                                     </div>
                                 </template>
 
-                                <template v-else>
+                                <!-- If no records at all -->
+                                <template v-else-if="daily_cash_report && daily_cash_report.length === 0">
                                     <div class="bg-white p-4 mb-0" style="border-radius: 5px;">
-                                        <p class="text-center text-muted mb-0" style="font-weight: 600;">No Records</p>
+                                        <p class="text-center text-muted mb-0" style="font-weight: 600;">
+                                            No Records
+                                        </p>
+                                    </div>
+                                </template>
+
+                                <!-- SKELETON (default & while waiting) -->
+                                <template v-else>
+                                    <div v-for="n in 3" :key="n" class="dcr-wrap bg-white skeleton-box">
+                                        <div class="dcr-payment d-flex justify-content-between align-items-center">
+                                            <div class="skeleton skeleton-title"></div>
+                                            <div class="skeleton skeleton-amount"></div>
+                                        </div>
+
+                                        <hr>
+
+                                        <div class="cashier-wrap">
+                                            <div v-for="i in 3" :key="i" class="d-flex justify-content-between align-items-center">
+                                                <div class="skeleton skeleton-text"></div>
+                                                <div class="skeleton skeleton-text small"></div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
@@ -342,7 +430,7 @@
                             <h5 class="text-center mb-4" style="font-weight: 700; color: #7f7f83;">Total per cashier</h5>
                             
                             <div class="tpc-scroller-wrap">
-                                <template v-if="total_per_cashier.length > 0">
+                                <template v-if="total_per_cashier && total_per_cashier.length > 0">
                                     <div v-for="(totalPerCashier, index) in total_per_cashier" :key="index" class="dcr-wrap">
                                         <div class="tcp-header d-flex justify-content-between align-items-center">
                                             <h5>{{ totalPerCashier.cashier }}</h5> 
@@ -351,9 +439,23 @@
                                     </div>
                                 </template>
 
+                                   <!-- If no records at all -->
+                                <template v-else-if="total_per_cashier && total_per_cashier.length === 0">
+                                    <div class="alert m-alert--default p-4 mb-0"
+                                        style="border-radius: 5px; background: #efeff0;">
+                                        <p class="text-center text-muted mb-0" style="font-weight: 600;">
+                                            No Records
+                                        </p>
+                                    </div>
+                                </template>
+
+                                <!-- SKELETON (default & while waiting) -->
                                 <template v-else>
-                                    <div class="alert m-alert--default p-4 mb-0" style="border-radius: 5px; background: #efeff0;">
-                                        <p class="text-center text-muted mb-0" style="font-weight: 600;">No Records</p>
+                                    <div v-for="n in 4" :key="n" class="dcr-wrap skeleton-box">
+                                        <div class="tcp-header d-flex justify-content-between align-items-center">
+                                            <div class="skeleton skeleton-title"></div>
+                                            <div class="skeleton skeleton-amount"></div>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
@@ -393,7 +495,7 @@
                 <div class="remittance_details">
                     <div class="row mx-0">
                         <div class="col-4 p-5">
-                            <h5 class="text-center mb-4" style="font-weight: 700; color: #7f7f83;">Remittance Details</h5>
+                            <h5 class="text-center mb-4" style="font-weight: 700; color: #7f7f83;">Remit Details</h5>
 
                             <div class="remit_inputs_scroll_wrap">
                                 <div class="info_block">
@@ -442,7 +544,8 @@
                             <h5 class="text-center mb-4" style="font-weight: 700; color: #7f7f83;">Daily Cash</h5>
 
                             <div class="dcr-scroller-wrap">
-                                <template v-if="daily_cash_report.length > 0">
+                                <!-- Display Data -->
+                                <template v-if="daily_cash_report && daily_cash_report.length > 0">
                                     <div v-for="(item, index) in daily_cash_report" :key="index" class="dcr-wrap bg-white">
                                         <div class="dcr-payment d-flex justify-content-between align-items-center">
                                             <h5>{{ item.payment_date }}</h5> 
@@ -460,9 +563,22 @@
                                     </div>
                                 </template>
 
-                                <template v-else>
-                                    <div class="bg-white p-4 mb-0" style="border-radius: 5px;">
-                                        <p class="text-center text-muted mb-0" style="font-weight: 600;">No Records</p>
+                                <!-- SKELETON (default & while waiting) -->
+                                <template v-else-if="daily_cash_report && daily_cash_report.length === 0">
+                                    <div v-for="n in 3" :key="n" class="dcr-wrap bg-white skeleton-box">
+                                        <div class="dcr-payment d-flex justify-content-between align-items-center">
+                                            <div class="skeleton skeleton-title"></div>
+                                            <div class="skeleton skeleton-amount"></div>
+                                        </div>
+
+                                        <hr>
+
+                                        <div class="cashier-wrap">
+                                            <div v-for="i in 3" :key="i" class="d-flex justify-content-between align-items-center">
+                                                <div class="skeleton skeleton-text"></div>
+                                                <div class="skeleton skeleton-text small"></div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
@@ -472,7 +588,7 @@
                             <h5 class="text-center mb-4" style="font-weight: 700; color: #7f7f83;">Total per cashier</h5>
                             
                             <div class="tpc-scroller-wrap">
-                                <template v-if="grand_total_per_cashier.length > 0">
+                                <template v-if="grand_total_per_cashier && grand_total_per_cashier.length > 0">
                                     <div v-for="(totalPerCashier, index) in grand_total_per_cashier" :key="index" class="dcr-wrap">
                                         <div class="tcp-header d-flex justify-content-between align-items-center">
                                             <h5>{{ totalPerCashier.cashier }}</h5> 
@@ -481,9 +597,13 @@
                                     </div>
                                 </template>
 
-                                <template v-else>
-                                    <div class="alert m-alert--default p-4 mb-0" style="border-radius: 5px; background: #efeff0;">
-                                        <p class="text-center text-muted mb-0" style="font-weight: 600;">No Records</p>
+                                <!-- SKELETON (default & while waiting) -->
+                                <template v-else-if="grand_total_per_cashier && grand_total_per_cashier.length === 0">
+                                    <div v-for="n in 4" :key="n" class="dcr-wrap skeleton-box">
+                                        <div class="tcp-header d-flex justify-content-between align-items-center">
+                                            <div class="skeleton skeleton-title"></div>
+                                            <div class="skeleton skeleton-amount"></div>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
