@@ -839,7 +839,9 @@ let dtPayrollSheet = _tblPayrollSheet
                         if (row.has_latest_payroll == 1) {
                             return `<i class="locked-payroll fa fa-lock"></i>`;
                         } else {
-                            return `<i class="locked-payroll fa fa-lock pulse" onclick="undoPrinted(${row.id}, ${row.emp_id})" style="cursor: pointer" title="Undo Printed Status" data-toggle="m-tooltip" data-original-title="Restore Selected" data-skin="dark"></i>`;
+
+                            const hasUndoPrintedPermission = jQuery.inArray("undo_print", _currentActions) !== -1 ? true : false;
+                            return `<i class="locked-payroll fa fa-lock ${hasUndoPrintedPermission ? 'pulse' : ''}" ${hasUndoPrintedPermission ? 'onclick="undoPrinted(' + row.id + ', ' + row.emp_id + ')"' : ''} ${hasUndoPrintedPermission ? 'style="cursor: pointer"' : ''} ${hasUndoPrintedPermission ? 'title="Undo Printed Status" data-toggle="m-tooltip" data-original-title="Restore Selected" data-skin="dark"' : ''}></i>`;
                         }
                     }
                     return `<i class="fa fa-check m--font-primary"></i>`;
@@ -1877,7 +1879,12 @@ function generate_ps(date_range, employees, company, payout_schedule, payout_seq
             let tempContributionsFields = [];
             let unpostedCounter = 0;
 
-            checkPrintedPayslip(date_range, employees, company, payout_schedule, payout_sequence, pay_date, payroll_group);
+            //only display printed payslip check if user has the action/permission
+            if (jQuery.inArray("undo_print", _currentActions) !== -1) {
+                checkPrintedPayslip(date_range, employees, company, payout_schedule, payout_sequence, pay_date, payroll_group);
+            }
+            //only display printed payslip check if user has the action/permission
+
             const generatedData = response.data;
             dtPayrollSheet.ajax.reload(function (_e) {
                 try{
