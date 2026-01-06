@@ -11091,6 +11091,7 @@ class Employee_model extends CI_Model {
                 $data = array(
                     'work_status' => 'RESIGNED',
                     'employee_status' => 'Inactive',
+                    'telegram_chat_id' => '',
                     'date_end' => $now
                 );
 
