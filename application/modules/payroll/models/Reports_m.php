@@ -5777,4 +5777,163 @@ class Reports_m extends CI_Model{
         }
     }
 
+    public function getCustomOvertimeSummaryRequest(){
+        $post = $this->input->post();
+        $search = $post['search']['value'] ?? false;
+        $limit = $post['length'] ?? 10;
+        $offset = $post['start'] ?? 0;
+        $sortBy = $post['columns'] ?? 1;
+        $sortOrder = $post['order'] ?? null;
+        $filteredIds = $post['ids'] ?? [];
+        $clearTable = $post['clear_table'] === 'true';
+        $coverageDate = $post['filters']['coverage_date'] ?? false;
+
+        $results = $this->customOvertimeSummaryList($filteredIds, $search, $limit, $offset, $sortBy, $sortOrder, $coverageDate);
+        $rowCount = $this->customOvertimeSummaryListCount($filteredIds, $search);
+
+        if ($clearTable) { $rowCount = 0; $results = []; }
+
+        return [
+            'recordsTotal' => $rowCount,
+            'recordsFiltered' => $rowCount,
+            'data' => $results['data'] ?? [],
+            'clear_table' => $clearTable,
+        ];
+    }
+
+    protected function customOvertimeSummaryList($filteredIds, $search, $limit, $offset, $sortBy, $sortOrder, $coverageDate){
+        if (is_array($filteredIds) && count($filteredIds) > 0) {
+            $select = "a.id, a.emp_id, b.firstname, b.lastname, b.middlename, b.suffix, b.company_id, b.idno,
+            a.total_accredited_ot_hrs as ot_hrs, a.total_accredited_ndiff_ot_hrs as ot_ndiff_hrs,
+            IF(DATE(a.overtime_in) != NULL AND DATE(a.overtime_in) != '0000-00-00', DATE(a.overtime_in), DATE(a.date)) as overtime_in,
+            ROUND(IF(LOWER(b.payroll_type) = 'monthly', ROUND( IFNULL(b.basic_rate, 0), 2) * 12 / ROUND( IFNULL(comp.work_days_in_year, 314), 2),
+            IFNULL(b.basic_rate, 0)), 2) as basic_rate,
+            ROUND(IF(LOWER(allw.frequency) = 'month', ROUND( IFNULL(allw.rate, 0), 2) * 12 / ROUND( IFNULL(comp.work_days_in_year, 314), 2),
+            IFNULL(allw.rate, 0)), 2) as allowance_rate,
+            a.has_overtime, a.has_shift, IF((a.shift_am_start && a.shift_am_end) || (a.shift_pm_start && a.shift_pm_end), '1', '0') as ampm_shift,
+            IF(a.is_holiday = 1 && a.paid_holiday = 1, '1', '0') as is_paid_holiday, a.payrate_id, DATE(a.date) as tsDate";
+
+            $this->db->select($select);
+            $this->db->from('gcctimeutility.timesheet a');
+            $this->db->join('gccmaster.tblemployees b', 'a.emp_id = b.id');
+            $this->db->join('gcchris.tblcompanies comp', 'comp.id = b.company_id', 'LEFT');
+            $this->db->join($this->tbl_hris_allawances." allw", "allw.emp_id = b.id AND allw.is_active = 1 AND allw.is_archived = 0", "LEFT");
+            $this->db->where_in('a.id', $filteredIds);
+            $this->db->where('a.has_overtime', 1);
+            $this->db->group_start();
+            $this->db->where('a.total_accredited_ot_hrs >', 0);
+            $this->db->or_where('a.total_accredited_ndiff_ot_hrs >', 0);
+            $this->db->group_end();
+            if ($limit != -1) {
+                $this->db->limit($limit, $offset);
+            }
+            $this->db->order_by('b.lastname, b.firstname, a.date', 'asc');
+            $query = $this->db->get();
+            if ($query->num_rows() > 0) {
+                $data = array();
+                foreach ($query->result() as $key => $item) {
+                    $employeeRecord = (object) $this->core_layout->getEmployeeData($item->emp_id);
+                    $employeeName = $employeeRecord->display_name_1 ?? 'No assigned name';
+                    $totalOtHrs = $item->ot_hrs + $item->ot_ndiff_hrs;
+
+                    $payrateTemp = intval($item->has_shift) === 1 ? "regular" : "rest day";
+                    $payrateSetting = $this->getPayrateSetting($payrateTemp);
+                    $tempPayrateSetting = intval($item->payrate_id) > 0 ? $this->getPayrateSettingById($item->payrate_id) : $payrateSetting;
+                    $allowPaidAllowance = $tempPayrateSetting->particulars !== "regular" || intval($item->has_shift) === 0 || intval($tempPayrateSetting->is_holiday) === 1 ? 1 : 0;
+                    /*** paid holiday allowance ***/
+                    if(intval($tempPayrateSetting->is_holiday) === 1){ $allowPaidAllowance = intval($item->is_paid_holiday) === 1 ? 1 : 0; }
+                    /*** paid holiday allowance ***/
+
+                    $otRate = floatval($tempPayrateSetting->ot_rate) > 0 ? floatval($tempPayrateSetting->ot_rate): 1;
+                    $otNightDiffRate = floatval($tempPayrateSetting->ot_night_diff_rate) > 0 ? floatval($tempPayrateSetting->ot_night_diff_rate): 0;
+                    
+                    $tempOtRate = ($otRate * 100) - 100;
+                    $perMinute = $item->basic_rate / 8;
+                    $otAllowance = floatval($item->allowance_rate) > 0 && $item->ot_hrs >= 1 ? floatval($item->allowance_rate): 0;
+                    $allowancePerMinute = $otAllowance / 8;
+                    
+                    $totalOtPay = $perMinute * floatval($totalOtHrs);
+                    $totalOtNdPay = $perMinute * floatval($item->ot_ndiff_hrs);
+                    $totalOtAllowance = $allowPaidAllowance === 1 ? $allowancePerMinute * floatval($totalOtHrs): 0;
+                    
+                    $tempOtPayWithRate = $otRate > 1 ? ($tempOtRate / 100) * $totalOtPay : 0;
+                    $totalOtPayable = $totalOtPay + $tempOtPayWithRate;
+                    $nightDiffPay = $otNightDiffRate > 0 ? $totalOtNdPay * $otNightDiffRate: 0;
+
+                    $item->_ot_rate = $tempOtRate;
+                    $item->_temp_ot_pay = $tempOtPayWithRate;
+                    $item->employee_name = $employeeName;
+                    $item->day = date('D', strtotime($item->overtime_in));
+                    $item->daily_rate = $item->basic_rate;
+                    $item->has_shift = $item->ampm_shift === "0" ? "0": $item->has_shift;
+                    $item->pay_info = $tempPayrateSetting;
+                    $item->per_minute = $perMinute;
+                    $item->ot_hrs = $totalOtHrs > 0 ? $totalOtHrs: '-';
+                    $item->allowance = $otAllowance > 0 ? $otAllowance: '';
+                    $item->ot_rate = $otRate;
+                    $item->ot_allowance = $totalOtAllowance === 0 ? '-' : $totalOtAllowance;
+                    $item->ot_pay = $totalOtPay;
+                    $item->ot_pay_20 = $otRate > 1 && $tempOtRate == 25 && $tempOtPayWithRate > 0 ? $tempOtPayWithRate: '';
+                    $item->ot_pay_30 = $otRate > 1 && $tempOtRate == 30 && $tempOtPayWithRate > 0 ? $tempOtPayWithRate: '';
+                    $item->ot_ndiff_hrs = ($item->ot_ndiff_hrs == 0) ? '-' : $item->ot_ndiff_hrs;
+                    $item->night_diff = $nightDiffPay > 0 ? $nightDiffPay : '';
+                    $item->ot_adj = $this->getOTAdjustment($coverageDate, $item->emp_id);
+                    $item->amount = $totalOtPayable + $nightDiffPay + $totalOtAllowance;
+                    $item->total_pay = $item->amount;
+                    $item->ot_details = $this->get_ot_details($item->overtime_in, $item->emp_id);
+                    $data[$key] = $item;
+                }
+
+                $resultset = array();
+                $resultset['data'] = $data;
+                return $resultset;
+            } else {
+                return array();
+            }
+        } else {
+            return array();
+        }
+    }
+
+    protected function customOvertimeSummaryListCount($filteredId, $search){
+        $count = 0;
+        if(is_array($filteredId) && count($filteredId) > 0){
+            $sqlSelect = "a.id, a.emp_id, b.firstname, b.lastname, b.middlename, b.suffix, b.company_id, b.idno,
+            a.total_accredited_ot_hrs as ot_hrs, a.total_accredited_ndiff_ot_hrs as ot_ndiff_hrs";
+
+            $this->db->select($sqlSelect);
+            $this->db->from('gcctimeutility.timesheet a');
+            $this->db->join('gccmaster.tblemployees b', 'a.emp_id = b.id');
+            $this->db->join('gcchris.tblcompanies comp', 'comp.id = b.company_id', "LEFT");
+            $this->db->where_in("a.id", $filteredId);
+            $this->db->where("a.has_overtime", 1);
+            $this->db->order_by("b.lastname, b.firstname, a.overtime_in","asc");
+            $query = $this->db->get();
+            $count = $query->num_rows();
+        }
+
+        return $count;
+    }
+
+    protected function get_ot_details($date, $empId){
+        $result = array();
+
+        if ($empId) {
+            $date = date("Y-m-d", strtotime($date));
+            $this->db->select("reference_no, status, created_at");
+            $this->db->from("gcceforms.overtime");
+            $this->db->where("employee", $empId);
+
+            $this->db->group_start();
+                $this->db->where("DATE(date_from)", $date);
+            $this->db->group_end();
+
+            $query = $this->db->get();
+            if ($query->num_rows() > 0) {
+                $result = $query->row();
+            }
+        }
+
+        return $result;
+    }
 }
