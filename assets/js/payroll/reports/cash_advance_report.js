@@ -82,10 +82,15 @@ let ca_report_table = $('#payroll-cash-advance-report').DataTable({
         { 
             data: 'reference',
             render: function (data, type, row) {
-                if (row.reference !== null && row.reference !== "") {
+                if (row.reference && row.reference.trim() !== '') {
                     return row.reference;
                 }
-                return row.remarks ?? "NO REFERENCE";
+            
+                if (row.remarks && row.remarks.trim() !== '') {
+                    return row.remarks;
+                }
+            
+                return 'NO REFERENCE';
             }
         },
         {
