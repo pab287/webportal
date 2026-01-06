@@ -458,101 +458,12 @@ const vm_remittance_view = new Vue({
         variance_value_text_color: '',
         date_range: '0000-00-00 to 0000-00-00',
         remarks_text: '',
-        table: null,
-        daily_collection: [],
-    },
-    mounted() {
-        const vm = this;
-
-        $('#modal_view_remittance').on('shown.bs.modal', function() {
-            // vm.initializeTable();
-        });
+        daily_cash_report: [],
+        grand_total_per_cashier: [],
     },
     methods: {
-        loadCollection(newData) {
-            const vm = this;
-            vm.daily_collection = newData;
-
-            if (!vm.table) {
-                vm.initializeTable();
-            }
-            
-            vm.table.clear().rows.add(vm.daily_collection).draw();
-        },
-
-        initializeTable() {
-            const vm = this;
-
-            if ($.fn.DataTable.isDataTable('#remit_daily_collection')) {
-                vm.table = $('#remit_daily_collection').DataTable();
-                return; // prevent reinit
-            }
-
-            vm.table = $('#remit_daily_collection').DataTable({
-                dom: 't',
-                serverSide: false,
-                processing: true,
-                deferLoading: 0,
-                paging: false,
-                scrollY: "300px",
-                scrollCollapse: true,
-                data: vm.daily_collection, // ← Vue data
-                columns: [
-                    { data: "payment_date" },
-                    { data: "total_payments", render: data => vm.numberWithCommas(parseFloat(data).toFixed(2))},
-                    // { data: "total_balance_covered", render: data => vm.numberWithCommas(parseFloat(data).toFixed(2))},
-                    { data: "cashier"},
-                ],
-                columnDefs: [
-                    { orderable: false, targets: '_all' },
-                    {
-                        targets: [0, 2],
-                        createdCell: function (td) {
-                            $(td).addClass('text-center');
-                        }
-                    },
-                    {
-                        targets: [1],
-                        createdCell: function (td) {
-                            $(td).addClass('text-right');
-                        }
-                    }
-                ],
-                drawCallback: function () {
-                    vm.updateFooterTotal();
-                }
-            });
-        },
-
         numberWithCommas(data) {
             return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        },
-
-        updateFooterTotal() {
-            const api = this.table;            
-
-            // Stop if table is not ready or has no data
-            if (!api || !api.rows || api.rows().data().length === 0) {
-                // Clear footer when no data
-                $('#remit_daily_collection tfoot th').eq(0).html('<b>Total</b>');
-                $('#remit_daily_collection tfoot th').eq(1).html('');
-                // $('#remit_daily_collection tfoot th').eq(2).html('');
-                $('.payment_collected').val('0.00');
-                return;
-            }
-
-            const data = api.rows().data().toArray();
-
-            // Filter out rows with deposit_exists === false
-            // const filteredData = data.filter(row => row.deposit_exists === false);
-
-            // Calculate total
-            const totalPayment = data.reduce((sum, row) => sum + parseFloat(row.total_payments || 0), 0);
-            const totalBalanceCovered = data.reduce((sum, row) => sum + parseFloat(row.total_balance_covered || 0), 0);
-
-            $(api.column(0).footer()).removeClass().addClass('text-center').html('<b>Total</b>');
-            $(api.column(1).footer()).removeClass().addClass('text-right footer-total').html(`<b>${this.numberWithCommas(totalPayment.toFixed(2))}</b>`);
-            // $(api.column(2).footer()).removeClass().addClass('text-right footer-total').html(`<b>${this.numberWithCommas(totalBalanceCovered.toFixed(2))}</b>`);
         },
     }
 });
@@ -571,14 +482,6 @@ $('#modal_view_remittance').on('hidden.bs.modal', function () {
         variance_color: '',
         date_range: '0000-00-00 to 0000-00-00',
         remarks_text: '',
-    });
-
-    // Clear Payment Table
-    vm_remittance_view.loadCollection([]);
-    vm_remittance_view.table.clear().draw();
-
-    $('#remit_daily_collection_wrapper .dataTables_scrollFoot tfoot tr').each(function () {
-        $(this).html('');
     });
 
     $('#remarks_wrap').hide();
@@ -776,6 +679,8 @@ $(document).on('click', '#view_remit_modal', function() {
                 variance: g_numberWithCommas(d.variance),
                 date_range: d.date_range_selected,
                 remarks_text: d.remarks,
+                daily_cash_report: d.collection.daily_cash_report,
+                grand_total_per_cashier: d.collection.grand_total_per_cashier.cashier
             });
 
             switch (Math.sign(Number(d.variance) || 0)) {
@@ -794,8 +699,6 @@ $(document).on('click', '#view_remit_modal', function() {
                     vm_remittance_view.variance_label_text_color = '';
                     vm_remittance_view.variance_value_text_color = '';
             }
-
-            // vm_remittance_view.loadCollection(d.daily_collection.data);
         },
         error: function(xhr, status, error) {
             console.error("Error:", error);

@@ -36,10 +36,6 @@
     } */
 
     /* Remittance View Design */
-    .remittance_details {
-        padding: 10px 0px;
-    }
-
     .remittance_details .d-label {
         font-size: 12px;
         color: #484848;
@@ -48,7 +44,7 @@
     }
 
     .remittance_details .d-val {
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 600;
         margin: 0;
         white-space: nowrap;
@@ -73,10 +69,6 @@
 
     #tbl-payment_collection_wrapper table.dataTable {
         width: 100% !important;
-    }
-
-    #remit_daily_collection_wrapper .dataTables_scrollHead table {
-        min-width: max-content!important;
     }
 
     .r-widget .r-widget_legend-bullet {
@@ -148,6 +140,11 @@
         overflow-y: auto;
         scrollbar-color: #7f7f83 transparent;
         scrollbar-width: thin;
+    }
+
+    /* View modal remittance */
+    #remittance_details .remit_inputs_scroll_wrap .info_block:not(:last-child) {
+        margin: 0 0 10px 0;
     }
 </style>
 
@@ -392,78 +389,107 @@
                 </div>
 			</div>
 
-            <div id="remittance_details" class="modal-body">
+            <div id="remittance_details" class="modal-body p-0">
                 <div class="remittance_details">
-                    <div class="row justify-content-between mb-3 mx-0">
-                        <div class="col-3 info_block">
-                            <p class="d-label">Reference No.</p>
-                            <p class="d-val r_ref_no" :title="ref_no">{{ ref_no }}</p>
-                        </div>
-                        <div class="col-3 info_block">
-                            <p class="d-label">Cashier</p>
-                            <p class="d-val r_cashier" :title="cashier">{{ cashier }}</p>
-                        </div>
-                        <div class="col-3 info_block">
-                            <p class="d-label">Depositor</p>
-                            <p class="d-val r_depositor" :title="depositor">{{ depositor }}</p>
-                        </div>
-                        <div class="col-3 info_block">
-                            <p class="d-label">Date Deposit</p>
-                            <p class="d-val r_date_deposit" :title="date_deposit">{{ date_deposit }}</p>
-                        </div>
-                    </div>
-                    <div class="row justify-content-between mb-3 mx-0">
-                        <div class="col-3 info_block">
-                            <p class="d-label">Total Collection</p>
-                            <p class="d-val r_total_collection" :title="total_collection">{{ total_collection }}</p>
-                        </div>
-                        <div class="col-3 info_block">
-                            <p class="d-label">Deposit</p>
-                            <p class="d-val r_deposit" :title="deposit">{{ deposit }}</p>
-                        </div>
-                        <div class="col-3 info_block" :style="{backgroundColor: variance_color}">
-                            <p class="d-label" :style="{color: variance_label_text_color}">Variance</p>
-                            <p class="d-val r_variance" :style="{color: variance_value_text_color}" :title="variance">{{ variance }}</p>
-                        </div>
-                        <div class="col-3 info_block">
-                            <p class="d-label">Date Range</p>
-                            <p class="d-val r_date_range" :title="date_range">{{ date_range }}</p>
-                        </div>
-                    </div>
+                    <div class="row mx-0">
+                        <div class="col-4 p-5">
+                            <h5 class="text-center mb-4" style="font-weight: 700; color: #7f7f83;">Remittance Details</h5>
 
-                    <template v-if="remarks_text != ''">
-                        <div id="remarks_wrap" class="row mx-0">
-                            <div class="col-12 m-alert m-alert--icon m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
-                                <div class="m-alert__icon">
-                                    <i class="la la-warning"></i>
+                            <div class="remit_inputs_scroll_wrap">
+                                <div class="info_block">
+                                    <p class="d-label">Reference No.</p>
+                                    <p class="d-val r_ref_no" :title="ref_no">{{ ref_no }}</p>
                                 </div>
-                                <div class="m-alert__text r_remarks_text" :title="remarks_text">{{ remarks_text }}</div>	  			  	
+                                <div class="info_block">
+                                    <p class="d-label">Depositor</p>
+                                    <p class="d-val r_depositor" :title="depositor">{{ depositor }}</p>
+                                </div>
+                                <div class="info_block">
+                                    <p class="d-label">Date Deposit</p>
+                                    <p class="d-val r_date_deposit" :title="date_deposit">{{ date_deposit }}</p>
+                                </div>
+                                <div class="info_block">
+                                    <p class="d-label">Total Collection</p>
+                                    <p class="d-val r_total_collection" :title="total_collection">{{ total_collection }}</p>
+                                </div>
+                                <div class="info_block">
+                                    <p class="d-label">Deposit</p>
+                                    <p class="d-val r_deposit" :title="deposit">{{ deposit }}</p>
+                                </div>
+                                <div class="info_block" :style="{backgroundColor: variance_color}">
+                                    <p class="d-label" :style="{color: variance_label_text_color}">Variance</p>
+                                    <p class="d-val r_variance" :style="{color: variance_value_text_color}" :title="variance">{{ variance }}</p>
+                                </div>
+                                <div class="info_block">
+                                    <p class="d-label">Date Range</p>
+                                    <p class="d-val r_date_range" :title="date_range">{{ date_range }}</p>
+                                </div>
+
+                                <template v-if="remarks_text != ''">
+                                    <div id="remarks_wrap" class="row mx-0">
+                                        <div class="col-12 m-alert m-alert--icon m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
+                                            <div class="m-alert__icon">
+                                                <i class="la la-warning"></i>
+                                            </div>
+                                            <div class="m-alert__text r_remarks_text" :title="remarks_text">{{ remarks_text }}</div>	  			  	
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
                         </div>
-                    </template>
+
+                        <div class="col-4 py-5 px-0 daily-cash-wrap" style="background: #efeff0;">
+                            <h5 class="text-center mb-4" style="font-weight: 700; color: #7f7f83;">Daily Cash</h5>
+
+                            <div class="dcr-scroller-wrap">
+                                <template v-if="daily_cash_report.length > 0">
+                                    <div v-for="(item, index) in daily_cash_report" :key="index" class="dcr-wrap bg-white">
+                                        <div class="dcr-payment d-flex justify-content-between align-items-center">
+                                            <h5>{{ item.payment_date }}</h5> 
+                                            <h5>₱ {{ numberWithCommas(item.total_payments_per_day.toFixed(2)) }}</h5>
+                                        </div>
+
+                                        <hr>
+
+                                        <div class="cashier-wrap">
+                                            <div v-for="(cashier, c_index) in item.cashier" :key="c_index" class="d-flex justify-content-between align-items-center bg-white">
+                                                <span class="cashier-name">{{ cashier.cashier }}</span>
+                                                <span class="cashier-collected">₱ {{ numberWithCommas(cashier.total_payments.toFixed(2)) }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <template v-else>
+                                    <div class="bg-white p-4 mb-0" style="border-radius: 5px;">
+                                        <p class="text-center text-muted mb-0" style="font-weight: 600;">No Records</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="col-4 py-5 px-0 total-per-cashier-wrap">
+                            <h5 class="text-center mb-4" style="font-weight: 700; color: #7f7f83;">Total per cashier</h5>
+                            
+                            <div class="tpc-scroller-wrap">
+                                <template v-if="grand_total_per_cashier.length > 0">
+                                    <div v-for="(totalPerCashier, index) in grand_total_per_cashier" :key="index" class="dcr-wrap">
+                                        <div class="tcp-header d-flex justify-content-between align-items-center">
+                                            <h5>{{ totalPerCashier.cashier }}</h5> 
+                                            <h5>₱ {{ numberWithCommas(totalPerCashier.total_cash) }}</h5>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <template v-else>
+                                    <div class="alert m-alert--default p-4 mb-0" style="border-radius: 5px; background: #efeff0;">
+                                        <p class="text-center text-muted mb-0" style="font-weight: 600;">No Records</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <table class="table" id="remit_daily_collection" style="font-family: roboto;">
-                    <thead>
-                        <tr>
-                            <th class="text-center" width="25%">Date Collected</th>
-                            <th class="text-center" width="25%">Payment Collected</th>
-                            <!-- <th class="text-center" width="25%">Total Balance Covered</th> -->
-                            <th class="text-center" width="25%">Collected By</th>
-                        </tr>
-                    </thead>
-
-                    <tbody></tbody>
-
-                    <tfoot>
-                        <tr>
-                            <td></td>
-                            <td></td>
-                            <!-- <td></td> -->
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                </table>
             </div>
 
             <div class="modal-footer">

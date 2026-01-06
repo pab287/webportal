@@ -7313,7 +7313,7 @@ class Billing_m extends CI_Model {
 
             return [
                 "daily_cash_report" => array_values($grouped),
-                "all_payment_ids" => $all_payment_ids,
+                // "all_payment_ids" => $all_payment_ids,
                 "grand_total_per_cashier" => $this->view_remittance_grand_total_per_cashier_group_date($cashier_ids, $date_range, $remittance_id)
             ];
             
@@ -7321,7 +7321,7 @@ class Billing_m extends CI_Model {
             // No results found
             return [
                 "daily_cash_report" => [],
-                "all_payment_ids" => [],
+                // "all_payment_ids" => [],
                 "grand_total_per_cashier" => $this->view_remittance_grand_total_per_cashier_group_date($cashier_ids, $date_range, $remittance_id)
             ];
         }
