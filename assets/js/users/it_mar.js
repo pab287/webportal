@@ -41,7 +41,7 @@ $(document).ready(function () {
             data: function (d) {
                 d.csrf_token = _csrf_hash;
                 d.app_name = $("input[name='app_name_select']:checked").val();
-                d.search = $("#generalSearch").val();
+                d.search['value'] = $("#generalSearch").val();
                 d.date_range = $("#date_range").val();
                 d.is_archive = is_archive;
                 return d;
@@ -207,3 +207,11 @@ function archiveRow(id) {
         }
     });
 }
+
+$('#generalSearch').donetyping(function () {
+    ITMar.ajax.reload();
+});
+
+$('#date_range').daterangepicker({
+
+});

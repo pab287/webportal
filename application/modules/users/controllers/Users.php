@@ -89,6 +89,8 @@ class Users extends MY_Controller{
         $data['installer'] = $this->user->select2Installer();
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
         $this->core_layout->setPrivilegeName("it_mobile_application_request");
         $this->core_layout->setHeaderTitle("IT MOBIILE APPLICATION REQUEST");
         $this->core_layout->addJs("js/users/it_mar.js", true, $data);
