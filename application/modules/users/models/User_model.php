@@ -920,6 +920,7 @@ class User_model extends CI_Model{
         $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
         $app_name =  (isset($post["app_name"]) && $post["app_name"])? $post["app_name"]: '';
         $is_archive =  (isset($post["is_archive"]) && $post["is_archive"])? $post["is_archive"]: '';
+        $date_range = (isset($post["date_range"]) && $post["date_range"])? $post["date_range"]: false;
         $filterFields = array(
             "purpose","app_name",
             "c.firstname","c.middlename","c.lastname",
@@ -933,15 +934,15 @@ class User_model extends CI_Model{
             "CONCAT(b.lastname, ' ', b.firstname)"
         );
 
-        $rowData = $this->getItmarListData($search, $limit, $offset, $sortBy, $sortOrder, $filterFields, $app_name, $is_archive);
-        $rowCount = $this->getItmarListDataCount($search,$filterFields, $app_name, $is_archive);
+        $rowData = $this->getItmarListData($search, $limit, $offset, $sortBy, $sortOrder, $filterFields, $app_name, $is_archive, $date_range);
+        $rowCount = $this->getItmarListDataCount($search,$filterFields, $app_name, $is_archive,$date_range);
         $resultset["recordsTotal"] = $rowCount;
         $resultset["recordsFiltered"] = $rowCount;
         $resultset["data"] = $rowData;
         return $resultset;
     }
 
-    private function getItmarListData($search, $limit, $offset, $sortBy, $sortOrder,$filterFields, $app_name, $is_archive){
+    private function getItmarListData($search, $limit, $offset, $sortBy, $sortOrder,$filterFields, $app_name, $is_archive,$date_range){
         $this->db->select("a.emp_id,a.is_archive,a.id,a.app_name,a.purpose,a.created_at, d.description as department_name, e.name as position_name, CONCAT(
                 b.firstname, ' ',
                 IF(b.middlename IS NOT NULL AND b.middlename != '',
@@ -967,6 +968,14 @@ class User_model extends CI_Model{
         $this->db->join("gcchris.tblposition as e", "e.id = c.position", "LEFT");
         $this->db->where("a.app_name",  $app_name);
         $this->db->where("a.is_archive",  $is_archive);
+
+        if (!empty($date_range['start']) && !empty($date_range['end'])) {
+            $start = $date_range['start'] . ' 00:00:00';
+            $end   = $date_range['end'] . ' 23:59:59';
+        
+            $this->db->where('a.created_at >=', $start);
+            $this->db->where('a.created_at <=', $end);
+        }
         
         if ($search) {
             $this->db->group_start();
@@ -992,7 +1001,7 @@ class User_model extends CI_Model{
 
     }
 
-    private function getItmarListDataCount($search,$filterFields, $app_name, $is_archive){
+    private function getItmarListDataCount($search,$filterFields, $app_name, $is_archive, $date_range){
         $this->db->select("a.emp_id,a.id,a.app_name,a.purpose,a.created_at,    CONCAT(
                 b.firstname, ' ',
                 IF(b.middlename IS NOT NULL AND b.middlename != '',
@@ -1017,6 +1026,14 @@ class User_model extends CI_Model{
         $this->db->join("gccmaster.tblemployees as c", "c.id = a.emp_id", "LEFT");
         $this->db->where("a.app_name",  $app_name);
         $this->db->where("a.is_archive",  $is_archive);
+
+        if (!empty($date_range['start']) && !empty($date_range['end'])) {
+            $start = $date_range['start'] . ' 00:00:00';
+            $end   = $date_range['end'] . ' 23:59:59';
+        
+            $this->db->where('a.created_at >=', $start);
+            $this->db->where('a.created_at <=', $end);
+        }
 
         if ($search) {
             $this->db->group_start();

@@ -1,4 +1,5 @@
 let _employee = [];
+let selected = {}; 
 let ITMar = null;
 let selectedEmpId = null;
 let is_archive = 0;
@@ -42,7 +43,7 @@ $(document).ready(function () {
                 d.csrf_token = _csrf_hash;
                 d.app_name = $("input[name='app_name_select']:checked").val();
                 d.search['value'] = $("#generalSearch").val();
-                d.date_range = $("#date_range").val();
+                d.date_range = selected;
                 d.is_archive = is_archive;
                 return d;
             },
@@ -213,5 +214,29 @@ $('#generalSearch').donetyping(function () {
 });
 
 $('#date_range').daterangepicker({
+    showDropdowns: true,
+    autoUpdateInput: false,
+    minDate: moment().subtract(3, 'years').startOf('day'),
+    maxDate: moment(),  
+    locale: {
+        format: 'MMM DD, YYYY',
+        cancelLabel: 'Clear'
+    }
+});
 
+$('#date_range').on('apply.daterangepicker', function(ev, picker) {
+    $(this).val(
+        picker.startDate.format('MMM DD, YYYY') + ' - ' + picker.endDate.format('MMM DD, YYYY')
+    );
+    selected = {
+        start: picker.startDate.format('YYYY-MM-DD'),
+        end: picker.endDate.format('YYYY-MM-DD')
+    };
+    ITMar.ajax.reload();
+});
+
+$('#date_range').on('cancel.daterangepicker', function(ev, picker) {
+    $(this).val('');  
+    selected = {}; 
+    ITMar.ajax.reload();
 });
