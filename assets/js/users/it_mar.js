@@ -59,7 +59,7 @@ $(document).ready(function () {
                 }
              },
             { data: "purpose", sortable: false },
-            { data: "app_name" },
+            { data: "app_name", sortable: false },
             {
                 data: "created_at",
                 render: function (data) {
