@@ -7116,26 +7116,29 @@ class Billing_m extends CI_Model {
             "r.virtual_cashier"
         ];
 
-        $this->db->select("r.id, r.ref_no, r.deposit, r.variance, r.payment_collected, r.virtual_cashier, r.date_range_selected, r.date_from, r.date_to, r.deposit_date, r.remarks, CONCAT(d.firstname, ' ', d.lastname) as depositor, r.created_date");
+        $this->db->select("r.id, r.ref_no, r.deposit, r.variance, r.payment_collected, r.virtual_cashier, r.date_range_selected, r.date_from, r.date_to, r.deposit_date, r.remarks, CONCAT(d.firstname, ' ', d.lastname) as depositor, r.created_date, r.is_archive, r.created_date");
         $this->db->from("hydra_billing.remittance r");
         $this->db->join("gccmaster.tblemployees d", "d.id = r.created_by", "LEFT");
-        $this->db->where("r.is_archive", 0);
         $this->db->order_by("r.id", "DESC");
 
         $has_valid_date = !empty($post['startDate']) && !empty($post['endDate']) && $post['startDate'] != 'Invalid date' && $post['endDate'] != 'Invalid date';
         $has_search = !empty($search);
 
-        if ($has_valid_date) {
-            $start_date = date('Y-m-d 00:00:00', strtotime($post['startDate']));
-            $end_date   = date('Y-m-d 23:59:59', strtotime($post['endDate']));
-        } else {
-            $start_date = date('Y-m-d 00:00:00', strtotime('-2 years'));
-            $end_date   = date('Y-m-d 23:59:59');
+        if ($has_valid_date || $limit != -1) {
+            if ($has_valid_date) {
+                $start_date = date('Y-m-d 00:00:00', strtotime($post['startDate']));
+                $end_date   = date('Y-m-d 23:59:59', strtotime($post['endDate']));
+            } else {
+                $start_date = date('Y-m-d 00:00:00', strtotime('-2 years'));
+                $end_date   = date('Y-m-d 23:59:59');
+            }
+
+            $this->db->where("r.created_date >=", $start_date);
+            $this->db->where("r.created_date <=", $end_date);
         }
 
-        $this->db->where("r.created_date >=", $start_date);
-        $this->db->where("r.created_date <=", $end_date);
-
+        // Check for search
+        // =============================================
         if ($has_search) {
             $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
             $search = preg_replace('/[^a-zA-Z0-9\s\.,-]/', '', $search); // Remove special characters except for comma, dot & dashes
@@ -7150,22 +7153,106 @@ class Billing_m extends CI_Model {
             }
             $this->db->group_end();
         }
+
+        // Check for datatable pagination
+        // =============================================
+        if ($limit != -1) {
+            $this->db->limit($limit, $offset);
+        }
  
         $query = $this->db->get();
 
         foreach ($query->result_array() as $_query) {
+            $is_archive = (int) $_query["is_archive"];
+
+            if ($is_archive == 1) {
+                $_query["payment_collected"] = 0;
+                $_query["deposit"] = 0;
+                $_query["variance"] = 0;
+            }
+
             $_query["deposited_cashier"] = $this->get_deposited_cashier_name($_query['id']);
             $_query["created_date"] = date('Y-m-d', strtotime($_query['created_date']));
             $_query["date_from"] = date('Y-m-d', strtotime($_query['date_from']));
             $_query["date_to"] = date('Y-m-d', strtotime($_query['date_to']));
+            $_query["is_archive"] = $is_archive;
             $resultarray[] = $_query;
         }
 
         return array(
             "data" => $resultarray, 
-            "recordsTotal" => $query->num_rows(), 
-            "recordsFiltered" => $query->num_rows()
+            "recordsTotal" => $this->remittance_records_count($post, $search), 
+            "recordsFiltered" => $this->remittance_records_count($post, $search)
         );
+    }
+
+    public function remittance_records_count($post, $search) {
+        $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
+        $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
+        $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+
+        $filterFields = [
+            "d.firstname",
+            "d.middlename",
+            "d.lastname",
+            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))",  
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))",  
+            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))",  
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))",  
+            "r.ref_no",
+            "r.deposit",
+            "r.payment_collected",
+            "r.variance",
+            "r.date_range_selected",
+            "r.virtual_cashier"
+        ];
+
+        $this->db->select("r.id, r.ref_no, r.deposit, r.variance, r.payment_collected, r.virtual_cashier, r.date_range_selected, r.date_from, r.date_to, r.deposit_date, r.remarks, CONCAT(d.firstname, ' ', d.lastname) as depositor, r.created_date, r.is_archive, r.created_date");
+        $this->db->from("hydra_billing.remittance r");
+        $this->db->join("gccmaster.tblemployees d", "d.id = r.created_by", "LEFT");
+        $this->db->order_by("r.id", "DESC");
+
+        $has_valid_date = !empty($post['startDate']) && !empty($post['endDate']) && $post['startDate'] != 'Invalid date' && $post['endDate'] != 'Invalid date';
+        $has_search = !empty($search);
+
+        if ($has_valid_date || $limit != -1) {
+            if ($has_valid_date) {
+                $start_date = date('Y-m-d 00:00:00', strtotime($post['startDate']));
+                $end_date   = date('Y-m-d 23:59:59', strtotime($post['endDate']));
+            } else {
+                $start_date = date('Y-m-d 00:00:00', strtotime('-2 years'));
+                $end_date   = date('Y-m-d 23:59:59');
+            }
+
+            $this->db->where("r.created_date >=", $start_date);
+            $this->db->where("r.created_date <=", $end_date);
+        }
+
+        // Check for search
+        // =============================================
+        if ($has_search) {
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            $search = preg_replace('/[^a-zA-Z0-9\s\.,-]/', '', $search); // Remove special characters except for comma, dot & dashes
+
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+
+        // Check for datatable pagination
+        // =============================================
+        if ($limit != -1) {
+            $this->db->limit($limit, $offset);
+        }   
+ 
+        $query = $this->db->get();
+        return $query->num_rows();
     }
 
     public function get_deposited_cashier_name($remittance_id) {
@@ -7194,6 +7281,7 @@ class Billing_m extends CI_Model {
         $this->db->where("dc.remittance_id", $remittance_id);
 
         $query = $this->db->get();
+
 
         foreach ($query->result_array() as $row) {
             $cashiers[] = (int)$row['emp_id'];
@@ -7428,11 +7516,16 @@ class Billing_m extends CI_Model {
     public function archive_remittance() {
         $post = $this->input->post();
         $id = $post["id"];
-        $post["is_archive"] = 1;
+
+        $data_to_update = [
+            "is_archive" => 1,
+            "is_archive_by" => $this->getUserdata()['emp_id'],
+            "is_archive_at" => date("Y-m-d H:i:s")
+        ];
 
         // Update remittance table
         $this->db->where("id", $id);
-        $query = $this->db->update('hydra_billing.remittance', $post);
+        $query = $this->db->update('hydra_billing.remittance', $data_to_update);
 
         // Update deposited_payment table
         $this->db->where("remittance_id", $id);

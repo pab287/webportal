@@ -21,7 +21,7 @@
     #remarks_text span {
         max-width: 1300px;
         display: block;
-        font-style: italic;1
+        font-style: italic;
         font-weight: 400;
     }
 
@@ -31,9 +31,10 @@
         color: #8E8E93;
     }
 
-    /* .emp-filter .col-5 {
-        max-width: 40%;
-    } */
+    .remit_inputs_wrapper {
+        border-radius: 10px;
+        border: 1px solid #e2e2e3!important;
+    }
 
     /* Remittance View Design */
     .remittance_details .d-label {
@@ -84,6 +85,7 @@
     }
 
     tr.short-dep td,
+    tr.is_archived td,
     tr.has-variance td .btn.m-btn--hover-accent:not(.btn-secondary):not(.btn-outline-light) i {
         color: #fff;
     }
@@ -96,10 +98,10 @@
 
     /* Daily cash report css */
     .dcr-wrap:not(:last-child) {
-        margin-bottom: 20px;
+        margin-bottom: 10px;
     }
     .dcr-wrap {
-        padding: 30px;
+        padding: 25px 20px 20px;
         border-radius: 10px;
     }
 
@@ -113,7 +115,7 @@
     }
 
     .total-per-cashier-wrap .dcr-wrap:not(:last-child) {
-        margin: 0 0 15px 0px;
+        margin: 0 0 10px 0px;
     }
 
     .dcr-scroller-wrap, .tpc-scroller-wrap {
@@ -151,6 +153,11 @@
         margin: 0 0 10px 0;
     }
 
+    #modal_view_remittance .dcr-scroller-wrap, 
+    #modal_view_remittance .tpc-scroller-wrap,
+    #modal_view_remittance .remit_inputs_scroll_wrap {
+        max-height: 575px;
+    }
 
     /* Skeleton Loader start */
     .skeleton-box {
@@ -244,14 +251,18 @@
                             <span class="r-widget_legend-bullet m--bg-accent"></span>
                             <span class="r-widget_legend-text">EXCESS DEPOSIT</span>
                         </div>
+                        <div class="r-widget_legend d-flex align-items-center mb-1">
+                            <span class="r-widget_legend-bullet" style="background: #ffcd4a;"></span>
+                            <span class="r-widget_legend-text">SHORT DEPOSIT</span>
+                        </div>
                         <div class="r-widget_legend d-flex align-items-center">
                             <span class="r-widget_legend-bullet m--bg-danger"></span>
-                            <span class="r-widget_legend-text">SHORT DEPOSIT</span>
+                            <span class="r-widget_legend-text">CANCEL DEPOSIT</span>
                         </div>
                     </div>
 
-                    <div class="alert alert-warning alert-dismissible fade show m-alert m-alert--air m-alert--outline m-alert--outline-2x mb-0">
-                        <strong>Total Collection - Deposit = <span class="m-badge m-badge--warning m-badge--wide text-white">VARIANCE</span></strong>
+                    <div class="alert alert-brand alert-dismissible fade show m-alert m-alert--air m-alert--outline m-alert--outline-2x mb-0">
+                        <strong>Total Collection - Deposit = <span class="m-badge m-badge--brand m-badge--wide text-white">VARIANCE</span></strong>
                     </div>
                 </div>
 
@@ -279,6 +290,7 @@
                             <th class="text-center py-3 px-2">Cashier</th>
                             <th class="text-center py-3 px-2">Depositor</th>
                             <th class="text-center py-3 px-2">Date Deposit</th>
+                            <th class="text-center py-3 px-2">Date Log</th>
                             <th class="text-center py-3 px-2">Action</th>
                         </tr>
                     </thead>
@@ -287,6 +299,7 @@
 
                     <tfoot>
                         <tr>
+                            <td></td>
                             <td></td>
                             <td></td>
                             <td></td>
@@ -498,34 +511,40 @@
             <div id="remittance_details" class="modal-body p-0">
                 <div class="remittance_details">
                     <div class="row mx-0">
-                        <div class="col-4 p-5">
+                        <div class="col-4 px-0 py-5">
                             <h5 class="text-center mb-4" style="font-weight: 700; color: #7f7f83;">Remit Details</h5>
 
-                            <div class="remit_inputs_scroll_wrap">
+                            <div class="remit_inputs_scroll_wrap px-5">
                                 <div class="info_block">
                                     <p class="d-label">Reference No.</p>
                                     <p class="d-val r_ref_no" :title="ref_no">{{ ref_no }}</p>
                                 </div>
+
                                 <div class="info_block">
                                     <p class="d-label">Depositor</p>
                                     <p class="d-val r_depositor" :title="depositor">{{ depositor }}</p>
                                 </div>
+
                                 <div class="info_block">
                                     <p class="d-label">Date Deposit</p>
                                     <p class="d-val r_date_deposit" :title="date_deposit">{{ date_deposit }}</p>
                                 </div>
+
                                 <div class="info_block">
                                     <p class="d-label">Total Collection</p>
                                     <p class="d-val r_total_collection" :title="total_collection">{{ total_collection }}</p>
                                 </div>
+
                                 <div class="info_block">
                                     <p class="d-label">Deposit</p>
                                     <p class="d-val r_deposit" :title="deposit">{{ deposit }}</p>
                                 </div>
+
                                 <div class="info_block" :style="{backgroundColor: variance_color}">
                                     <p class="d-label" :style="{color: variance_label_text_color}">Variance</p>
                                     <p class="d-val r_variance" :style="{color: variance_value_text_color}" :title="variance">{{ variance }}</p>
                                 </div>
+
                                 <div class="info_block">
                                     <p class="d-label">Date Range</p>
                                     <p class="d-val r_date_range" :title="date_range">{{ date_range }}</p>
@@ -533,11 +552,11 @@
 
                                 <template v-if="remarks_text != ''">
                                     <div id="remarks_wrap" class="row mx-0">
-                                        <div class="col-12 m-alert m-alert--icon m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
-                                            <div class="m-alert__icon">
-                                                <i class="la la-warning"></i>
-                                            </div>
-                                            <div class="m-alert__text r_remarks_text" :title="remarks_text">{{ remarks_text }}</div>	  			  	
+                                        <div class="col-12 mb-0 m-alert m-alert--icon m-alert--outline alert alert-warning alert-dismissible fade show" role="alert">
+                                            <div class="m-alert__text r_remarks_text" :title="remarks_text">
+                                                <p class="d-label text-warning">Remarks</p>    
+                                                <p class="mb-0" style="font-weight: 600;">{{ remarks_text }}</p>
+                                            </div>	  			  	
                                         </div>
                                     </div>
                                 </template>
@@ -655,14 +674,14 @@
 			<input type="hidden" name="archive_ref_no" id="archive_ref_no">
 
 			<div class="modal-header">
-				<h5 class="modal-title">Archive Remittance</h5>
+				<h5 class="modal-title">Cancel Remittance</h5>
 			</div>
 
 			<div class="modal-body" id="archive_text"></div>
 
 			<div class="modal-footer">
-				<button type="submit" class="btn btn-danger btnArchive" onclick="archiveBill()">Archive</button>
-				<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+				<button type="submit" class="btn btn-danger btnArchive" onclick="cancel_remit()">Yes</button>
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
 			</div>
 		</div>
 	</div>

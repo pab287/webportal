@@ -14,7 +14,6 @@ const vm_remit_filter = new Vue({
         // This will trigger skeleton loader in new remit
         selectedEmployee: {
             handler(newVal, oldVal) {
-                console.log('selectedEmployee changed:', newVal);
                 vm_cash_report.daily_cash_report = null;
                 vm_cash_report.total_per_cashier = null;
             },
@@ -23,8 +22,6 @@ const vm_remit_filter = new Vue({
 
         // This will trigger skeleton loader in new remit
         date_range_picked(newVal, oldVal) {
-            console.log('date_range_picked changed:', newVal);
-
             if (!newVal) {
                 this.date_range_from = null;
                 this.date_range_to = null;
@@ -474,13 +471,13 @@ const vm_save_remit = new Vue({
 const vm_remittance_view = new Vue({
     el: "#remittance_details",
     data: {
-        ref_no: '',
+        ref_no: '##############',
         cashier: '',
-        depositor: '',
+        depositor: '*************',
         date_deposit: '0000-00-00',
-        total_collection: 0,
-        deposit: 0,
-        variance: 0,
+        total_collection: 0.00,
+        deposit: 0.00,
+        variance: 0.00,
         variance_color: '',
         variance_label_text_color: '',
         variance_value_text_color: '',
@@ -500,14 +497,16 @@ $('#modal_view_remittance').on('hidden.bs.modal', function () {
     vm_save_remit.clearForm();
 
     Object.assign(vm_remittance_view.$data, {
-        ref_no: '',
+        ref_no: '##############',
         cashier: '',
-        depositor: '',
+        depositor: '*************',
         date_deposit: '0000-00-00',
-        total_collection: 0,
-        deposit: 0,
-        variance: 0,
+        total_collection: 0.00,
+        deposit: 0.00,
+        variance: 0.00,
         variance_color: '',
+        variance_label_text_color: '#8E8E93',
+        variance_value_text_color: '#7f7f83',
         date_range: '0000-00-00 to 0000-00-00',
         remarks_text: '',
         daily_cash_report: [],
@@ -534,6 +533,8 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
     destroy: true,
     serverSide: true,
     processing: true,
+    searching: true,
+    paging: true,
     aaSorting: [],
     ajax: {
         url: baseUrl("eforms/billing/remittance_records/"),
@@ -585,10 +586,15 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
                 return g_numberWithCommas(amount);
             }
         },
-        { data: "virtual_cashier" },
+        { data: "virtual_cashier", width: "20%" },
         { data: "depositor" },
         { 
             data: "deposit_date", render: function(data, type, row) {
+                return moment(data).format('MMM DD, YYYY');
+            }
+        },
+        { 
+            data: "created_date", render: function(data, type, row) {
                 return moment(data).format('MMM DD, YYYY');
             }
         },
@@ -614,14 +620,24 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
         }
     ],
     createdRow: function (row, data, dataIndex) {
+        // Check for variance
         const variance = parseFloat(data.variance);
         
         if (variance > 0) {
-            $(row).css('background-color', '#f4516c').addClass('has-variance short-dep'); // light red
+            $(row).css('background-color', '#ffcd4a').addClass('has-variance short-dep'); // light yellow
         } else if (variance < 0) {
             $(row).css('background-color', '#00e0fb').addClass('has-variance excess-dep'); // light green
         } else {
             $(row).css('background-color', ''); // no background
+        }
+
+        // =============================================================
+
+        // Check for archives
+        const is_archived = data.is_archive;
+
+        if (is_archived == 1) {
+            $(row).css('background-color', '#f4516c').addClass('is_archived');
         }
     }
 });
@@ -635,35 +651,39 @@ function g_numberWithCommas(x) {
 
 // Action in datatable Start
 function itemDatatableActions(row) {
-	if (row) {
-        var tempHtml = "---";
+    const is_archived = row.is_archive;
 
-        tempHtml = `<div class="dropdown">
-                        <a href="#" class="btn m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" data-toggle="dropdown"> 
-                            <i class="la la-ellipsis-h"></i>
-                        </a>
+    if (is_archived != 1) { // if NOT archived
+        	if (row) {
+            var tempHtml = "---";
 
-                        <div class="dropdown-menu dropdown-menu-right">
-                            <a class="dropdown-item" data-toggle='modal' data-target='#modal_view_remittance' href="javascript:void(0);" id='view_remit_modal' data-id='${row.id}'><i class="la la-eye"></i>View</a>
-                            <a class="dropdown-item" style="color: #FF8383;" href="javascript:void(0);" onclick='modalArchive( `+ row.id +`,`+`\"`+ row.ref_no + `\" )'><i class="la la-trash" style="color: #FF8383;"></i> Archive</a>
-                        </div>
-                    </div>`;
-        return tempHtml;
-	} else { 
-        return false; 
+            tempHtml = `<div class="dropdown">
+                            <a href="#" class="btn m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill" data-toggle="dropdown"> 
+                                <i class="la la-ellipsis-h"></i>
+                            </a>
+
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <a class="dropdown-item" data-toggle='modal' data-target='#modal_view_remittance' href="javascript:void(0);" id='view_remit_modal' data-id='${row.id}'><i class="la la-eye"></i>View</a>
+                                <a class="dropdown-item" style="color: #FF8383;" href="javascript:void(0);" onclick='modalArchive( `+ row.id +`,`+`\"`+ row.ref_no + `\" )'><i class="la la-trash" style="color: #FF8383;"></i> Cancel</a>
+                            </div>
+                        </div>`;
+            return tempHtml;
+        } else { 
+            return false; 
+        }
     }
 }
 // Action in datatable End
 
 function modalArchive(id, name){
-    const temp = `<p>Are you sure you wan't to archive <strong class='m--font-boldest'>${name}</strong>?</p>`;
+    const temp = `<p>Are you sure you wan't to cancel <strong class='m--font-boldest'>${name}</strong>?</p>`;
     $('#m_archived').modal('show');
     $('#archive_text').empty().html(temp);
     $("#m_archived input[name=id]").val(id);
     $("#m_archived input[name=archive_ref_no]").val(name);
 }
 
-function archiveBill(){
+function cancel_remit(){
     const remittance_id = document.getElementById('archive_id').value;
     const ref_no = document.getElementById('archive_ref_no').value;
 
@@ -715,14 +735,14 @@ $(document).on('click', '#view_remit_modal', function() {
 
             switch (Math.sign(Number(d.variance) || 0)) {
                 case 1:
-                    vm_remittance_view.variance_color = '#f4516c';
+                    vm_remittance_view.variance_color = '#ffcd4a';
                     vm_remittance_view.variance_label_text_color = '#fff';
                     vm_remittance_view.variance_value_text_color = '#fff';
                     break;
                 case -1:
                     vm_remittance_view.variance_color = '#00e0fb';
-                    vm_remittance_view.variance_label_text_color = '#484848';
-                    vm_remittance_view.variance_value_text_color = '#212529';
+                    vm_remittance_view.variance_label_text_color = '#8E8E93';
+                    vm_remittance_view.variance_value_text_color = '#7f7f83';
                     break;
                 default:
                     vm_remittance_view.variance_color = '';
