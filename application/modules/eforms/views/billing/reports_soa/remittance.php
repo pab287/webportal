@@ -37,19 +37,22 @@
 
     /* Remittance View Design */
     .remittance_details .d-label {
-        font-size: 12px;
-        color: #484848;
+        font-size: 10px;
+        color: #8E8E93;
         margin: 0 0 5px;
-        text-transform: capitalize;
+        text-transform: uppercase;
+        font-weight: 500;
+        letter-spacing: 1px;
     }
 
     .remittance_details .d-val {
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 700;
         margin: 0;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        color: #7f7f83;
     }
 
     .remittance_details .col-3 {
@@ -57,9 +60,10 @@
     }
 
     .remittance_details .info_block {
-        background: #F4F5F9;
+        background: #fff;
         padding: 15px;
         border-radius: 10px;
+        border: 1px solid #e2e2e3;
     }
 
     /* New remit modal datatable */
