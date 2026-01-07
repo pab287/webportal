@@ -210,7 +210,7 @@
                         </button>
                     </div>
                     <div class="modal-body" style="font-size: 16px;">
-                        <p>Your account has been locked out. Click 'UNLOCK' to unlock your account. If you are having trouble please contact IT Support instead.</p>
+                        <p>Your account has been locked out. Click 'UNLOCK' to unlock your account. If you are still having trouble unlocking your account, please contact your direct supervisor for further assistance.</p>
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-focus m-btn m-btn--pill m-btn--custom m-btn--air m-login__btn m-login__btn--primary">
