@@ -331,15 +331,19 @@ class Telegram_bot_config extends CI_Model{
         $post = $this->input->post();
         $bot_token = $post['bot_token'];
         $emp_id = $this->user_data['emp_id'];
-        
-        $user = $this->db->select('telegram_chat_id')->where('emp_id', $emp_id)->get('gccmaster.tblusers')->row();
-        
-        if(!$user || !$user->telegram_chat_id){
-            $result['message'] = "Your user does not have a Telegram Chat ID configured.";
-            return $result;
+
+        if($post['chat_id'] ){
+            $telegram_chat_id = $post['chat_id'];
+        }else{
+            $user = $this->db->select('telegram_chat_id')->where('emp_id', $emp_id)->get('gccmaster.tblusers')->row();
+            if(!$user || !$user->telegram_chat_id){
+                $result['message'] = "Your user does not have a Telegram Chat ID configured.";
+                return $result;
+            }else{
+                $telegram_chat_id = $user->telegram_chat_id;
+            }
         }
         
-        $telegram_chat_id = $user->telegram_chat_id;
         $message = "Test message from your system.";
         $url = "https://api.telegram.org/bot{$bot_token}/sendMessage";
     

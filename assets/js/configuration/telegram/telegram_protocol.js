@@ -41,7 +41,17 @@ $(function() {
         },
         columns: [
             { data: "id", visible: false },
-            { data: "bot_name"},
+            {
+                data: "bot_name",
+                render: function (data, type, row) {
+                    return `
+                        <div>
+                            <strong>${data}</strong><br>
+                            ${renderStatus(row.status)}
+                        </div>
+                    `;
+                }
+            },
             { data: "bot_description", orderable: false},
             {
                 data: "owner",
@@ -60,11 +70,6 @@ $(function() {
                     `;
                 }
             },
-            { data: "status", className: "text-center", orderable: false,
-                render: function (data) {
-                    return renderStatus(data)
-                }
-            },
             { 
                 data: "modules", orderable: false,
                 render: function(data) {
@@ -77,7 +82,7 @@ $(function() {
                         </div>`;
                 }
             },
-            { data: "chat_id", orderable: false,
+            { data: "chat_id", orderable: false, width: "15%",
                 render: function(data, type, row) {
                     return data || 'N/A';
                 }
@@ -85,20 +90,9 @@ $(function() {
             { data: "telegram_bot_token",orderable: false},
             {
                 data: "created_at",
-                render: function(data) {
-                    const dateStr = data.trim();
-                    const dateParts = dateStr.split(' ');
-                    const dateComponents = dateParts[0].split('-');
-                    
-                    // Create Date object for proper month formatting
-                    const dateObj = new Date(dateComponents[0], parseInt(dateComponents[1])-1, dateComponents[2]);
-                    
-                    // Format the date parts
-                    const month = dateObj.toLocaleString('default', { month: 'long' });
-                    const day = dateComponents[2];
-                    const year = dateComponents[0];
-            
-                    return `${month} ${day}, ${year}`;
+                render: function (data) {
+                    if (!data) return "";
+                    return moment(data, "YYYY-MM-DD HH:mm:ss").format("MMMM DD, YYYY");
                 }
             },
             { data: null, className: "text-center" },
@@ -142,7 +136,17 @@ $(function() {
         searching: false,
         columns: [
             { data: "id", visible: false },
-            { data: "bot_name"},
+            {
+                data: "bot_name",
+                render: function (data, type, row) {
+                    return `
+                        <div>
+                            <strong>${data}</strong><br>
+                            ${renderStatus(row.status)}
+                        </div>
+                    `;
+                }
+            },
             { data: "bot_description", orderable: false},
             {
                 data: "owner",
@@ -161,11 +165,6 @@ $(function() {
                     `;
                 }
             },
-            { data: "status", className: "text-center", orderable: false,
-                render: function (data) {
-                    return renderStatus(data)
-                }
-            },
             { 
                 data: "modules", orderable: false,
                 render: function(data) {
@@ -178,7 +177,7 @@ $(function() {
                         </div>`;
                 }
             },
-            { data: "chat_id", orderable: false,
+            { data: "chat_id", orderable: false, width: "15%",
                 render: function(data, type, row) {
                     return data || 'N/A';
                 }
@@ -186,20 +185,9 @@ $(function() {
             { data: "telegram_bot_token",orderable: false},
             {
                 data: "created_at",
-                render: function(data) {
-                    const dateStr = data.trim();
-                    const dateParts = dateStr.split(' ');
-                    const dateComponents = dateParts[0].split('-');
-                    
-                    // Create Date object for proper month formatting
-                    const dateObj = new Date(dateComponents[0], parseInt(dateComponents[1])-1, dateComponents[2]);
-                    
-                    // Format the date parts
-                    const month = dateObj.toLocaleString('default', { month: 'long' });
-                    const day = dateComponents[2];
-                    const year = dateComponents[0];
-            
-                    return `${month} ${day}, ${year}`;
+                render: function (data) {
+                    if (!data) return "";
+                    return moment(data, "YYYY-MM-DD HH:mm:ss").format("MMMM DD, YYYY");
                 }
             },
             { data: null, className: "text-center" },
@@ -272,10 +260,10 @@ $(function() {
 function renderStatus(data) {
     switch (data) {
         case "1":
-            return '<span class="m-badge m-badge--success m-badge--wide" style="cursor: default"><i class="fa-lg fa fa-check" style="color:white"></i></span>';
+            return '<span class="m-badge m-badge--success m-badge--wide" style="cursor: default">Active</span>';
             break;
         default:
-            return '<span class="m-badge m-badge--danger m-badge--wide" style="cursor: default"><i class="fa-lg fa fa-remove" style="color:white"></i></span>';
+            return '<span class="m-badge m-badge--danger m-badge--wide" style="cursor: default">Inactive</span>';
             break;
     }
 };
@@ -309,6 +297,7 @@ var test_protocol = function (id) {
             data: {
                 csrf_token: _csrf_hash,
                 bot_token: rowData.telegram_bot_token,
+                chat_id: rowData.chat_id
             },
             dataType: "json",
             success: function (json) {
