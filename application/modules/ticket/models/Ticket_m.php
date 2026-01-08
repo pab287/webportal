@@ -845,7 +845,7 @@ class Ticket_m extends CI_Model
         $result = $this->db->insert('gccticket.ticket', $data);
         $last_id = $this->db->insert_id();
         if ($last_id) {
-            // $this->email_send($last_id, $this->input->post('category'), $this->input->post('issue'), $requested_date, $sub_category, $this->user_data['emp_id'], $date, "Open", "", "", $reference_no);
+            $this->email_send($last_id, $this->input->post('category'), $this->input->post('issue'), $requested_date, $sub_category, $this->user_data['emp_id'], $date, "Open", "", "", $reference_no);
             $this->sendTelegram($data, $last_id);
         }
 
