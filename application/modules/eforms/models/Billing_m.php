@@ -988,7 +988,7 @@ class Billing_m extends CI_Model {
             END,
             TRIM(a.lastname)
         ) AS name,
-        a.middlename, r.id, a.accountno, r.meterno, a.firstname, a.lastname, CAST(a.lot AS DECIMAL(10)) AS lot, CAST(a.block AS DECIMAL(10)) AS block, r.ref_no, r.reading_date, r.status, CAST(r.reading AS DECIMAL(10,2)) AS reading, a.model, r.is_billed");
+        a.middlename, r.id, a.accountno, r.meterno, a.firstname, a.lastname, CAST(a.lot AS DECIMAL(10)) AS lot, CAST(a.block AS DECIMAL(10)) AS block, r.ref_no, r.reading_date, r.status, CAST(r.reading AS DECIMAL(10,2)) AS reading, a.model, r.is_billed, r.created_at");
         $this->db->from("hydra_billing.readings r");
         $this->db->join("hydra_billing.accounts a", "a.id = r.account_id", "LEFT");
         $this->db->where("r.is_archived", 0);
@@ -999,10 +999,8 @@ class Billing_m extends CI_Model {
         if ($has_valid_date) {
             $start_date = date('Y-m-d 00:00:00', strtotime($post['startDate']));
             $end_date = date('Y-m-d 23:59:59', strtotime($post['endDate']));
-            $this->db->where("r.reading_date >=", $start_date);
-            $this->db->where("r.reading_date <=", $end_date);
-        } elseif (!$has_search) {
-            $this->db->where("YEAR(r.reading_date)", $current_year); // Defaults to the current year
+            $this->db->where("r.created_at >=", $start_date);
+            $this->db->where("r.created_at <=", $end_date);
         }
         
         if($has_search){
@@ -1018,8 +1016,11 @@ class Billing_m extends CI_Model {
                 }
             }
             $this->db->group_end();
-        } else {
-            $this->db->where("YEAR(r.reading_date)", $current_year);
+        }
+
+        if (!$has_search && !$has_valid_date) {
+            $display_last_2_years = $current_year - 1;
+            $this->db->where("YEAR(r.created_at) >=", $display_last_2_years); // Defaults to the current year
         }
 
         $i = $sortOrder[0]['column'];
@@ -1045,7 +1046,8 @@ class Billing_m extends CI_Model {
         }
 
         $total = $this->getReadingCount($search, $post);
-        return array("data" => $resultarray, "recordsTotal" => $total, "recordsFiltered" => $total, "to_billed" => $to_billed);
+        $last = $this->db->last_query($query);
+        return array("data" => $resultarray, "recordsTotal" => $total, "recordsFiltered" => $total, "to_billed" => $to_billed, "last_query" => $last);
     }
 
     public function getReadingCount($search, $post){
@@ -1104,10 +1106,8 @@ class Billing_m extends CI_Model {
         if ($has_valid_date) {
             $start_date = date('Y-m-d 00:00:00', strtotime($post['startDate']));
             $end_date = date('Y-m-d 23:59:59', strtotime($post['endDate']));
-            $this->db->where("r.reading_date >=", $start_date);
-            $this->db->where("r.reading_date <=", $end_date);
-        } elseif (!$has_search) {
-            $this->db->where("YEAR(r.reading_date)", $current_year); // Defaults to the current year
+            $this->db->where("r.created_at >=", $start_date);
+            $this->db->where("r.created_at <=", $end_date);
         }
         
         if($has_search){
@@ -1123,8 +1123,11 @@ class Billing_m extends CI_Model {
                 }
             }
             $this->db->group_end();
-        } else {
-            $this->db->where("YEAR(r.reading_date)", $current_year);
+        }
+
+        if (!$has_search && !$has_valid_date) {
+            $display_last_2_years = $current_year - 1;
+            $this->db->where("YEAR(r.created_at) >=", $display_last_2_years); // Defaults to the current year
         }
 
         $query = $this->db->get();
@@ -1836,6 +1839,7 @@ class Billing_m extends CI_Model {
         $this->db->join("hydra_billing.payments as p", "p.bill_id = b.id AND p.is_archive = 0", "LEFT");
         $this->db->where("b.status", 1);
         $this->db->group_by("b.id");
+
         if($query_builder){
             $this->db->where($query_builder);
         }
@@ -1848,8 +1852,6 @@ class Billing_m extends CI_Model {
             $end_date = date('Y-m-d 23:59:59', strtotime($post['endDate']));
             $this->db->where("b.created_at >=", $start_date);
             $this->db->where("b.created_at <=", $end_date);
-        } elseif (!$has_search) {
-            $this->db->where("YEAR(b.created_at)", $current_year); // Defaults to the current year
         }
         
         if ($has_search) {
@@ -1865,8 +1867,11 @@ class Billing_m extends CI_Model {
                 }
             }
             $this->db->group_end();
-        } else {
-            $this->db->where("YEAR(b.created_at)", $current_year);
+        } 
+
+        if (!$has_search && !$has_valid_date) {
+            $display_last_2_years = $current_year - 1;
+            $this->db->where("YEAR(b.created_at) >=", $display_last_2_years); // Defaults to the current year
         }
 
         $i = $sortOrder[0]['column'];
@@ -2019,11 +2024,9 @@ class Billing_m extends CI_Model {
             $end_date = date('Y-m-d 23:59:59', strtotime($post['endDate']));
             $this->db->where("b.created_at >=", $start_date);
             $this->db->where("b.created_at <=", $end_date);
-        } elseif (!$has_search) {
-            $this->db->where("YEAR(b.created_at)", $current_year); // Defaults to the current year
         }
         
-        if($has_search){
+        if ($has_search) {
             $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
             $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
 
@@ -2036,8 +2039,11 @@ class Billing_m extends CI_Model {
                 }
             }
             $this->db->group_end();
-        } else {
-            $this->db->where("YEAR(b.created_at)", $current_year);
+        } 
+
+        if (!$has_search && !$has_valid_date) {
+            $display_last_2_years = $current_year - 1;
+            $this->db->where("YEAR(b.created_at) >=", $display_last_2_years); // Defaults to the current year
         }
 
         $this->db->order_by('b.ref_no', 'DESC');
@@ -3097,7 +3103,6 @@ class Billing_m extends CI_Model {
         $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
         $this->db->join("hydra_billing.bills c", "c.id = b.bill_id", "LEFT");
         $this->db->join("gccmaster.tblemployees d", "d.id = b.created_by", "LEFT");
-        // $this->db->where("b.is_archive", 0);
 
         $has_valid_date = !empty($post['startDate']) && !empty($post['endDate']) && $post['startDate'] != 'Invalid date' && $post['endDate'] != 'Invalid date';
         $has_search = !empty($search);
@@ -3108,10 +3113,7 @@ class Billing_m extends CI_Model {
             $this->db->where("b.created_date >=", $start_date);
             $this->db->where("b.created_date <=", $end_date);
         }
-        if (!$has_search && !$has_valid_date) {
-            $this->db->where("YEAR(b.created_date)", $current_year); // Defaults to the current year
-        }
-        
+
         if($has_search){
             $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
             $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
@@ -3125,8 +3127,11 @@ class Billing_m extends CI_Model {
                 }
             }
             $this->db->group_end();
-        } else {
-            $this->db->where("YEAR(b.created_date)", $current_year);
+        } 
+
+        if (!$has_search && !$has_valid_date) {
+            $display_last_2_years = $current_year - 1;
+            $this->db->where("YEAR(b.created_date) >=", $display_last_2_years); // Defaults to the current year
         }
 
         // Sort Column
@@ -3249,10 +3254,7 @@ class Billing_m extends CI_Model {
             $this->db->where("b.created_date >=", $start_date);
             $this->db->where("b.created_date <=", $end_date);
         }
-        if (!$has_search && !$has_valid_date) {
-            $this->db->where("YEAR(b.created_date)", $current_year); // Defaults to the current year
-        }
-        
+
         if($has_search){
             $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
             $search = preg_replace('/[^a-zA-Z0-9\s.-]/', '', $search); // Remove special characters except for dot & dashses
@@ -3266,8 +3268,11 @@ class Billing_m extends CI_Model {
                 }
             }
             $this->db->group_end();
-        } else {
-            $this->db->where("YEAR(b.created_date)", $current_year);
+        } 
+
+        if (!$has_search && !$has_valid_date) {
+            $display_last_2_years = $current_year - 1;
+            $this->db->where("YEAR(b.created_date) >=", $display_last_2_years); // Defaults to the current year
         }
 
         $query = $this->db->get();

@@ -315,6 +315,9 @@ class Billing extends MY_Controller {
         $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
         $this->core_layout->addJs("js/eforms/billing/readings/index.js", true);
 
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
+
         $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', TRUE);
         $this->core_layout->addJs('js/querybuilder/query-builder.standalone.min.js', TRUE);
 
