@@ -315,7 +315,7 @@
                     Cancel
                 </button>
                 <button id="btnConfirmLoan" class="btn btn-primary">
-                    Yes, Inactivate Employee
+                    Yes, Proceed
                 </button>
             </div>
         </div>
