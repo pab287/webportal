@@ -2165,7 +2165,7 @@ class Payroll_m extends CI_Model{
                     $this->suspendNoEarnersLoans($employee->id);
                 }
 
-                $loans = (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0) 
+                $loans = (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0)
                     ? $this->getEmployeeActiveLoansNotPaid($employee->id, $gross_pay, 0, $_gross_pay, true) //get all active employee loans that is not still paid
                     : $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
 
@@ -2181,7 +2181,7 @@ class Payroll_m extends CI_Model{
                         if($loan->active == 1 && $loan->loan_type == 0){
                             /*** loan internal ***/
                             /*** if(floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0){ ***/
-                            if(floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due){
+                            if(floatval($loan->amount_due) > 0 && round($_gross_pay, 2) >= round($loan->amount_due, 2)){
                                 $updatedTotalLoans += $loan->amount_due;
                                 $_gross_pay = $_gross_pay - $loan->amount_due;
                                 $loanId[] = $loan->id;
@@ -2190,7 +2190,7 @@ class Payroll_m extends CI_Model{
 
                             /*** loan interest ***/
                             /*** if(floatval($loan->interest_amount) > 0 && $_gross_pay >= $loan->interest_amount && intval($loan->zero_netpay) == 0){ ***/
-                            if(floatval($loan->interest_amount) > 0 && $_gross_pay >= $loan->interest_amount){
+                            if(floatval($loan->interest_amount) > 0 && round($_gross_pay, 2) >= round($loan->interest_amount, 2)){
                                 $updatedTotalLoansInterest += $loan->interest_amount;
                                 $_gross_pay = $_gross_pay - $loan->interest_amount;
                                  $loanId[] = $loan->id;
@@ -2205,7 +2205,7 @@ class Payroll_m extends CI_Model{
                         /*** if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 1) &&
                         (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0)){ ***/
                         if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 1) &&
-                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due)){
+                        (floatval($loan->amount_due) > 0 && round($_gross_pay, 2) >= round($loan->amount_due, 2))){
                             $updatedSSSLoans += $loan->amount_due;
                             $_gross_pay = $_gross_pay - $loan->amount_due;
                              $loanId[] = $loan->id;
@@ -2217,7 +2217,7 @@ class Payroll_m extends CI_Model{
                         /*** if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 2) &&
                         (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0)){ ***/
                         if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 2) &&
-                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due)){
+                        (floatval($loan->amount_due) > 0 && round($_gross_pay, 2) >= round($loan->amount_due, 2))){
                             $updatedHDMFLoans += $loan->amount_due;
                             $_gross_pay = $_gross_pay - $loan->amount_due;
                              $loanId[] = $loan->id;
@@ -2258,8 +2258,9 @@ class Payroll_m extends CI_Model{
 
                     $this->db->select("SUM(amount_due) as amount_due");
                     $totalLoansAmount = $this->db->get_where("payroll.payroll_sheet_loan_payments", array("payroll_sheet_id"=>$payroll_sheet_id))->row();
-                    $allowResetLoans = ($updatedToDeductLoans > 0 && $totalLoansAmount->amount_due > 0) && $totalLoansAmount->amount_due != $updatedToDeductLoans;
+                    $allowResetLoans = ($updatedToDeductLoans >= 0 && $totalLoansAmount->amount_due >= 0) && $totalLoansAmount->amount_due != $updatedToDeductLoans;
 
+                    
                     if (count($loans) <= 0) {
                         $this->db->where("payroll_sheet_id", $payroll_sheet_id)->delete("payroll.payroll_sheet_loan_payments");
                     } else {
@@ -2268,6 +2269,7 @@ class Payroll_m extends CI_Model{
                         $finalLoanInterest = 0;
                         foreach ($loans as $loan) {
                             if(is_array($loanId) && in_array($loan->id, $loanId)){
+
                                 $isZeroNetPay = intval($loan->zero_netpay) == 1;
                                 if(floatval($loan->amount_due) > 0){
                                     $loan_data = array(
@@ -5070,8 +5072,8 @@ class Payroll_m extends CI_Model{
                             $_grossPay = $_grossPay - $tempAmount;
                         }
                     }
-                    
-                    if(floatval($tempRow->amount) > $_grossPay && intval($tempStatus) == 1){ $allowAdjustmentApproval = false; }
+
+                    if(round($tempRow->amount, 2) > round($_grossPay, 2) && intval($tempStatus) == 1){ $allowAdjustmentApproval = false; }
                 }
 
                 $post->approval_by = $this->core_layout->getCurrentEmployeeId();
