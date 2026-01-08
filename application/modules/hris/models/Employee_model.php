@@ -11099,7 +11099,7 @@ class Employee_model extends CI_Model {
 
 
                 if($update){
-                    $this->db->where('id', $row->id)->update($this->tblUsers, ['telegram_chat_id' => '']);
+                    $this->db->where('emp_id', $row->id)->update($this->tblUsers, ['telegram_chat_id' => '']);
                     $temp[] = $row->employee_name. ' with employee ID #'.$row->id;
                     array_push($ids, $row->id);
                 }
