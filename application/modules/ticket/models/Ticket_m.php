@@ -35,8 +35,9 @@ class Ticket_m extends CI_Model
         $rowData = array();
         $view_own_request = (in_array("view_own_request", $this->core_layout->getCurrentActions())) ? true : false;
         $payroll =  (in_array("payroll_ticket", $this->core_layout->getCurrentActions())) ? true : false;
-        $rowData = $this->get_ticket_masterfile($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll, $params, $date);
-        $rowCount = $this->get_ticket_masterfile_count($search, $query_builder, $view_own_request, $payroll, $params, $date);
+        $qms =  (in_array("qms_ticket", $this->core_layout->getCurrentActions())) ? true : false;
+        $rowData = $this->get_ticket_masterfile($limit, $offset, $sortBy, $sortOrder, $search, $query_builder, $view_own_request, $payroll, $params, $date,  $qms);
+        $rowCount = $this->get_ticket_masterfile_count($search, $query_builder, $view_own_request, $payroll, $params, $date,  $qms);
 
         $totalNotFiltered = $rowCount;
 
@@ -47,7 +48,7 @@ class Ticket_m extends CI_Model
         return $resultset;
     }
 
-    public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll, $params, $date){
+    public function get_ticket_masterfile($limit = 10, $offset = 0, $sortBy = null, $sortOrder = "DESC", $search = null, $query_builder = null, $view_own_request, $payroll, $params, $date , $qms){
         $resultset = array();
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
         $this->db->select("a.reference_no, cat.name as category, sub.name as sub_category,prio.name as priority, a.status,a.message, a.requested_date, a.requestor,a.performed_by,a.department_id,b.firstname,b.middlename,b.lastname,c.firstname,c.middlename,c.lastname, a.id, d.code as department, a.created_at");
@@ -76,16 +77,22 @@ class Ticket_m extends CI_Model
         }
 
         $current_user_id = $this->user_data['emp_id'];
-        if($payroll) {
-            $this->db->where('cat.name', 'payroll');
+
+        if ($view_own_request) {
+            $this->db->where('a.requestor', $current_user_id);
         }
-        if($view_own_request) {
-            if($payroll) {
-                $this->db->or_where('a.requestor', $current_user_id);
-            } else {
-                $this->db->where('a.requestor', $current_user_id);
+        else if ($payroll || $qms) {
+            $this->db->group_start();
+            $this->db->where('a.requestor', $current_user_id);
+            if ($payroll) {
+                $this->db->or_where('cat.name', 'payroll');
             }
+            if ($qms) {
+                $this->db->or_where('cat.name', 'qms');
+            }
+            $this->db->group_end();
         }
+
         $this->db->where('a.is_archived', '0');
         // $this->db->where("LOWER(a.status) != 'cancelled'");
         if ($query_builder) {
@@ -148,7 +155,7 @@ class Ticket_m extends CI_Model
         return $resultset;
     }
     
-    private function get_ticket_masterfile_count($search = null, $query_builder = null, $view_own_request, $payroll, $params, $date){
+    private function get_ticket_masterfile_count($search = null, $query_builder = null, $view_own_request, $payroll, $params, $date,  $qms){
         $filterFields = array("a.reference_no",'a.message', 'b.firstname', 'b.middlename', 'b.lastname', 'c.firstname', 'c.middlename', 'c.lastname','cat.name','sub.name','prio.name','stat.name');
         $this->db->from("gccticket.ticket as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.requestor", 'LEFT');
@@ -178,16 +185,22 @@ class Ticket_m extends CI_Model
         
         // $this->db->where("LOWER(a.status) != 'cancelled'", NULL, FALSE);
         $current_user_id = $this->user_data['emp_id']; 
-        if($payroll) {
-            $this->db->where('cat.name', 'payroll');
+        
+        if ($view_own_request) {
+            $this->db->where('a.requestor', $current_user_id);
         }
-        if($view_own_request) {
-            if($payroll) {
-                $this->db->or_where('a.requestor', $current_user_id);
-            } else {
-                $this->db->where('a.requestor', $current_user_id);
+        else if ($payroll || $qms) {
+            $this->db->group_start();
+            $this->db->where('a.requestor', $current_user_id);
+            if ($payroll) {
+                $this->db->or_where('cat.name', 'payroll');
             }
+            if ($qms) {
+                $this->db->or_where('cat.name', 'qms');
+            }
+            $this->db->group_end();
         }
+
         if($query_builder){
             $this->db->where($query_builder);
         }
@@ -1326,6 +1339,28 @@ class Ticket_m extends CI_Model
                                   WHERE b.emp_id = c.id 
                                   AND c.employee_status = 'Active' 
                                   AND (b.role_id = 14 OR b.role_id = 124 OR b.role_id = 144) 
+                                  ORDER BY c.firstname ASC");
+        
+        $resultarray = array();
+        
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $data = array();
+                $data["id"] = $_query["id"];
+                $data["text"] = $_query["emp_name"];
+                $resultarray[] = $data;
+            }
+        }
+        
+        return $resultarray;
+    }
+
+    public function select2PerformedByQMSData() {
+        $query = $this->db->query("SELECT c.id, CONCAT(c.firstname,' ',c.lastname) as emp_name 
+                                  FROM gccmaster.tblusers b, gccmaster.tblemployees c 
+                                  WHERE b.emp_id = c.id 
+                                  AND c.employee_status = 'Active' 
+                                  AND (b.role_id = 24 OR b.role_id = 86) 
                                   ORDER BY c.firstname ASC");
         
         $resultarray = array();

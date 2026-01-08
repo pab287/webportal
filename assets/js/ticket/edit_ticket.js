@@ -145,7 +145,11 @@ $.ajax({
 
         if(vmTab1.vm_tab1.category == "payroll"){
            performed_by = _tempContentData.performed_by_payroll;
-        }else{
+        }
+        else if (vmTab1.vm_tab1.category == "qms"){
+           performed_by = _tempContentData.performed_by_qms;
+        }
+        else{
            performed_by = _tempContentData.performed_by;
         }
         
@@ -196,14 +200,22 @@ $.ajax({
             $("#performed_by").select2("destroy");
             $("#performed_by").empty();
             if(type == 'payroll'){
-                console.log(data.performed_by_id,"Reqq",reqq);
                 $("#performed_by").select2({
                     width: "100%",
                     placeholder: "Select an option",
                     data:  _tempContentData.performed_by_payroll,
                     allowClear: true,
                 }).val(reqq).trigger('change');
-            }else{
+            }
+            else if(type == 'qms'){
+                $("#performed_by").select2({
+                    width: "100%",
+                    placeholder: "Select an option",
+                    data:  _tempContentData.performed_by_qms,
+                    allowClear: true,
+                }).val(reqq).trigger('change');
+            }
+            else{
                 $("#performed_by").select2({
                     width: "100%",
                     placeholder: "Select an option",
