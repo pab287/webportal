@@ -235,7 +235,7 @@
         <div class="m-portlet__body">
             <div class="row align-items-center justify-content-between mb-4">
                 <div class="col-8 d-flex align-items-center">
-                    <button class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--pill btnNew text-white mr-1" id="new_remit_modal" data-toggle="modal" data-target="#modal_new_remittance">
+                    <button type="button" class="btnNew btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--pill text-white mr-1" id="new_remit_modal" data-toggle="modal" data-target="#modal_new_remittance">
                         <span><i class="la la-plus"></i><span>New</span></span>
                     </button>
 
