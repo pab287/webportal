@@ -7047,7 +7047,6 @@ const vmJobDesc = new Vue({
 });
 
 function sendEmail(){
-    console.log(vm_tab3.resignation_effective_date);
     let data = {
         csrf_token: _csrf_hash,
         emp_id: tempDataId,
@@ -7056,7 +7055,7 @@ function sendEmail(){
         department: vmTab3.vm_tab3.department,
         level: vmTab3.vm_tab3.level,
         position: vmTab3.vm_tab3._position,
-        // resign_effictivity_date: vm_tab3.resignation_effective_date,
+        resign_effectivity_date: vmTab3.vm_tab3.resignation_effective_date,
     };
 
     $.ajax({
