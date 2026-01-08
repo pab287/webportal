@@ -48,6 +48,12 @@ function val($item, $key, $default = 'N/A') {
                                 Please be informed that the following employee record has been set to inactive:
                             </p>
 
+                            <p>
+                                <?php if (!empty(val($data, 'effictivity_date'))): ?>
+                                    Effictivity Date: <?php echo val($data, 'effictivity_date'); ?>
+                                <?php endif; ?>
+                            </p>
+
                             <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse; font-size:14px;">
                                 <tr>
                                     <td width="35%" style="border:1px solid #ddd;"><strong>EMPLOYEE NAME</strong></td>
