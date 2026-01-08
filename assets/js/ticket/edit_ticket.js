@@ -143,14 +143,16 @@ $.ajax({
         
         vmTab1.vm_tab1 = Object.assign({}, data);
 
-        if(vmTab1.vm_tab1.category == "payroll"){
-           performed_by = _tempContentData.performed_by_payroll;
+        const categories = (vmTab1.vm_tab1.category || '').toLowerCase();
+
+        if (categories === "payroll") {
+            performed_by = _tempContentData.performed_by_payroll;
         }
-        else if (vmTab1.vm_tab1.category == "qms"){
-           performed_by = _tempContentData.performed_by_qms;
+        else if (categories === "qms") {
+            performed_by = _tempContentData.performed_by_qms;
         }
-        else{
-           performed_by = _tempContentData.performed_by;
+        else {
+            performed_by = _tempContentData.performed_by;
         }
         
         $("#performed_by").select2({
@@ -186,7 +188,7 @@ $.ajax({
              reqq = null
         }
         $("#category").on("change", function (e) {
-            let type = $("#category option:selected").text();
+            let type = ($("#category option:selected").text() || "").toLowerCase();
             if(type == 'webportal'){
                 $("#webportal").show();
             }else{
