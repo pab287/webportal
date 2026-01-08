@@ -769,6 +769,10 @@ class Ticket_m extends CI_Model
                 $responsibility = "SOFTWARE DEVELOPMENT";
                 break;
 
+            case 'qms':
+                $responsibility = "QMS";
+                break;
+
             default:
                 $responsibility = "IT SUPPORT";
                 break;
@@ -1195,9 +1199,13 @@ class Ticket_m extends CI_Model
             $telegram_msg .= '<b>Date Needed</b>: '.strtoupper($data['requested_date']).chr(10);
         }
 
-        if ($data['responsibility'] == "PAYROLL") {
+        if (strtoupper($data['responsibility']) == "PAYROLL") {
             $config_key = 'new_ticket_payroll';
-        } else {
+        }
+        else if (strtoupper($data['responsibility']) == "QMS") {
+            $config_key = 'new_ticket_qms';
+        }
+        else {
             $config_key = 'new_ticket';
         }
         
