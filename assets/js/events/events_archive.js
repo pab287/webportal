@@ -179,3 +179,22 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays-archive")
             }
         });
     }
+
+    $('#filter-year')
+    .on('change', function () {
+        tblCalendarOfHolidays.ajax.reload();
+    });
+
+$('#filter-year')
+    .datepicker({
+        todayHighlight: true,
+        orientation: "bottom left",
+        templates: {
+            leftArrow: '<i class="la la-angle-left"></i>',
+            rightArrow: '<i class="la la-angle-right"></i>'
+        },
+        format: "yyyy",
+        viewMode: "years",
+        minViewMode: "years",
+        autoclose: true
+    });
