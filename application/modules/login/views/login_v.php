@@ -175,7 +175,7 @@
 <body id="m_login">
     <div class="login-container">
         <img src="<?php echo base_url("assets/logo.png"); ?>" alt="GC&C Logo"> 
-        <h2>Sign In To GC&C</h2>
+        <h2>SIGN IN TO GC&C</h2>
         <form method="post" action="<?php echo site_url('login/verifylogin/index'); ?>">
             <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
             <?php echo(validation_errors()); ?>

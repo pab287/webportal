@@ -32,7 +32,7 @@ class Verifylogin extends MY_Controller{
                 $this->db->set('lockout_dt', 'NULL', false);
                 $this->db->update('gccmaster.tblusers');
 
-                $query = $this->db->select('force_update, password, auth, emp_id,resend_attempts')
+                $query = $this->db->select('force_update, password, auth, emp_id, resend_attempts, is_important')
                 ->from('gccmaster.tblusers')
                 ->where('username', $post['username'])
                 ->get()->row_array();
@@ -47,6 +47,13 @@ class Verifylogin extends MY_Controller{
                     redirect('login/change_password', );
                     return;
                 }
+
+                
+                if (isset($query['is_important']) && $query['is_important'] == 1) {
+                    $query['auth'] = 1;
+                }
+
+                
                 if (isset($query['auth']) && $query['auth'] == 1) {
 
                     $userDetails = $this->db->select('u.email, u.telegram_chat_id, e.mobile_no')
