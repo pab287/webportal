@@ -144,7 +144,7 @@ $.ajax({
         vmTab1.vm_tab1 = Object.assign({}, data);
 
         const categories = (vmTab1.vm_tab1.category || '').toLowerCase();
-
+        console.log(categories);
         if (categories === "payroll") {
             performed_by = _tempContentData.performed_by_payroll;
         }
@@ -154,7 +154,7 @@ $.ajax({
         else {
             performed_by = _tempContentData.performed_by;
         }
-        
+        console.log(performed_by);
         $("#performed_by").select2({
             width: "100%",
             placeholder: "Select an option",
@@ -236,6 +236,8 @@ $.ajax({
         if(data.status == 'open'){
             _tempContentData.status = [{'text': 'open', 'id': 'open'},{'text': 'In Progress', 'id': 'in progress'}];
         }
+
+        console.log(data);
 
         $("#status").select2({
             width: "100%",

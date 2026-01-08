@@ -482,9 +482,9 @@ class Ticket_m extends CI_Model
                 $rs->requested_by = $this->requested_by($rs->requestor);
                 $rs->performed_by_det = $this->requested_by($rs->performed_by);
                 $rs->department = $this->getDepartmentName($rs->department_id);
-                $rs->category = $this->getCategoryLabel($rs->category);
-                $rs->sub_category = $this->getCategoryLabel($rs->sub_category);
-                $rs->status = $this->getCategoryLabel($rs->status);
+                $rs->category = $this->getCategoryLabel($rs->category,"category");
+                $rs->sub_category = $this->getCategoryLabel($rs->sub_category,"sub-category");
+                $rs->status = $this->getCategoryLabel($rs->status,"status");
                 $rs->requested_date = date("M d, Y h:i:A", strtotime($rs->requested_date));
                 
                 
@@ -525,9 +525,9 @@ class Ticket_m extends CI_Model
         }
     }
 
-    public function getCategoryLabel($id){
+    public function getCategoryLabel($id,$type){
         if($id){
-            return $this->db->get_where("gccticket.category", array("name"=>$id))->row('name');
+            return $this->db->get_where("gccticket.category", array("name"=>$id,"type"=>$type))->row('name');
         }else{
             return "Not set";
         }
@@ -845,7 +845,7 @@ class Ticket_m extends CI_Model
         $result = $this->db->insert('gccticket.ticket', $data);
         $last_id = $this->db->insert_id();
         if ($last_id) {
-            $this->email_send($last_id, $this->input->post('category'), $this->input->post('issue'), $requested_date, $sub_category, $this->user_data['emp_id'], $date, "Open", "", "", $reference_no);
+            // $this->email_send($last_id, $this->input->post('category'), $this->input->post('issue'), $requested_date, $sub_category, $this->user_data['emp_id'], $date, "Open", "", "", $reference_no);
             $this->sendTelegram($data, $last_id);
         }
 
@@ -1199,8 +1199,8 @@ class Ticket_m extends CI_Model
 
         if($data){
             $requestor = $this->core_layout->getEmployeeData($data['requestor']);
-            $sub_category = $data['sub_category'] || $data['sub_category'] != 0 ? ' - '.$this->getCategoryLabel($data['sub_category']) : "";
-            $category = $this->getCategoryLabel($data['category']) . $sub_category;
+            $sub_category = $data['sub_category'] || $data['sub_category'] != 0 ? ' - '.$this->getCategoryLabel($data['sub_category'],"sub-category") : "";
+            $category = $this->getCategoryLabel($data['category'],"category") . $sub_category;
             $department = $this->getDepartmentName($data['department_id']);
             $telegram_msg .= '<b>Reference #</b>: '.strtoupper($data['reference_no']).chr(10);
             $telegram_msg .= '<b>Priority</b>: '.strtoupper($data['priority']).chr(10);
