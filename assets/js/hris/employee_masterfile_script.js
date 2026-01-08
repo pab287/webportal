@@ -589,7 +589,7 @@ if (typeof _tempContentData !== "undefined") {
             if(vmData.employee_status) {
                 if (vmData.employee_status.toLowerCase() === 'active') {
                     status.append(activeStatusOptions);
-                    currentResignDate = "";
+                    // currentResignDate = "";
                 } else if (vmData.employee_status.toLowerCase() === 'inactive') {
                     status.append(inactiveStatusOptions);
                 } else {
@@ -825,7 +825,7 @@ if (typeof _tempContentData !== "undefined") {
                         $("#m_datepicker-date_end").prop('disabled', true);
                         $("#m_datepicker-date_end_prob").val('0000-00-00');
                         $("#m_datepicker-date_end").val('0000-00-00');
-                        $("#m_datepicker-date_resign").prop("disabled", true);
+                        // $("#m_datepicker-date_resign").prop("disabled", true);
                     } else if (data.text === 'INACTIVE') {
                         $("#m_datepicker-date_resign").prop("disabled", false);
                         status.append(inactiveStatusOptions);
@@ -4849,14 +4849,14 @@ var validatePersonalEmployeeData = function () {
                 formDataObj[item.name] = item.value;
             });
             let oldDate = (currentResignDate && currentResignDate !== "null") ? currentResignDate : "";
-            let oldClassification = (currentClassification && currentClassification !== "null") ? currentClassification : "";
 
             let newDate = formDataObj.resignation_effective_date ?? ""
             let newClassification = formDataObj.employee_status ?? ""
             
             const isInactive = (newClassification || '').toLowerCase() === 'inactive';
-            if ( isInactive && (oldClassification !== newClassification || oldDate !== newDate) ) {
-                $("#m_datepicker-date_resign").attr("readonly", true);
+            console.log(isInactive , newClassification , oldDate ,newDate);
+            if ( isInactive || ( oldDate !== newDate) ) {
+                // $("#m_datepicker-date_resign").attr("readonly", true);
                 let loans = currentLoansData;
                 loans = loans.map(row => {
                     const balance = parseFloat(row.amount) - parseFloat(row.total_amount_paid);
