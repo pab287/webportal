@@ -11091,14 +11091,16 @@ class Employee_model extends CI_Model {
                 $data = array(
                     'work_status' => 'RESIGNED',
                     'employee_status' => 'Inactive',
-                    'telegram_chat_id' => '',
                     'date_end' => $now
                 );
 
                 $this->db->where('id', $row->id);
                 $update = $this->db->update($this->employeeTable, $data);
 
+
                 if($update){
+                    $this->db->where('id', $row->id);
+                    $this->db->update($this->tblUsers, array('telegram_chat_id' => '',));
                     $temp[] = $row->employee_name. ' with employee ID #'.$row->id;
                     array_push($ids, $row->id);
                 }
