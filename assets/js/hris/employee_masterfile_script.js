@@ -589,7 +589,6 @@ if (typeof _tempContentData !== "undefined") {
             if(vmData.employee_status) {
                 if (vmData.employee_status.toLowerCase() === 'active') {
                     status.append(activeStatusOptions);
-                    // currentResignDate = "";
                 } else if (vmData.employee_status.toLowerCase() === 'inactive') {
                     status.append(inactiveStatusOptions);
                 } else {
@@ -826,6 +825,8 @@ if (typeof _tempContentData !== "undefined") {
                         $("#m_datepicker-date_end_prob").val('0000-00-00');
                         $("#m_datepicker-date_end").val('0000-00-00');
                         // $("#m_datepicker-date_resign").prop("disabled", true);
+                        vmTab3.vm_tab3.resignation_effective_date = null;
+                        $("#m_datepicker-date_resign").val(null);
                     } else if (data.text === 'INACTIVE') {
                         $("#m_datepicker-date_resign").prop("disabled", false);
                         status.append(inactiveStatusOptions);
@@ -4849,13 +4850,15 @@ var validatePersonalEmployeeData = function () {
                 formDataObj[item.name] = item.value;
             });
             let oldDate = (currentResignDate && currentResignDate !== "null") ? currentResignDate : "";
+            let oldClassification = (currentClassification && currentClassification !== "null") ? currentClassification : "";
 
             let newDate = formDataObj.resignation_effective_date ?? ""
             let newClassification = formDataObj.employee_status ?? ""
             
             const isInactive = (newClassification || '').toLowerCase() === 'inactive';
-            console.log(isInactive , newClassification , oldDate ,newDate);
-            if ( isInactive || ( oldDate !== newDate) ) {
+            if(!isInactive && newDate == "" || newDate == null && oldDate == newDate){
+            }
+            else if ( oldClassification !== newClassification || oldDate !== newDate ) {
                 // $("#m_datepicker-date_resign").attr("readonly", true);
                 let loans = currentLoansData;
                 loans = loans.map(row => {
@@ -7055,7 +7058,7 @@ function sendEmail(){
         department: vmTab3.vm_tab3.department,
         level: vmTab3.vm_tab3.level,
         position: vmTab3.vm_tab3._position,
-        resign_effectivity_date: vmTab3.vm_tab3.resignation_effective_date,
+        resignation_effective_date: vmTab3.vm_tab3.resignation_effective_date,
     };
 
     $.ajax({

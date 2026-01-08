@@ -13073,8 +13073,6 @@ class Employee_model extends CI_Model {
         $ids = [4,49,8]; // 4 = FINANCE, 49 = FINANCE, 8 = HRD
         $heads = $this->getHeadEmails($ids);
         $email_content = $this->load->view("email_templates/email-active_ca.php",array("data" => $post, "loans" => $loans), true);
-        var_dump($email_content );
-        die();
         $mailer['send_to'] = $heads['data'];
         $result['status'] = $this->core_layout->send_email('core','GC & C Conyx PH','INACTIVE EMPLOYEE NOTIFICATION',$email_content,$mailer);
         if ($result['status']) {

@@ -30,7 +30,7 @@ function val($item, $key, $default = 'N/A') {
     <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
             <td align="center">
-                <table width="800" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:6px; overflow:hidden;">
+                <table width="1000" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:6px; overflow:hidden;">
                     
                     <!-- Header -->
                     <tr>
@@ -45,16 +45,19 @@ function val($item, $key, $default = 'N/A') {
                             <p>Good day,</p>
 
                             <p>
-                                Please be informed that the following employee record has been set to inactive:
+                                Please be informed that the following employee record has been set to inactive/updated resignation date:
                             </p>
 
                             <p>
-                                <?php if (!empty(val($data, 'effictivity_date'))): ?>
-                                    Effictivity Date: <?php echo val($data, 'effictivity_date'); ?>
-                                <?php endif; ?>
+                                <?php
+                                    $date = val($data, 'resignation_effective_date');
+                                    if (!empty($date) && $date !== '0000-00-00' && $date !== 'N/A') {
+                                        echo 'Effective Resignation Date: ' . date('F d, Y', strtotime($date));
+                                    }
+                                ?>
                             </p>
 
-                            <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse; font-size:14px;">
+                            <table width="100%" cellpadding="4" cellspacing="0" style="border-collapse:collapse; font-size:14px;">
                                 <tr>
                                     <td width="35%" style="border:1px solid #ddd;"><strong>EMPLOYEE NAME</strong></td>
                                     <td style="border:1px solid #ddd;"><?php echo val($data, 'fullname'); ?></td>
@@ -120,11 +123,42 @@ function val($item, $key, $default = 'N/A') {
                                             $totalAmount  += $amount;
                                             $totalPaid    += $paid;
                                             $totalBalance += $balance;
+
+                                            switch ($active) {
+                                                case 1: 
+                                                    $badgeBg   = "#17a2b8";
+                                                    $badgeText = "Active";
+                                                    break;
+                                                case 2: 
+                                                    $badgeBg   = "#28a745";
+                                                    $badgeText = "Paid";
+                                                    break;
+                                                default:
+                                                    $badgeBg   = "#ffc107";
+                                                    $badgeText = "Suspended";
+                                                    break;
+                                            }
+
                                         ?>
                                         <tr>
+
                                             <td style="border:1px solid #ddd; text-transform:uppercase; white-space:normal; word-wrap:break-word;">
                                                 <strong><?php echo htmlspecialchars($loanName); ?></strong>
+                                                <br>
+                                                <span style="
+                                                    display:inline-block;
+                                                    padding:3px 8px;
+                                                    font-size:11px;
+                                                    font-weight:bold;
+                                                    color:#ffffff;
+                                                    background-color:<?php echo $badgeBg; ?>;
+                                                    border-radius:4px;
+                                                    margin-top:4px;
+                                                ">
+                                                    <?php echo $badgeText; ?>
+                                                </span>
                                             </td>
+
                                             <td style="border:1px solid #ddd; text-align:right;">
                                                 ₱ <?php echo number_format($amount, 2); ?>
                                             </td>
