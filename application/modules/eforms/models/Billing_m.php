@@ -5310,11 +5310,11 @@ class Billing_m extends CI_Model {
     function getReportsSOA_details(){
         $resultarray = array();
         $post = $this->input->post();
-        $this->db->select("p.ref_no, b.ref_no as bill_ref_no, b.total_charges, p.created_date, p.payment_type, p.payment_details, p.received_amount, p.balance_covered, p.sub_total, p.net_payment");
+        $this->db->select("p.ref_no, b.ref_no as bill_ref_no, b.total_charges, p.created_date, p.payment_type, p.payment_details, p.received_amount, p.balance_covered, p.sub_total, p.net_payment, p.is_archive");
         $this->db->from("hydra_billing.payments as p");
         $this->db->join("hydra_billing.bills as b", "b.id = p.bill_id", "LEFT");
         $this->db->where("p.account_id", $post['id']);
-        $this->db->where("p.is_archive", "0");
+        // $this->db->where("p.is_archive", "0");
 
         if($post['selectedDate'] != 'all' AND $post['selectedDate'] != ""){ 
             $this->db->where("year(created_date)",$post['selectedDate']); 
@@ -5332,17 +5332,28 @@ class Billing_m extends CI_Model {
 
         if($query->num_rows() > 0){
             foreach($query->result_array() as $_query){
+                $balance_covered = 0;
+                $received_amount = 0;
+                $net_payment = 0;
+
+                if ($_query['is_archive'] == 0) { // means 1
+                    $balance_covered = $_query["balance_covered"];
+                    $received_amount = $_query["received_amount"];
+                    $net_payment = $_query["net_payment"];
+                }
+
                 $data = array();
                 $data["created_date"] = date('Y-m-d g:i A', strtotime($_query["created_date"]));
                 $data["payment_type"] = $_query['payment_type'];
                 $data["payment_details"] = $_query['payment_details'];
                 $data["sub_total"] = $_query["sub_total"];
-                $data["received_amount"] = $_query["received_amount"];
-                $data["balance_covered"] = $_query["balance_covered"];
-                $data["net_payment"] = $_query["net_payment"];
+                $data["received_amount"] = $received_amount;
+                $data["balance_covered"] = $balance_covered;
+                $data["net_payment"] = $net_payment;
                 $data["ref_no"] = $_query["ref_no"];
                 $data["bill_ref"] = $_query["bill_ref_no"];
                 $data["total_charges"] = $_query["total_charges"];
+                $data["is_archive"] = (int)$_query["is_archive"];
                 $resultarray[] = $data;
             }
         }

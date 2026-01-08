@@ -168,8 +168,8 @@ var tbl_reports_dialog = $("#table-reports_soa").DataTable({
     },
     searching: true,
     columns: [
-        { data: "ref_no", render: function (data) { return "<strong style='color: #525252;'>"+data+"</strong>"; } },
-        { data: "bill_ref", render: function (data) { return "<strong style='color: #525252;'>"+data+"</strong>";} },
+        { data: "ref_no", render: function (data) { return "<strong>"+data+"</strong>"; } },
+        { data: "bill_ref", render: function (data) { return "<strong>"+data+"</strong>";} },
         { data: "created_date", width: "20%", render: function (data) { return data; } },
         { data: "payment_type" },
         { data: "total_charges" },
@@ -182,13 +182,21 @@ var tbl_reports_dialog = $("#table-reports_soa").DataTable({
             }
         },
         { data: "received_amount", className: "text-right", render: function (data) {
-                return "<strong style='color: #525252;'>"+numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
+                return "<strong>"+numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
             }
         },
     ],
     select: {
      style:    'os',
      selector: 'td:first-child'
+    },
+    createdRow: function(row, data, dataIndex){
+        const is_archive = data.is_archive;
+        if (is_archive == 1) {
+            $(row).addClass('is_archived_text').find('strong').addClass('is_archived_text');
+        } else {
+            $(row).find('strong').css('color', '#525252');
+        }
     },
     buttons: [
         { 
@@ -211,19 +219,19 @@ var tbl_reports_dialog = $("#table-reports_soa").DataTable({
     "footerCallback": function ( row, data, start, end, display ) {
         var api = this.api(), data;
 
-        var totalNetPayment = api
-            .column(5)
-            .data()
-            .reduce(function (a, b) {
-                return parseFloat(a) + parseFloat(b);
-            }, 0);
+        // var totalNetPayment = api
+        //     .column(5)
+        //     .data()
+        //     .reduce(function (a, b) {
+        //         return parseFloat(a) + parseFloat(b);
+        //     }, 0);
 
-        var totalBalance = api
-            .column(6)
-            .data()
-            .reduce(function (a, b) {
-                return parseFloat(a) + parseFloat(b);
-            }, 0);
+        // var totalBalance = api
+        //     .column(6)
+        //     .data()
+        //     .reduce(function (a, b) {
+        //         return parseFloat(a) + parseFloat(b);
+        //     }, 0);
         
         var totalPayment = api
             .column(7)
@@ -237,9 +245,9 @@ var tbl_reports_dialog = $("#table-reports_soa").DataTable({
         $(api.column(1).footer()).html();
         $(api.column(2).footer()).html();
         $(api.column(3).footer()).html();
-        $(api.column(4).footer()).html('Total');
-        $(api.column(5).footer()).html('₱ '+numberWithCommas(totalNetPayment.toFixed(2)));
-        $(api.column(6).footer()).html('₱ -'+numberWithCommas(totalBalance.toFixed(2)));
+        $(api.column(6).footer()).html('Total');
+        // $(api.column(5).footer()).html('₱ '+numberWithCommas(totalNetPayment.toFixed(2)));
+        // $(api.column(6).footer()).html('₱ -'+numberWithCommas(totalBalance.toFixed(2)));
         $(api.column(7).footer()).html('₱ '+numberWithCommas(totalPayment.toFixed(2)));
     },
 });
