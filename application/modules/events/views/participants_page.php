@@ -1026,19 +1026,30 @@
                                 <span>{{emp_attendance_selected.company}} | {{emp_attendance_selected.department}}</span>
                             </div>
                         </div>
-                        <template v-for="(item, index) in employee_attendance" :key="index">
-                            <template v-for="(sch, idx) in item.schedules" :key="idx">
-                                <div class="col-4">
-                                    <div class="bg-gray p-4 mb-3" :class="sch.is_present == 1 ? 'border-success' : 'border-danger'" style="border: 2px solid; border-radius: 10px;">
-                                        <div class="m--font-boldest ">{{ sch.title }}</div>
-                                        <small class="m--font-bolder">{{ formatDateLocale2(item.event_date) }} ● {{ formatTime(sch.start,sch.end) }}</small><br/>
-                                        <small>{{ sch.location }}</small><br />
-                                        <span v-if="sch.is_present == 1" class="badge bg-success">Present</span>
-                                        <span v-else class="badge bg-danger">Absent</span>
-                                    </div>
+                        <template v-if="employee_attendance && employee_attendance.length">
+                                <template v-for="(item, index) in employee_attendance" :key="index">
+                                    <template v-for="(sch, idx) in item.schedules" :key="idx">
+                                        <div class="col-4">
+                                            <div class="bg-gray p-4 mb-3"
+                                                :class="sch.is_present == 1 ? 'border-success' : 'border-danger'"
+                                                style="border: 2px solid; border-radius: 10px;">
+                                                
+                                                <div class="m--font-boldest ">{{ sch.title }}</div>
+                                                <small class="m--font-bolder">{{ formatDateLocale2(item.event_date) }} ● {{ formatTime(sch.start,sch.end) }}</small><br/>
+                                                <small>{{ sch.location }}</small><br />
+                                                
+                                                <span v-if="sch.is_present == 1" class="badge bg-success">Present</span>
+                                                <span v-else class="badge bg-danger">Absent</span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </template>
+                            </template>
+                            <template v-else>
+                                <div class="col-12 text-center text-muted p-4">
+                                    NO ASSIGNED SCHEDULES FOUND.
                                 </div>
                             </template>
-                        </template>
                     </div>
                 </div>
                 <div class="modal-footer">

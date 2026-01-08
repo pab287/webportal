@@ -1158,6 +1158,7 @@ class Events_model extends MX_Controller {
         $this->db->from($this->eventsSched . ' a');
         $this->db->join($this->events_attendance . ' b', 'a.id = b.schedule_id AND b.participant_id = ' . $this->db->escape($participant_id), 'left');
         $this->db->where('a.event_id', $event_id);
+        $this->db->where('b.participant_id', $participant_id);
         $this->db->order_by('a.event_date', 'ASC');
         $rows = $this->db->get()->result_array();
         $grouped = [];
