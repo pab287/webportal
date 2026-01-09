@@ -958,9 +958,9 @@ class Reports extends MY_Controller {
             ->set_output(json_encode($data));
     }
 
-    function select_employee() {
+    function select_employee($type=null){
         $this->load->model("payroll/payroll_m", "payroll");
-        $data = $this->payroll->selectEmployee();
+        $data = $this->payroll->selectEmployee($type);
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));

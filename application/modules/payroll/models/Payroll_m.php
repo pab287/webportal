@@ -152,7 +152,7 @@ class Payroll_m extends CI_Model{
         return $resultset;
     }
 
-    function selectEmployee()
+    function selectEmployee($type=null)
     {
         $get = $this->input->get();
         $resultarray = array();
@@ -160,7 +160,13 @@ class Payroll_m extends CI_Model{
         $this->db->select("a.id, trim(a.firstname) as firstname, a.lastname, a.middlename, a.suffix");
         $this->db->from("gccmaster.tblemployees a");
         $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
-        $this->db->where("a.employee_status", "Active"); 
+        
+        if($type !== 'all' && $type === null){
+            $this->db->where("a.employee_status", "Active");
+        } elseif ($type !== 'all' && $type !== null) {
+            $this->db->where("a.employee_status", $type);
+        }
+
         if(is_array($companyIds) && count($companyIds) > 0){ $this->db->where_in("b.id", $companyIds); }
         if(isset($get["company_ids"]) && !is_array($get["company_ids"]) && $get["company_ids"]){
             $this->db->where("b.id", $get["company_ids"]);
