@@ -16,6 +16,10 @@
     table.dataTable tfoot tr:first-child th{ border-bottom: 4px double #000000; }
     #portlet--signatories { page-break-inside: inherit; }
 }
+
+.unpaid-ot td {
+    background-color: #EBEDF2;
+}
 </style>
 <div class="m-content">
     <div class="m-portlet m-portlet--mobile">

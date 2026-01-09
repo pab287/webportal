@@ -450,15 +450,25 @@ $(document).ready(function(){
                 render: function (data) { 
                     let html = '';
 
-                    const status = data.status.toLowerCase() == 'approved' ? 'fa-check-circle text-success' : 'fa-times-circle text-danger';
-                    const title = `Status: ${data.status.toUpperCase()}&#013;Ref #: ${data.reference_no}&#013;Created at: ${moment(data.created_at).format('YYYY-MM-DD HH:mm')}`;
-                    html = `<span class="fa ${status}" style="font-size: 22px" title="${title}"></span>`;
+                    let status = 'fa-times-circle text-danger';
+                    let title = 'No Overtime Request Found.';
+
+                    if (data) {
+                        status = data.status.toLowerCase() == 'approved' ? 'fa-check-circle text-success' : 'fa-times-circle text-danger';
+                        title = `Status: ${data.status.toUpperCase()}&#013;Ref #: ${data.reference_no}&#013;Created at: ${moment(data.created_at).format('LL')}`;
+                    }
+
+                    html = `<span class="fa ${status}" style="font-size: 18px" title="${title}"></span>`;
                     return html;
                 }
             },
-            { data: null, width: '5%', className: "text-center",
-                render: function () {
-                    return '-';
+            { data: 'is_paid', width: '5%', className: "text-center",
+                render: function (data) {
+                    let html = '';
+                    const status = data && parseInt(data) == 1 ? 'fa-check-circle text-success' : 'fa-times-circle text-danger';
+                    const title = data && parseInt(data) == 1 ? 'Paid' : 'Unpaid';
+                    html = `<span class="fa ${status}" style="font-size: 18px" title="${title}"></span>`;
+                    return html;
                 }
             },
         ], rowGroup: {
@@ -561,6 +571,10 @@ $(document).ready(function(){
             $(api.column(otAllowanceIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otAllowanceAmount) + "</span>");
             $(api.column(adjustmentIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAdjustmentAmount) + "</span>");
             $(api.column(grandTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(grandTotalAmount) + "</span>");
+        }, createdRow: function (rowEl, rowData, _index) {
+            const isPaid = rowData.is_paid && parseInt(rowData.is_paid) == 1 ? true : false;
+
+            if (!isPaid) { $(rowEl).addClass('unpaid-ot'); }
         }
     });
 

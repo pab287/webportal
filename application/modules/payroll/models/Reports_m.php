@@ -5835,6 +5835,7 @@ class Reports_m extends CI_Model{
                     $employeeRecord = (object) $this->core_layout->getEmployeeData($item->emp_id);
                     $employeeName = $employeeRecord->display_name_1 ?? 'No assigned name';
                     $totalOtHrs = $item->ot_hrs + $item->ot_ndiff_hrs;
+                    $otDetails = $this->get_ot_details($item->overtime_in, $item->emp_id);
 
                     $payrateTemp = intval($item->has_shift) === 1 ? "regular" : "rest day";
                     $payrateSetting = $this->getPayrateSetting($payrateTemp);
@@ -5880,7 +5881,8 @@ class Reports_m extends CI_Model{
                     $item->ot_adj = $this->getOTAdjustment($coverageDate, $item->emp_id);
                     $item->amount = $totalOtPayable + $nightDiffPay + $totalOtAllowance;
                     $item->total_pay = $item->amount;
-                    $item->ot_details = $this->get_ot_details($item->overtime_in, $item->emp_id);
+                    $item->ot_details = !empty((array)$otDetails) ? $otDetails : null;
+                    $item->is_paid = $this->check_ot_paid($item->overtime_in, $item->id);
                     $data[$key] = $item;
                 }
 
@@ -5923,10 +5925,7 @@ class Reports_m extends CI_Model{
             $this->db->select("reference_no, status, created_at");
             $this->db->from("gcceforms.overtime");
             $this->db->where("employee", $empId);
-
-            $this->db->group_start();
-                $this->db->where("DATE(date_from)", $date);
-            $this->db->group_end();
+            $this->db->where("DATE(date_from)", $date);
 
             $query = $this->db->get();
             if ($query->num_rows() > 0) {
@@ -5935,5 +5934,25 @@ class Reports_m extends CI_Model{
         }
 
         return $result;
+    }
+
+    protected function check_ot_paid($date, $timesheetId){
+        $isPaid = 0;
+
+        if ($timesheetId) {
+            $date = date("Y-m-d", strtotime($date));
+
+            $this->db->select("id");
+            $this->db->from($this->tbl_timesheet_overtime);
+            $this->db->where('DATE(overtime_in)', $date);
+            $this->db->where("timesheet_id", $timesheetId);
+
+            $query = $this->db->get();
+            if ($query->num_rows() > 0) {
+                $isPaid = 1;
+            }
+        }
+
+        return $isPaid;
     }
 }
