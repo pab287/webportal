@@ -5499,7 +5499,7 @@ class Reports_m extends CI_Model{
     private function getCAReportData($search, $limit, $offset, $sortBy, $sortOrder, $filterFields, $date_range) {
     $innerSql = $this->db->select("psloanpayments.*,ps.date_start,ps.date_end,ps.pay_date,ps.posted_by,ps.posted_at,d.firstname,d.middlename,d.lastname,
             CONCAT(TRIM(d.firstname),' ',TRIM(d.middlename),' ',TRIM(d.lastname)) AS fullname,
-            c.reference,
+            c.reference, c.remarks, 
             c.amount AS loan_amount,
             SUM(psloanpayments.amount_due)
                 OVER (
