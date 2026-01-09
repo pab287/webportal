@@ -1761,7 +1761,7 @@ class Reports_m extends CI_Model{
                         /*** bonus filter for weekly ***/
                     }
                 }
-
+                
                 if(is_array($employeeIds) && count($employeeIds) > 0){
                     $xDateFrom = date("F d, Y", strtotime($tempStartDate));
                     $xDateTo = date("F d, Y", strtotime($tempEndDate));
@@ -1798,8 +1798,9 @@ class Reports_m extends CI_Model{
                 if((is_array($employeePsIds) && count($employeePsIds) > 0) || (is_array($weeklyPsIds) && count($weeklyPsIds) > 0)){
                     $employeePsIds = array_unique(array_merge($employeePsIds, $weeklyPsIds));
                     if(is_array($employeePsIds) && count($employeePsIds) > 0){
+                        /*** override here ***/
+                        /*** override here ***/
                         $employeePsIds = array_map("intval", $employeePsIds);
-
                         /*** altered section ***/
                         $_tempYear = $post["filter_year"];
                         $_monthName = null;
@@ -2640,7 +2641,8 @@ class Reports_m extends CI_Model{
 
             if(is_array($psIds) && count($psIds) > 0){
                 $deductions = array();
-                $tempChunk = array_chunk($psIds, 2500, true);
+                $ctrChunk = count($psIds) > 10000 ? 2500: 500;
+                $tempChunk = array_chunk($psIds, $ctrChunk, true);
                 foreach ($tempChunk as $key => $tempIds) {
                     $tempDeductions = $this->generateContributionDeductionAdjustments($tempIds);
                     foreach ($tempDeductions as $key => $value) { $deductions[$key] = $value; }
