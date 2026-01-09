@@ -1704,9 +1704,18 @@ class Reports_m extends CI_Model{
                                 $this->db->group_end();
                         $this->db->group_end();
                         }else{
+                            $tempYear = date("Y", strtotime($tempStartDate));
+                            $_yearStartDate = date("Y-m-d", strtotime($tempYear."-01-01"));
+                            $_yearEndDate = date("Y-m-d", strtotime($tempYear."-12-31"));
                             $this->db->group_start();
-                            $this->db->where("DATE(date_start) >=", $_tempStartDate);
-                            $this->db->where("DATE(date_end) <=", $_tempEndDate);
+                                $this->db->group_start();
+                                $this->db->where("DATE(date_start) >=", $_tempStartDate);
+                                $this->db->where("DATE(date_end) <=", $_tempEndDate);
+                                $this->db->group_end();
+                                $this->db->or_group_start();
+                                $this->db->where("DATE(date_start) >=", $_yearStartDate);
+                                $this->db->where("DATE(date_end) <=", $_yearEndDate);
+                                $this->db->group_end();
                             $this->db->group_end();
                         }
                         
@@ -1810,7 +1819,7 @@ class Reports_m extends CI_Model{
 
                         $this->setGeneratedTaxableIncome($employeePsIds, $tempParams);
                         /*** altered section ***/
-                        
+                                                
                         $resultset["response"] = true;
                         $resultset["data"] = $employeePsIds;
                         $resultset["is_weekly_employees"] = $isWeeklyEmployees;
@@ -2631,7 +2640,7 @@ class Reports_m extends CI_Model{
 
             if(is_array($psIds) && count($psIds) > 0){
                 $deductions = array();
-                $tempChunk = array_chunk($psIds, 500, true);
+                $tempChunk = array_chunk($psIds, 2500, true);
                 foreach ($tempChunk as $key => $tempIds) {
                     $tempDeductions = $this->generateContributionDeductionAdjustments($tempIds);
                     foreach ($tempDeductions as $key => $value) { $deductions[$key] = $value; }
