@@ -171,7 +171,7 @@
                 </button>
             </div>
             <!-- payroll summary filters -->
-            <form id="frm-journal-report" method="post" action="<?php echo site_url("payroll/reports/generate_overtime_summary"); ?>">
+            <form id="frm-journal-report" method="post" action="<?php echo site_url("payroll/reports/generate_custom_overtime_summary"); ?>">
                 <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
                 <div  class="modal-body">
                     <div class="row">

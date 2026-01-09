@@ -323,24 +323,25 @@ $("#payroll_group").select2({
 $(document).ready(function(){
     dtOTSummary = $('#tbl-overtime-summary').DataTable({
         dom: "rt",
-        serverSide: true,
-        processing: true,
+        serverSide: false,
+        processing: false,
         destroy: true,
         paging: false,
         searching: false,
         ordering: false,
         footer: true,
-        ajax: {
-            url: baseUrl('payroll/reports/get_custom_overtime_summary'),
-            type: 'POST',
-            dataType: 'JSON',
-            data: function (d) {
-                d.csrf_token = _csrf_hash;
-                d.ids = _tempIds;
-                d.clear_table = _clearTable;
-                d.filters = _tempFilter;
-            }, 
-        }, buttons: [{
+        // ajax: {
+        //     url: baseUrl('payroll/reports/get_custom_overtime_summary'),
+        //     type: 'POST',
+        //     dataType: 'JSON',
+        //     data: function (d) {
+        //         d.csrf_token = _csrf_hash;
+        //         d.ids = _tempIds;
+        //         d.clear_table = _clearTable;
+        //         d.filters = _tempFilter;
+        //     }, 
+        // }, 
+        buttons: [{
             extend: 'excel',
             footer: true,
             customize: function (xlsx) {
@@ -597,7 +598,22 @@ $(document).ready(function(){
             let formData = $(currentForm).serialize();
             if(propDisabled){ tempEmployeeFilter.prop("disabled", true); }
             
-            getScriptRendering(formUrl, formData, currentForm);
+            $.ajax({
+                url: formUrl,
+                type: "post",
+                dataType: "json",
+                data: formData,
+                beforeSend: function () {
+                    $(currentForm)
+                        .find(".btn-submit")
+                        .addClass("m-btn--custom m-loader m-loader--light m-loader--right")
+                        .prop("disabled", true);
+                },
+                success: function (json) {
+                    console.log(json);
+                }
+            });
+
             return false;
         }
     });

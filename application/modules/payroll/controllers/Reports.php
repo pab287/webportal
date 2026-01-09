@@ -1076,10 +1076,10 @@ class Reports extends MY_Controller {
         $this->load->view("core/templates/footer");
     }
 
-    function get_custom_overtime_summary(){
-        $data = $this->reports->getCustomOvertimeSummaryRequest();
-        $this->output
-        ->set_content_type('json')
-        ->set_output(json_encode($data));
+    function generate_custom_overtime_summary(){
+        $data = $this->reports->generateCustomOvertimeSummary();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
     }
 }
