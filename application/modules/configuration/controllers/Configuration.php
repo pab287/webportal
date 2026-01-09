@@ -315,4 +315,9 @@ class Configuration extends MY_Controller {
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
+    public function test_telegram_protocol(){
+        $data = $this->telegram->testTelegramProtocol();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
 }

@@ -58,9 +58,8 @@
                                     <th>Name</th>
                                     <th>Description</th>
                                     <th>Owner</th>
-                                    <th>Status</th>
                                     <th>Module</th>
-                                    <th>Bot Chat Id</th>
+                                    <th>Group Chat ID</th>
                                     <th>Token</th>
                                     <th>Created At</th>
                                     <th>Action</th>
