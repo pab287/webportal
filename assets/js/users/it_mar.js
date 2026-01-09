@@ -8,7 +8,7 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
         _employee = _tempContentData.employee;
     }
 }
-const allEmployees = _employee;
+let allEmployees = _employee;
 
 $(document).on('click', '.btnArchive', function (e) {
     e.preventDefault();
@@ -34,6 +34,7 @@ $(document).ready(function () {
         serverSide: true,
         processing: true,
         searching: false,
+        rowId: 'id',
         ajax: {
             url: baseUrl("users/get_itmar_list"),
             type: "post",
@@ -73,17 +74,31 @@ $(document).ready(function () {
                 data: null,
                 sortable: false,
                 render: function (data, type, row, meta) {
-                    const isRestore = row.is_archive == 1;
+                    const isArchived = row.is_archive == 1;
+            
                     return `
+                        ${!isArchived ? `
+                            <button type="button"
+                                class="btn btn-default m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill btnEdit"
+                                data-toggle="m-tooltip"
+                                data-placement="bottom"
+                                data-skin="dark"
+                                data-original-title="Edit"
+                                data-delay='{"show":300}'
+                                onclick="editRow(${row.id})">
+                                <i class="la la-eye"></i>
+                            </button>
+                        ` : ''}
+            
                         <button type="button"
-                            class="btn btn-default m-btn m-btn--hover-${isRestore ? 'success' : 'danger'} m-btn--icon m-btn--icon-only m-btn--pill btnDelete ml-1"
+                            class="btn btn-default m-btn m-btn--hover-${isArchived ? 'success' : 'danger'} m-btn--icon m-btn--icon-only m-btn--pill btnDelete ml-1"
                             data-toggle="m-tooltip"
                             data-placement="bottom"
                             data-skin="dark"
-                            data-original-title="${isRestore ? 'Restore' : 'Archive'}"
-                            onclick="archiveRow(${row.id})"
-                            data-delay='{"show":300}'>
-                            <i class="la ${isRestore ? 'la-reply' : 'la-archive'}"></i>
+                            data-original-title="${isArchived ? 'Restore' : 'Archive'}"
+                            data-delay='{"show":300}'
+                            onclick="archiveRow(${row.id})">
+                            <i class="la ${isArchived ? 'la-reply' : 'la-archive'}"></i>
                         </button>
                     `;
                 }
@@ -124,6 +139,12 @@ $.validate({
             success: function (response) {
                 if (response.success) {
                     toastr.success(response.message);
+                    allEmployees = response.employees;
+                    $('#new_itmar')[0].reset();
+                    $('#employee').val(null).trigger('change');
+                    $('#position').val('');
+                    $('#department').val('');
+                    $('#ass_loc').val('');
                     $('#newITMARModal').modal('hide');
                     ITMar.ajax.reload();
                 } else {
@@ -240,3 +261,38 @@ $('#date_range').on('cancel.daterangepicker', function(ev, picker) {
     selected = {}; 
     ITMar.ajax.reload();
 });
+
+$("#edit_employee").select2({
+    width: "100%",
+    dropdownParent: $("#editITMARModal"),
+    placeholder: "Select an option",
+    data: allEmployees
+});
+
+$("#edit_employee").on("change", function () {
+    const data = $("#edit_employee").select2("data")[0];
+
+    if (!data) {
+        selectedEmpId = null;
+        $("#edit_position, #edit_department, #edit_ass_loc").val("");
+        return;
+    }
+
+    selectedEmpId = data.id || null;
+    $("#edit_position").val(data.position || "");
+    $("#edit_department").val(data.department || "");
+    $("#edit_ass_loc").val(
+        data.site_locations ? data.site_locations.split("|").join(", ") : ""
+    );
+});
+
+function editRow(id){
+    let rowData = ITMar.row('#'+id).data();
+    $('#editITMARModal').modal('show');
+    $('#edit_purpose').val(rowData.purpose);
+    $("#edit_employee").val(rowData.emp_id).trigger("change");
+    $('input[name="edit_app_name"][value="' + rowData.app_name + '"]').prop('checked', true);
+    $("#edit_employee").prop("disabled", true);
+    $('input[name="edit_app_name"]').prop('disabled', true);
+}
+

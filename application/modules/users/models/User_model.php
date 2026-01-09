@@ -1065,6 +1065,7 @@ class User_model extends CI_Model{
         if($save){
             $resultArray['success'] = true;
             $resultArray['message'] = "Successfully saved itmar request.";
+            $resultArray['employees'] = $this->select2Employee();
         }else{
             $resultArray['success'] = false;
             $resultArray['message'] = "Failed to save itmar request.";

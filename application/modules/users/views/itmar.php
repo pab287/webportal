@@ -168,3 +168,67 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="editITMARModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title" id="exampleModalLabel">
+                    IT MOBILE APPLICATION FORM
+                </h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">
+                        ×
+                    </span>
+                </button>
+            </div>
+            <form id="edit_itmar" method="post" onsubmit="event.preventDefault();">
+                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                <div class="modal-body">
+                    <div class="form-group m-form__group row col">
+                        <div class="col-6 d-flex align-items-center">
+                            <label class="m-radio m-radio--brand">
+                                <input type="radio" name="edit_app_name" value="GCCTIME">
+                                GCCTIME Mobile APP
+                                <span></span>
+                            </label>
+                        </div>
+                        <div class="col-6 d-flex align-items-center">
+                            <label class="m-radio m-radio--brand">
+                                <input type="radio" name="edit_app_name" value="TGCloudBAS">
+                                TG CloudBAS
+                                <span></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row align-items-center col">
+                        <label for="employee" class="col-sm-12 col-xs-12 col-md-3 form-label required mb-0">Requested By:</label>
+                        <div class="col-sm-12 col-xs-12 col-md-9">
+                            <select name="employee" id="edit_employee" data-validation="required">
+                                <option></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group m-form__group row align-items-center col">
+                        <label for="position" class="col-2 form-label mb-0">POSITION: </label>
+                        <input type="text" name="position" id="edit_position" class="col-10 form-control m-input" readonly>
+                    </div>
+                    <div class="m-separator m-separator--dashed"></div>
+                    <div class="form-group m-form__group row align-items-center col">
+                        <label for="department" class="col-2 form-label mb-0">DEPARTMENT: </label>
+                        <input type="text" name="department" id="edit_department" class="col-10 form-control m-input" style="padding-right: 15px;" readonly>
+                    </div>
+                    <div class="form-group m-form__group row col">
+                        <label for="ass_loc" class="col-12 form-label">ASSIGNED LOCATION/S: </label>
+                        <input name="ass_loc" class="col-12 form-control m-input" id="edit_ass_loc" readonly>
+                    </div>
+                    <div class="m-separator m-separator--dashed"></div>
+                    <div class="form-group m-form__group row col">
+                        <label for="purpose" class="col-12 form-label">PURPOSE: </label>
+                        <textarea id="edit_purpose" name="purpose" class="col-12 form-control m-input auto-resize" rows="4" data-validation="required" style="resize:none; overflow-y:auto;" readonly></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
