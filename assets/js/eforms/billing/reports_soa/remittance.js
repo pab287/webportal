@@ -1,531 +1,8 @@
-const DataCollection = new Vue();
-
-// Employee & Daterange filter Remittance Filter Vue Instance
-const vm_remit_filter = new Vue({
-    el: "#remit_filter",
-    data: {
-        selectedEmployee: [],
-        date_range_picked: null,
-        date_range_from: null,
-        date_range_to: null,
-    },
-    watch: {
-
-        // This will trigger skeleton loader in new remit
-        selectedEmployee: {
-            handler(newVal, oldVal) {
-                vm_cash_report.daily_cash_report = null;
-                vm_cash_report.total_per_cashier = null;
-            },
-            deep: true
-        },
-
-        // This will trigger skeleton loader in new remit
-        date_range_picked(newVal, oldVal) {
-            if (!newVal) {
-                this.date_range_from = null;
-                this.date_range_to = null;
-
-                vm_cash_report.daily_cash_report = null;
-                vm_cash_report.total_per_cashier = null;
-            }
-        }
-    },
-    mounted() {
-        this.initializeSelect2('#employee');
-        this.initializeDateRangePicker('#date-picker');
-    },
-    methods: {
-        initializeSelect2(el_id) {
-            const vm = this;
-
-            $(el_id).select2({
-                placeholder: 'SELECT AN OPTION',
-                dropdownParent: $("#modal_new_remittance"),
-                width: '100%',
-                minimumInputLength: 3,
-                allowClear: true,
-                ajax: {
-                    url: baseUrl("eforms/billing/get_employee_collector"),
-                    global: false,
-                    processResults: function (data) {
-                        return data;
-                    }
-                }
-            }).on('change', function () {
-                vm.selectedEmployee = $(this).val();
-
-                // Emit to remit data collection
-                DataCollection.$emit('cashier', vm.selectedEmployee);
-            }).on('select2:select', function(e) {
-                vm.selectedEmployee = $(this).val() || [];
-            }).on('select2:unselect', function(e) {
-                vm.selectedEmployee = $(this).val() || [];
-            });
-        },
-
-        initializeDateRangePicker(el_id) {
-            const vm = this;
-
-            $(el_id).daterangepicker({
-                autoUpdateInput: false,
-                buttonClasses: 'm-btn btn',
-                applyClass: 'btn-primary',
-                cancelClass: 'btn-secondary',
-                maxDate: moment().format('MM/DD/YYYY'),
-                locale: {
-                    format: 'MM/DD/YYYY'
-                }
-            }).on('apply.daterangepicker', function (ev, picker) {
-                const tempStartDate = picker.startDate.format('MMM DD, YYYY');
-                const tempEndDate = picker.endDate.format('MMM DD, YYYY');
-                vm.date_range_picked = tempStartDate + ' - ' + tempEndDate;
-
-                vm.date_range_from = picker.startDate.format('YYYY-MM-DD');
-                vm.date_range_to = picker.endDate.format('YYYY-MM-DD');
-
-                // Emit to remit data collection
-                DataCollection.$emit('date_range_selected', vm.date_range_picked);
-                DataCollection.$emit('date_range_from', vm.date_range_from);
-                DataCollection.$emit('date_range_to', vm.date_range_to);
-
-            }).on('cancel.daterangepicker', function (ev, picker) {
-                vm.date_range_picked = null;
-                vm.date_range_from = null;
-                vm.date_range_to = null;            
-            });
-
-            vm.date_range_picked = null;
-        },
-
-        generateReport() {
-            const vm = this;
-
-            vm_cash_report.daily_cash_report = null;
-            vm_cash_report.daily_cash_report = null;
-
-            if (!vm.selectedEmployee || !vm.date_range_picked) {
-                toastr.error('Please select Employee and Date Range.', 'Input Required');
-                return;
-            }
-
-            $.ajax({
-                url: baseUrl("eforms/billing/remittance_date_payments_selected/"),
-                type: "POST",
-                dataType: "json",
-                data: {
-                    csrf_token: _csrf_hash,
-                    id: vm.selectedEmployee,
-                    date: vm.date_range_picked
-                },
-                success: function(response) {
-                    vm_cash_report.daily_cash_report = response.daily_cash_report || [];
-                    vm_cash_report.total_per_cashier = response.grand_total_per_cashier.cashier || [];
-                    vm_remit_data.payment_collected = response.grand_total_per_cashier.totalCash || 0;
-                    vm_remit_data.payment_ids = response.all_payment_ids || [];
-
-                    if (vm.selectedEmployee.length == 0) {
-                        vm_remit_data.cashier = response.cashier_ids;
-                    }
-                },
-                error: function (xhr, error, code) {
-                    console.log(error);
-                }
-            });
-        },
-    }
-});
-
-const vm_cash_report = new Vue({
-    el: "#daily_cash_report_app",
-    data: {
-        daily_cash_report: null,
-        total_per_cashier: null,
-    },
-    methods: {
-        numberWithCommas(data) {
-            return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        },
-
-        // reset table & remittance input fields
-        resetTable_and_inputs() {
-            this.table.clear().draw();
-
-            $('#tbl-payment_collection_wrapper .dataTables_scrollFoot tfoot td').each(function () {
-                $(this).html('');
-            });
-
-            Object.assign(vm_remit_data.$data, {
-                deposit_amount: null,
-                payment_collected: null,
-                variance: null,
-                deposit_date: null,
-            });
-        },
-    }
-});
-
-const vm_remit_data = new Vue({
-    el: "#remit_inputs",
-    data: {
-        cashier: null,
-        date_range_selected: null,
-        date_range_from: null,
-        date_range_to: null,
-        payment_ids: [],
-        deposit_amount: null,
-        payment_collected: null,
-        variance: null,
-        deposit_date: null,
-    },
-    mounted() {
-        this.initializeDatePicker('#deposit_date');
-        this.initializeInputMask(['deposit', 'payment_collected']);
-        this.initializeInputMaskNegative(['variance']);
-    },
-    created() {
-        DataCollection.$on('cashier', (cashier_id) => {
-            this.cashier = cashier_id;
-        });
-
-        DataCollection.$on('date_range_selected', (date_range_selected) => {
-            this.date_range_selected = date_range_selected;
-        });
-
-        DataCollection.$on('date_range_from', (date_range_from) => {
-            this.date_range_from = date_range_from;
-        });
-
-        DataCollection.$on('date_range_to', (date_range_to) => {
-            this.date_range_to = date_range_to;
-        });
-
-        DataCollection.$on('payment_ids', (payment_ids) => {
-            this.payment_ids = payment_ids;
-        });
-
-        DataCollection.$on('payment_collected', (payment_collected) => {
-            this.payment_collected = payment_collected;
-        });
-    },
-    watch: {
-        deposit_amount() {
-            this.calculateVariance();
-        },
-        payment_collected() {
-            this.calculateVariance();
-        }
-    },
-    methods: {
-        initializeDatePicker(el_id) {
-            const vm = this;
-            $(el_id).datepicker({
-                todayHighlight: true,
-                orientation: "bottom left",
-                templates: {
-                    leftArrow: '<i class="la la-angle-left"></i>',
-                    rightArrow: '<i class="la la-angle-right"></i>'
-                },
-                format: "mm/dd/yyyy",     // Format for month/day/year
-                viewMode: "days",         // Default view to show calendar days
-                minViewMode: "days",      // Minimum selectable view is days
-                autoclose: true,
-                endDate: new Date(),
-            }).on('changeDate', function (e) {
-                vm.deposit_date = $(this).val(); // ← update Vue data
-            });
-        },
-
-        calculateVariance() {
-            const deposit = parseFloat(this.deposit_amount) || 0;
-            const collected = parseFloat(this.payment_collected) || 0;
-            this.variance = (collected - deposit).toFixed(2);
-        },
-
-        initializeInputMask(ids) {
-            Inputmask.extendAliases({
-                pesos: {
-                    groupSeparator: ".",
-                    alias: "numeric",
-                    placeholder: "0",
-                    autoGroup: true,
-                    digits: 2,
-                    digitsOptional: false,
-                    clearMaskOnLostFocus: false,
-                    autoUnmask: true,
-                    rightAlign: true,
-                    inputmode: "decimal",
-                    allowMinus: false,
-                    oncomplete: function () {
-                        const event = new Event('input', { bubbles: true });
-                        this.dispatchEvent(event);
-                    },
-                    onincomplete: function () {
-                        const event = new Event('input', { bubbles: true });
-                        this.dispatchEvent(event);
-                    },
-                    oncleared: function () {
-                        const event = new Event('input', { bubbles: true });
-                        this.dispatchEvent(event);
-                    }
-                },
-            });
-
-            ids.forEach(id => {
-                Inputmask("pesos").mask(document.getElementById(id));
-            });
-        },
-
-        initializeInputMaskNegative(ids) {
-            Inputmask.extendAliases({
-                pesos_negative: {
-                    groupSeparator: ".",
-                    alias: "numeric",
-                    placeholder: "0",
-                    autoGroup: true,
-                    digits: 2,
-                    digitsOptional: false,
-                    clearMaskOnLostFocus: false,
-                    autoUnmask: false,
-                    rightAlign: true,
-                    inputmode: "decimal",
-                    allowMinus: true, // allow negative values for clearing_entry
-                    oncomplete: function () {
-                        const event = new Event('input', { bubbles: true });
-                        this.dispatchEvent(event);
-                    },
-                    onincomplete: function () {
-                        const event = new Event('input', { bubbles: true });
-                        this.dispatchEvent(event);
-                    },
-                    oncleared: function () {
-                        const event = new Event('input', { bubbles: true });
-                        this.dispatchEvent(event);
-                    }
-                }
-            });
-
-            ids.forEach(id => {
-                Inputmask("pesos_negative").mask(document.getElementById(id));
-            });
-        }
-    }
-});
-
-const vm_save_remit = new Vue({
-    el: "#remit_form_btn",
-    data: {
-        remarksApproved: false,
-        remarksText: '',
-    },
-    methods: {
-        save_remittance() {
-            const data = vm_remit_data.$data;
-            const vm = this;
-            
-            // Verify everything first
-            if (data.deposit_amount === null || data.deposit_date === null || data.cashier === null || data.date_range_selected === null) {
-                toastr.error('Please fill in required fields.', 'Input Required');
-                return;
-            }
-
-            // Check for variance if short or over
-            const variance = data.variance;
-
-            if (variance > 0 && !this.remarksApproved) {
-                this.openRemarks();
-                return;
-            }
-
-            $.ajax({
-                url: baseUrl("eforms/billing/save_remit/"),
-
-                type: "POST",
-                dataType: "json",
-                data: {
-                    csrf_token: _csrf_hash,
-                    cashier: data.cashier,
-                    date_range_selected: data.date_range_selected,
-                    date_range_from: data.date_range_from,
-                    date_range_to: data.date_range_to,
-                    payment_ids: data.payment_ids,
-                    deposit_amount: data.deposit_amount,
-                    payment_collected: data.payment_collected,
-                    variance: data.variance,
-                    deposit_date: data.deposit_date,
-                    remarks: this.remarksText,
-                },
-                success: function(response) {
-                    const res = response || [];
-                    if (res.status) {
-                        toastr.success('Remittance saved successfully.', 'Success');
-
-                        vm.clearForm();
-                    } else {
-                        toastr.error(res.message || 'Failed to save remittance.', 'Error');
-                    }
-
-                    tbl_remittance.ajax.reload();
-                },
-                error: function (xhr, error, code) {
-                    toastr.error(res.message || 'Failed to save remittance. (Ajax Error)', 'Error');
-                }
-            });
-        },
-
-        openRemarks() {
-            const minChars = 30;
-
-            Swal.fire({
-                title: "Remarks",
-                input: "textarea",
-                html: `
-                    <span class="text-danger">
-                        Deposit does not match the total payment collected. Please provide a remarks.
-                    </span>
-                    <div style="margin-top:8px; font-size:12px; color:#666;">
-                        <span id="charCount">0</span> / ${minChars} required
-                    </div>
-                `,
-                inputAttributes: {
-                    autocapitalize: "off"
-                },
-                showCancelButton: false,
-                confirmButtonText: "Save",
-                confirmButtonColor: "#36a3f7",
-                allowOutsideClick: false,
-                target: document.querySelector('.modal.show') || document.body,
-                didOpen: () => {
-                    const textarea = Swal.getInput();
-                    const charCount = document.getElementById("charCount");
-                    const saveBtn = Swal.getConfirmButton();
-
-                    // Disable save initially
-                    saveBtn.disabled = true;
-
-                    textarea.addEventListener("input", () => {
-                        const len = textarea.value.length;
-                        charCount.textContent = len;
-
-                        // Enable save only if min length is reached
-                        saveBtn.disabled = len < minChars;
-                    });
-                },
-                preConfirm: (value) => {
-                    if (value.length < minChars) {
-                        Swal.showValidationMessage(`Remarks must be at least ${minChars} characters long`);
-                    } else {
-                        this.remarksApproved = true;
-                        this.remarksText = value.trim(); // store in variable
-
-                        // Trigger submit when remarks is approved
-                        this.save_remittance();
-                    }
-                }
-            });
-        },
-
-        clearForm() {
-            // Reset all Vue instances
-            const a = vm_remit_filter.$data;
-            const b = vm_remit_data.$data;
-
-            Object.assign(a, {
-                selectedEmployee: null,
-                date_range_picked: null,
-                date_range_from: null,
-                date_range_to: null,
-            });
-
-            Object.assign(b, {
-                cashier: null,
-                date_range_selected: null,
-                date_range_from: null,
-                date_range_to: null,
-                payment_ids: [],
-                deposit_amount: null,
-                payment_collected: null,
-                variance: null,
-                deposit_date: null,
-            });
-
-            this.remarksApproved = false;
-            this.remarksText = '';
-
-            // Reset Employee Select2 and Date Range Picker
-            $('#remit_filter #employee').val(null).trigger('change');
-            $('#remit_filter #date-picker').data('daterangepicker').setStartDate(moment());
-            $('#remit_filter #date-picker').data('daterangepicker').setEndDate(moment());
-            $('#remit_filter #date-picker').val('');
-
-            $('#tbl-payment_collection_wrapper .dataTables_scrollFoot tfoot td').each(function () {
-                $(this).html('');
-            });
-
-            // Close Modal
-            $('#modal_new_remittance').modal('hide');
-        }
-    }
-});
-
-const vm_remittance_view = new Vue({
-    el: "#remittance_details",
-    data: {
-        ref_no: '##############',
-        cashier: '',
-        depositor: '*************',
-        date_deposit: '0000-00-00',
-        total_collection: 0.00,
-        deposit: 0.00,
-        variance: 0.00,
-        variance_color: '',
-        variance_label_text_color: '',
-        variance_value_text_color: '',
-        date_range: '0000-00-00 to 0000-00-00',
-        remarks_text: '',
-        daily_cash_report: [],
-        grand_total_per_cashier: [],
-    },
-    methods: {
-        numberWithCommas(data) {
-            return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        },
-    }
-});
-
-$('#modal_view_remittance').on('hidden.bs.modal', function () {
-    vm_save_remit.clearForm();
-
-    Object.assign(vm_remittance_view.$data, {
-        ref_no: '##############',
-        cashier: '',
-        depositor: '*************',
-        date_deposit: '0000-00-00',
-        total_collection: 0.00,
-        deposit: 0.00,
-        variance: 0.00,
-        variance_color: '',
-        variance_label_text_color: '#8E8E93',
-        variance_value_text_color: '#7f7f83',
-        date_range: '0000-00-00 to 0000-00-00',
-        remarks_text: '',
-        daily_cash_report: [],
-        grand_total_per_cashier: [],
-    });
-
-    $('#remarks_wrap').hide();
-});
-
-$('#modal_new_remittance').on('hidden.bs.modal', function () {
-    vm_save_remit.clearForm();
-});
-
-// Remittance table
 // Datatable start    
-const initReadingStartDate = moment();
-const initReadingEndDate = moment();
-let selectedReadingStartDate = null;
-let selectedReadingEndDate = null;
+const init_payment_start_date = moment();
+const init_payment_end_date = moment();
+let selected_payment_start_date = null;
+let selected_payment_end_date = null;
 
 let search_val = "";
 const tbl_remittance = $('#tbl-remittance').DataTable({
@@ -539,15 +16,15 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
     ajax: {
         url: baseUrl("eforms/billing/remittance_records/"),
         type: "post",
-        global: true,
+        global: false,
         dataType: "json",
         data: function(d) {
             d.csrf_token = _csrf_hash;
             d.search['value'] = search_val;
 
-            if (selectedReadingStartDate && selectedReadingEndDate) {
-                d.startDate = moment(selectedReadingStartDate).format("YYYY-MM-DD");
-                d.endDate = moment(selectedReadingEndDate).format("YYYY-MM-DD");
+            if (selected_payment_start_date && selected_payment_end_date) {
+                d.startDate = moment(selected_payment_start_date).format("YYYY-MM-DD");
+                d.endDate = moment(selected_payment_end_date).format("YYYY-MM-DD");
             } else {
                 d.startDate = '';
                 d.endDate = '';
@@ -606,6 +83,14 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
             targets: [0, 1, 2, 3, 4, 5, 6, 7, 8]
         },
         {
+            targets: [0, 1, 5, 6, 7, 8, 9],
+            className: "text-center",
+        },
+        {
+            targets: [2, 3, 4],
+            className: "text-right",
+        },
+        {
             data: null,
             defaultContent: "",
             targets: -1,
@@ -615,7 +100,7 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
         {
             targets: "_all",
             createdCell: function (td) {
-                $(td).addClass('v-middle text-center');
+                $(td).addClass('v-middle');
             }
         }
     ],
@@ -639,6 +124,36 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
         if (is_archived == 1) {
             $(row).css('background-color', '#f4516c').addClass('is_archived');
         }
+    },
+    "footerCallback": function ( row, data, start, end, display ) {
+        var api = this.api(), data;
+        let variance_total_collected = 0;
+        let variance_total_deposit = 0;
+        let variance_total = 0;
+
+        // Total Payment
+        const total_collection = api
+            .column( 2 )
+            .data()
+            .reduce( function (a, b) {
+                return parseFloat(a) + parseFloat(b);
+            }, 0 );
+        variance_total_collected = total_collection;
+        $( api.column( 1 ).footer() ).html('<b class="d-block text-center">Total</b>');
+        $( api.column( 2 ).footer() ).html('<b class="d-block text-right">'+g_numberWithCommas(parseFloat(total_collection).toFixed(2))+'</b>');
+
+        // Total Balance Covered
+        const total_deposit = api
+            .column( 3 )
+            .data()
+            .reduce( function (a, b) {
+                return parseFloat(a) + parseFloat(b);
+            }, 0 );
+        variance_total_deposit = total_deposit;
+        $( api.column( 3 ).footer() ).html('<b class="d-block text-right">'+g_numberWithCommas(parseFloat(total_deposit).toFixed(2))+'</b>');
+
+        variance_total = total_collection - total_deposit;
+        $( api.column( 4 ).footer() ).html('<b class="d-block text-right">'+g_numberWithCommas(parseFloat(variance_total).toFixed(2))+'</b>');
     }
 });
 // Datatable end
@@ -766,12 +281,12 @@ $('#billing-date-picker').daterangepicker({
     buttonClasses: 'm-btn btn',
     applyClass: 'btn-primary',
     cancelClass: 'btn-secondary',
-    startDate: initReadingStartDate,
-    endDate: initReadingEndDate,
+    startDate: init_payment_start_date,
+    endDate: init_payment_end_date,
     format: "MMM. DD, YYYY"
 }, function (start, end, label) {
-    selectedReadingStartDate = start;
-    selectedReadingEndDate = end;
+    selected_payment_start_date = start;
+    selected_payment_end_date = end;
 
     let _label = "<strong>" + start.format("MMM. DD, YYYY") + "</strong> to <strong>" + end.format("MMM. DD, YYYY") + "</strong>";
 
@@ -780,8 +295,462 @@ $('#billing-date-picker').daterangepicker({
 }).on('cancel.daterangepicker', function(ev, picker) {
     $(".selected-filter", $('#billing-date-picker')).text('Date Filter');
 
-    selectedReadingStartDate = null;
-    selectedReadingEndDate = null;
+    selected_payment_start_date = null;
+    selected_payment_end_date = null;
 
     tbl_remittance.ajax.reload();
+});
+
+// Reset new remittance form vue instances
+// ===============================================================================
+$('#modal_new_remittance').on('hidden.bs.modal', function () {
+    vm_remit.clear_form_instances();
+});
+
+
+// Reset view remittance form vue instances
+// ===============================================================================
+$('#modal_view_remittance').on('hidden.bs.modal', function () {
+    Object.assign(vm_remittance_view.$data, {
+        ref_no: '##############',
+        cashier: '',
+        depositor: '*************',
+        date_deposit: '0000-00-00',
+        total_collection: 0.00,
+        deposit: 0.00,
+        variance: 0.00,
+        variance_color: '',
+        variance_label_text_color: '#8E8E93',
+        variance_value_text_color: '#7f7f83',
+        date_range: '0000-00-00 to 0000-00-00',
+        remarks_text: '',
+        daily_cash_report: [],
+        grand_total_per_cashier: [],
+    });
+
+    $('#remarks_wrap').hide();
+});
+
+// Vue Instance
+// ===============================================================================
+const vm_remit = new Vue({
+    el: '#remittance_input',
+    data: {
+        cashiers: [],
+        date_range_picked: null,
+        date_range_from: null,
+        date_range_to: null,
+
+        deposit_amount: null,
+        payment_collected: null,
+        variance: null,
+        deposit_date: null,
+
+        payment_ids: [],
+    },
+    mounted() {
+        this.initialize_select2();
+        this.initialize_date_picker();
+        this.initialize_date_range_picker();
+        this.initialize_input_mask(['deposit', 'payment_collected']);
+        this.initialize_input_mask_negative(['variance']);
+    },
+    watch: {
+        deposit_amount() {
+            this.calculated_variance();
+        },
+        payment_collected() {
+            this.calculated_variance();
+        }
+    },
+    methods: {
+        initialize_select2() {
+            const vm = this;
+
+            $('#employee').select2({
+                placeholder: 'SELECT AN OPTION',
+                dropdownParent: $("#modal_new_remittance"),
+                width: '100%',
+                minimumInputLength: 3,
+                allowClear: true,
+                ajax: {
+                    url: baseUrl("eforms/billing/get_employee_collector"),
+                    global: false,
+                    processResults: function (data) {
+                        return data;
+                    }
+                }
+            }).on('change', function () {
+                vm.cashiers = $(this).val();
+            }).on('select2:select', function(e) {
+                vm.cashiers = $(this).val() || [];
+            }).on('select2:unselect', function(e) {
+                vm.cashiers = $(this).val() || [];
+            });
+        },
+
+        initialize_date_range_picker() {
+            const vm = this;
+
+            vm.date_range_picked = null;
+
+            $('#date-picker').daterangepicker({
+                autoUpdateInput: false,
+                buttonClasses: 'm-btn btn',
+                applyClass: 'btn-primary',
+                cancelClass: 'btn-secondary',
+                maxDate: moment().format('MM/DD/YYYY'),
+                locale: {
+                    format: 'MM/DD/YYYY'
+                }
+            }).on('apply.daterangepicker', function (ev, picker) {
+                const tempStartDate = picker.startDate.format('MMM DD, YYYY');
+                const tempEndDate = picker.endDate.format('MMM DD, YYYY');
+                vm.date_range_picked = tempStartDate + ' - ' + tempEndDate;
+
+                vm.date_range_from = picker.startDate.format('YYYY-MM-DD');
+                vm.date_range_to = picker.endDate.format('YYYY-MM-DD');
+            }).on('cancel.daterangepicker', function (ev, picker) {
+                vm.date_range_picked = null;
+                vm.date_range_from = null;
+                vm.date_range_to = null;            
+            });
+        },
+
+        initialize_date_picker() {
+            const vm = this;
+            $('#deposit_date').datepicker({
+                todayHighlight: true,
+                orientation: "top left",
+                templates: {
+                    leftArrow: '<i class="la la-angle-left"></i>',
+                    rightArrow: '<i class="la la-angle-right"></i>'
+                },
+                format: "mm/dd/yyyy",     // Format for month/day/year
+                viewMode: "days",         // Default view to show calendar days
+                minViewMode: "days",      // Minimum selectable view is days
+                autoclose: true,
+                endDate: new Date(),
+            }).on('changeDate', function (e) {
+                vm.deposit_date = $(this).val(); // ← update Vue data
+            });
+        },
+
+        initialize_input_mask(ids) {
+            Inputmask.extendAliases({
+                pesos: {
+                    groupSeparator: ".",
+                    alias: "numeric",
+                    placeholder: "0",
+                    autoGroup: true,
+                    digits: 2,
+                    digitsOptional: false,
+                    clearMaskOnLostFocus: false,
+                    autoUnmask: true,
+                    rightAlign: true,
+                    inputmode: "decimal",
+                    allowMinus: false,
+                    oncomplete: function () {
+                        const event = new Event('input', { bubbles: true });
+                        this.dispatchEvent(event);
+                    },
+                    onincomplete: function () {
+                        const event = new Event('input', { bubbles: true });
+                        this.dispatchEvent(event);
+                    },
+                    oncleared: function () {
+                        const event = new Event('input', { bubbles: true });
+                        this.dispatchEvent(event);
+                    }
+                },
+            });
+
+            ids.forEach(id => {
+                Inputmask("pesos").mask(document.getElementById(id));
+            });
+        },
+
+        initialize_input_mask_negative(ids) {
+            Inputmask.extendAliases({
+                pesos_negative: {
+                    groupSeparator: ".",
+                    alias: "numeric",
+                    placeholder: "0",
+                    autoGroup: true,
+                    digits: 2,
+                    digitsOptional: false,
+                    clearMaskOnLostFocus: false,
+                    autoUnmask: false,
+                    rightAlign: true,
+                    inputmode: "decimal",
+                    allowMinus: true, // allow negative values for clearing_entry
+                    oncomplete: function () {
+                        const event = new Event('input', { bubbles: true });
+                        this.dispatchEvent(event);
+                    },
+                    onincomplete: function () {
+                        const event = new Event('input', { bubbles: true });
+                        this.dispatchEvent(event);
+                    },
+                    oncleared: function () {
+                        const event = new Event('input', { bubbles: true });
+                        this.dispatchEvent(event);
+                    }
+                }
+            });
+
+            ids.forEach(id => {
+                Inputmask("pesos_negative").mask(document.getElementById(id));
+            });
+        },
+
+        calculated_variance() {
+            const deposit = parseFloat(this.deposit_amount) || 0;
+            const collected = parseFloat(this.payment_collected) || 0;
+            this.variance = (collected - deposit).toFixed(2);
+        },
+
+        clear_form_instances() {
+            const vm = this;
+
+            vm.cashiers = [];
+            vm.date_range_picked = null;
+            vm.date_range_from = null;
+            vm.date_range_to = null;
+            
+            vm.deposit_amount = null;
+            vm.payment_collected = null;
+            vm.variance = null;
+            vm.deposit_date = null;
+
+            vm.payment_ids = [];
+
+            // Clear remarks
+            vm_save_remit.remarksApproved = false;
+            vm_save_remit.remarksText = '';
+
+            // Clear cash report
+            vm_cash_report.daily_cash_report = null;
+            vm_cash_report.total_per_cashier = null;
+
+            // Clear select2
+            $('#remit_filter #employee').val(null).trigger('change');
+
+            // Set daterangepicker ui to normal
+            $('#remit_filter #date-picker').data('daterangepicker').setStartDate(moment());
+            $('#remit_filter #date-picker').data('daterangepicker').setEndDate(moment());
+        },
+
+        generateReport() {
+            const vm = this;
+
+            vm_cash_report.daily_cash_report = null;
+            vm_cash_report.total_per_cashier = null;
+
+            if (!vm.cashiers || !vm.date_range_picked) {
+                toastr.error('Please select Employee and Date Range.', 'Input Required');
+                return;
+            }
+
+            $.ajax({
+                url: baseUrl("eforms/billing/remittance_date_payments_selected/"),
+                type: "POST",
+                dataType: "json",
+                data: {
+                    csrf_token: _csrf_hash,
+                    id: vm.cashiers,
+                    date: vm.date_range_picked
+                },
+                success: function(response) {
+                    vm_cash_report.daily_cash_report = response.daily_cash_report || [];
+                    vm_cash_report.total_per_cashier = response.grand_total_per_cashier.cashier || [];
+
+                    vm.payment_collected = response.grand_total_per_cashier.totalCash || 0;
+                    vm.payment_ids = response.all_payment_ids || [];
+
+                    /**
+                     * if no cashier selected, the backend will return all cashier ids from payments within the default or selected date range
+                     */
+                    if (vm.cashiers.length == 0) {
+                        vm.cashier = response.cashier_ids;
+                    }
+                },
+                error: function (xhr, error, code) {
+                    console.log(error);
+                }
+            });
+        },
+    }
+});
+
+const vm_cash_report = new Vue({
+    el: "#daily_cash_report_app",
+    data: {
+        daily_cash_report: null,
+        total_per_cashier: null,
+    },
+    methods: {
+        numberWithCommas(data) {
+            return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        },
+    }
+});
+
+const vm_save_remit = new Vue({
+    el: "#remit_form_btn",
+    data: {
+        remarksApproved: false,
+        remarksText: '',
+    },
+    computed: {
+        can_save() {
+            return (
+                vm_cash_report.daily_cash_report !== null &&
+                vm_cash_report.total_per_cashier !== null
+            );
+        }
+    },
+    methods: {
+        save_remittance() {
+            const data = vm_remit.$data;
+            const vm = this;
+    
+            // Verify everything first
+            if (data.deposit_amount === null || data.deposit_date === null || data.cashiers === null || data.date_range_picked === null) {
+                toastr.error('Please fill in required fields. *', 'Input Required *');
+                return;
+            }
+
+            // ALWAYS use this.can_save
+            if (!this.can_save) {
+                toastr.error('Please generate data first !', 'Generate Report Required ! ! !');
+                return;
+            }
+
+            // Check for variance if short or over
+            const variance = data.variance;
+
+            if (variance > 0 && !vm.remarksApproved) {
+                vm.openRemarks();
+                return;
+            }
+
+            $.ajax({
+                url: baseUrl("eforms/billing/save_remit/"),
+                type: "POST",
+                dataType: "json",
+                data: {
+                    csrf_token: _csrf_hash,
+                    cashiers: data.cashiers,
+                    date_range_selected: data.date_range_picked,
+                    date_range_from: data.date_range_from,
+                    date_range_to: data.date_range_to,
+                    
+                    deposit_amount: data.deposit_amount,
+                    payment_collected: data.payment_collected,
+                    variance: data.variance,
+                    deposit_date: data.deposit_date,
+
+                    payment_ids: data.payment_ids,
+
+                    remarks: vm.remarksText,
+                },
+                success: function(response) {
+                    const res = response || [];
+                    if (res.status) {
+                        toastr.success('Remittance saved successfully.', 'Success');
+
+                        vm_remit.clear_form_instances();
+
+                        // Close Modal
+                        $('#modal_new_remittance').modal('hide');
+                    } else {
+                        toastr.error(res.message || 'Failed to save remittance.', 'Error');
+                    }
+
+                    tbl_remittance.ajax.reload();
+                },
+                error: function (xhr, error, code) {
+                    toastr.error(res.message || 'Failed to save remittance. (Ajax Error)', 'Error');
+                }
+            });
+        },
+
+        openRemarks() {
+            const minChars = 30;
+
+            Swal.fire({
+                title: "Remarks",
+                input: "textarea",
+                html: `
+                    <span class="text-danger">
+                        Deposit does not match the total payment collected. Please provide a remarks.
+                    </span>
+                    <div style="margin-top:8px; font-size:12px; color:#666;">
+                        <span id="charCount">0</span> / ${minChars} required
+                    </div>
+                `,
+                inputAttributes: {
+                    autocapitalize: "off"
+                },
+                showCancelButton: false,
+                confirmButtonText: "Proceed",
+                confirmButtonColor: "#36a3f7",
+                allowOutsideClick: true,
+                target: document.querySelector('.modal.show') || document.body,
+                didOpen: () => {
+                    const textarea = Swal.getInput();
+                    const charCount = document.getElementById("charCount");
+                    const saveBtn = Swal.getConfirmButton();
+
+                    // Disable save initially
+                    saveBtn.disabled = true;
+
+                    textarea.addEventListener("input", () => {
+                        const len = textarea.value.length;
+                        charCount.textContent = len;
+
+                        // Enable save only if min length is reached
+                        saveBtn.disabled = len < minChars;
+                    });
+                },
+                preConfirm: (value) => {
+                    if (value.length < minChars) {
+                        Swal.showValidationMessage(`Remarks must be at least ${minChars} characters long`);
+                    } else {
+                        this.remarksApproved = true;
+                        this.remarksText = value.trim(); // store in variable
+
+                        // Trigger submit when remarks is approved
+                        this.save_remittance();
+                    }
+                }
+            });
+        },
+    }
+});
+
+const vm_remittance_view = new Vue({
+    el: "#remittance_details",
+    data: {
+        ref_no: '##############',
+        cashier: '',
+        depositor: '*************',
+        date_deposit: '0000-00-00',
+        total_collection: 0.00,
+        deposit: 0.00,
+        variance: 0.00,
+        variance_color: '',
+        variance_label_text_color: '',
+        variance_value_text_color: '',
+        date_range: '0000-00-00 to 0000-00-00',
+        remarks_text: '',
+        daily_cash_report: [],
+        grand_total_per_cashier: [],
+    },
+    methods: {
+        numberWithCommas(data) {
+            return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        },
+    }
 });

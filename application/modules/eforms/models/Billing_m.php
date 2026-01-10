@@ -6989,7 +6989,7 @@ class Billing_m extends CI_Model {
         $ref_month = explode("-",$ref_no)[1];
         $ref_yr = explode($code,explode("-",$ref_no)[0])[1];
 
-        $cashier_ids = $post['cashier'];
+        $cashier_ids = $post['cashiers'];
 
         // Payload Start
         $data['ref_no'] = $ref_no;
@@ -7142,6 +7142,15 @@ class Billing_m extends CI_Model {
             $this->db->where('r.created_date >=', $start_date);
             $this->db->where('r.created_date <=', $end_date); 
 
+        } elseif ($has_valid_date && $limit == -1) {
+
+            // Display records regardless the year
+            $start_date = date('Y-m-d 00:00:00', strtotime($post['startDate']));
+            $end_date   = date('Y-m-d 23:59:59', strtotime($post['endDate']));
+
+            $this->db->where('r.created_date >=', $start_date);
+            $this->db->where('r.created_date <=', $end_date); 
+
         } 
 
         // Check for search
@@ -7189,8 +7198,92 @@ class Billing_m extends CI_Model {
         return array(
             "data" => $resultarray, 
             "recordsTotal" => $this->remittance_records_count_no_filter(), 
-            "recordsFiltered" => $this->remittance_records_count_no_filter()
+            "recordsFiltered" => $this->remittance_records_count($post, $search)
         );
+    }
+
+    public function remittance_records_count($post, $search) {
+        $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
+        $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+
+        $filterFields = [
+            "d.firstname",
+            "d.middlename",
+            "d.lastname",
+            "CONCAT(TRIM(d.firstname), ' ', LEFT(TRIM(d.middlename), 1), '.', ' ', TRIM(d.lastname))",  
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.lastname))",  
+            "CONCAT(TRIM(d.lastname), ' ', TRIM(d.firstname))",  
+            "CONCAT(TRIM(d.firstname), ' ', TRIM(d.middlename), ' ', TRIM(d.lastname))",  
+            "r.ref_no",
+            "r.deposit",
+            "r.payment_collected",
+            "r.variance",
+            "r.date_range_selected",
+            "r.virtual_cashier"
+        ];
+
+        $this->db->select("r.id, r.ref_no, r.deposit, r.variance, r.payment_collected, r.virtual_cashier, r.date_range_selected, r.date_from, r.date_to, r.deposit_date, r.remarks, CONCAT(d.firstname, ' ', d.lastname) as depositor, r.created_date, r.is_archive, r.created_date");
+        $this->db->from("hydra_billing.remittance r");
+        $this->db->join("gccmaster.tblemployees d", "d.id = r.created_by", "LEFT");
+        $this->db->order_by("r.id", "DESC");
+
+        $has_valid_date = !empty($post['startDate']) && !empty($post['endDate']) && $post['startDate'] != 'Invalid date' && $post['endDate'] != 'Invalid date';
+        $has_search = !empty($search);
+
+        if (!$has_valid_date && $limit != -1) {
+
+            // Display previous & now year
+            $start_date = date('Y-m-d 00:00:00', strtotime('-1 year'));
+            $end_date   = date('Y-m-d 23:59:59');
+
+            $this->db->where('r.created_date >=', $start_date);
+            $this->db->where('r.created_date <=', $end_date); 
+
+        } elseif ($has_valid_date && $limit != -1) {
+
+            // Display records regardless the year
+            $start_date = date('Y-m-d 00:00:00', strtotime($post['startDate']));
+            $end_date   = date('Y-m-d 23:59:59', strtotime($post['endDate']));
+
+            $this->db->where('r.created_date >=', $start_date);
+            $this->db->where('r.created_date <=', $end_date); 
+
+        } elseif ($has_valid_date && $limit == -1) {
+
+            // Display records regardless the year
+            $start_date = date('Y-m-d 00:00:00', strtotime($post['startDate']));
+            $end_date   = date('Y-m-d 23:59:59', strtotime($post['endDate']));
+
+            $this->db->where('r.created_date >=', $start_date);
+            $this->db->where('r.created_date <=', $end_date); 
+
+        } 
+
+        // Check for search
+        // =============================================
+        if ($has_search) {
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            $search = preg_replace('/[^a-zA-Z0-9\s\.,-]/', '', $search); // Remove special characters except for comma, dot & dashes
+
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+
+        // Check for datatable pagination
+        // =============================================
+        if ($limit != -1) {
+            $this->db->limit($limit, $offset);
+        }
+
+        $query = $this->db->get();
+        return $query->num_rows();
     }
 
     public function remittance_records_count_no_filter() {

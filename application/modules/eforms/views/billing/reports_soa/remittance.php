@@ -66,16 +66,7 @@
         border-radius: 10px;
         border: 1px solid #e2e2e3;
     }
-
-    /* New remit modal datatable */
-    #tbl-payment_collection_wrapper .dataTables_scrollHeadInner, #tbl-payment_collection_wrapper .dataTables_scrollFootInner {
-        width: unset !important;
-    }
-
-    #tbl-payment_collection_wrapper table.dataTable {
-        width: 100% !important;
-    }
-
+    
     .r-widget .r-widget_legend-bullet {
         width: 15px;
         height: 15px;
@@ -249,7 +240,7 @@
                     <div class="r-widget mr-4">
                         <div class="r-widget_legend d-flex align-items-center mb-1">
                             <span class="r-widget_legend-bullet m--bg-accent"></span>
-                            <span class="r-widget_legend-text">EXCESS DEPOSIT</span>
+                            <span class="r-widget_legend-text">( - ) EXCESS DEPOSIT</span>
                         </div>
                         <div class="r-widget_legend d-flex align-items-center mb-1">
                             <span class="r-widget_legend-bullet" style="background: #ffcd4a;"></span>
@@ -279,7 +270,7 @@
             </div>
 
             <div id="remittance_table_wrapper">
-                <table class="table table-bordered table-sm" id="tbl-remittance" width="100%" style="font-family: roboto;">
+                <table class="table table-bordered" id="tbl-remittance" width="100%" style="font-family: roboto;">
                     <thead>
                         <tr>
                             <th class="text-center py-3 px-2">Ref #</th>
@@ -336,19 +327,19 @@
 
             <div class="modal-body p-0">
                 <div class="row justify-content-between mx-0">
-                    <div class="col-4 py-5 px-0">
+                    <div id="remittance_input" class="col-4 py-5 px-0">
                         <h5 class="text-center mb-4" style="font-weight: 700; color: #7f7f83;">Remit Details</h5>
 
                         <div class="remit_inputs_scroll_wrap">
                             <div class="px-5 pb-1">
                                 <div id="remit_filter" class="remit_inputs_wrapper m-alert m-alert--outline alert alert-metal py-4 mb-4">
                                     <div class="form-group m-form__group w-100 mb-4">
-                                        <label for="employee" class="mb-2">Employee: <span class="text-danger">*</span></label>
+                                        <label for="employee" class="mb-2">Employee: <span class="text-danger" style="font-weight: 900;">*</span></label>
                                         <select id="employee" class="form-control w-100" multiple></select>
                                     </div>
 
                                     <div class="form-group m-form__group w-100 mb-4">
-                                        <label for="date-range" class="mb-2">Date: <span class="text-danger">*</span></label>
+                                        <label for="date-range" class="mb-2">Date: <span class="text-danger" style="font-weight: 900;">*</span></label>
                                         <div class="input-group" id="date-picker">
                                             <input type="text" class="form-control m-input" placeholder="MMM DD, YYYY - MMM DD, YYYY" v-model="date_range_picked" autocomplete='off' style="height: 35.13px;">
                                             <span class="input-group-addon bg-white"><i class="la la-calendar-check-o"></i></span>
@@ -365,7 +356,7 @@
                                         <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
 
                                         <div class="form-group m-form__group w-100 mb-4">
-                                            <label for="deposit" class="mb-2">Deposit: <span class="text-danger">*</span></label>
+                                            <label for="deposit" class="mb-2">Deposit: <span class="text-danger" style="font-weight: 900;">*</span></label>
                                             <input type="text" v-model="deposit_amount" id="deposit" class="form-control h-35_13 deposit text-right w-100" placeholder="0.00">
                                         </div>
 
@@ -380,7 +371,7 @@
                                         </div>
 
                                         <div class="form-group m-form__group w-100">
-                                            <label for="deposit_date" class="mb-2">Deposit Date: <span class="text-danger">*</span></label>
+                                            <label for="deposit_date" class="mb-2">Deposit Date: <span class="text-danger" style="font-weight: 900;">*</span></label>
                                             <input type="text" v-model="deposit_date" id="deposit_date" placeholder="MMM DD, YYYY" class="form-control h-35_13 deposit_date w-100">
                                         </div>
                                     </form>
@@ -555,7 +546,7 @@
                                         <div class="col-12 mb-0 m-alert m-alert--icon m-alert--outline alert alert-warning alert-dismissible fade show" role="alert">
                                             <div class="m-alert__text r_remarks_text" :title="remarks_text">
                                                 <p class="d-label text-warning">Remarks</p>    
-                                                <p class="mb-0" style="font-weight: 600;">{{ remarks_text }}</p>
+                                                <p class="mb-0" style="font-weight: 600;word-break: break-all;">{{ remarks_text }}</p>
                                             </div>	  			  	
                                         </div>
                                     </div>
@@ -660,7 +651,7 @@
                 <textarea class="form form-control mt-2 mb-4" name="remarks" id="remarks" rows="6"></textarea>
 
                 <div class="row align-items-center justify-content-end w-100 mx-0">
-                    <input type="button" id="remarks-modal-save" class="btn btn-primary" value="SAVE">
+                    <input type="button" id="remarks-modal-save" class="btn btn-primary" value="Proceed">
                 </div>
             </div>
 		</div>
