@@ -89,6 +89,9 @@ const vmGeneratejournal = new Vue({
                         const tempEndDate = picker.endDate.format('MMM DD, YYYY');
                         const tempFormat = tempStartDate + ' - ' + tempEndDate;
                         $(currentElement).find("#date-range").val(tempFormat);
+
+                        const self = $(currentElement).find("#date-range");
+                        self.validate();
                     });
             } else {
                 _this.renderSelect2Picker();
@@ -107,6 +110,9 @@ const vmGeneratejournal = new Vue({
                         placeholder: "SELECT MONTH",
                         allowClear: true,
                         dropdownParent: tempModal,
+                    }).on("select2:select", function (e) {
+                        const self = $(this);
+                        self.validate();
                     });
 
                 $(currentElement).find("select[name='filter_year']")
@@ -116,7 +122,10 @@ const vmGeneratejournal = new Vue({
                         placeholder: "SELECT YEAR",
                         allowClear: true,
                         dropdownParent: tempModal,
-                    });
+                    }).on("select2:select", function (e) {
+                        const self = $(this);
+                        self.validate();
+                    });;
 
                 $(currentElement).find("select#employee")
                     .select2({
@@ -130,6 +139,7 @@ const vmGeneratejournal = new Vue({
                             delay: 250,
                             data: function (params) {
                                 /*** params.company_ids = _this.company_ids; ***/
+                                params.company_ids = [$(currentElement).find("select#company").val()] || 0;
                                 params.q = params.term;
                                 return params;
                             },
@@ -154,6 +164,9 @@ const vmGeneratejournal = new Vue({
                             .find("select#employee")
                             .val([])
                             .trigger("change");
+                        
+                        const self = $(this);
+                        self.validate();
                     }).on("select2:unselect", function (e) {
                         const _thisSelect2 = this;
                         const selectedValues = $(_thisSelect2).select2("val");
@@ -176,14 +189,14 @@ const vmGeneratejournal = new Vue({
                 const select2Multiple = currentForm.find("select[multiple]");
                 if(typeof select2Multiple != "undefined" && select2Multiple.length > 0){
                     select2Multiple.prop("disabled", false);
-                    setTimeout(function(){ 
-                        currentForm[0].reset(); 
-                        setTimeout(function(){
-                            select2Multiple.val([]);
-                            select2Multiple.trigger("change");
-                        }, 250);
-                    }, 750);
+                    setTimeout(function(){
+                        select2Multiple.val([]);
+                        select2Multiple.trigger("change");
+                    }, 250);
+                    // setTimeout(function(){ 
+                        // }, 750);
                 }
+                currentForm[0].reset(); 
             }
         },
     }, mounted: function () {
@@ -196,18 +209,6 @@ const vmGeneratejournal = new Vue({
 const vmReportHeaders = new Vue({
     el: "#report-header",
     data: { show_header: false, filters: {} }
-});
-
-const vmActionSignatories = new Vue({
-    el: "#actionSignatories",
-    data: { show_signatories: false, signatories: {} },
-    methods: {
-        editSignatories: function () {
-            return psSignatoryModal.modal("show");
-        }, resetSignatories: function () {
-            return psResetSignatoryModal.modal("show");
-        }
-    }
 });
 
 $("#payroll_group").select2({
@@ -330,19 +331,11 @@ $(document).ready(function(){
         searching: false,
         ordering: false,
         footer: true,
-        // ajax: {
-        //     url: baseUrl('payroll/reports/get_custom_overtime_summary'),
-        //     type: 'POST',
-        //     dataType: 'JSON',
-        //     data: function (d) {
-        //         d.csrf_token = _csrf_hash;
-        //         d.ids = _tempIds;
-        //         d.clear_table = _clearTable;
-        //         d.filters = _tempFilter;
-        //     }, 
-        // }, 
         buttons: [{
             extend: 'excel',
+            exportOptions: {
+                columns: [0, 1, 2, 3,4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16, 17],
+            },
             footer: true,
             customize: function (xlsx) {
                 const sheet = xlsx.xl.worksheets['sheet1.xml'];
@@ -369,70 +362,101 @@ $(document).ready(function(){
             }
         }], columns: [
             { visible: false, data: 'employee_name' },
-            { data: 'overtime_in', width: '10%' },
+            { data: 'overtime_in', width: '10%',
+                render: function (data, type, row) {
+                    return moment(data).format('YYYY-MM-DD');
+                }
+            },
             { data: 'day', width: '8%', className: "text-center" },
             { data: 'daily_rate', width: '6%', className: "text-right",
                 render: function(data, type, row){
-                    return '₱ '+data;
+                    return data > 0 ? '₱ '+data : '-';
                 }
-            }, { data: 'allowance', width: '9%', className: "text-right", 
+            }, 
+            { data: 'allowance', width: '9%', className: "text-right", 
                 render: function (data) {
+                    $allowance = '-';
                     if (data && parseFloat(data) > 0) {
                         const allw = parseFloat(data);
-                        return '₱ '+ allw.toFixed(2);
-                    } else { return '-'; }
+                        $allowance = '₱ '+ allw.toFixed(2);
+                    }
+
+                    return $allowance;
                 }
-            }, { data: 'ot_hrs', width: '5%', className: "text-right",
+            }, 
+            { data: 'ot_hrs', width: '5%', className: "text-right",
                 render: function (data, type, row) {
+                    $ot_hrs = '-';
                     if (data && parseFloat(data) > 0) {
                         const ot_hrs = parseFloat(data);
-                        return ot_hrs.toFixed(2);
+                        $ot_hrs = ot_hrs.toFixed(2);
                     }
-                    return data;
+                    return $ot_hrs;
                 }
-            }, { data: 'ot_pay', width: '8%', className: "text-right",
+            }, 
+            { data: 'ot_pay', width: '8%', className: "text-right",
                 render: function (data) {
+                    $ot_pay = '-';
                     if (data && parseFloat(data) > 0) {
                         let ot_pay = parseFloat(data);
-                        return '₱ '+ot_pay.toFixed(2);
-                    }else{ return '-'; }
+                        $ot_pay = '₱ '+ot_pay.toFixed(2);
+                    }
+
+                    return $ot_pay;
                 }
-            }, { data: 'ot_pay_20', className: "text-right", width: '8%', 
+            }, 
+            { data: 'ot_pay_20', className: "text-right", width: '8%', 
                 render: function (data) {
+                    $_ot_pay_20 = '-';
                     if (data && parseFloat(data) > 0) {
                         let ot_pay_20 = parseFloat(data);
-                        return '₱ '+ot_pay_20.toFixed(2);
-                    }else{ return '-'; }
+                        $_ot_pay_20 = '₱ '+ot_pay_20.toFixed(2);
+                    }
+
+                    return $_ot_pay_20;
                 }
-            }, { data: 'ot_pay_30', className: "text-right", width: '8%', 
+            }, 
+            { data: 'ot_pay_30', className: "text-right", width: '8%', 
                 render: function (data) {
+                    $_ot_pay_30 = '-';
                     if (data && parseFloat(data) > 0) {
                         let ot_pay_30 = parseFloat(data);
-                        return '₱ '+ot_pay_30.toFixed(2);
-                    }else{ return '-'; }
+                        $_ot_pay_30 = '₱ '+ot_pay_30.toFixed(2);
+                    }
+
+                    return $_ot_pay_30;
                 }
-            }, { data: 'ot_ndiff_hrs', width: '8%', className: "text-right",
+            },
+            { data: 'ot_ndiff_hrs', width: '8%', className: "text-right",
                 render: function (data) {
+                    $_ot_ndiff_hrs = '-';
                     if (data && parseFloat(data) > 0) {
                         const ot_ndiff_hrs = parseFloat(data);
-                        return ot_ndiff_hrs.toFixed(2);
+                        $_ot_ndiff_hrs = ot_ndiff_hrs.toFixed(2);
                     }
-                    return data;
+                    return $_ot_ndiff_hrs;
                 }
-            }, { data: 'night_diff', className: "text-right", width: '8%', 
+            }, 
+            { data: 'night_diff', className: "text-right", width: '8%', 
                 render: function (data) {
+                    $_night_diff = '-';
                     if (data && parseFloat(data) > 0) {
                         const ot_ndiff_pay = parseFloat(data);
-                        return '₱ '+ot_ndiff_pay.toFixed(2);
-                    } else { return '-'; }
+                        $_night_diff = '₱ '+ot_ndiff_pay.toFixed(2);
+                    }
+
+                    return $_night_diff;
                 }
             },
             { data: 'ot_allowance', className: "text-right", width: '8%', 
                 render: function (data) {
+                    $_ot_allowance = '-';
                     if (data && parseFloat(data) > 0) {
                         const ot_allowance = parseFloat(data);
-                        return '₱ '+ot_allowance.toFixed(2);
-                    } else { return '-'; }
+                        $_ot_allowance = '₱ '+ot_allowance.toFixed(2);
+                    }
+
+                    return $_ot_allowance;
                 }
             },
             { data: null, className: "text-right", width: '5%', 
@@ -440,11 +464,12 @@ $(document).ready(function(){
             }, 
             { data: 'amount', className: "text-right pr-3", width: '10%', 
                 render: function (data, type, row) {
+                    $_amount = '-';
                     if (data && parseFloat(data) > 0) {
                         const amount = parseFloat(data);
-                        return '₱ '+amount.toFixed(2);
+                        $_amount = '₱ '+amount.toFixed(2);
                     }
-                    return data;
+                    return $_amount;
                 }
             },
             { data: 'ot_details', width: '5%', className: "text-center", 
@@ -470,6 +495,24 @@ $(document).ready(function(){
                     const title = data && parseInt(data) == 1 ? 'Paid' : 'Unpaid';
                     html = `<span class="fa ${status}" style="font-size: 18px" title="${title}"></span>`;
                     return html;
+                }
+            },
+            { visible: false, title: 'APPROVED', data: 'ot_details',
+                render: function (data) {
+                    let html = '-';
+
+                    if (data) {
+                        html = data.status.toUpperCase();
+                    } else {
+                        html = 'NO REQUEST';
+                    }
+
+                    return html;
+                }
+            },
+            { visible: false, title: 'PAID', data: 'is_paid',
+                render: function (data) {
+                    return data && parseInt(data) == 1 ? 'PAID' : 'UNPAID';
                 }
             },
         ], rowGroup: {
@@ -548,7 +591,7 @@ $(document).ready(function(){
             const otPayTotalIndex = 6;
             const otPay20TotalIndex = 7;
             const otPay30TotalIndex = 8;
-            const nDiffTotalIndex = 10;
+            const nDiffTotalIndex = 9;
             const otAllowanceIndex = 11;
             const adjustmentIndex = 12;
             const grandTotalIndex = 13;
@@ -610,7 +653,20 @@ $(document).ready(function(){
                         .prop("disabled", true);
                 },
                 success: function (json) {
-                    console.log(json);
+                    _tempFilter = {};
+
+                    if (json.data.length > 0) {
+                        vmReportHeaders.filters = { ...json.filters };
+                        toastr.success(json.toastr_msg, "Filtered Overtime Summary Report");
+
+                        dtOTSummary.clear().rows.add(json.data).draw();
+
+                        setTimeout( function () { 
+                            modalGenerateReport.modal("hide"); 
+                        }, 750);
+                    } else {
+                        toastr.error(json.toastr_msg, "Filtered Overtime Summary Report");
+                    }
                 }
             });
 
@@ -632,14 +688,12 @@ $(document).ready(function(){
             },
             success: function (json) {
                 _tempFilter = {};
-                vmActionSignatories.show_signatories = false;
                 
                 if (json.response) {
                     _clearTable = false;
                     _tempIds = json.data;
                     _tempFilter = { ...json.filters };
                     vmReportHeaders.filters = { ...json.filters };
-                    vmActionSignatories.show_signatories = true;
                     toastr.success(json.toastr_msg, "Filtered Overtime Summary Report");
 
                     setTimeout( function () { modalGenerateReport.modal("hide"); }, 750);
@@ -649,27 +703,6 @@ $(document).ready(function(){
                 }
     
                 dtOTSummary.ajax.reload();
-                const currentSelectCompanyId = $(currentForm).find("#company").val();
-                if (typeof currentSelectCompanyId !== "undefined" && parseInt(currentSelectCompanyId) > 0) {
-                    $.ajax({
-                        url: siteUrl("payroll/reports/get_current_signatory_by_company_and_type/" + currentSelectCompanyId + "/2"),
-                        global: false,
-                        dataType: "json",
-                        success: function (json) {
-                            let tempRow = {};
-                            let ctr = json.count ? json.count : 0;
-                            if (json.response) { tempRow = { ...json.data }; }
-                            
-                            vmActionSignatories.signatories = { ...tempRow };
-                            vmTempSignatory.row = { ...tempRow };
-                            vmTempSignatory.count = ctr;
-                            vmTempSignatory.$mount();
-
-                            vmPortletSignatories.row = { ...tempRow };
-                            vmPortletSignatories.count = ctr;
-                        }
-                    });
-                }
             }
         });
     }
@@ -788,66 +821,6 @@ const vmTempSignatory = new Vue({
             _this.setGlobalSignatories();
             _this.validateFields();
         }, 500);
-    }
-});
-
-const vmResetSignatories = new Vue({
-    el: "#reset-signatory--content",
-    data: { row: {}, count: 0 },
-    methods: {
-        validateFields: function () {
-            const _this = this;
-            const currentElement = _this.$el;
-            const tempForm = $(currentElement).find("form#resetPrintableSignatories");
-            if (typeof tempForm !== "undefined") {
-                $.validate({
-                    form: tempForm,
-                    lang: 'en',
-                    onSuccess: function (form) {
-                        const tempUrl = form[0].action;
-                        const tempType = form[0].method;
-                        const formData = $(form[0]).serialize();
-
-                        $.ajax({
-                            url: tempUrl,
-                            type: tempType,
-                            dataType: "json",
-                            data: formData,
-                            beforeSend: function () {
-                                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                            },
-                            success: function (json) {
-                                let tempRow = {};
-                                let ctr = 0;
-
-                                if (json.response) {
-                                    tempRow = { ...json.data };
-                                    ctr = json.count;
-                                }
-                                vmTempSignatory.row = { ...tempRow };
-                                vmTempSignatory.count = ctr;
-                                vmTempSignatory.$mount();
-
-                                vmPortletSignatories.row = { ...tempRow };
-                                vmPortletSignatories.count = ctr;
-
-                                _this.row = { ...tempRow };
-                                _this.count = ctr;
-                                const currentModal = $(currentElement).closest(".modal");
-                                currentModal.modal("hide");
-
-                                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                            }
-                        });
-                        return false;
-                    },
-
-                });
-            }
-        }
-    }, mounted: function () {
-        const _this = this;
-        _this.validateFields();
     }
 });
 

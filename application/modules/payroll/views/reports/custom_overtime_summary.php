@@ -42,19 +42,7 @@
                             <span>Export Excel</span>
                         </button>
                     </li>
-                    <li id="actionSignatories" class="m-portlet__nav-item text-right m-animate-fade-in" v-if="show_signatories === true">
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-accent btnEdit">Signatories</button>
-                            <button type="button" class="btn btn-accent btnEdit dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="sr-only">Toggle Dropdown</span>
-                            </button>
-                            <div class="dropdown-menu" x-placement="bottom-start">
-                            <a class="dropdown-item" href="javascript:void(0);" @click="editSignatories"><i class="la la-pencil"></i> Edit Signatories</a>
-                            <a class="dropdown-item" href="javascript:void(0);" @click="resetSignatories"><i class="la la-refresh"></i> Reset Signatories</a>
-                            </div>
-                        </div>
-                    </li>
-                    <li class="m-portlet__nav-item">
+                    <li class="m-portlet__nav-item p-0">
                         <span data-toggle="modal"
                             data-target="#generate-report-modal">
                             <button class="btn btn-success m-btn m-btn--icon"
@@ -132,28 +120,6 @@
                             </tfoot>
                         </table>
                     </div>
-                </div>
-
-                <div id="portlet--signatories">
-                <template v-if="count > 0">
-                <table style='margin-top: 60px; width: 100%;'>
-                    <thead>
-                        <tr><th>&nbsp;</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                            <template v-for="(item, index) in row.meta_field" v-if="item.is_active === true">
-                                <div style='display: inline-block; position: relative; width: 25%; margin-top: 30px;'>
-                                    <p style='font-weight: bold; margin-left: 10px;'>{{item.label}}:</p>
-                                    <p style='font-weight: 600; margin-left: 10px; margin-right: 50px; margin-top: 50px; padding-top: 10px; border-top: 1px solid #000000;'>{{item.value}}</p>
-                                </div>
-                            </template>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                </template>
                 </div>
             </div>
             <!--::dt end::-->
@@ -287,115 +253,6 @@
                 </div>
             </form>
             <!-- end of payroll summary filters -->
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" tabindex="-1" id="modal-ps--signatory">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content" id="signatory--content">
-            <div class="modal-header">
-                <h5 class="modal-title">Overtime Summary Signatories</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form id="updatePrintableSignatories" method="post" action="<?php echo site_url("payroll/reports/update_printable_signatories"); ?>">
-                <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
-                <input type="hidden" name="id" v-model="row.id" />
-                <input type="hidden" name="signatory_id" v-model="row.signatory_id" />
-                <input type="hidden" name="user_id" v-model="row.user_id" />
-                <div class="modal-body">
-                    <template v-if="count > 0">
-                        <template v-for="(item, index) in row.meta_field">
-                        <div class="form-group m-form__group row">
-                            <label for="" class="col-3 col-form-label">{{item.label}}</label>
-                            <div class="col-8">
-                                <select class="form-control m-input select2--value" 
-                                    data-validation="required" 
-                                    :name="'value['+index+']'" 
-                                    :disabled="item.is_active === false">
-                                    <option :value="item.value" selected>{{item.value}}</option>
-                                </select>
-                            </div>
-                            <div class="col-1 text-right">
-                                <span class="m-switch m-switch--sm">
-                                    <label>
-                                        <input type="checkbox" :checked="item.is_active === true" @click="activeSignatory(event)" />
-                                        <span></span>
-                                    </label>
-                                </span>
-                            </div>
-                        </div>
-                        </template>
-                    </template>
-                    <template v-else>
-                        <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
-                            <div class="m-alert__icon">
-                                <i class="flaticon-exclamation-1"></i>
-                                <span></span>
-                            </div>
-                            <div class="m-alert__text">
-                                <strong>NO ASSIGNED SIGNATORIES!</strong>Please add/update the signatory.
-                            </div>
-                        </div>
-                    </template>
-                </div>
-                <template v-if="count > 0">
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary btnSave">Update</button>
-                        <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Cancel</button>
-                    </div>
-                </template>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" tabindex="-1" id="modal-ps--reset-signatory">
-    <div class="modal-dialog">
-        <div class="modal-content" id="reset-signatory--content">
-            <div class="modal-header">
-                <h5 class="modal-title">Reset - Overtime Summary Signatories</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form id="resetPrintableSignatories" method="post" action="<?php echo site_url("payroll/reports/reset_printable_signatories"); ?>">
-                <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
-                <input type="hidden" name="id" v-model="row.id" />
-                <div class="modal-body">
-                    <h4>Are you sure you want to reset the current signatories?</h4>
-                    <template v-if="count > 0">
-                        <template v-for="(item, index) in row.meta_field">
-                        <div class="form-group m-form__group row m--marginless" v-if="item.is_active === true">
-                            <label for="" class="col-4 col-form-label">{{item.label}}</label>
-                            <label for="" class="col-8 col-form-label m--font-bolder">{{item.value}}</label>
-                        </div>
-                        </template>
-                    </template>
-                    <template v-else>
-                        <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
-                            <div class="m-alert__icon">
-                                <i class="flaticon-exclamation-1"></i>
-                                <span></span>
-                            </div>
-                            <div class="m-alert__text">
-                                <strong>
-                                    NO ASSIGNED SIGNATORIES!
-                                </strong>
-                                Please add/update the signatory.
-                            </div>
-                        </div>
-                    </template>
-                </div>
-                <template v-if="count > 0">
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary btnSave">Reset</button>
-                        <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Cancel</button>
-                    </div>
-                </template>
-            </form>
         </div>
     </div>
 </div>
