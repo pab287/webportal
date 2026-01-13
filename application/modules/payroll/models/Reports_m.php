@@ -6107,7 +6107,11 @@ class Reports_m extends CI_Model{
             if ($query->num_rows() > 0) {
                 $row = $query->row();
 
-                $allowance = $row->total_allowances / $row->no_of_days;
+                if ($row->total_allowances > 0) {
+                    $allowance = $row->total_allowances / $row->no_of_days;
+                } else {
+                    $allowance = 0;
+                }
             }
         }
 
