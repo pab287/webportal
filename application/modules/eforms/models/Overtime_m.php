@@ -2051,4 +2051,62 @@ class Overtime_m extends CI_Model {
 
         return $result;
     }
+
+    function select2Employee($type=null)
+    {
+        $get = $this->input->get();
+        $resultarray = array();
+        $companyIds = (isset($get["company_ids"]) && $get["company_ids"])? $get["company_ids"]: array();
+        //$this->db->select("a.id, trim(a.firstname) as firstname, a.lastname, a.middlename, a.suffix");
+
+        $this->db->select("a.id, UPPER(TRIM(CONCAT(a.firstname, ' ',
+                CASE WHEN UPPER(TRIM(a.middlename)) != 'N/A' AND UPPER(TRIM(a.middlename)) != 'NONE' AND
+                        TRIM(a.middlename) !='' AND a.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(a.middlename, 1, 1), '.') ELSE ''
+                END,' ', a.lastname,
+                CASE WHEN UPPER(TRIM(a.suffix)) != 'N/A' AND
+                    UPPER(TRIM(a.suffix !='NONE')) AND a.suffix !='' AND
+                        a.suffix IS NOT NULL THEN CONCAT(' ', a.suffix) ELSE ''
+                END))) as text");
+        $this->db->from("gccmaster.tblemployees a");
+        $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
+        
+        if($type !== 'all' && $type === null){
+            $this->db->where("a.employee_status", "Active");
+        } elseif ($type !== 'all' && $type !== null) {
+            $this->db->where("a.employee_status", $type);
+        }
+
+        if(is_array($companyIds) && count($companyIds) > 0){ $this->db->where_in("b.id", $companyIds); }
+        if(isset($get["company_ids"]) && !is_array($get["company_ids"]) && $get["company_ids"]){
+            $this->db->where("b.id", $get["company_ids"]);
+        }
+
+        $tempLimit = 10;
+        if (isset($get['q']) && $get['q']) {
+            $this->db->group_start();
+            $this->db->like("a.firstname", $get['q'], "both");
+            $this->db->or_like("a.lastname", $get['q'], "both");
+            $this->db->or_like("CONCAT(a.firstname, ' ', a.lastname)", $get['q'], "both");
+            $this->db->or_like("CONCAT(a.firstname, ' ', CONCAT(SUBSTR(a.middlename, 1, 1), '.'), ' ', a.lastname)", $get['q'], "both");
+            $this->db->group_end();
+            $tempLimit = 20;
+        }
+        $this->db->limit($tempLimit);
+        $this->db->order_by("trim(a.firstname)", "ASC");
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            /*** foreach ($query->result_array() as $_query) {
+                $data = array();
+                $display_employee = $this->format_name($_query);
+
+                $data["id"] = $_query["id"];
+                $data["text"] = $display_employee;
+                $resultarray[] = $data;
+            } ***/
+           $resultarray = $query->result();
+        }
+        return array("results" => $resultarray);
+    }
 }

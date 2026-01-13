@@ -1057,29 +1057,4 @@ class Reports extends MY_Controller {
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
     }
-
-    public function custom_overtime() {
-        $this->load->model("payroll/payroll_m", "payroll");
-        $this->core_layout->setPageTitle("Payroll - Custome Overtime Summary Report");
-        $this->core_layout->setPrivilegeName("payroll_custom_overtime_summary");
-
-        $tempData = array();
-        $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
-        $tempData["company"] = $this->payroll->select2CompanyData();
-
-        $this->core_layout->addJs("js/buttons.print.min.js", true);
-        $this->core_layout->addJs("global/js/jquery.table2excel.min.js", true);
-        $this->core_layout->addJs("js/payroll/reports/custom_overtime.script.js", true, $tempData);
-
-        $this->load->view("core/templates/header");
-        $this->load->view("payroll/reports/custom_overtime_summary");
-        $this->load->view("core/templates/footer");
-    }
-
-    function generate_custom_overtime_summary(){
-        $data = $this->reports->generateCustomOvertimeSummary();
-            $this->output
-                ->set_content_type('json')
-                ->set_output(json_encode($data));
-    }
 }
