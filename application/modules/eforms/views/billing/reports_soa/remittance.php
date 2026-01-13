@@ -240,11 +240,11 @@
                     <div class="r-widget mr-4">
                         <div class="r-widget_legend d-flex align-items-center mb-1">
                             <span class="r-widget_legend-bullet m--bg-accent"></span>
-                            <span class="r-widget_legend-text">( - ) EXCESS DEPOSIT</span>
+                            <span class="r-widget_legend-text">EXCESS DEPOSIT</span>
                         </div>
                         <div class="r-widget_legend d-flex align-items-center mb-1">
                             <span class="r-widget_legend-bullet" style="background: #ffcd4a;"></span>
-                            <span class="r-widget_legend-text">SHORT DEPOSIT</span>
+                            <span class="r-widget_legend-text">( - ) SHORT DEPOSIT</span>
                         </div>
                         <div class="r-widget_legend d-flex align-items-center">
                             <span class="r-widget_legend-bullet m--bg-danger"></span>
@@ -253,7 +253,7 @@
                     </div>
 
                     <div class="alert alert-brand alert-dismissible fade show m-alert m-alert--air m-alert--outline m-alert--outline-2x mb-0">
-                        <strong>Total Collection - Deposit = <span class="m-badge m-badge--brand m-badge--wide text-white">VARIANCE</span></strong>
+                        <strong>Deposit - Total Collection = <span class="m-badge m-badge--brand m-badge--wide text-white">VARIANCE</span></strong>
                     </div>
                 </div>
 
@@ -278,8 +278,8 @@
                             <th class="text-center py-3 px-2">Total Collection</th>
                             <th class="text-center py-3 px-2">Deposit</th>
                             <th class="text-center py-3 px-2">Variance</th>
-                            <th class="text-center py-3 px-2">Cashier</th>
-                            <th class="text-center py-3 px-2">Depositor</th>
+                            <th class="text-center py-3 px-2">Payment collector</th>
+                            <th class="text-center py-3 px-2">Received By</th>
                             <th class="text-center py-3 px-2">Date Deposit</th>
                             <th class="text-center py-3 px-2">Date Log</th>
                             <th class="text-center py-3 px-2">Action</th>
@@ -334,7 +334,7 @@
                             <div class="px-5 pb-1">
                                 <div id="remit_filter" class="remit_inputs_wrapper m-alert m-alert--outline alert alert-metal py-4 mb-4">
                                     <div class="form-group m-form__group w-100 mb-4">
-                                        <label for="employee" class="mb-2">Employee: <span class="text-danger" style="font-weight: 900;">*</span></label>
+                                        <label for="employee" class="mb-2">Payment Collector: <span class="text-danger" style="font-weight: 900;">*</span></label>
                                         <select id="employee" class="form-control w-100" multiple></select>
                                     </div>
 
@@ -512,7 +512,7 @@
                                 </div>
 
                                 <div class="info_block">
-                                    <p class="d-label">Depositor</p>
+                                    <p class="d-label">Received by</p>
                                     <p class="d-val r_depositor" :title="depositor">{{ depositor }}</p>
                                 </div>
 

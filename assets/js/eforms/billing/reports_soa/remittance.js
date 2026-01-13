@@ -108,9 +108,9 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
         // Check for variance
         const variance = parseFloat(data.variance);
         
-        if (variance > 0) {
+        if (variance < 0) {
             $(row).css('background-color', '#ffcd4a').addClass('has-variance short-dep'); // light yellow
-        } else if (variance < 0) {
+        } else if (variance > 0) {
             $(row).css('background-color', '#00e0fb').addClass('has-variance excess-dep'); // light green
         } else {
             $(row).css('background-color', ''); // no background
@@ -152,7 +152,7 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
         variance_total_deposit = total_deposit;
         $( api.column( 3 ).footer() ).html('<b class="d-block text-right">'+g_numberWithCommas(parseFloat(total_deposit).toFixed(2))+'</b>');
 
-        variance_total = total_collection - total_deposit;
+        variance_total = total_deposit - total_collection;
         $( api.column( 4 ).footer() ).html('<b class="d-block text-right">'+g_numberWithCommas(parseFloat(variance_total).toFixed(2))+'</b>');
     }
 });
@@ -250,14 +250,14 @@ $(document).on('click', '#view_remit_modal', function() {
 
             switch (Math.sign(Number(d.variance) || 0)) {
                 case 1:
-                    vm_remittance_view.variance_color = '#ffcd4a';
-                    vm_remittance_view.variance_label_text_color = '#fff';
-                    vm_remittance_view.variance_value_text_color = '#fff';
-                    break;
-                case -1:
                     vm_remittance_view.variance_color = '#00e0fb';
                     vm_remittance_view.variance_label_text_color = '#8E8E93';
                     vm_remittance_view.variance_value_text_color = '#7f7f83';
+                    break;
+                case -1:
+                    vm_remittance_view.variance_color = '#ffcd4a';
+                    vm_remittance_view.variance_label_text_color = '#fff';
+                    vm_remittance_view.variance_value_text_color = '#fff';
                     break;
                 default:
                     vm_remittance_view.variance_color = '';
@@ -507,7 +507,7 @@ const vm_remit = new Vue({
         calculated_variance() {
             const deposit = parseFloat(this.deposit_amount) || 0;
             const collected = parseFloat(this.payment_collected) || 0;
-            this.variance = (collected - deposit).toFixed(2);
+            this.variance = (deposit - collected).toFixed(2);
         },
 
         clear_form_instances() {
@@ -630,7 +630,7 @@ const vm_save_remit = new Vue({
             // Check for variance if short or over
             const variance = data.variance;
 
-            if (variance > 0 && !vm.remarksApproved) {
+            if (variance < 0 && !vm.remarksApproved) {
                 vm.openRemarks();
                 return;
             }
