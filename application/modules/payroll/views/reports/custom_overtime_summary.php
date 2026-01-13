@@ -1,6 +1,6 @@
 <style>
 @media print {
-    @page { size: auto; margin: 0.75cm; }
+    @page { size: auto; margin: 0.75cm; size: landscape; }
     body * { visibility: hidden; }
     #overtime_summary_table, #overtime_summary_table * { visibility: visible; }
     #overtime_summary_table {
@@ -15,10 +15,16 @@
     table.dataTable tfoot tr:first-child th{ border-top: 1px solid #000000; }
     table.dataTable tfoot tr:first-child th{ border-bottom: 4px double #000000; }
     #portlet--signatories { page-break-inside: inherit; }
+    #filter-table { display: none !important }
 }
 
 .unpaid-ot td {
     background-color: #EBEDF2;
+}
+
+.custom-col { 
+    flex: 0 0 37.4%;
+    max-width: 37.4%;
 }
 </style>
 <div class="m-content">
@@ -64,6 +70,45 @@
             <!--::dt begin::-->
             <div id="overtime_summary_table">
                 <div class="tbl-responsive-sm">
+                    <div id="filter-table" class="row justify-content-between m-animate-fade-in m--hide">
+                        <div class="col-md-2"></div>
+                        <div class="col-md-10">
+                            <div class="m-form__group form-group m-0">
+                                <div class="row justify-content-end">
+                                    <div class="custom-col">
+                                        <label for=""> Filter By </label>
+                                        <div class="m-radio-inline">
+                                            <label class="m-radio">
+                                                <input type="radio" name="filter" value="all" checked>
+                                                All
+                                                <span></span>
+                                            </label>
+                                            <label class="m-radio">
+                                                <input type="radio" name="filter" value="approved">
+                                                Approved
+                                                <span></span>
+                                            </label>
+                                            <label class="m-radio">
+                                                <input type="radio" name="filter" value="unapproved">
+                                                Unapproved
+                                                <span></span>
+                                            </label>
+                                            <label class="m-radio">
+                                                <input type="radio" name="filter" value="paid">
+                                                Paid
+                                                <span></span>
+                                            </label>
+                                            <label class="m-radio">
+                                                <input type="radio" name="filter" value="unpaid">
+                                                UnPaid
+                                                <span></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div id="report-header">
                         <template v-if="show_header">
                             <div class="row mb-3">

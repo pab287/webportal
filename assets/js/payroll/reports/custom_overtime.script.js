@@ -1,6 +1,4 @@
 let globalPrintableSignatory = [];
-const psSignatoryModal = $("#modal-ps--signatory");
-const psResetSignatoryModal = $("#modal-ps--reset-signatory");
 const modalGenerateReport = $("#generate-report-modal");
 
 let _years = [];
@@ -328,7 +326,7 @@ $(document).ready(function(){
         processing: false,
         destroy: true,
         paging: false,
-        searching: false,
+        searching: true,
         ordering: false,
         footer: true,
         buttons: [{
@@ -472,16 +470,16 @@ $(document).ready(function(){
                     return $_amount;
                 }
             },
-            { data: 'ot_details', width: '5%', className: "text-center", 
-                render: function (data) { 
+            { data: 'status', width: '5%', className: "text-center", 
+                render: function (data, type, row, meta) { 
                     let html = '';
 
                     let status = 'fa-times-circle text-danger';
                     let title = 'No Overtime Request Found.';
 
                     if (data) {
-                        status = data.status.toLowerCase() == 'approved' ? 'fa-check-circle text-success' : 'fa-times-circle text-danger';
-                        title = `Status: ${data.status.toUpperCase()}&#013;Ref #: ${data.reference_no}&#013;Created at: ${moment(data.created_at).format('LL')}`;
+                        status = data.toLowerCase() == 'approved' ? 'fa-check-circle text-success' : 'fa-times-circle text-danger';
+                        title = `Status: ${status.toUpperCase()}&#013;Ref #: ${row.reference_no}&#013;Created at: ${moment(row.created_at).format('LL')}`;
                     }
 
                     html = `<span class="fa ${status}" style="font-size: 18px" title="${title}"></span>`;
@@ -497,12 +495,12 @@ $(document).ready(function(){
                     return html;
                 }
             },
-            { visible: false, title: 'APPROVED', data: 'ot_details',
+            { visible: false, title: 'APPROVED', data: 'status',
                 render: function (data) {
                     let html = '-';
 
                     if (data) {
-                        html = data.status.toUpperCase();
+                        html = data.toUpperCase();
                     } else {
                         html = 'NO REQUEST';
                     }
@@ -556,71 +554,111 @@ $(document).ready(function(){
             const _dtActions = $("#table-actions");
             const hasRowData = tempData.length > 0;
             if (_dtActions.hasClass("m--hide") === false) { _dtActions.addClass("m--hide"); }
+            
             if (hasRowData && typeof _dtActions !== "undefined" && _dtActions.length == 1 && _dtActions.hasClass("m--hide") === true) {
                 _dtActions.removeClass("m--hide");
             }
             vmReportHeaders.show_header = hasRowData;
 
-        }, footerCallback: function () {
-            const api = this.api();
-            const tempData = api.data();
-            let arrAdjustments = {};
-            if(tempData.length > 0) {
-                $.each(tempData, function (_i, row) {
-                    if (row.ot_adj && parseFloat(row.ot_adj) > 0) {
-                        if(jQuery.isEmptyObject(arrAdjustments[row.emp_id])) { arrAdjustments[row.emp_id] = []; }
-                        if(jQuery.inArray(row.ot_adj, arrAdjustments[row.emp_id]) == -1) { arrAdjustments[row.emp_id].push(row.ot_adj); }
-                    }
-                });
+            const _filter = $("#filter-table");
+            if (_filter.hasClass("m--hide") === false) { _filter.addClass("m--hide"); }
+            if (hasRowData && typeof _filter !== "undefined" && _filter.length == 1 && _filter.hasClass("m--hide") === true) {
+                _filter.removeClass("m--hide");
             }
 
-            let totalAdjustmentAmount = 0;
-            if(Object.keys(arrAdjustments).length > 0) {
-                $.each(arrAdjustments, function (_i, adjAmount) {
-                    totalAdjustmentAmount += parseFloat(adjAmount);
-                });
-            }
-            
-            const intVal = function (i) {
-                if (typeof i === 'string') {
-                    return parseFloat(i.replace(/[^0-9.-]/g, '').trim()) || 0;
-                }
-                return typeof i === 'number' ? i : 0;
+        }, footerCallback: function () {
+            const api = this.api();
+
+            const intVal = i => {
+                if (typeof i === 'string') return parseFloat(i.replace(/[^0-9.-]/g, '').trim()) || 0;
+                if (typeof i === 'number') return i;
+                return 0;
             };
 
             const otPayTotalIndex = 6;
             const otPay20TotalIndex = 7;
             const otPay30TotalIndex = 8;
-            const nDiffTotalIndex = 9;
+            const nDiffTotalHrsIndex = 9;
+            const nDiffTotalIndex = 10;
             const otAllowanceIndex = 11;
             const adjustmentIndex = 12;
             const grandTotalIndex = 13;
 
-            let otPayTotalAmount = api.column(otPayTotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
-            let otPay20TotalAmount = api.column(otPay20TotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
-            let otPay30TotalAmount = api.column(otPay30TotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
-            let nDiffTotalAmount = api.column(nDiffTotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
-            let otAllowanceAmount = api.column(otAllowanceIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
-            let totalAmount = api.column(grandTotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
+            // get filtered rows only
+            const filteredRows = api.rows({ filter: 'applied' }).data();
 
-            const grandTotalAmount = parseFloat(totalAmount) + parseFloat(totalAdjustmentAmount);
+            // compute OT adjustment totals per employee (filtered rows only)
+            let arrAdjustments = {};
+            $.each(filteredRows, function (_i, row) {
+                if (row.ot_adj && parseFloat(row.ot_adj) > 0) {
+                    if (!arrAdjustments[row.emp_id]) arrAdjustments[row.emp_id] = [];
+                    if ($.inArray(row.ot_adj, arrAdjustments[row.emp_id]) === -1) {
+                        arrAdjustments[row.emp_id].push(row.ot_adj);
+                    }
+                }
+            });
+
+            let totalAdjustmentAmount = 0;
+            $.each(arrAdjustments, function (_i, adjAmount) {
+                totalAdjustmentAmount += parseFloat(adjAmount);
+            });
+
+            const sumColumn = (index) => filteredRows.reduce((a, b) => a + intVal(b[api.column(index).dataSrc()]), 0);
+
+            const otPayTotalAmount = sumColumn(otPayTotalIndex);
+            const otPay20TotalAmount = sumColumn(otPay20TotalIndex);
+            const otPay30TotalAmount = sumColumn(otPay30TotalIndex);
+            const nDiffTotalHrsAmount = sumColumn(nDiffTotalHrsIndex);
+            const nDiffTotalAmount = sumColumn(nDiffTotalIndex);
+            const otAllowanceAmount = sumColumn(otAllowanceIndex);
+            const totalAmount = sumColumn(grandTotalIndex);
+
+            const grandTotalAmount = totalAmount + totalAdjustmentAmount;
             const footerLabelTotal = $(api.column(5).footer());
-            footerLabelTotal.removeClass("text-center");
-            footerLabelTotal.html(`<span class="m--font-boldest mr-3">GRAND TOTAL</span>`);
+            footerLabelTotal.removeClass("text-center").html(`<span class="m--font-boldest mr-3">GRAND TOTAL</span>`);
 
-            $(api.column(otPayTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otPayTotalAmount) + "</span>");
-            $(api.column(otPay20TotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otPay20TotalAmount) + "</span>");
-            $(api.column(otPay30TotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otPay30TotalAmount) + "</span>");
-            $(api.column(nDiffTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(nDiffTotalAmount) + "</span>");
-            $(api.column(otAllowanceIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otAllowanceAmount) + "</span>");
-            $(api.column(adjustmentIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAdjustmentAmount) + "</span>");
-            $(api.column(grandTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(grandTotalAmount) + "</span>");
+            $(api.column(otPayTotalIndex).footer()).html("<span class='m--font-boldest'>₱ "+numberFormat(otPayTotalAmount)+"</span>");
+            $(api.column(otPay20TotalIndex).footer()).html("<span class='m--font-boldest'>₱ "+numberFormat(otPay20TotalAmount)+"</span>");
+            $(api.column(otPay30TotalIndex).footer()).html("<span class='m--font-boldest'>₱ "+numberFormat(otPay30TotalAmount)+"</span>");
+            $(api.column(nDiffTotalHrsIndex).footer()).html("<span class='m--font-boldest'>"+numberFormat(nDiffTotalHrsAmount)+"</span>");
+            $(api.column(nDiffTotalIndex).footer()).html("<span class='m--font-boldest'>₱ "+numberFormat(nDiffTotalAmount)+"</span>");
+            $(api.column(otAllowanceIndex).footer()).html("<span class='m--font-boldest'>₱ "+numberFormat(otAllowanceAmount)+"</span>");
+            $(api.column(adjustmentIndex).footer()).html("<span class='m--font-boldest'>₱ "+numberFormat(totalAdjustmentAmount)+"</span>");
+            $(api.column(grandTotalIndex).footer()).html("<span class='m--font-boldest'>₱ "+numberFormat(grandTotalAmount)+"</span>");
         }, createdRow: function (rowEl, rowData, _index) {
             const isPaid = rowData.is_paid && parseInt(rowData.is_paid) == 1 ? true : false;
 
             if (!isPaid) { $(rowEl).addClass('unpaid-ot'); }
         }
     });
+
+    // for filtering by column without create new request or altering array
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+        if (settings.nTable.id !== 'tbl-overtime-summary') {
+            return true;
+        }
+
+        let checked = $('input[name="filter"]:checked')
+            .map(function () { return this.value; })
+            .get();
+
+        if (!checked.length || checked.includes('all')) {
+            return true;
+        }
+
+        let row = settings.aoData[dataIndex]._aData;
+
+        let approved = (row.status || '').toLowerCase();
+        let paid     = parseInt(row.is_paid, 10);
+
+        return checked.some(val =>
+            (val === 'approved'   && approved === 'approved') ||
+            (val === 'unapproved' && approved !== 'approved') ||
+            (val === 'paid'       && paid === 1) ||
+            (val === 'unpaid'     && paid === 0)
+        );
+    });
+    // for filtering by column without create new request or altering array
 
     $.validate({
         form: "#frm-journal-report",
@@ -673,156 +711,15 @@ $(document).ready(function(){
             return false;
         }
     });
-    
-    const getScriptRendering = function (formUrl, formData, currentForm) {
-        $.ajax({
-            url: formUrl,
-            type: "post",
-            dataType: "json",
-            data: formData,
-            beforeSend: function () {
-                $(currentForm)
-                    .find(".btn-submit")
-                    .addClass("m-btn--custom m-loader m-loader--light m-loader--right")
-                    .prop("disabled", true);
-            },
-            success: function (json) {
-                _tempFilter = {};
-                
-                if (json.response) {
-                    _clearTable = false;
-                    _tempIds = json.data;
-                    _tempFilter = { ...json.filters };
-                    vmReportHeaders.filters = { ...json.filters };
-                    toastr.success(json.toastr_msg, "Filtered Overtime Summary Report");
 
-                    setTimeout( function () { modalGenerateReport.modal("hide"); }, 750);
-                } else {
-                    _clearTable = true;
-                    toastr.error(json.toastr_msg, "Filtered Overtime Summary Report");
-                }
-    
-                dtOTSummary.ajax.reload();
-            }
-        });
-    }
+    $('input[name="filter"]').on('change', function () {
+        dtOTSummary.draw();
+    });
 });
 
 const exportExcel = function(){
     dtOTSummary.button(".buttons-excel").trigger();
 }
-
-const vmPortletSignatories = new Vue({
-    el: "#portlet--signatories",
-    data: { row: {}, count: 0 }
-});
-
-const vmTempSignatory = new Vue({
-    el: "#signatory--content",
-    data: { row: {}, count: 0 },
-    methods: {
-        setGlobalSignatories: function () {
-            const _this = this;
-            const currentRow = _this.row;
-            globalPrintableSignatory = [];
-            if (typeof currentRow.meta_field !== "undefined" && typeof currentRow.meta_field == "object") {
-                $.each(currentRow.meta_field, function (i, v) {
-                    const tempData = { label: v.label, value: v.value, is_active: v.is_active };
-                    globalPrintableSignatory.push(tempData);
-                });
-            }
-            return globalPrintableSignatory;
-        },
-        activeSignatory: function (e) {
-            const currentTarget = e.target;
-            const formGroup = $(currentTarget).closest(".form-group.m-form__group.row");
-            if (typeof formGroup !== "undefined" && formGroup.length == 1) {
-                let isChecked = $(currentTarget).is(":checked");
-                const select2Container = formGroup.find(".select2--value");
-                if (typeof select2Container !== "undefined" && select2Container.length == 1) {
-                    if (isChecked) {
-                        if (select2Container.is(":disabled") === true) {
-                            select2Container.prop("disabled", false);
-                        }
-                    } else {
-                        if (select2Container.is(":disabled") === false) {
-                            select2Container.prop("disabled", true);
-                        }
-                    }
-                }
-            }
-        }, setModalSelect2: function () {
-            const _this = this;
-            const _currentElement = _this.$el;
-            const psModalSignatory = $(_currentElement)
-                .closest("#modal-ps--signatory");
-            if (typeof psModalSignatory !== "undefined" && psModalSignatory.length == 1) {
-                initSelect2Employee(psModalSignatory);
-            }
-        }, validateFields: function () {
-            const _this = this;
-            const currentElement = _this.$el;
-            const tempForm = $(currentElement).find("form#updatePrintableSignatories");
-            if (typeof tempForm !== "undefined") {
-                $.validate({
-                    form: tempForm,
-                    lang: 'en',
-                    onSuccess: function (form) {
-                        const tempUrl = form[0].action;
-                        const tempType = form[0].method;
-                        const formData = $(form[0]).serialize();
-
-                        $.ajax({
-                            url: tempUrl,
-                            type: tempType,
-                            dataType: "json",
-                            data: formData,
-                            beforeSend: function () {
-                                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                            },
-                            success: function (json) {
-                                const currentModal = $(currentElement).closest(".modal");
-                                if (json.response) {
-                                    const currentData = json.data;
-                                    if (Object.keys(currentData).length > 0) {
-                                        const metaFields = currentData.meta_field;
-                                        const ctr = metaFields.length;
-
-                                        _this.row = { ...currentData };
-                                        _this.count = ctr;
-                                        _this.setGlobalSignatories();
-
-                                        vmPortletSignatories.row = { ...currentData };
-                                        vmPortletSignatories.count = ctr;
-
-                                        vmResetSignatories.row = { ...currentData };
-                                        vmResetSignatories.count = ctr;
-
-                                        if (typeof currentModal !== "undefined" && currentModal.length == 1) {
-                                            currentModal.modal("hide");
-                                        }
-                                    }
-                                } else {
-                                    toastr.error("Payroll Signatory", json.toastr_msg);
-                                }
-                                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                            }
-                        });
-                        return false;
-                    },
-
-                });
-            }
-        }
-    }, mounted: function () {
-        const _this = this;
-        setTimeout(function () {
-            _this.setModalSelect2();
-            _this.setGlobalSignatories();
-            _this.validateFields();
-        }, 500);
-    }
-});
 
 const initSelect2Employee = function (tempModal, portlet) {
     if (typeof tempModal !== "undefined" && tempModal.length == 1) {
