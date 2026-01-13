@@ -5934,7 +5934,7 @@ class Reports_m extends CI_Model{
                     $tempOtRate = 0;
                     $tempOtPayWithRate = 0;
                     $day = date('D', strtotime($item->date_from));
-                    $basicRate = $item->basic_rate;
+                    $basicRate = floatval($item->basic_rate);
                     $totalOtHrs = 0;
                     $has_shift = 0;
                     $tempPayrateSetting = null;

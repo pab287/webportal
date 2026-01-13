@@ -235,7 +235,7 @@ $("#payroll_group").select2({
     if (typeof data.employees == "object" && typeof data.employees !== "undefined") { employees = data.employees; }
     if (tempVal.length > 1) {
         $.ajax({
-            url: baseUrl("payroll/get_payroll_group_multiple"),
+            url: baseUrl("eforms/overtime/get_payroll_group_multiple"),
             type: "post",
             dataType: "json",
             data: { group_id: tempVal, [_csrf_token]: _csrf_hash },

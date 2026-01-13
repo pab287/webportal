@@ -400,4 +400,12 @@ function select_employee() {
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
+
+    public function get_payroll_group_multiple() {
+        $this->load->model("payroll/payroll_m", "payroll");
+        $data = $this->payroll->getPayrollGroupMultiple();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 }
