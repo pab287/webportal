@@ -13094,6 +13094,7 @@ class Employee_model extends CI_Model {
     }
 
     private function getEmployeeLoansData($employee_id){
+        $arrData = array();
         $this->db->select("emp_loans.amount,emp_loans.active, master_loans.loan_name, emp_loans.remarks, emp_loans.loan_id as loan_code, 
             ROUND(SUM(IFNULL(psloanpayments.amount_due, 0)),2) as total_amount_paid, 
             GROUP_CONCAT(DISTINCT psloanpayments.amount_due, '||', ps.id) as temp_amount_paid, emp_loans.reference as ref");

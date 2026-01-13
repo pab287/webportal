@@ -1544,6 +1544,7 @@
 
                     $("#mdl-newLoan").modal("hide");
                     $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    getEmployeeLoans(<?php echo $data->id; ?>);
                 }
             });
             return false;
@@ -1631,6 +1632,7 @@
                         $("#mdl-removeLoan").modal("hide");
                         dtLoan.ajax.reload(); //bug here
                         $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                        getEmployeeLoans(<?php echo $data->id; ?>);
                     }
                 });
                 return false;
