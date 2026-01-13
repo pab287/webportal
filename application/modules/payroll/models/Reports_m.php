@@ -5903,15 +5903,10 @@ class Reports_m extends CI_Model{
                 $endDate = date("Y-m-d", strtotime(trim($dateRange[1])));
             }
 
-            $select = "a.id, a.reference_no, a.status, a.created_at, b.id as emp_id, a.date_from, a.date_to, a.employee, b.firstname, b.middlename, b.lastname, b.suffix, b.company_id, c.code as company_name,
-                ROUND(IF(LOWER(b.payroll_type) = 'monthly', ROUND( IFNULL(b.basic_rate, 0), 2) * 12 / ROUND( IFNULL(c.work_days_in_year, 314), 2), IFNULL(b.basic_rate, 0)), 2) as basic_rate,
-                ROUND(IF(LOWER(d.frequency) = 'month', ROUND( IFNULL(d.rate, 0), 2) * 12 / ROUND( IFNULL(c.work_days_in_year, 314), 2),
-                IFNULL(d.rate, 0)), 2) as allowance_rate";
+            $select = "a.id, a.reference_no, a.status, a.created_at, b.id as emp_id, a.date_from, a.date_to, a.employee, b.firstname, b.middlename, b.lastname, b.suffix";
             $this->db->select($select);
             $this->db->from("gcceforms.overtime a");
             $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
-            $this->db->join("gcchris.tblcompanies c", "c.id = b.company_id", "LEFT");
-            $this->db->join($this->tbl_hris_allawances." d", "d.emp_id = b.id AND d.is_active = 1 AND d.is_archived = 0", "LEFT");
 
             $this->db->where_in('a.employee', $filteredIds);
             $this->db->where('b.company_id', $company);
@@ -5934,11 +5929,11 @@ class Reports_m extends CI_Model{
                     $tempOtRate = 0;
                     $tempOtPayWithRate = 0;
                     $day = date('D', strtotime($item->date_from));
-                    $basicRate = floatval($item->basic_rate);
+                    $basicRate = 0;
                     $totalOtHrs = 0;
                     $has_shift = 0;
                     $tempPayrateSetting = null;
-                    $otAllowance = $item->allowance_rate;
+                    $otAllowance = 0;
                     $totalOtPay = 0;
                     $totalOtPayable = 0;
                     $nightDiffPay = 0;
@@ -5970,6 +5965,9 @@ class Reports_m extends CI_Model{
 
                     $_q = $this->db->get();
 
+                    $basicRate = $this->getPayrollSheetBasicRate($overtime_in, $item->emp_id);
+                    $item->allowance_rate = $this->getPayrollSheetAllowance($overtime_in, $item->emp_id);
+
                     if ($_q->num_rows() > 0) {
                         $_row = (object) $_q->row();
     
@@ -5979,8 +5977,6 @@ class Reports_m extends CI_Model{
                         $payrateSetting = $this->getPayrateSetting($payrateTemp);
                         $tempPayrateSetting = intval($_row->payrate_id) > 0 ? $this->getPayrateSettingById($_row->payrate_id) : $payrateSetting;
                         $allowPaidAllowance = $tempPayrateSetting->particulars !== "regular" || intval($_row->has_shift) === 0 || intval($tempPayrateSetting->is_holiday) === 1 ? 1 : 0;
-                        $basicRate = $this->getPayrollSheetBasicRate($overtime_in, $item->emp_id);
-                        $item->allowance_rate = $this->getPayrollSheetAllowance($overtime_in, $item->emp_id);
     
                         if(intval($tempPayrateSetting->is_holiday) === 1){ $allowPaidAllowance = intval($_row->is_paid_holiday) === 1 ? 1 : 0; }
     
@@ -6044,25 +6040,6 @@ class Reports_m extends CI_Model{
         return $data;
     }
 
-    protected function get_ot_details($date, $empId){
-        $result = array();
-
-        if ($empId) {
-            $date = date("Y-m-d", strtotime($date));
-            $this->db->select("reference_no, status, created_at");
-            $this->db->from("gcceforms.overtime");
-            $this->db->where("employee", $empId);
-            $this->db->where("DATE(date_from)", $date);
-
-            $query = $this->db->get();
-            if ($query->num_rows() > 0) {
-                $result = $query->row();
-            }
-        }
-
-        return $result;
-    }
-
     protected function check_ot_paid($date, $timesheetId){
         $isPaid = 0;
 
@@ -6092,8 +6069,8 @@ class Reports_m extends CI_Model{
             $this->db->where('emp_id', $id);
             
             $this->db->group_start();
-                $this->db->where('DATE(date_start) <= ', $date);
-                $this->db->where('DATE(date_end) >=', $date);
+                $this->db->where('DATE(date_start) <= ', date('Y-m-d', strtotime($date)));
+                $this->db->where('DATE(date_end) >=', date('Y-m-d', strtotime($date)));
             $this->db->group_end();
 
             $this->db->where('is_bonus', 0);
@@ -6119,8 +6096,8 @@ class Reports_m extends CI_Model{
             $this->db->where('emp_id', $id);
             
             $this->db->group_start();
-                $this->db->where('DATE(date_start) <= ', $date);
-                $this->db->where('DATE(date_end) >=', $date);
+                $this->db->where('DATE(date_start) <= ', date('Y-m-d', strtotime($date)));
+                $this->db->where('DATE(date_end) >=', date('Y-m-d', strtotime($date)));
             $this->db->group_end();
 
             $this->db->where('is_bonus', 0);

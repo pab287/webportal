@@ -480,10 +480,10 @@ $(document).ready(function(){
 
                     if (data) {
                         status = data.toLowerCase() == 'approved' ? 'fa-check-circle text-success' : 'fa-times-circle text-danger';
-                        title = `Status: ${status.toUpperCase()}&#013;Ref #: ${row.reference_no}&#013;Created at: ${moment(row.created_at).format('LL')}`;
+                        title = `Status: ${data.toUpperCase()}&#013;Ref #: ${row.reference_no}&#013;Created at: ${moment(row.created_at).format('LL')}`;
                     }
 
-                    html = `<span class="fa ${status}" style="font-size: 18px" title="${title}"></span>`;
+                    html = `<span class="fa ${status}" style="font-size: 18px" title="${title}" onclick="copyToClipboard('${row.reference_no}')"></span>`;
                     return html;
                 }
             },
@@ -720,4 +720,14 @@ $(document).ready(function(){
 
 const exportExcel = function(){
     dtOTSummary.button(".buttons-excel").trigger();
+}
+
+function copyToClipboard(text){
+    navigator.clipboard.writeText(text)
+    .then(() => {
+        toastr.success("OT copied to clipboard!");
+    })
+    .catch(err => {
+        console.error('Error in copying text: ', err);
+    });
 }
