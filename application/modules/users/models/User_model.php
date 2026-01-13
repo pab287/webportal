@@ -836,13 +836,14 @@ class User_model extends CI_Model{
 
     public function select2Employee(){
         $arrData = array();
-        $this->db->select("a.id, a.lastname, a.firstname, a.middlename, a.suffix, b.description as department, c.name as position, GROUP_CONCAT(DISTINCT(`e`.`location_name`) ORDER BY `e`.`created_at`, `e`.`id` ASC SEPARATOR '|') as location_name, GROUP_CONCAT(DISTINCT(`f`.`app_name`) SEPARATOR '|') as app_name");
+        $this->db->select("a.id, a.lastname, a.firstname, a.middlename, a.suffix, b.description as department, c.name as position, GROUP_CONCAT(DISTINCT(`e`.`location_name`) ORDER BY `e`.`created_at`, `e`.`id` ASC SEPARATOR '|') as location_name, GROUP_CONCAT(DISTINCT(`f`.`app_name`) SEPARATOR '|') as app_name, GROUP_CONCAT(DISTINCT(`g`.`telegram_chat_id`) SEPARATOR '|') as telegram_id");
         $this->db->from('gccmaster.tblemployees as a');
         $this->db->join("gcchris.tbldepartments as b", "a.department_id = b.id", "LEFT");
         $this->db->join("gcchris.tblposition as c", "a.position = c.id", "LEFT");
         $this->db->join('gcctimeutility.personnel as d', 'd.biometricno = a.biometricno', 'left');
         $this->db->join('gcctimeutility.personnel_locations as e', 'e.personnel_id = d.id', 'left');
         $this->db->join('gccmaster.it_mobile_application as f', 'f.emp_id = a.id', 'left');
+        $this->db->join('gccmaster.tblusers as g', 'g.emp_id = a.id', 'left');
         $this->db->where("a.employee_status", "Active");
         $this->db->group_by('a.id');
         $this->db->order_by("a.id", "DESC");
@@ -859,6 +860,7 @@ class User_model extends CI_Model{
                 $row["department"] = $rs->department;
                 $row["position"] = $rs->position;
                 $row["site_locations"] = $rs->location_name;
+                $row["telegram_id"] = $rs->telegram_id;
                 $row["app_name"] = $rs->app_name;
                 $arrData[] = $row;
             }
@@ -959,13 +961,18 @@ class User_model extends CI_Model{
                     ''
                 ),
                 c.lastname
-            ) as emp_name
+            ) as emp_name,
+            GROUP_CONCAT(DISTINCT(`g`.`location_name`) ORDER BY `g`.`created_at`, `g`.`id` ASC SEPARATOR '|') as location_name,
+            h.telegram_chat_id as telegram_id,
         ");
         $this->db->from("gccmaster.it_mobile_application as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.created_by", "LEFT");
         $this->db->join("gccmaster.tblemployees as c", "c.id = a.emp_id", "LEFT");
         $this->db->join("gcchris.tbldepartments as d", "d.id = c.department_id", "LEFT");
         $this->db->join("gcchris.tblposition as e", "e.id = c.position", "LEFT");
+        $this->db->join('gcctimeutility.personnel as f', 'f.biometricno = c.biometricno', 'LEFT');
+        $this->db->join('gcctimeutility.personnel_locations as g', 'g.personnel_id = f.id', 'LEFT');
+        $this->db->join('gccmaster.tblusers as h', 'h.emp_id = c.id', 'LEFT');
         $this->db->where("a.app_name",  $app_name);
         $this->db->where("a.is_archive",  $is_archive);
 
@@ -995,7 +1002,7 @@ class User_model extends CI_Model{
 
         $i = $sortOrder[0]['column'];
         $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
-
+        $this->db->group_by("a.id");
         $query = $this->db->get();
         return $query->result_array();
 

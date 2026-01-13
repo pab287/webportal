@@ -28,6 +28,11 @@ $(document).on('show.bs.modal', '#newITMARModal', function () {
 });
 
 $(document).ready(function () {
+    toggleAppFields();
+    $('input[name="app_name"]').on('change', function () {
+        toggleAppFields();
+    });
+
     const selectedApp = $("input[name='app_name']:checked").val();
     loadEmployeesByApp(selectedApp);
     ITMar = $('#itmarTable').DataTable({
@@ -115,6 +120,7 @@ $("#employee").on("select2:select", function (e) {
     $("#position").val(data.position || "");
     $("#department").val(data.department || "");
     $("#ass_loc").val(data.site_locations ? data.site_locations.split("|").join(", ") : "");
+    $("#telegram_id").val(data.telegram_id ? data.telegram_id.split("|").join(", ") : "");
 }).on("change", function () {
     if (!this.value) {
         selectedEmpId = null;
@@ -292,7 +298,36 @@ function editRow(id){
     $('#edit_purpose').val(rowData.purpose);
     $("#edit_employee").val(rowData.emp_id).trigger("change");
     $('input[name="edit_app_name"][value="' + rowData.app_name + '"]').prop('checked', true);
+    $("#edit_ass_loc").val(rowData.location_name ? rowData.location_name.split("|").join(", ") : "");
+    $("#edit_telegram_id").val(rowData.telegram_id ? rowData.telegram_id.split("|").join(", ") : "");
+    toggleEditAppFields();
     $("#edit_employee").prop("disabled", true);
     $('input[name="edit_app_name"]').prop('disabled', true);
 }
 
+$('input[name="edit_app_name"]').on('change', function () {
+    toggleEditAppFields();
+});
+
+function toggleAppFields() {
+    const selected = $('input[name="app_name"]:checked').val();
+    if (selected === 'GCCTIME') {
+        $('#ass_loc_group').show();
+        $('#telegram_id_group').hide();
+    } else if (selected === 'TGCloudBAS') {
+        $('#ass_loc_group').hide();
+        $('#telegram_id_group').show();
+    }
+}
+
+function toggleEditAppFields() {
+    const selected = $('input[name="edit_app_name"]:checked').val();
+
+    if (selected === 'GCCTIME') {
+        $('#edit_ass_loc_group').show();
+        $('#edit_telegram_id_group').hide();
+    } else if (selected === 'TGCloudBAS') {
+        $('#edit_ass_loc_group').hide();
+        $('#edit_telegram_id_group').show();
+    }
+}

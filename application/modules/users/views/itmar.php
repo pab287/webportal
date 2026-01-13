@@ -146,9 +146,14 @@
                         <label for="department" class="col-2 form-label mb-0">DEPARTMENT: </label>
                         <input type="text" name="department" id="department" class="col-10 form-control m-input" style="padding-right: 15px;" readonly>
                     </div>
-                    <div class="form-group m-form__group row col">
+                    <div class="form-group m-form__group row col" id="ass_loc_group">
                         <label for="ass_loc" class="col-12 form-label">ASSIGNED LOCATION/S: </label>
                         <input name="ass_loc" class="col-12 form-control m-input" id="ass_loc" readonly>
+                    </div>
+
+                    <div class="form-group m-form__group row col" id="telegram_id_group">
+                        <label for="telegram_id" class="col-12 form-label">Telegram ID: </label>
+                        <input name="telegram_id" class="col-12 form-control m-input" id="telegram_id" readonly>
                     </div>
                     <div class="m-separator m-separator--dashed"></div>
                     <div class="form-group m-form__group row col">
@@ -218,9 +223,14 @@
                         <label for="department" class="col-2 form-label mb-0">DEPARTMENT: </label>
                         <input type="text" name="department" id="edit_department" class="col-10 form-control m-input" style="padding-right: 15px;" readonly>
                     </div>
-                    <div class="form-group m-form__group row col">
+                    <div class="form-group m-form__group row col" id="edit_ass_loc_group">
                         <label for="ass_loc" class="col-12 form-label">ASSIGNED LOCATION/S: </label>
                         <input name="ass_loc" class="col-12 form-control m-input" id="edit_ass_loc" readonly>
+                    </div>
+
+                    <div class="form-group m-form__group row col" id="edit_telegram_id_group">
+                        <label for="telegram_id" class="col-12 form-label">Telegram ID: </label>
+                        <input name="telegram_id" class="col-12 form-control m-input" id="edit_telegram_id" readonly>
                     </div>
                     <div class="m-separator m-separator--dashed"></div>
                     <div class="form-group m-form__group row col">
