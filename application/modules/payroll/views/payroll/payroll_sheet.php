@@ -413,7 +413,7 @@
                                               data-placement="top"
                                               data-original-title="REGULAR NIGHT DIFFERENTIAL (AMT)"
                                               data-skin="dark">
-                                            REG.ND
+                                            R.ND
                                         </span>
                                     </th>
                                     <th scope="col" class="text-center align-middle" rowspan="2">
@@ -430,6 +430,14 @@
                                               data-original-title="ALLOWANCE"
                                               data-skin="dark" id="allowance">
                                             ALLOWANCE
+                                        </span>
+                                    </th>
+                                    <th scope="col" class="text-center align-middle" rowspan="2">
+                                        <span data-toggle="m-tooltip"
+                                              data-placement="top"
+                                              data-original-title="OT ALLOWANCE"
+                                              data-skin="dark" id="ot_allowance">
+                                            OT.ALLW
                                         </span>
                                     </th>
                                     <th scope="col" class="text-center align-middle" rowspan="2">
@@ -528,9 +536,10 @@
                                 </thead>
                                 <tbody>
                                 </tbody>
-                                <tfoot class="m--hide">
+                                <tfoot class="">
                                     <tr>
                                         <th scope="col" class="m--font-boldest" colspan="6">GRAND TOTAL</th>
+                                        <th scope="col"></th>
                                         <th scope="col"></th>
                                         <th scope="col"></th>
                                         <th scope="col"></th>

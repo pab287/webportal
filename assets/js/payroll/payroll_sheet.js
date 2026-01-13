@@ -56,7 +56,7 @@ let _tempLastRow = [];
 
 let globalGrandTotal = {};
 const exportOptions = {
-    columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+    columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
 };
 
 let globalFilterOptions = {};
@@ -954,6 +954,13 @@ let dtPayrollSheet = _tblPayrollSheet
                     return template;
                 }
             }, {
+                data: "ot_allowances",
+                width: "5%",
+                className: "text-right",
+                render: function (data) {
+                    return numberFormat(data);
+                }
+            }, {
                 data: "custom_adjustments", // adjustment
                 width: "6%",
                 orderable: false,
@@ -1523,10 +1530,11 @@ let dtPayrollSheet = _tblPayrollSheet
             const totalRegND = api.column(9).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
             const totalBasic = api.column(10).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
             const totalAllowance = api.column(11).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
-            const totalGross = api.column(13).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            const totalOtAllowance = api.column(12).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            const totalGross = api.column(14).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
 
             const totalCharges = api
-                .column(20)
+                .column(21)
                 .data()
                 .reduce(function (a, b) {
                     const tempDeduction = b.sss_hdmf_loan_deduction;
@@ -1549,16 +1557,16 @@ let dtPayrollSheet = _tblPayrollSheet
                     return intVal(a) + intVal(totalChargeDeduction);
                 }, 0);
 
-            const totalSSSLoans = api.column(21).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
-            const totalHDMFLoans = api.column(22).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
-            const totalNetpay = api.column(23).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            const totalSSSLoans = api.column(22).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            const totalHDMFLoans = api.column(23).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            const totalNetpay = api.column(24).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
             
-            let totalSSS = api.column(14).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
-            let totalSSS_PROV = api.column(15).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
-            let totalPH = api.column(16).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
-            let totalHDMF = api.column(17).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
-            let totalTAX = api.column(18).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
-            let totalLoans = api.column(19).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let totalSSS = api.column(15).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let totalSSS_PROV = api.column(16).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let totalPH = api.column(17).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let totalHDMF = api.column(18).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let totalTAX = api.column(19).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
+            let totalLoans = api.column(20).data().reduce(function (a, b) { return intVal(a) + intVal(b); }, 0);
             
             totalSSS = _globalFooterAdjustments.sss;
             totalSSS_PROV = _globalFooterAdjustments.sss_prov;
@@ -1574,6 +1582,7 @@ let dtPayrollSheet = _tblPayrollSheet
                 holiday: numberFormat(totalHoliday),
                 basic: numberFormat(totalBasic),
                 allowance: numberFormat(totalAllowance),
+                ot_allowance: numberFormat(totalOtAllowance),
                 gross: numberFormat(totalGross),
                 sss: numberFormat(totalSSS),
                 sss_prov: numberFormat(totalSSS_PROV),
@@ -1597,17 +1606,18 @@ let dtPayrollSheet = _tblPayrollSheet
 
             $(api.column(10).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalBasic) + "</span>");
             $(api.column(11).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalAllowance) + "</span>");
-            $(api.column(13).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalGross) + "</span>");
-            $(api.column(14).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalSSS) + "</span>");
-            $(api.column(15).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalSSS_PROV) + "</span>");
-            $(api.column(16).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalPH) + "</span>");
-            $(api.column(17).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalHDMF) + "</span>");
-            $(api.column(18).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalTAX) + "</span>");
-            $(api.column(19).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalLoans) + "</span>");
-            $(api.column(20).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalCharges) + "</span>");
-            $(api.column(21).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalSSSLoans) + "</span>");
-            $(api.column(22).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalHDMFLoans) + "</span>");
-            $(api.column(23).footer()).html("<span class='m--font-boldest'>&#8369;&nbsp;&nbsp;" + numberFormat(totalNetpay) + "</span>");
+            $(api.column(12).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalOtAllowance) + "</span>");
+            $(api.column(14).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalGross) + "</span>");
+            $(api.column(15).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalSSS) + "</span>");
+            $(api.column(16).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalSSS_PROV) + "</span>");
+            $(api.column(17).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalPH) + "</span>");
+            $(api.column(18).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalHDMF) + "</span>");
+            $(api.column(19).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalTAX) + "</span>");
+            $(api.column(20).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalLoans) + "</span>");
+            $(api.column(21).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalCharges) + "</span>");
+            $(api.column(22).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalSSSLoans) + "</span>");
+            $(api.column(23).footer()).html("<span class='m--font-boldest'>" + numberFormat(totalHDMFLoans) + "</span>");
+            $(api.column(24).footer()).html("<span class='m--font-boldest'>&#8369;&nbsp;&nbsp;" + numberFormat(totalNetpay) + "</span>");
         }
     });
 

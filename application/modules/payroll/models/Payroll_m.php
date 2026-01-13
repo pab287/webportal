@@ -1591,10 +1591,12 @@ class Payroll_m extends CI_Model{
                 $employeeRate = $employee->rate + 0;
                 $employeeRate = is_float($employeeRate) ? floatval($employeeRate): intval($employeeRate);
 
+                $tempHolidayPay = floatval($holiday);
                 $tempBasicRate = floatval($basic_rate);
                 $tempAllowance = floatval($employeeAllowanceTotal);
                 $tempOtndiff = floatval($ot_amount) + floatval($ot_ndiff_amount);
                 $totalNightDifferential = floatval($total_ndiff_amount);
+                /*** $earnings = $tempBasicRate + $tempAllowance + $tempHolidayPay + $tempOtndiff + $totalNightDifferential; ***/
                 $earnings = $tempBasicRate + $tempAllowance + $tempOtndiff + $totalNightDifferential;
 
                 $employee->earnings = $earnings;
@@ -2008,6 +2010,9 @@ class Payroll_m extends CI_Model{
                 $_total_allowances = $payroll_sheet->total_allowances;
                 $_total_ot_ndiff = $payroll_sheet->ot_amount + $payroll_sheet->ot_ndiff_amount;
                 $_total_night_diff = $payroll_sheet->total_ndiff_amount;
+                
+                $_holiday_pay = $payroll_sheet->total_holiday_amount;
+                /*** $gross_pay = $_total_basic_rate + $_total_allowances + $_holiday_pay + $_total_ot_ndiff + $_total_night_diff; ***/
                 $gross_pay = $_total_basic_rate + $_total_allowances + $_total_ot_ndiff + $_total_night_diff;
 
                 $custom_adjustments = $this->db->where("payroll_sheet_id", $payroll_sheet_id)
@@ -2980,6 +2985,7 @@ class Payroll_m extends CI_Model{
 
             /*** $timesheet->holiday_gross_minutely = $_holiday_minutes;
             $timesheet->holiday_gross_amount = $_holiday_amount; ***/
+
             if(floatval($tempHolidayRate) > 1){ $tempHolidayRate = floatval($tempHolidayRate) - 1; }
             $tempMinutely = $timesheet->holiday_minutely * floatval($tempHolidayRate);
             $tempAmount = $timesheet->holiday_amount * floatval($tempHolidayRate);

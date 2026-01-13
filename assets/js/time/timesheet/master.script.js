@@ -767,9 +767,13 @@ $(document)
 
                             let HolidayIcon = ``;
                             if (parseInt(row.is_holiday) == 1) {
-                                HolidayIcon = `<i style="cursor: pointer;" class="fa fa-flag ml-2"
+                                const isPaidHoliday = parseInt(row.paid_holiday) == 1;
+                                const iconClass = isPaidHoliday ? "m--regular-font-size-lg2 m--font-success" : "";
+                                const label = isPaidHoliday ? "Paid Holiday" : "Holiday";
+
+                                HolidayIcon = `<i style="cursor: pointer;" class="fa fa-flag ml-2 ${iconClass}"
                                     data-toggle="m-tooltip" data-skin="dark"
-                                    data-original-title="Holiday" data-delay='{"show": 500}'></i>`;
+                                    data-original-title="${label}" data-delay='{"show": 500}'></i>`;
                             }
 
                             if (dayOfWeek === 0) {

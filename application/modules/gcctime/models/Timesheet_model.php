@@ -2466,11 +2466,16 @@ class Timesheet_model extends CI_Model{
         if (($pm_in && $_pm_end) && ($pm_in >= $_pm_end)) {
             $employee_time_sheet->pm_late = 0;
         } else {
-            if (($pm_in && $_pm_start) && ($pm_in > $_pm_start) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false) {
+            /*** if (($pm_in && $_pm_start) && ($pm_in > $_pm_start) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false) {
+                $employee_time_sheet->pm_late = round(($pm_in - $_pm_start) / 60, 2);
+            } ***/
+            if (($pm_in && $_pm_start) && ($pm_in > $_pm_start) && $allow_late_adjustment === false && $isHourlySlashPartimer === false) {
                 $employee_time_sheet->pm_late = round(($pm_in - $_pm_start) / 60, 2);
             }
             if($superFlexibleEmployee){ $employee_time_sheet->pm_late = 0; }
         }
+
+
 
         if(($pm_in && $pmHalfDayAbsent) && ($pm_in > $pmHalfDayAbsent) && $allow_late_adjustment === false && $isHourlySlashPartimer === false){ $hasHalfDayDeduction = true; }
         if($flexibleEmployee && $hasHalfDayDeduction === false && $allow_late_adjustment === false){ $employee_time_sheet->pm_late = 0; }
@@ -2488,6 +2493,8 @@ class Timesheet_model extends CI_Model{
             if($superFlexibleEmployee){ $employee_time_sheet->pm_ut = 0; }
         }
         
+        
+
         if ($pm_in >= $_pm_end) {
             $employee_time_sheet->pm_time_rendered = 0;
             $employee_time_sheet->pm_ndiff_rendered = 0;
@@ -2543,7 +2550,12 @@ class Timesheet_model extends CI_Model{
         }
 
         /*** pm half day deduction custom ***/
-        if(($pm_in && $pmHalfDayAbsent) && ($pm_in > $pmHalfDayAbsent) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
+        /*** if(($pm_in && $pmHalfDayAbsent) && ($pm_in > $pmHalfDayAbsent) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
+            $employee_time_sheet->pm_late = 0;
+            $employee_time_sheet->pm_time_rendered = 0;
+            $employee_time_sheet->pm_ut = round(($_pm_end - $_pm_start) / 60, 2);
+        }***/
+        if(($pm_in && $pmHalfDayAbsent) && ($pm_in > $pmHalfDayAbsent) && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
             $employee_time_sheet->pm_late = 0;
             $employee_time_sheet->pm_time_rendered = 0;
             $employee_time_sheet->pm_ut = round(($_pm_end - $_pm_start) / 60, 2);
@@ -9280,8 +9292,9 @@ class Timesheet_model extends CI_Model{
                 $hasOvertime = intval($qTemp->row()->has_overtime) === 1;
 
                 $timesheet = new stdClass();
-
-                $timesheet->am_late = 0;
+                
+                /*** comment out, use actual time records and computation ***/
+                /*** $timesheet->am_late = 0;
                 $timesheet->pm_late = 0;
                 $timesheet->am_ut = 0;
                 $timesheet->pm_ut = 0;
@@ -9290,7 +9303,9 @@ class Timesheet_model extends CI_Model{
                 $timesheet->am_time_rendered = 0;
                 $timesheet->pm_time_rendered = 0;
                 
-                $timesheet->total_time_rendered = 8 * 60;
+                $timesheet->total_time_rendered = 8 * 60; ***/
+                /*** comment out, use actual time records and computation ***/
+
                 $timesheet->paid_holiday = 1;
                 $timesheet->verified = 1;
                 $timesheet->verified_by = $logged_in_user_emp_id;
@@ -9307,16 +9322,32 @@ class Timesheet_model extends CI_Model{
                 if($updated){
                     $tempWhere = array();
                     $tempWhere["timesheet_id"] = $qTemp->row()->id;
-                    $tempData = new stdClass();
-                    $tempData->status = 1;
-                    $tempData->updated_by = $logged_in_user_emp_id;
-                    $tempData->updated_at = Date("Y-m-d H:i:s");
-                    $updatedLog = $this->db->update($this->tbl_timesheet_paid_holiday, $tempData, $tempWhere);
-                    if($updatedLog){
-                        $resultset["response"] = true;
-                        $resultset["data"] = $timesheet;
+
+                    $qTempPaidHoliday = $this->db->get_where($this->tbl_timesheet_paid_holiday, $tempWhere);
+                    if($qTempPaidHoliday->num_rows() === 0){
+                        $tempData = new stdClass();
+                        $tempData->timesheet_id = $qTemp->row()->id;
+                        $tempData->created_by = $logged_in_user_emp_id;
+                        $tempData->created_at = Date("Y-m-d H:i:s");
+                        $addedLog = $this->db->insert($this->tbl_timesheet_paid_holiday, $tempData);
+                        if($addedLog){
+                            $resultset["response"] = true;
+                            $resultset["data"] = $timesheet;
+                        }else{
+                            $resultset["response"] = false;
+                        }
                     }else{
-                        $resultset["response"] = false;
+                        $tempData = new stdClass();
+                        $tempData->status = 1;
+                        $tempData->updated_by = $logged_in_user_emp_id;
+                        $tempData->updated_at = Date("Y-m-d H:i:s");
+                        $updatedLog = $this->db->update($this->tbl_timesheet_paid_holiday, $tempData, $tempWhere);
+                        if($updatedLog){
+                            $resultset["response"] = true;
+                            $resultset["data"] = $timesheet;
+                        }else{
+                            $resultset["response"] = false;
+                        }
                     }
                 }else{
                     $resultset["response"] = false;
