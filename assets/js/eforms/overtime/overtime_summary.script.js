@@ -366,7 +366,11 @@ $(document).ready(function(){
                     return moment(data).format('YYYY-MM-DD');
                 }
             },
-            { data: 'day', width: '8%', className: "text-center" },
+            { data: 'day', width: '8%', className: "text-center", 
+                render: function(data) {
+                    return data ?? 'no day';
+                }
+            },
             { data: 'daily_rate', width: '6%', className: "text-right",
                 render: function(data, type, row){
                     return data > 0 ? '₱ '+data : '-';
@@ -483,7 +487,7 @@ $(document).ready(function(){
                         title = `Status: ${data.toUpperCase()}&#013;Ref #: ${row.reference_no}&#013;Created at: ${moment(row.created_at).format('LL')}`;
                     }
 
-                    html = `<span class="fa ${status}" style="font-size: 18px" title="${title}" onclick="copyToClipboard('${row.reference_no}')"></span>`;
+                    html = `<span class="fa ${status}" style="font-size: 18px; cursor: pointer" title="${title}" onclick="copyToClipboard('${row.reference_no}')"></span>`;
                     return html;
                 }
             },
@@ -690,6 +694,7 @@ $(document).ready(function(){
                         .find(".btn-submit")
                         .addClass("m-btn--custom m-loader m-loader--light m-loader--right")
                         .prop("disabled", true);
+                    toastr.success('Generating overtime records. Please wait.');
                 },
                 success: function (json) {
                     _tempFilter = {};
