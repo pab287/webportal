@@ -1591,6 +1591,7 @@ class Overtime_m extends CI_Model {
         return $resultset;
     }
 
+    //here temp upload
     function tempUploadCsvFile() {
         $resultset = array();
         $session = $this->core_layout->getCurrentSession();
@@ -1674,8 +1675,18 @@ class Overtime_m extends CI_Model {
                                             if(intval($row->id) > 0){
                                                 $isValidEmployee = true;
                                                 $displayName = $row->employee_name ? $row->employee_name : "No assigned name";
-                                                $isValid = strtotime(trim($filteredData[1])) > strtotime(trim($row->max_date));
-    
+
+                                                if (date('Y-m-d', strtotime($dateFrom)) <= date('Y-m-d', strtotime($dateTo))) { //checks if date start is less than the date end
+                                                    $validOTEndDate = date('Y-m-d', strtotime($filteredData[1].' +1 day')); //added 1 day to date start to prevent extensive date to
+                                                    if (date('Y-m-d', strtotime($dateTo)) <= date('Y-m-d', strtotime($validOTEndDate))) { //checks if the date end is correct based on the added 1 day to the date start
+                                                        $isValid = strtotime(trim($filteredData[1])) > strtotime(trim($row->max_date));
+                                                    } else {
+                                                        $isValid = false;
+                                                    }
+                                                } else {
+                                                    $isValid = false;
+                                                }
+
                                                 $qSearchOt = $this->db->get_where("gcceforms.overtime",
                                                     array(
                                                         "employee"=>$row->id,

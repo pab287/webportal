@@ -437,7 +437,6 @@ $("#modal-advance-search").on("hidden.bs.modal", function () {
 })
 
 $(document).on('shown.bs.modal', '#modal-import-overtime', function (e) {
-    console.log(e);
     var tempTable = vmTempUploadedContent.current_table;
     if (typeof tempTable !== "undefined" && typeof tempTable == "object" && tempTable !== null) {
         tempTable.clear().destroy();
@@ -635,8 +634,10 @@ const vmTempUploadedContent = new Vue({
             const currentModal = $(currentElement).closest(".modal");
             const currentTable = $(currentElement).find("#uploaded_csv_table");
             const currentSelect2 = $(currentElement).find("#approved_by");
+
             if (typeof currentTable !== "undefined") {
                 _this.current_table = currentTable.DataTable({
+                    destroy: true,
                     dom: "lftp",
                     serverSide: false,
                     processing: false,
@@ -645,6 +646,7 @@ const vmTempUploadedContent = new Vue({
                     scrollCollapse: true,
                     paging: false,
                     ordering: false,
+                    retrieve: true,
                     columns: [
                         { data: "is_valid", title: "", width: "3%", render: function (data) {
                             return data === true ? `<i class="fa fa-check text-success"></i>` : `<i class="fa fa-times text-danger"></i>`;
@@ -656,21 +658,29 @@ const vmTempUploadedContent = new Vue({
                             return tempHtml;
                         }},
                         {
-                            data: "date_from", title: "Date From", width: "12%", render: function (data) {
-                                return moment(data).format("YYYY-MM-DD HH:mm");
+                            data: "date_from", title: "Date From", width: "12%", render: function (data, type, row) {
+                                const isInvalid = row.is_valid === true ? '' : 'font-weight: 600';
+                                return `<span style="${isInvalid}">` + moment(data).format("YYYY-MM-DD HH:mm") + `</span>`;
                             }
                         },
                         {
-                            data: "date_to", title: "Date To", width: "12%", render: function (data) {
-                                return moment(data).format("YYYY-MM-DD HH:mm");
+                            data: "date_to", title: "Date To", width: "12%", render: function (data, type, row) {
+                                const isInvalid = row.is_valid === true ? '' : 'font-weight: 600';
+                                return  `<span style="${isInvalid}">` + moment(data).format("YYYY-MM-DD HH:mm") + `</span>`;
                             }
                         },
                         {
-                            data: "approved_date", title: "Approved Date", className: "text-center", width: "14%", render: function (data) {
-                                return moment(data).format("YYYY-MM-DD");
+                            data: "approved_date", title: "Approved Date", className: "text-center", width: "14%", render: function (data, type, row) {
+                                const isInvalid = row.is_valid === true ? '' : 'font-weight: 600';
+                                return `<span style="${isInvalid}">` + moment(data).format("YYYY-MM-DD") + `</span>`;
                             }
                         },
-                        { data: "purpose", title: "Purpose", width: "*" },
+                        { data: "purpose", title: "Purpose", width: "*",
+                            render: function(data, type, row) {
+                                const isInvalid = row.is_valid === true ? '' : 'font-weight: 600';
+                                return `<span style="${isInvalid}">` + data + `</span>`;
+                            }
+                        },
                     ], drawCallback: function (settings) {
                         const tableWrapper = $(settings.nTableWrapper);
                         tableWrapper.find("#uploaded_csv_table_filter input").removeClass("form-control-sm");

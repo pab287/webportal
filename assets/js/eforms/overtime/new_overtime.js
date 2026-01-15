@@ -18,28 +18,36 @@ $("#requested_by").select2({
     width: '100%',
     minimumInputLength: 3,
     ajax: {
-      url: baseUrl("eforms/overtime/get_employee"),
-      dataType: "json",
-      delay: 250,
-      global: false,
-      processResults: function (data) {
-        return data;
-      }
+        url: baseUrl("eforms/overtime/get_employee"),
+        dataType: "json",
+        delay: 250,
+        global: false,
+        processResults: function (data) {
+            return data;
+        }
     }
 }).on("select2:select", function(e) {
     $(e.target).validate();
 });
 
-const dateTimeRangePicker = function (minDate) {
+let lastStart = null;
+let updating = false;
+
+const dateTimeRangePicker = function (minDate, maxDate) {
     $("#date_from, #date_to, #date").val("");
     const nMinDate = minDate ? new Date(minDate) : moment().subtract(2, 'years');
+    const nMaxDate = new Date(moment().add(1, 'days').format("YYYY-MM-DD"));
+
     $("#date_time").daterangepicker({
+        autoApply: false,
+        autoUpdateInput: false,
         timePicker: true,
         minDate: nMinDate,
         startDate: moment().startOf('hour'),
         endDate: moment().startOf('hour').add(32, 'hour'),
+        maxDate: nMaxDate,
         locale: {
-          format: 'M/DD hh:mm A'
+            format: 'M/DD hh:mm A'
         }
     }).on('apply.daterangepicker', function (ev, picker) {
         $("#date_from").val(picker.startDate.format('YYYY-MM-DD HH:mm:ss'));
@@ -48,6 +56,7 @@ const dateTimeRangePicker = function (minDate) {
     });
 }
 dateTimeRangePicker();
+
 
 $("#employee").on("select2:select", function() {
     $.ajax({
@@ -74,31 +83,31 @@ $("#employee").on("select2:select", function() {
 });
 
 function save(){
-  $.validate({
-    form : '#frm_new',
-    lang: 'en',
-    onSuccess : function(form) {
-            var disabled = $('#frm_new').find('textarea:disabled').removeAttr('disabled');
-            $.ajax({
-                url: baseUrl("eforms/overtime/save_overtime"),
-                type: "POST",
-                dataType: "json",
-                data: $("#frm_new").find("input,select,textarea").serialize(),
-                beforeSend: function(){
-                    $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                },
-                success: function(data){
-                    if(data.state){
-                        window.location.href = baseUrl("eforms/overtime/masterfile", toastr.success(data.message, "Successfully saved!", 5000));
-                        disabled.attr('disabled','disabled');
-                    }else{
-                        toastr.error(data.message, "Error!", 5000);
-                        disabled.attr('disabled','disabled');
+    $.validate({
+        form : '#frm_new',
+        lang: 'en',
+        onSuccess : function(form) {
+                var disabled = $('#frm_new').find('textarea:disabled').removeAttr('disabled');
+                $.ajax({
+                    url: baseUrl("eforms/overtime/save_overtime"),
+                    type: "POST",
+                    dataType: "json",
+                    data: $("#frm_new").find("input,select,textarea").serialize(),
+                    beforeSend: function(){
+                        $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    },
+                    success: function(data){
+                        if(data.state){
+                            window.location.href = baseUrl("eforms/overtime/masterfile", toastr.success(data.message, "Successfully saved!", 5000));
+                            disabled.attr('disabled','disabled');
+                        }else{
+                            toastr.error(data.message, "Error!", 5000);
+                            disabled.attr('disabled','disabled');
+                        }
+                        $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
                     }
-                    $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                }
-            });
-        return false;
+                });
+            return false;
         },
     });
 }
