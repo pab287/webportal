@@ -954,7 +954,7 @@ let dtPayrollSheet = _tblPayrollSheet
                     return template;
                 }
             }, {
-                data: "ot_allowances",
+                data: "ot_allowance_amount",
                 width: "5%",
                 className: "text-right",
                 render: function (data) {

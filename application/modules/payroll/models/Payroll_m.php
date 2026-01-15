@@ -1161,6 +1161,7 @@ class Payroll_m extends CI_Model{
 
                 $total_ndiff_minutes = 0;
                 $total_ndiff_amount = 0;
+                $total_ot_allowance_minutes = 0;
 
                 $holiday_minutes = 0;
                 $holiday = 0;
@@ -1198,6 +1199,8 @@ class Payroll_m extends CI_Model{
                         $ts->total_ut_minutes = 0;
                         $ts->total_accredited_ot_hrs_amount = 0;
                         $ts->total_accredited_ndiff_ot_hrs_amount = 0;
+
+                        $ts->total_allowance_ot_hrs_minutes = 0;
 
                         $ts->regular_ndiff_minutes = 0;
                         $ts->regular_ndiff_amount = 0;
@@ -1270,7 +1273,7 @@ class Payroll_m extends CI_Model{
                             $tempTs->actual_minutes = $ts->total_time_rendered;
                             $tempTs->actual_hours = $ts->total_time_rendered / 60;
                             $tempTs->actual_hours_decimal = number_format($tempTs->actual_hours, 2);
-    
+
                             $basic_rate += $tempRatex;
                             $basic_rate_total += $tempRatexx;
     
@@ -1312,6 +1315,14 @@ class Payroll_m extends CI_Model{
                                     if(floatval($ts->total_time_rendered) > 0 && isset($ts->paid_holiday) && intval($ts->paid_holiday) == 1){
                                         $excludePaidHolidayMinutes += floatval($ts->total_time_rendered);
                                     }
+
+                                    $tempTotalRendered = intval($ts->am_time_rendered) + intval($ts->pm_time_rendered);
+                                    $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($ts->am_time_rendered) > 0 || intval($ts->pm_time_rendered) > 0);
+
+                                    if($hasRenderedShift && $ts->holiday_amount > 0){
+                                        $basic_rate += $ts->holiday_amount;
+                                        $basic_rate_total += $ts->holiday_amount;
+                                    }
                                 }
                             }
                         }else{
@@ -1330,7 +1341,7 @@ class Payroll_m extends CI_Model{
                             $tempTs->actual_minutes = $ts->total_time_rendered;
                             $tempTs->actual_hours = $ts->total_time_rendered / 60;
                             $tempTs->actual_hours_decimal = number_format($tempTs->actual_hours, 2);
-    
+
                             $basic_rate += $tempRatex;
                             $basic_rate_total += $tempRatexx;
     
@@ -1362,6 +1373,14 @@ class Payroll_m extends CI_Model{
     
                                     if(floatval($ts->total_time_rendered) > 0 && isset($ts->paid_holiday) && intval($ts->paid_holiday) == 1){
                                         $excludePaidHolidayMinutes += floatval($ts->total_time_rendered);
+                                    }
+
+                                    $tempTotalRendered = intval($ts->am_time_rendered) + intval($ts->pm_time_rendered);
+                                    $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($ts->am_time_rendered) > 0 || intval($ts->pm_time_rendered) > 0);
+
+                                    if($hasRenderedShift && $ts->holiday_amount > 0){
+                                        $basic_rate += $ts->holiday_amount;
+                                        $basic_rate_total += $ts->holiday_amount;
                                     }
                                 }
                             }
@@ -1508,6 +1527,10 @@ class Payroll_m extends CI_Model{
                     $total_ndiff_amount = array_reduce($timesheet, function ($carry, $item) {
                         return $carry + $item->regular_ndiff_amount;
                     }, 0);
+
+                    $total_ot_allowance_minutes = array_reduce($timesheet, function ($carry, $item) {
+                        return $carry + $item->total_allowance_ot_hrs_minutes;
+                    });
                     
                 } // end of is monthly paid FALSE
 
@@ -1573,6 +1596,12 @@ class Payroll_m extends CI_Model{
                 $employee->ewd = $ewd;
                 $allowances = $this->getEmployeeAllowances($employee, $working_days_in_a_month, $minutes_per_day, $target_minutes_worked, $total_unrendered_minutes, 1);
 
+                $allowance_per_minute = array_reduce($allowances, function ($carry, $item) {
+                    return $carry + $item->allowance_per_minute;
+                });
+
+                $total_ot_allowance_amount = $total_ot_allowance_minutes * $allowance_per_minute;
+
                 /*** $employee_allowance = array_reduce($allowances, function ($carry, $item) {
                     return $carry + (intval($item->is_active) === 0 ? 0 : $item->allowance_net);
                 }, 0);
@@ -1588,16 +1617,19 @@ class Payroll_m extends CI_Model{
 
                 $employee->total_allowance = $employeeAllowanceTotal;
 
+                $employee->total_ot_allowance_minutes = $total_ot_allowance_minutes;
+                $employee->total_ot_allowance_amount = $total_ot_allowance_amount;
+
                 $employeeRate = $employee->rate + 0;
                 $employeeRate = is_float($employeeRate) ? floatval($employeeRate): intval($employeeRate);
 
-                $tempHolidayPay = floatval($holiday);
                 $tempBasicRate = floatval($basic_rate);
                 $tempAllowance = floatval($employeeAllowanceTotal);
                 $tempOtndiff = floatval($ot_amount) + floatval($ot_ndiff_amount);
                 $totalNightDifferential = floatval($total_ndiff_amount);
-                /*** $earnings = $tempBasicRate + $tempAllowance + $tempHolidayPay + $tempOtndiff + $totalNightDifferential; ***/
-                $earnings = $tempBasicRate + $tempAllowance + $tempOtndiff + $totalNightDifferential;
+                $totalOtAllowance = floatval($total_ot_allowance_amount);
+
+                $earnings = $tempBasicRate + $tempAllowance + $tempOtndiff + $totalNightDifferential + $totalOtAllowance;
 
                 $employee->earnings = $earnings;
                 $gross_pay = $earnings;
@@ -1935,7 +1967,7 @@ class Payroll_m extends CI_Model{
                         $employees["undertime_records"][] = $temp_undertime_records;
                     }
                 }
-
+                
                 $data = array(
                     "date_start" => $start,
                     "date_end" => $end,
@@ -1968,6 +2000,8 @@ class Payroll_m extends CI_Model{
                     "ot_amount" => $ot_amount,
                     "ot_ndiff_minutes" => $ot_ndiff_minutes,
                     "ot_ndiff_amount" => $ot_ndiff_amount,
+                    "ot_allowance_minutes" => $total_ot_allowance_minutes,
+                    "ot_allowance_amount" => $total_ot_allowance_amount,
                     "total_ndiff_minutes" => $total_ndiff_minutes,
                     "total_ndiff_amount" => $total_ndiff_amount,
                     "gross_pay" => $gross_pay,
@@ -2010,10 +2044,9 @@ class Payroll_m extends CI_Model{
                 $_total_allowances = $payroll_sheet->total_allowances;
                 $_total_ot_ndiff = $payroll_sheet->ot_amount + $payroll_sheet->ot_ndiff_amount;
                 $_total_night_diff = $payroll_sheet->total_ndiff_amount;
-                
-                $_holiday_pay = $payroll_sheet->total_holiday_amount;
-                /*** $gross_pay = $_total_basic_rate + $_total_allowances + $_holiday_pay + $_total_ot_ndiff + $_total_night_diff; ***/
-                $gross_pay = $_total_basic_rate + $_total_allowances + $_total_ot_ndiff + $_total_night_diff;
+                $_total_ot_allowance = $payroll_sheet->ot_allowance_amount;
+
+                $gross_pay = $_total_basic_rate + $_total_allowances + $_total_ot_ndiff + $_total_night_diff + $_total_ot_allowance;
 
                 $custom_adjustments = $this->db->where("payroll_sheet_id", $payroll_sheet_id)
                     ->get("payroll.payroll_sheet_custom_adjustments");
@@ -2940,6 +2973,10 @@ class Payroll_m extends CI_Model{
             $ot_ndiff_minutely = $timesheet->per_minute * (isset($payrate_setting) ? $payrate_setting->ot_night_diff_rate : 0.1);
             $timesheet->ot_ndiff_minutely = floatval($tempNightDiffHours) > 0 ? floatval($tempNightDiffHours) * $ot_ndiff_minutely: 0;
             $timesheet->total_accredited_ndiff_ot_hrs_amount = ($tempNightDiffHours * 60) * $ot_ndiff_minutely;
+
+            if($timesheet->is_rest_day == 1 || $timesheet->has_shift == 0 || $timesheet->is_holiday == 1){
+                $timesheet->total_allowance_ot_hrs_minutes = $tempTotalOvertimeHours * 60;
+            }
         }
         return $timesheet;
     }
@@ -2958,8 +2995,11 @@ class Payroll_m extends CI_Model{
     protected function getHolidayAmountDaily($timesheet=array()){
         if($timesheet && count(get_object_vars($timesheet)) > 0 && isset($timesheet->paid_holiday) && intval($timesheet->paid_holiday) == 1){
             $rowPayrate = $this->getPayrateSettingById($timesheet->payrate_id);
-            $isPaidHoliday = isset($timesheet->paid_holiday) && intval($timesheet->paid_holiday) == 1 ? true: false;
-            $tempHolidayRate = (isset($rowPayrate->regular_rate, $rowPayrate->is_holiday) && $rowPayrate->regular_rate && intval($rowPayrate->is_holiday) == 1 && $isPaidHoliday === false) ? $rowPayrate->regular_rate: 1;
+            $isPaidHoliday = isset($timesheet->paid_holiday) && intval($timesheet->paid_holiday) === 1;
+
+            $tempHolidayRate = (isset($rowPayrate->regular_rate, $rowPayrate->is_holiday)
+                && intval($rowPayrate->is_holiday) == 1 && $rowPayrate->regular_rate
+                && intval($rowPayrate->is_holiday) == 1 && $isPaidHoliday === false) ? $rowPayrate->regular_rate: 1;
             /*** $_holiday_minutes = $timesheet->minutely * ($timesheet->minutes_per_day / 60); ***/
             $_holiday_minutes = floatval($timesheet->minutes_per_day);
             $_holiday_amount = $timesheet->minutely_amount * ($timesheet->minutes_per_day / 60);

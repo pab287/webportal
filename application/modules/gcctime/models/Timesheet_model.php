@@ -2361,7 +2361,13 @@ class Timesheet_model extends CI_Model{
             }
             /*** am 2hrs deduction custom ***/
             $has2hrsDeduction = false;
-            if(($am_in && $am2hrsDeduction) && ($am_in > $am2hrsDeduction) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
+            /*** if(($am_in && $am2hrsDeduction) && ($am_in > $am2hrsDeduction) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
+                $amPlus2hrs = strtotime(date("Y-m-d H:i", strtotime("+2 hours", strtotime($employee_time_sheet->date . " " . $employee_time_sheet->shift_am_start))));
+                $employee_time_sheet->am_late = round(($amPlus2hrs - $_am_start) / 60, 2);
+                $has2hrsDeduction = true;
+            } ***/
+
+            if(($am_in && $am2hrsDeduction) && ($am_in > $am2hrsDeduction) && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
                 $amPlus2hrs = strtotime(date("Y-m-d H:i", strtotime("+2 hours", strtotime($employee_time_sheet->date . " " . $employee_time_sheet->shift_am_start))));
                 $employee_time_sheet->am_late = round(($amPlus2hrs - $_am_start) / 60, 2);
                 $has2hrsDeduction = true;
@@ -2398,10 +2404,16 @@ class Timesheet_model extends CI_Model{
                 $tempAmOutx = ($am_out > $_am_end) ? $_am_end : $am_out;
 
                 /*** am 2hrs deduction custom ***/
-                if(($am_in && $am2hrsDeduction) && ($am_in > $am2hrsDeduction) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
+                /*** if(($am_in && $am2hrsDeduction) && ($am_in > $am2hrsDeduction) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
+                    $tempAmInx = strtotime(date("Y-m-d H:i", strtotime("+2 hours", strtotime($employee_time_sheet->date . " " . $employee_time_sheet->shift_am_start))));
+                    $has2hrsDeduction = true;
+                } ***/
+
+                if(($am_in && $am2hrsDeduction) && ($am_in > $am2hrsDeduction) && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
                     $tempAmInx = strtotime(date("Y-m-d H:i", strtotime("+2 hours", strtotime($employee_time_sheet->date . " " . $employee_time_sheet->shift_am_start))));
                     $has2hrsDeduction = true;
                 }
+
                 if($flexibleEmployee && $has2hrsDeduction === false && $allow_late_adjustment === false){ $tempAmInx = $_am_start; }
                 /*** am 2hrs deduction custom ***/
 
@@ -2452,7 +2464,8 @@ class Timesheet_model extends CI_Model{
         }
 
         /*** am half day deduction custom ***/
-        if(($am_in && $amHalfDayAbsent) && ($am_in >= $amHalfDayAbsent) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
+        /*** if(($am_in && $amHalfDayAbsent) && ($am_in >= $amHalfDayAbsent) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){ ***/
+        if(($am_in && $amHalfDayAbsent) && ($am_in >= $amHalfDayAbsent) && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
             $employee_time_sheet->am_late = 0;
             $employee_time_sheet->am_ut = round(($_am_end - $_am_start) / 60, 2);
             $employee_time_sheet->am_time_rendered = 0;
