@@ -5872,7 +5872,7 @@ class Reports_m extends CI_Model{
         $tempArrFilter["has_comp_desc"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? true: false;
         $tempArrFilter["payroll_group"] = $filterPayrollGroup;
 
-        $results = $this->customOvertimeSummaryList($filteredIds, $filter_month, $filter_year, $company, $coverageDate);
+        $results = $this->customOvertimeSummaryList($filteredIds, $filter_month, $filter_year, $company, $tempArrFilter["coverage_date"]);
 
         return [
             'data' => $results['data'] ?? [],
@@ -5903,7 +5903,7 @@ class Reports_m extends CI_Model{
         if ($timesheetId) {
             $date = date("Y-m-d", strtotime($date));
 
-            $this->db->select("a.id");
+            $this->db->select("a.id, b.emp_id");
             $this->db->from($this->tbl_timesheet_overtime.' as a');
             $this->db->join($this->tbl_timesheet.' as b', 'b.id = a.timesheet_id', 'left');
             $this->db->where('DATE(a.overtime_in)', $date);
@@ -5911,8 +5911,29 @@ class Reports_m extends CI_Model{
             $this->db->where('b.verified', 1);
 
             $query = $this->db->get();
+
             if ($query->num_rows() > 0) {
-                $isPaid = 1;
+            
+                $row = $query->row();
+
+                $this->db->select('daily');
+                $this->db->from($this->tbl_payroll_sheet);
+                $this->db->where('emp_id', $row->emp_id);
+                
+                $this->db->group_start();
+                    $this->db->where('DATE(date_start) <= ', date('Y-m-d', strtotime($date)));
+                    $this->db->where('DATE(date_end) >=', date('Y-m-d', strtotime($date)));
+                $this->db->group_end();
+
+                $this->db->where('posted', 1);
+                $this->db->where('is_bonus', 0);
+
+                $_q = $this->db->get();
+                
+                if ($_q->num_rows() > 0) {
+                    $isPaid = 1;
+                }
+
             }
         }
 
@@ -5932,6 +5953,7 @@ class Reports_m extends CI_Model{
                 $this->db->where('DATE(date_end) >=', date('Y-m-d', strtotime($date)));
             $this->db->group_end();
 
+            $this->db->where('posted', 1);
             $this->db->where('is_bonus', 0);
 
             $query = $this->db->get();
@@ -5959,6 +5981,7 @@ class Reports_m extends CI_Model{
                 $this->db->where('DATE(date_end) >=', date('Y-m-d', strtotime($date)));
             $this->db->group_end();
 
+            $this->db->where('posted', 1);
             $this->db->where('is_bonus', 0);
 
             $query = $this->db->get();
@@ -6085,7 +6108,16 @@ class Reports_m extends CI_Model{
             ->or_where('a.total_accredited_ndiff_ot_hrs >', 0)
         ->group_end();
 
+        // $this->db->group_start();
+        //     $this->db->where('DATE(b.date_start) <= ', date('Y-m-d', strtotime($date)));
+        //     $this->db->where('DATE(b.date_end) >=', date('Y-m-d', strtotime($date)));
+        // $this->db->group_end();
+
+        // $this->db->where('b.is_bonus', 0);
+
         $rows = $this->db->get()->result();
+
+        //here
 
         $tsMap = [];
         foreach ($rows as $r) {

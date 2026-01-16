@@ -202,7 +202,7 @@
                                             @click="tempShowByDates(2)">
                                         MONTH<span></span>
                                     </label>
-                                    <label class="m-checkbox" hidden>
+                                    <label class="m-checkbox">
                                         <input type="radio" id="yearly_period"
                                             name="group"
                                             data-validation="required"
