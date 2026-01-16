@@ -536,7 +536,7 @@
                                 </thead>
                                 <tbody>
                                 </tbody>
-                                <tfoot class="">
+                                <tfoot class="m--hide">
                                     <tr>
                                         <th scope="col" class="m--font-boldest" colspan="6">GRAND TOTAL</th>
                                         <th scope="col"></th>

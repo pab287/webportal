@@ -126,6 +126,14 @@
                                         <th scope="col">
                                             <span data-toggle="m-tooltip"
                                                 data-placement="top"
+                                                data-original-title="OT ALLOWANCE"
+                                                data-skin="dark">
+                                                OT.ALLW
+                                            </span>
+                                        </th>
+                                        <th scope="col">
+                                            <span data-toggle="m-tooltip"
+                                                data-placement="top"
                                                 data-original-title="GROSS PAY"
                                                 data-skin="dark">
                                                 GROSS PAY
@@ -204,7 +212,7 @@
                                     <tfoot>
                                         <tr>
                                             <th scope="col"></th>
-                                            <th scope="col" colspan='21' style='text-align: right !important;'></th>
+                                            <th scope="col" colspan='22' style='text-align: right !important;'></th>
                                             <th scope="col"></th>
                                             <th scope="col"></th>
                                         </tr>

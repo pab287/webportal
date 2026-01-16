@@ -5,7 +5,7 @@ const viewTimesheetModal = $("#view-timesheet-modal");
 const viewPayrollPayslipModal = $("#view-payroll-payslip-modal");
 
 const exportOptions = {
-    columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+    columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
 };
 
 let dtEmployeeTimesheet;
@@ -612,6 +612,13 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                 }
             },
             {
+                data: "ot_allowance_amount", // gross pay
+                className: "text-right",
+                render: function (data) {
+                    return numberFormat(data);
+                }
+            },
+            {
                 data: "gross_pay", // gross pay
                 className: "text-right",
                 render: function (data) {
@@ -1039,13 +1046,13 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
             };
 
             let totalNet = api
-                .column(22)
+                .column(23)
                 .data()
                 .reduce(function (a, b) {
                     return intVal(a) + intVal(b);
                 }, 0);
             $(api.column(1).footer()).html("<span class='m--font-boldest'>&nbsp;&nbsp;GRANDTOTAL</span>");
-            $(api.column(22).footer()).html("<span class='m--font-boldest'>&#8369;&nbsp;&nbsp;" + numberFormat(totalNet) + "</span>");
+            $(api.column(23).footer()).html("<span class='m--font-boldest'>&#8369;&nbsp;&nbsp;" + numberFormat(totalNet) + "</span>");
         }
     });
 
@@ -1481,10 +1488,10 @@ function triggerPrintable(ids = []) {
                     w.document.open();
                     w.document.write(json.html);
                     w.document.close();
-                    setTimeout(function () {
+                    /*** setTimeout(function () {
                         w.print();
                         w.close();
-                    }, 150);
+                    }, 150); ***/
 
                     w.onbeforeprint = function (e) {
                         setPrintIds = ids;

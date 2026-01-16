@@ -688,7 +688,7 @@ let dtPayrollSheet = _tblPayrollSheet
                         let cval = "";
                         if(i == 0) {
                             cval = "GRAND TOTAL";
-                        }else if (i > 1 && i !== 11) {
+                        }else if (i > 1 && i !== 12) {
                             cval = tempRowCols[tempx];
                             cval = $.trim(cval);
                             tempx++;

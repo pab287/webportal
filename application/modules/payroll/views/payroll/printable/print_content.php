@@ -144,10 +144,10 @@
                     <?php if(floatval($item->holiday_hours) > 0): ?>
                         <div class="row m--margin-top-5">
                             <div class="col-md-8 printable-width-8">
-                                <h5 class="m--font-bolder m--marginless">HOLIDAY PAY</h5>
+                                <h5 class="m--font-bolder m--marginless">HOLIDAY PAY <small class="m--font-boldest">(BASIC PAY INC)</small></h5>
                             </div>
                             <div class="col-md-4 printable-width-4 text-right">
-                                <h5 class="m--font-boldest m--marginless"><?php echo $item->total_holiday_amount; ?></h5>
+                                <h5 class="m--font-boldest mr-3"><?php echo $item->total_holiday_amount; ?></h5>
                             </div>
                         </div>
                         <div class="row">
@@ -198,7 +198,7 @@
                                 </div>
                                 <div class="col-md-6 printable-width-6 text-right">
                                     <?php if($item->ot_ndiff_amount > 0) { ?>
-                                        <h5 class="m--font-boldest m--marginless"><?php echo number_format($item->ot_amount + $item->ot_ndiff_amount,2); ?></h5>
+                                        <h5 class="m--font-boldest m--marginless"><?php echo number_format($item->ot_amount + $item->ot_ndiff_amount, 2); ?></h5>
                                     <?php }else{ ?>
                                         <h5 class="m--font-boldest m--marginless"><?php echo $item->ot_amount; ?></h5>
                                     <?php } ?>
@@ -206,7 +206,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-6 printable-width-6 text-right">
-                                    <h5 class="m--marginless"><span class="m--font-bolder">OT HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo number_format($item->ot_hours,2); ?></span></h5>
+                                    <h5 class="m--marginless"><span class="m--font-bolder">OT HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo number_format($item->ot_hours, 2); ?></span></h5>
                                 </div>
                                 <?php if(floatval($item->ot_ndiff_hours) > 0): ?>
                                 <div class="col-md-6 printable-width-6 text-left">
@@ -214,9 +214,21 @@
                                 </div>
                                 <?php endif; ?>
                             </div>
+
+                            <?php if($item->ot_allowance_amount > 0): ?>
+                            <div class="row m--margin-top-5">
+                                <div class="col-md-6 printable-width-6">
+                                    <h5 class="m--font-bolder m--marginless">OT ALLOWANCE</h5>
+                                </div>
+                                <div class="col-md-6 printable-width-6 text-right">
+                                    <h5 class="m--font-boldest m--marginless"><?php echo $item->ot_allowance_amount; ?></h5>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+
                             <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                         <?php endif; ?>
-                        
+
                         <?php if($item->total_ndiff_amount > 0): ?>
                             <div class="row m--margin-top-5">
                                 <div class="col-md-6 printable-width-6">
