@@ -1488,10 +1488,10 @@ function triggerPrintable(ids = []) {
                     w.document.open();
                     w.document.write(json.html);
                     w.document.close();
-                    /*** setTimeout(function () {
+                    setTimeout(function () {
                         w.print();
                         w.close();
-                    }, 150); ***/
+                    }, 150);
 
                     w.onbeforeprint = function (e) {
                         setPrintIds = ids;
