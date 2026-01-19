@@ -1422,7 +1422,7 @@ var tblFile = $("#table-file-content").DataTable({
         { data: "", width: "5%", orderable: false, className: "text-center", render: function (_data, _type, row, _meta) {
             return fileName(row.filename, row.emp_id, row.ext, row.has_thumbnail); 
         } },
-        { data: "filename" },
+        { data: "filename", width: '30%' },
         { data: null, width: "8%", className: "text-center" },
     ],
     columnDefs: [
@@ -1431,9 +1431,18 @@ var tblFile = $("#table-file-content").DataTable({
             defaultContent: "",
             targets: -1,
             orderable: false,
-            render: function (_data, _type, row, _meta) { return itemDatatableActions(row.id, row.filename, row.emp_id, row.has_file); },
+            render: function (_data, _type, row, _meta) { return itemDatatableActions(row.id, row.filename, row.emp_id, row.has_file, row.attachment_id, row.status); },
         }
-    ]
+    ],
+    drawCallback(setting) {
+        const count = tblFile.rows().count();
+
+        if (count > 1) {
+            $("#remove-attachment").prop('disabled', false);
+        } else {
+            $("#remove-attachment").prop('disabled', true);
+        }
+    }
 });
 
 function fileName($name, $id, $ext, $hasThumbnail = false) {
@@ -1444,11 +1453,29 @@ function fileName($name, $id, $ext, $hasThumbnail = false) {
     }
 }
 
-function itemDatatableActions($id, $name, $employee, $has_file = false) {
-    if ($id && $has_file) {
-        $fileName = '"' + $name + '"';
-        return "<button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem' onclick='openFile(" + $employee + ", " + $fileName + ")'><i class='la la-eye'></i></button>";
-    } else { return "<i class='la la-eye-slash'></i>"; }
+function itemDatatableActions(id, name, employee, has_file = false, attachment_id, status) {
+    let html = ``;
+    let count = tblFile.rows().count();
+    const _margin = count > 1 ? 'mr-2' : '';
+
+    if (id && has_file) {
+        const fileName = '"' + name + '"';
+
+        html += "<button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem "+_margin+"' onclick='openFile(" + employee + ", " + fileName + ")'><i class='la la-eye'></i></button>";
+    } else {
+        html += "<i class='la la-eye-slash mr-2'></i>";
+    }
+
+    if (jQuery.inArray("delete", _currentActions) !== -1) {
+        let disableAttachment = ['Approved', 'For Releasing', 'Released', 'Disapproved', 'Cancel'];
+
+        if (!jQuery.inArray(status, disableAttachment) !== -1) {
+            const _onclick = `removeAttachment(${id}, ${attachment_id})`;
+            html += "<button type='button' id='remove-attachment' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnDelete' onclick='"+_onclick+"'><i class='la la-trash'></i></button>";
+        }
+    }
+
+    return html;
 }
 
 function openFile($employeeId, $name) {
@@ -1770,3 +1797,45 @@ $.validate({
 $("#released").on('hidden.bs.modal', function (e) {
     $("#released-form").trigger('reset');
 });
+
+function removeAttachment(id, attachment) {
+    Swal.fire({
+        icon: 'warning',
+        title: 'Remove Attachment',
+        allowOutsideClick: false,
+        text: 'Removing this attachment is permanent and cannot be undone. Do you want to continue?',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'Remove',
+        input: 'textarea',
+        inputLabel: "Reason for removing the attachment.",
+        inputValidator: (result) => {
+            return !result && "Reason is required!";
+        },
+    }).then((result) => {
+        if (result.isConfirmed && typeof result.value !== "undefined" && result.value) { 
+            $.ajax({
+                url: baseUrl('eforms/cash_advance/remove_attachment'),
+                type: 'post',
+                data: {
+                    csrf_token: _csrf_hash,
+                    id: id,
+                    attachment: attachment,
+                    reason: result.value
+                },
+                dataType: 'json',
+                success: function(response) {
+                    Swal.fire({
+                        icon: response.state ? 'success' : 'error',
+                        title: 'Remove Attachment',
+                        text: response.msg
+                    });
+
+                    if (response.state) {
+                        tblFile.ajax.reload();
+                    }
+                }
+            })
+        }
+    });
+}
