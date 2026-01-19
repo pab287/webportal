@@ -1210,6 +1210,7 @@
                     vmEditLoanRefs.reference_id = 0;
 
                     editEmployeeLoan.modal("hide");
+                    getEmployeeLoans(<?php echo $data->id; ?>);
                 }
             });
 
