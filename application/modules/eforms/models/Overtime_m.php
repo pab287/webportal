@@ -254,8 +254,13 @@ class Overtime_m extends CI_Model {
                 $time1 = date_create($rs->date_from);
                 $time2 = date_create($rs->date_to);
                 $time_diff = date_diff($time1, $time2);
-                $tempHr = $time_diff->h;
-                $tempMn = $time_diff->i;
+                // $tempHr = $time_diff->h; //commented because it returns 0 when in 24hrs
+                // $tempMn = $time_diff->i;
+                $totalMinutes = ($time_diff->days * 24 * 60) + ($time_diff->h * 60) + $time_diff->i;
+
+                $tempHr = intdiv($totalMinutes, 60);
+                $tempMn = $totalMinutes % 60;
+
                 $tempHrLabel = ($tempHr == 1)? "Hour": "Hours";
                 $tempMnLabel = ($tempMn == 1)? "Minute": "Minutes";
                 $tempDuration = "{$tempHr} {$tempHrLabel} {$tempMn} {$tempMnLabel}";
@@ -776,70 +781,85 @@ class Overtime_m extends CI_Model {
         $attachment = ($this->input->post('attachment_image') !== '' && $this->input->post('attachment_image')) ? $this->input->post('attachment_image'): array();
         $attachment = serialize($attachment);
 
+        $this->db->select('reference_no, date_from, date_to, purpose, status');
+        $this->db->where('DATE(date_from)', date('Y-m-d', strtotime($this->input->post('date_from'))));
+        $this->db->where('employee', $this->input->post('employee'));
+        $this->db->from('gcceforms.overtime');
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $resultset['state'] = false;
+            $resultset['ot_data'] = $query->row();
+            $resultset['message'] = "You already have an overtime application for this date. Only one overtime is allowed per day.";
+
+            return $resultset;
+        }
+
         $list = $this->overtime->get_series($year, $month, "new");
-            $series = '';
-            if (sizeof($list) > 0) {
-                foreach ($list as $arr) {
-                    $x = $arr->ref_series;
-                }
-                $series = intval($x) + 1;
-                if (strlen($series) == 1) {
-                    $series = '000' . $series;
-                } else if (strlen($series) == 2) {
-                    $series = '00' . $series;
-                } else if (strlen($series) == 3) {
-                    $series = '0' . $series;
-                } else {
-                    $series = $series;
-                }
+        $series = '';
+        if (sizeof($list) > 0) {
+            foreach ($list as $arr) {
+                $x = $arr->ref_series;
+            }
+            $series = intval($x) + 1;
+            if (strlen($series) == 1) {
+                $series = '000' . $series;
+            } else if (strlen($series) == 2) {
+                $series = '00' . $series;
+            } else if (strlen($series) == 3) {
+                $series = '0' . $series;
             } else {
-                $series = '0001';
+                $series = $series;
             }
-            if((in_array("approve_action", $this->current_action))){
-                $data = array(
-                    'ref_yr' => $year,
-                    'ref_series' => $series,
-                    'ref_month' => $month,
-                    'reference_no' => 'OT' . $year . '-' . $month . '-' . $series,
-                    'status' => 'Pending',
-                    'employee' => $this->input->post('employee'),
-                    'company' => $this->input->post('company'),
-                    'department' => $this->input->post('department'),
-                    'position' => $this->input->post('position'),
-                    'requested_by' => $this->input->post('requested_by'),
-                    'requested_at' => $date,
-                    'requested_remarks' => $this->input->post('remarks'),
-                    'purpose' => $this->input->post('purpose'),
-                    'date_from' => $this->input->post('date_from'),
-                    'date_to' => $this->input->post('date_to'),
-                    'created_by' => $this->user_data['emp_id'],
-                    'created_at' => $date,
-                    'attachment_image' => $attachment,
-                    'status' => 'Approved',
-                    'approved_by' => $this->user_data['emp_id'],
-                    'approved_at' => $date,
-                );
-            }else{
-                $data = array(
-                    'ref_yr' => $year,
-                    'ref_series' => $series,
-                    'ref_month' => $month,
-                    'reference_no' => 'OT' . $year . '-' . $month . '-' . $series,
-                    'status' => 'Pending',
-                    'employee' => $this->input->post('employee'),
-                    'company' => $this->input->post('company'),
-                    'department' => $this->input->post('department'),
-                    'position' => $this->input->post('position'),
-                    'requested_by' => $this->input->post('requested_by'),
-                    'requested_at' => $date,
-                    'requested_remarks' => $this->input->post('remarks'),
-                    'purpose' => $this->input->post('purpose'),
-                    'date_from' => $this->input->post('date_from'),
-                    'date_to' => $this->input->post('date_to'),
-                    'created_by' => $this->user_data['emp_id'],
-                    'created_at' => $date
-            )   ;
-            }
+        } else {
+            $series = '0001';
+        }
+
+        if((in_array("approve_action", $this->current_action))){
+            $data = array(
+                'ref_yr' => $year,
+                'ref_series' => $series,
+                'ref_month' => $month,
+                'reference_no' => 'OT' . $year . '-' . $month . '-' . $series,
+                'status' => 'Pending',
+                'employee' => $this->input->post('employee'),
+                'company' => $this->input->post('company'),
+                'department' => $this->input->post('department'),
+                'position' => $this->input->post('position'),
+                'requested_by' => $this->input->post('requested_by'),
+                'requested_at' => $date,
+                'requested_remarks' => $this->input->post('remarks'),
+                'purpose' => $this->input->post('purpose'),
+                'date_from' => $this->input->post('date_from'),
+                'date_to' => $this->input->post('date_to'),
+                'created_by' => $this->user_data['emp_id'],
+                'created_at' => $date,
+                'attachment_image' => $attachment,
+                'status' => 'Approved',
+                'approved_by' => $this->user_data['emp_id'],
+                'approved_at' => $date,
+            );
+        }else{
+            $data = array(
+                'ref_yr' => $year,
+                'ref_series' => $series,
+                'ref_month' => $month,
+                'reference_no' => 'OT' . $year . '-' . $month . '-' . $series,
+                'status' => 'Pending',
+                'employee' => $this->input->post('employee'),
+                'company' => $this->input->post('company'),
+                'department' => $this->input->post('department'),
+                'position' => $this->input->post('position'),
+                'requested_by' => $this->input->post('requested_by'),
+                'requested_at' => $date,
+                'requested_remarks' => $this->input->post('remarks'),
+                'purpose' => $this->input->post('purpose'),
+                'date_from' => $this->input->post('date_from'),
+                'date_to' => $this->input->post('date_to'),
+                'created_by' => $this->user_data['emp_id'],
+                'created_at' => $date
+            );
+        }
 
         $this->db->insert('gcceforms.overtime', $data);
         $data_id = $this->db->insert_id();
@@ -1108,6 +1128,21 @@ class Overtime_m extends CI_Model {
 
     function updateOvertime($id){
         $this->input->post();
+
+        $this->db->select('reference_no, date_from, date_to, purpose, status');
+        $this->db->where('DATE(date_from)', date('Y-m-d', strtotime($this->input->post('date_from'))));
+        $this->db->where('employee', $this->input->post('employee'));
+        $this->db->from('gcceforms.overtime');
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $resultset['state'] = false;
+            $resultset['ot_data'] = $query->row();
+            $resultset['message'] = "You already have an overtime application for this date. Only one overtime is allowed per day.";
+
+            return $resultset;
+        }
+        
         $date = date('Y-m-d H:i:s');
         $data = array(
                 'employee' => $this->input->post('employee'),

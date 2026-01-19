@@ -36,15 +36,14 @@ let updating = false;
 const dateTimeRangePicker = function (minDate) {
     $("#date_from, #date_to, #date").val("");
     const nMinDate = minDate ? new Date(minDate) : moment().subtract(2, 'years');
-    const nMaxDate = new Date(moment().add(1, 'days').format("YYYY-MM-DD"));
+    const nMaxDate = new Date(moment().add(1, 'days').format("YYYY-MM-DD 23:59"));
 
     $("#date_time").daterangepicker({
-        autoApply: false,
-        autoUpdateInput: false,
         timePicker: true,
+        timePicker24Hour: false,
         minDate: nMinDate,
         startDate: moment().startOf('hour'),
-        // endDate: moment().startOf('hour').add(32, 'hour'),
+        endDate: moment().startOf('hour').add(24, 'hour'), //changed default tagged / selected time from 32hrs to 24hrs
         maxDate: nMaxDate,
         locale: {
             format: 'M/DD hh:mm A'
@@ -150,6 +149,24 @@ $.validate({
                             disabled.attr('disabled','disabled');
                         }else{
                             toastr.error(data.message, "Error!", 5000);
+
+                            if (typeof data.ot_data !== 'undefined' && data.ot_data) {
+                                let html = '';
+
+                                html += '<div class="text-left" style="text-transform: uppercase; font-size: 13px !important">';
+                                html += `<p style="margin-bottom: 0"><strong>Reference No: </strong> ${data.ot_data.reference_no} </p>`;
+                                html += `<p style="margin-bottom: 0"><strong>Datetime: </strong> ${moment(data.ot_data.date_from).format('YYYY-MM-DD hh:mm A')} - ${moment(data.ot_data.date_to).format('YYYY-MM-DD hh:mm A')}</p>`;
+                                html += `<p style="margin-bottom: 0"><strong>Purpose: </strong></p>`;
+                                html += `<p style="margin-bottom: 0; margin-left: 10px">${formatToBullets(data.ot_data.purpose)}</p>`;
+                                html += '</div>';
+
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Duplicate Overtime Entry Found!',
+                                    html: html
+                                });
+                            }
+
                             disabled.attr('disabled','disabled');
                         }
                         $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
@@ -311,4 +328,13 @@ function isValidTimeRange(from, to) {
     }
 
     return { valid: true };
+}
+
+function formatToBullets(text) {
+    return text
+        .split(/\r?\n|,/)
+        .map(item => item.trim())
+        .filter(item => item.length)
+        .map(item => `- ${item}`)
+        .join('<br>');
 }

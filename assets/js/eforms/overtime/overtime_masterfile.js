@@ -775,7 +775,7 @@ $("#mass_date_time").daterangepicker({
     startDate: moment().startOf('hour'),
     endDate: moment().startOf('hour').add(32, 'hour'),
     locale: {
-      format: 'M/DD hh:mm A'
+        format: 'M/DD hh:mm A'
     }
 }).on('apply.daterangepicker', function (ev, picker) {
     $("#date_from").val(picker.startDate.format('YYYY-MM-DD HH:mm:ss'));

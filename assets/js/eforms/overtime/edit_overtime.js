@@ -95,14 +95,15 @@ const dateTimeRangePicker = function (minDate, startDate, endDate) {
   $("#date_from, #date_to, #date").val("");
   const nMinDate = minDate ? new Date(minDate) : moment().subtract(2, 'years');
   const nStartDate = startDate ? new Date(startDate) : moment().startOf('hour');
-  const nEndDate = endDate ? new Date(endDate) : moment().startOf('hour').add(32, 'hour');
+  const nEndDate = endDate ? new Date(endDate) : moment().startOf('hour').add(24, 'hour'); //changed default tagged / selected time from 32hrs to 24hrs
 
-  const nMaxDate = new Date(moment().add(1, 'days').format("YYYY-MM-DD"));
+  const nMaxDate = new Date(moment().add(1, 'days').format("YYYY-MM-DD 23:59"));
   $("#date_time").daterangepicker({
       timePicker: true,
+      timePicker24Hour: false,
       minDate: nMinDate,
       startDate: nStartDate,
-      // endDate: nEndDate,
+      endDate: nEndDate,
       maxDate: nMaxDate,
       locale: {
         format: 'M/DD hh:mm A'
@@ -149,6 +150,24 @@ function save() {
                     location.href = 'view_overtime?id=' + param_id;
                   }, 1000);
                 } else {
+
+                  if (typeof data.ot_data !== 'undefined' && data.ot_data) {
+                      let html = '';
+
+                      html += '<div class="text-left" style="text-transform: uppercase; font-size: 13px !important">';
+                      html += `<p style="margin-bottom: 0"><strong>Reference No: </strong> ${data.ot_data.reference_no} </p>`;
+                      html += `<p style="margin-bottom: 0"><strong>Datetime: </strong> ${moment(data.ot_data.date_from).format('YYYY-MM-DD hh:mm A')} - ${moment(data.ot_data.date_to).format('YYYY-MM-DD hh:mm A')}</p>`;
+                      html += `<p style="margin-bottom: 0"><strong>Purpose: </strong></p>`;
+                      html += `<p style="margin-bottom: 0; margin-left: 10px">${formatToBullets(data.ot_data.purpose)}</p>`;
+                      html += '</div>';
+
+                      Swal.fire({
+                          icon: 'warning',
+                          title: 'Duplicate Overtime Entry Found!',
+                          html: html
+                      });
+                  }
+                  
                   toastr.error(data.message, "Error!", 5000);
                 }
                 $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
@@ -199,20 +218,29 @@ function OnInput(event) {
 }
 
 function isValidTimeRange(from, to) {
-    const fromDate = new Date(from.replace(' ', 'T'));
-    const toDate = new Date(to.replace(' ', 'T'));
+  const fromDate = new Date(from.replace(' ', 'T'));
+  const toDate = new Date(to.replace(' ', 'T'));
 
-    const diffMs = toDate - fromDate;
-    const diffMinutes = diffMs / (1000 * 60);
-    const diffHours = diffMinutes / 60;
+  const diffMs = toDate - fromDate;
+  const diffMinutes = diffMs / (1000 * 60);
+  const diffHours = diffMinutes / 60;
 
-    if (diffMinutes <= 30) {
-        return { valid: false, message: "Time range must be more than 30 minutes." };
-    }
+  if (diffMinutes <= 30) {
+      return { valid: false, message: "Time range must be more than 30 minutes." };
+  }
 
-    if (diffHours > 24) {
-        return { valid: false, message: "Time range must not exceed 24 hours." };
-    }
+  if (diffHours > 24) {
+    return { valid: false, message: "Time range must not exceed 24 hours." };
+  }
 
-    return { valid: true };
+  return { valid: true };
+}
+
+function formatToBullets(text) {
+  return text
+    .split(/\r?\n|,/)
+    .map(item => item.trim())
+    .filter(item => item.length)
+    .map(item => `- ${item}`)
+    .join('<br>');
 }
