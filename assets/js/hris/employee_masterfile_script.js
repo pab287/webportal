@@ -4865,7 +4865,6 @@ var validatePersonalEmployeeData = function () {
                     return { ...row, balance };
                 }).filter(row => row.balance > 0 && row.active != 3 );
                 if (loans.length > 0) {
-                    console.log(loans);
                     $("#currentLoan").modal("show");
                     $('#currentLoan').on('shown.bs.modal', function () {
                         $('#current_loan_table').DataTable({
@@ -7086,7 +7085,6 @@ function getEmployeeLoans(empId) {
         data: { csrf_token: _csrf_hash, emp_id: empId },
         success: function(response) {
             currentLoansData = response;
-            console.log("TRIGGERED");
         },
     });
 }
