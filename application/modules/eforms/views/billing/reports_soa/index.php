@@ -241,7 +241,7 @@
 
 					<div class="col-md-3">
 						<div class="form-group m-form__group row">
-							<label for="example-text-input" class="col-2 col-form-label">Date</label>
+							<label for="example-text-input" class="col-2 col-form-label">Year</label>
 							<div class="col-10">
 								<select class="form-control" id="date_filter">
 									<option></option>
@@ -316,8 +316,7 @@
 					</div>
 				</div>
 
-				<div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll mt-5">
-
+				<div id="report-tbl-wrapper" class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll mt-5">
 					<div class="report-wrapper m--hide" data-type="payment">
 						<table class="table table-striped table-bordered table-responsive" id="table-reports_soa" width="100%" style="display: table; width: 100%;">
 							<col width="13%" />

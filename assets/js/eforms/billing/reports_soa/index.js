@@ -651,10 +651,10 @@ $("#m_soa").on('hidden.bs.modal', function(){
     $("#report_type").val([]).trigger("change");
     $("#date_filter").val([]).trigger("change");
     $("#customer_id").val("");
-    $("#table-reports_reading").addClass('m--hide');
-    $("#table-reports_billing").addClass('m--hide');
-    $("#table-reports_soa").addClass('m--hide');
-    $("#table-reports_ledger").addClass('m--hide');
+    $(".report-wrapper").addClass("m--hide");
+
+    $("#report-tbl-wrapper table>tbody").empty();
+
     $("#date-range").val("");
     generateDateTimePicker(null, null);
 
