@@ -217,7 +217,7 @@
                     <div class="row">
                         <div id="filter-by-date-range" class="col-xl-6 col-lg-6 col-md-6 col-sm-12" v-if="show_by_date === true">
                             <div class="form-group">
-                                <label for="date-range" class="m--font-bolder">SELECT DATE RANGE</label>
+                                <label for="date-range" class="required m--font-bolder">SELECT DATE RANGE</label>
                                 <div class="input-group" id="date-picker">
                                     <input type="text" class="form-control m-input"
                                         placeholder="MMM DD, YYYY - MMM DD, YYYY" id="date-range"
