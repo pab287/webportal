@@ -3774,23 +3774,29 @@ class Cash_advance_m extends CI_Model {
     function remove_attachment(){
         $post = $this->input->post();
         $result = array();
-        $id = $post['id'];
-        $reason = trim($post['reason']);
 
-        $this->db->where('ca_id', $post['id']);
-        $this->db->where('id', $post['attachment']);
-        $query = $this->db->delete('gcceforms.ca_attachments');
-
-        if ($query){
-            $result['state'] = true;
-            $result['msg'] = 'Successfully removed attachment.';
-
-            $this->core_layout->setEventLog("Cash Advance Masterfile - Successfully removed the attachment of cash advance db id `$id` with reason of `$reason`.","delete", "success", "gcceforms", "user");
+        if (isset($post['id']) && $post['id']) {
+            $id = $post['id'];
+            $reason = trim($post['reason']);
+    
+            $this->db->where('ca_id', $post['id']);
+            $this->db->where('id', $post['attachment']);
+            $query = $this->db->delete('gcceforms.ca_attachments');
+    
+            if ($query){
+                $result['state'] = true;
+                $result['msg'] = 'Successfully removed attachment.';
+    
+                $this->core_layout->setEventLog("Cash Advance Masterfile - Successfully removed the attachment of cash advance db id `$id` with reason of `$reason`.","delete", "success", "gcceforms", "user");
+            } else {
+                $result['state'] = false;
+                $result['msg'] = 'Failed to remove the attachment';
+    
+                $this->core_layout->setEventLog("Cash Advance Masterfile - Failed to remove the attachment of cash advance db id `$id` with reason of `$reason`.","delete", "error", "gcceforms", "system");
+            }
         } else {
             $result['state'] = false;
-            $result['msg'] = 'Failed to remove the attachment';
-
-            $this->core_layout->setEventLog("Cash Advance Masterfile - Failed to remove the attachment of cash advance db id `$id` with reason of `$reason`.","delete", "error", "gcceforms", "system");
+            $result['msg'] = 'No data found.';
         }
 
         return $result;
