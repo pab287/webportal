@@ -701,7 +701,7 @@ $(document).ready(function(){
 
                     if (json.data.length > 0) {
                         vmReportHeaders.filters = { ...json.filters };
-                        toastr.success(json.toastr_msg, "Filtered Overtime Summary Report");
+                        toastr.success('Overtime entries found!', "Filtered Overtime Summary Report");
 
                         dtOTSummary.clear().rows.add(json.data).draw();
 
@@ -709,7 +709,7 @@ $(document).ready(function(){
                             modalGenerateReport.modal("hide"); 
                         }, 750);
                     } else {
-                        toastr.error(json.toastr_msg, "Filtered Overtime Summary Report");
+                        toastr.error('No overtime entries available!', "Filtered Overtime Summary Report");
                     }
                 }
             });

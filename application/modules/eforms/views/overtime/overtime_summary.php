@@ -258,7 +258,7 @@
                     <div class="row mt-3">
                         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                             <div class="form-group">
-                                <label for="company" class="m--font-bolder">Company *</label>
+                                <label for="company" class="required m--font-bolder">Company</label>
                                 <select id="company" class="form-control" name="company" data-validation="required"><option></option></select>
                             </div>
                         </div>
