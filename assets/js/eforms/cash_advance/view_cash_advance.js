@@ -1422,7 +1422,7 @@ var tblFile = $("#table-file-content").DataTable({
         { data: "", width: "5%", orderable: false, className: "text-center", render: function (_data, _type, row, _meta) {
             return fileName(row.filename, row.emp_id, row.ext, row.has_thumbnail); 
         } },
-        { data: "filename", width: '30%' },
+        { data: "filename" },
         { data: null, width: "8%", className: "text-center" },
     ],
     columnDefs: [
@@ -1455,13 +1455,11 @@ function fileName($name, $id, $ext, $hasThumbnail = false) {
 
 function itemDatatableActions(id, name, employee, has_file = false, attachment_id, status) {
     let html = ``;
-    let count = tblFile.rows().count();
-    const _margin = count > 1 ? 'mr-2' : '';
 
     if (id && has_file) {
         const fileName = '"' + name + '"';
 
-        html += "<button type='button' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem "+_margin+"' onclick='openFile(" + employee + ", " + fileName + ")'><i class='la la-eye'></i></button>";
+        html += "<button type='button' id='edit-attachment' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEditItem m-1' onclick='openFile(" + employee + ", " + fileName + ")'><i class='la la-eye'></i></button>";
     } else {
         html += "<i class='la la-eye-slash mr-2'></i>";
     }
@@ -1471,7 +1469,7 @@ function itemDatatableActions(id, name, employee, has_file = false, attachment_i
 
         if (!jQuery.inArray(status, disableAttachment) !== -1) {
             const _onclick = `removeAttachment(${id}, ${attachment_id})`;
-            html += "<button type='button' id='remove-attachment' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnDelete' onclick='"+_onclick+"'><i class='la la-trash'></i></button>";
+            html += "<button type='button' id='remove-attachment' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnDelete m-1' onclick='"+_onclick+"'><i class='la la-trash'></i></button>";
         }
     }
 
