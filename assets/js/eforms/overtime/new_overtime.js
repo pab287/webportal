@@ -33,7 +33,7 @@ $("#requested_by").select2({
 let lastStart = null;
 let updating = false;
 
-const dateTimeRangePicker = function (minDate, maxDate) {
+const dateTimeRangePicker = function (minDate) {
     $("#date_from, #date_to, #date").val("");
     const nMinDate = minDate ? new Date(minDate) : moment().subtract(2, 'years');
     const nMaxDate = new Date(moment().add(1, 'days').format("YYYY-MM-DD"));
@@ -44,7 +44,7 @@ const dateTimeRangePicker = function (minDate, maxDate) {
         timePicker: true,
         minDate: nMinDate,
         startDate: moment().startOf('hour'),
-        endDate: moment().startOf('hour').add(32, 'hour'),
+        // endDate: moment().startOf('hour').add(32, 'hour'),
         maxDate: nMaxDate,
         locale: {
             format: 'M/DD hh:mm A'
@@ -115,7 +115,6 @@ function save(){
 $.formUtils.addValidator({
     name: 'checkbox_group_min1',
     validatorFunction: function (value, $el, config, language, $form) {
-        console.log(value);
         return parseInt(value) > 0;
     },
     errorMessage: 'Select at least 1 image option!',
@@ -128,26 +127,50 @@ $.validate({
     validateHiddenInputs: true,
     onSuccess : function(form) {
         var disabled = $('#frm_new').find('textarea:disabled').removeAttr('disabled');
-        $.ajax({
-            url: baseUrl("eforms/overtime/save_overtime"),
-            type: "POST",
-            dataType: "json",
-            data: $("#frm_new").find("input,select,textarea").serialize(),
-            beforeSend: function(){
-                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-            },
-            success: function(data){
-                if(data.state){
-                    window.location.href = baseUrl("eforms/overtime/masterfile", toastr.success(data.message, "Successfully saved!", 5000));
-                    disabled.attr('disabled','disabled');
-                }else{
-                    toastr.error(data.message, "Error!", 5000);
-                    disabled.attr('disabled','disabled');
-                }
-                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+
+        let from = moment($("#date_from").val()).format('YYYY-MM-DD');
+        let to = moment($("#date_to").val()).format('YYYY-MM-DD');
+        let allowedOTDate = moment(from).add(1, 'days').format('YYYY-MM-DD');
+
+        if (to <= allowedOTDate){
+            const result = isValidTimeRange(moment($("#date_from").val()).format('YYYY-MM-DD HH:mm'), moment($("#date_to").val()).format('YYYY-MM-DD HH:mm'));
+
+            if (result.valid) {
+                $.ajax({
+                    url: baseUrl("eforms/overtime/save_overtime"),
+                    type: "POST",
+                    dataType: "json",
+                    data: $("#frm_new").find("input,select,textarea").serialize(),
+                    beforeSend: function(){
+                        $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    },
+                    success: function(data){
+                        if(data.state){
+                            window.location.href = baseUrl("eforms/overtime/masterfile", toastr.success(data.message, "Successfully saved!", 5000));
+                            disabled.attr('disabled','disabled');
+                        }else{
+                            toastr.error(data.message, "Error!", 5000);
+                            disabled.attr('disabled','disabled');
+                        }
+                        $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    }
+                });
+            } else {
+                Swal.fire({
+                    icon: "warning",
+                    title: 'New Overtime',
+                    text: result.message
+                });
             }
-        });
-    return false;
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'New Overtime',
+                text: 'Invalid selection. Please ensure the selected date range does not exceed 24 hours.'
+            });
+        }
+
+        return false;
     },
 });
 
@@ -269,4 +292,23 @@ var vmTempImages = new Vue({
 
 function SortByDate(a, b){
     return new Date(b.created_date) - new Date(a.created_date);
+}
+
+function isValidTimeRange(from, to) {
+    const fromDate = new Date(from.replace(' ', 'T'));
+    const toDate = new Date(to.replace(' ', 'T'));
+
+    const diffMs = toDate - fromDate;
+    const diffMinutes = diffMs / (1000 * 60);
+    const diffHours = diffMinutes / 60;
+
+    if (diffMinutes <= 30) {
+        return { valid: false, message: "Time range must be more than 30 minutes." };
+    }
+
+    if (diffHours > 24) {
+        return { valid: false, message: "Time range must not exceed 24 hours." };
+    }
+
+    return { valid: true };
 }

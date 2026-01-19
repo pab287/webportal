@@ -70,6 +70,10 @@ class Overtime extends MY_Controller {
         $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
         $this->core_layout->addJs("plugins/lightbox/js/lightbox.js");
+
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
+
         $this->core_layout->addJs("js/eforms/overtime/new_overtime.js", true);
         $this->core_layout->setPrivilegeName("overtime_masterfile");
 
@@ -108,6 +112,9 @@ function select_employee() {
 
     public function edit_overtime() {
         $this->core_layout->setPageTitle("Overtime - Edit Overtime Request");
+
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
 
         $this->core_layout->addJs("js/eforms/overtime/edit_overtime.js", true);
         $this->core_layout->setPrivilegeName("overtime_masterfile");
