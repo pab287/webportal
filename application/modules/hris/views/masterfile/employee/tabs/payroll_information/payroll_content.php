@@ -1009,6 +1009,10 @@
                                 badgeColor = "m-badge--success";
                                 badgeText = "Paid";
                                 break;
+                            case 3:
+                                badgeColor = "m-badge--metal text-white";
+                                badgeText = "Cancelled";
+                                break;
                             default:
                                 badgeColor = "m-badge--warning";
                                 badgeText = "Suspended";
