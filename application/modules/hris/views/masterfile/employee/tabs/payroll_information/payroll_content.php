@@ -1009,6 +1009,10 @@
                                 badgeColor = "m-badge--success";
                                 badgeText = "Paid";
                                 break;
+                            case 3:
+                                badgeColor = "m-badge--metal text-white";
+                                badgeText = "Cancelled";
+                                break;
                             default:
                                 badgeColor = "m-badge--warning";
                                 badgeText = "Suspended";
@@ -1210,6 +1214,7 @@
                     vmEditLoanRefs.reference_id = 0;
 
                     editEmployeeLoan.modal("hide");
+                    getEmployeeLoans(<?php echo $data->id; ?>);
                 }
             });
 
@@ -1544,6 +1549,7 @@
 
                     $("#mdl-newLoan").modal("hide");
                     $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    getEmployeeLoans(<?php echo $data->id; ?>);
                 }
             });
             return false;
@@ -1631,6 +1637,7 @@
                         $("#mdl-removeLoan").modal("hide");
                         dtLoan.ajax.reload(); //bug here
                         $(".btn-submit", form).removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                        getEmployeeLoans(<?php echo $data->id; ?>);
                     }
                 });
                 return false;

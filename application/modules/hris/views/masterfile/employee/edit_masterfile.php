@@ -39,6 +39,13 @@
     #modal-rehire .select2-results__option {
         border-bottom: 1px solid #efefef;
     }
+
+    #current_loan_table {
+        display: block;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
 </style>
 
 <div class="m-content">
@@ -271,6 +278,45 @@
             </div>
             <div class="modal-body">
                 <iframe id="pdfFrame" style="width: 100%; height: 800px;" frameborder="0"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="currentLoan" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Active Loans</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <strong>Notice:</strong> This employee currently has <strong class="font-weight-bold">active/unpaid loan(s)</strong> on their account.
+                    <br>
+                    Are you sure you want to <strong>set this employee to Inactive</strong>?
+                </div>
+                <table id="current_loan_table" class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Loan Name</th>
+                            <th>Amount</th>
+                            <th>Total Paid</th>
+                            <th>Balance</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    Cancel
+                </button>
+                <button id="btnConfirmLoan" class="btn btn-primary">
+                    Yes, Proceed
+                </button>
             </div>
         </div>
     </div>
