@@ -5777,4 +5777,502 @@ class Reports_m extends CI_Model{
         }
     }
 
+    public function generateCustomOvertimeSummary(){
+        $post = $this->input->post();
+        $search = $post['search']['value'] ?? false;
+        $group = $post['group'] ?? 1;
+        $filter_month = $post['filter_month'] ?? 0;
+        $filter_year = $post['filter_year'] ?? 0;
+        $company = $post['company'] ?? 0;
+        $filteredIds = $post['employee'] ?? [];
+        $coverageDate = $post['date_range'] ?? false;
+        $payrollGroup = isset($post["payroll_group"]) && $post["payroll_group"] ? $post["payroll_group"]: array();
+
+        $tempGroup = "PAY DATE";
+        $arrGroup = array(1=>"PAY DATE", 2=>"MONTH", 3=>"YEAR");
+        $arrCompany = array();
+        $employeeIds = array();
+        $tempStartDate = null;
+        $tempEndDate = null;
+        $hasDataFilter = false;
+        $tempGroup = $arrGroup[$group];
+        $tempArrFilter = array();
+        $tempArrFilter["filter_by"] = $tempGroup;
+
+        if(isset($post["company"]) && is_array($post["company"]) && count($post["company"]) > 0){
+            $this->db->select("description");
+            $this->db->from("gcchris.tblcompanies");
+            $this->db->where_in("id", $post["company"]);
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() > 0){
+                    foreach ($qTemp->result() as $key => $value) {
+                    if($value->description){
+                            $arrCompany[] = strtoupper($value->description);
+                    }
+                    }
+                    $tempArrFilter["companies"] = $arrCompany;
+            }
+        }
+
+        $tempCompRow = array();
+        if(isset($company) && $company){
+            $this->db->from("gcchris.tblcompanies");
+            $this->db->where("id", $company);
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() == 1){ $tempCompRow = $qTemp->row_array(); }
+        }
+
+        $filterPayrollGroup = null;
+        if(is_array($payrollGroup) && count($payrollGroup) > 0){
+            $this->db->select("GROUP_CONCAT(DISTINCT TRIM(UPPER(description))) as payroll_group");
+            $this->db->from("payroll.payroll_group");
+            $this->db->where_in("id", $payrollGroup);
+            $qPG = $this->db->get();
+
+            $filterPayrollGroup = $qPG->row()->payroll_group;
+        }
+
+        $isDateRange = isset($post["date_range"]) && $post["date_range"];
+        $isFilterMonth = isset($post["filter_month"]) && $post["filter_month"];
+
+        if(isset($post["date_range"]) && $post["date_range"]){
+            $dates = explode("-", $post["date_range"]);
+            if(is_array($dates) && count($dates) == 2){
+                    foreach ($dates as $key => $date) {
+                        $tempDate = date("Y-m-d", strtotime(trim($date)));
+                        $dates[$key] = $tempDate;
+                    }
+                    $tempStartDate = $dates[0];
+                    $tempEndDate = $dates[1];
+            }
+        }
+
+        if(isset($post["filter_month"], $post["filter_year"]) && ($post["filter_month"] && $post["filter_year"])){
+            $tempStartDate = date("Y-m-d", strtotime("{$post["filter_year"]}-{$post["filter_month"]}-01"));
+            $date = new DateTime($tempStartDate);
+            $date->modify('last day of this month');
+            $tempEndDate = $date->format('Y-m-d');
+        }elseif (isset($post["filter_year"]) && $post["filter_year"]){
+            $tempStartDate = date("Y-01-01", strtotime("{$post["filter_year"]}-01-01"));
+            $tempEndDate = date("Y-12-31", strtotime("{$post["filter_year"]}-12-31"));
+        }
+
+        if(isset($post["pay_date"]) && $post["pay_date"]){
+            $tempStartDate = date("Y-m-d", strtotime($post["pay_date"]));
+            $tempEndDate = date("Y-m-d", strtotime($post["pay_date"]));
+        }
+
+        $xDateFrom = date("F d, Y", strtotime($tempStartDate));
+        $xDateTo = date("F d, Y", strtotime($tempEndDate));
+        $tempArrFilter["coverage_date"] = strtoupper("{$xDateFrom} - {$xDateTo}");
+
+        if($isDateRange === false && $isFilterMonth){ $tempArrFilter["month"] = strtoupper(date("Y F", strtotime("{$post["filter_year"]}-{$post["filter_month"]}"))); }
+        $tempArrFilter["company_description"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? strtoupper(trim($tempCompRow['description'])): "";
+        $tempArrFilter["company_address"] = isset($tempCompRow['company_address']) && $tempCompRow['company_address']  ? strtoupper(trim($tempCompRow['company_address'])): "";
+        $tempArrFilter["has_comp_desc"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? true: false;
+        $tempArrFilter["payroll_group"] = $filterPayrollGroup;
+
+        $results = $this->customOvertimeSummaryList($filteredIds, $filter_month, $filter_year, $company, $tempArrFilter["coverage_date"]);
+
+        return [
+            'data' => $results['data'] ?? [],
+            'filters' => $tempArrFilter ?? [],
+        ];
+    }
+
+    protected function customOvertimeSummaryList($filteredIds, $filter_month, $filter_year, $company, $coverageDate){
+        $data = array();
+        $tempData = array();
+
+        $merged = $this->chunk_ot_records($filteredIds, $filter_month, $filter_year, $company, $coverageDate);
+
+        if (count($merged) > 0) {
+            $tempData = $this->computeBulkOvertime($merged, $coverageDate);
+
+            if (!empty($tempData)){
+                $data['data'] = $tempData;
+            }
+        }
+
+        return $data;
+    }
+
+    protected function check_ot_paid($date, $timesheetId){
+        $isPaid = 0;
+
+        if ($timesheetId) {
+            $date = date("Y-m-d", strtotime($date));
+
+            $this->db->select("a.id, b.emp_id");
+            $this->db->from($this->tbl_timesheet_overtime.' as a');
+            $this->db->join($this->tbl_timesheet.' as b', 'b.id = a.timesheet_id', 'left');
+            $this->db->where('DATE(a.overtime_in)', $date);
+            $this->db->where("a.timesheet_id", $timesheetId);
+            $this->db->where('b.verified', 1);
+
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+            
+                $row = $query->row();
+
+                $this->db->select('daily');
+                $this->db->from($this->tbl_payroll_sheet);
+                $this->db->where('emp_id', $row->emp_id);
+                
+                $this->db->group_start();
+                    $this->db->where('DATE(date_start) <= ', date('Y-m-d', strtotime($date)));
+                    $this->db->where('DATE(date_end) >=', date('Y-m-d', strtotime($date)));
+                $this->db->group_end();
+
+                $this->db->where('posted', 1);
+                $this->db->where('is_bonus', 0);
+
+                $_q = $this->db->get();
+                
+                if ($_q->num_rows() > 0) {
+                    $isPaid = 1;
+                }
+
+            }
+        }
+
+        return $isPaid;
+    }
+
+    protected function getPayrollSheetBasicRate($date, $id){
+        $basicRate = 0;
+
+        if ($id) {
+            $this->db->select('daily');
+            $this->db->from($this->tbl_payroll_sheet);
+            $this->db->where('emp_id', $id);
+            
+            $this->db->group_start();
+                $this->db->where('DATE(date_start) <= ', date('Y-m-d', strtotime($date)));
+                $this->db->where('DATE(date_end) >=', date('Y-m-d', strtotime($date)));
+            $this->db->group_end();
+
+            $this->db->where('posted', 1);
+            $this->db->where('is_bonus', 0);
+
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                $row = $query->row();
+
+                $basicRate = $row->daily;
+            }
+        }
+
+        return $basicRate;
+    }
+
+    protected function getPayrollSheetAllowance($date, $id){
+        $allowance = 0;
+
+        if ($id) {
+            $this->db->select('total_allowances, no_of_days');
+            $this->db->from($this->tbl_payroll_sheet);
+            $this->db->where('emp_id', $id);
+            
+            $this->db->group_start();
+                $this->db->where('DATE(date_start) <= ', date('Y-m-d', strtotime($date)));
+                $this->db->where('DATE(date_end) >=', date('Y-m-d', strtotime($date)));
+            $this->db->group_end();
+
+            $this->db->where('posted', 1);
+            $this->db->where('is_bonus', 0);
+
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                $row = $query->row();
+
+                if ($row->total_allowances > 0) {
+                    $allowance = $row->total_allowances / $row->no_of_days;
+                } else {
+                    $allowance = 0;
+                }
+            }
+        }
+
+        return $allowance;
+    }
+
+    protected function chunk_ot_records($filteredIds, $filter_month, $filter_year, $company, $coverageDate){
+        $tempData = array();
+
+        $startDate = null;
+        $endDate = null;
+
+        $lastId = 0;
+        $chunkSize = 100;
+
+        do {
+            if ($filter_month && $filter_year) {
+                $startDate = date("Y-m-d", strtotime("first day of $filter_year-$filter_month"));
+                $endDate = date("Y-m-t", strtotime($startDate));
+            }
+
+            if (!$filter_month && $filter_year) {
+                $startDate = date("Y-m-d", strtotime("first day of January $filter_year"));
+                $endDate = date('Y-m-d', strtotime("last day of December $filter_year"));
+            }
+
+            if ($coverageDate) {
+                $dateRange = explode("-", $coverageDate);
+                $startDate = date("Y-m-d", strtotime(trim($dateRange[0])));
+                $endDate = date("Y-m-d", strtotime(trim($dateRange[1])));
+            }
+
+            $select = "a.id, a.reference_no, a.status, a.created_at, b.id as emp_id, a.date_from, a.date_to, a.employee, b.firstname, b.middlename, b.lastname, b.suffix";
+            $this->db->select($select);
+            $this->db->from("gcceforms.overtime a");
+            $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
+
+            if ($lastId) {
+                $this->db->where('a.id >', $lastId);
+            }
+
+            if (is_array($filteredIds) && count($filteredIds) > 0) {
+                $this->db->where_in('a.employee', $filteredIds);
+            }
+
+            $this->db->where('b.company_id', $company);
+
+            $this->db->group_start();
+                $this->db->where('a.date_from >=', $startDate . ' 00:00:00');
+                $this->db->where('a.date_from <=', $endDate . ' 23:59:59');
+            $this->db->group_end();
+
+            $this->db->where('status !=', 'Cancelled');
+
+            $this->db->order_by('a.id', 'asc');
+            $this->db->limit($chunkSize);
+
+            $query = $this->db->get();
+            $rows = $query->result();
+            $rowsA = $query->result_array();
+
+            if (!$rows) {
+                break;
+            }
+
+            $lastArray = end($rowsA);
+            if (!empty($lastArray)) {
+                $lastId = $lastArray['id'];
+            }
+
+            $tempData[] = $rows;
+        } while(count($rows) === $chunkSize);
+
+        $merged = array_merge(...$tempData);
+        
+        usort($merged, function ($a, $b) {
+            return [$a->lastname, $a->firstname, $a->date_from]
+                <=> [$b->lastname, $b->firstname, $b->date_from];
+        });
+
+        return $merged;
+    }
+
+    protected function computeBulkOvertime(array $tempData, string $coverageDate) {
+        if (empty($tempData)) {
+            return [];
+        }
+
+        $empIds = [];
+        $dates  = [];
+
+        foreach ($tempData as $item) {
+            if (empty($item->emp_id) || empty($item->date_from)) {
+                continue;
+            }
+
+            $empIds[] = $item->emp_id;
+            $dates[]  = date('Y-m-d', strtotime($item->date_from));
+        }
+
+        $empIds = array_unique($empIds);
+        $dates  = array_unique($dates);
+
+        $this->db->select(" a.id, a.emp_id, DATE(a.date) as tsDate, a.total_accredited_ot_hrs as ot_hrs, a.total_accredited_ndiff_ot_hrs as ot_ndiff_hrs, IF(DATE(a.overtime_in) != '0000-00-00', DATE(a.overtime_in), DATE(a.date)) as overtime_in, a.has_shift, a.payrate_id, IF(a.is_holiday = 1 AND a.paid_holiday = 1, 1, 0) as is_paid_holiday");
+        $this->db->from('gcctimeutility.timesheet a');
+        $this->db->where_in('a.emp_id', $empIds);
+        $this->db->where_in('DATE(a.date)', $dates);
+        $this->db->where('a.has_overtime', 1);
+        $this->db->where('verified', 1);
+        $this->db->group_start()
+            ->where('a.total_accredited_ot_hrs >', 0)
+            ->or_where('a.total_accredited_ndiff_ot_hrs >', 0)
+        ->group_end();
+
+        // $this->db->group_start();
+        //     $this->db->where('DATE(b.date_start) <= ', date('Y-m-d', strtotime($date)));
+        //     $this->db->where('DATE(b.date_end) >=', date('Y-m-d', strtotime($date)));
+        // $this->db->group_end();
+
+        // $this->db->where('b.is_bonus', 0);
+
+        $rows = $this->db->get()->result();
+
+        //here
+
+        $tsMap = [];
+        foreach ($rows as $r) {
+            $key = $r->emp_id . '_' . $r->tsDate;
+            $tsMap[$key] = $r;
+        }
+
+        $basicRateCache = [];
+        $allowanceCache = [];
+        $payrateCache   = [];
+        $otAdjCache     = [];
+        $otPaidCache    = [];
+
+        foreach ($tempData as $item) {
+
+            $tempRs = (array) $item;
+            $tempDisplay = (object) $this->core_layout->getDisplayName($tempRs);
+            $tempName = (isset($tempDisplay->display_name_0) && $tempDisplay->display_name_0)? strtoupper($tempDisplay->display_name_0): strtoupper("no display name");
+            $item->employee_name = $tempName;
+
+            $basicRate = 0;
+            $otRate = 1;
+            $tempOtRate = 0;
+            $tempOtPayWithRate = 0;
+            $totalOtHrs = 0;
+            $totalOtPay = 0;
+            $totalOtAllowance = 0;
+            $nightDiffPay = 0;
+            $perMinute = 0;
+            $ot_ndiff_hrs = 0;
+            $has_shift = 0;
+            $overtime_in = $item->date_from;
+            $day = date('D', strtotime($overtime_in));
+            $tempPayrateSetting = [];
+            $otAllowance = 0;
+
+            $dateKey = date('Y-m-d', strtotime($item->date_from));
+            $mapKey  = $item->emp_id . '_' . $dateKey;
+
+            if (!isset($tsMap[$mapKey])) {
+
+                $item->_ot_rate = $tempOtRate;
+                $item->_temp_ot_pay = $tempOtPayWithRate;
+                $item->day = $day;
+                $item->daily_rate = $basicRate;
+                $item->has_shift = $has_shift;
+                $item->pay_info = $tempPayrateSetting;
+                $item->per_minute = $perMinute;
+                $item->ot_hrs = $totalOtHrs > 0 ? $totalOtHrs : 0;
+                $item->allowance = $otAllowance > 0 ? $otAllowance : 0;
+                $item->ot_rate = $otRate;
+                $item->ot_allowance = $totalOtAllowance ?: 0;
+                $item->ot_pay = $totalOtPay;
+                $item->ot_pay_20 = ($otRate > 1 && $tempOtRate == 25) ? $tempOtPayWithRate : 0;
+                $item->ot_pay_30 = ($otRate > 1 && $tempOtRate == 30) ? $tempOtPayWithRate : 0;
+                $item->ot_ndiff_hrs = $ot_ndiff_hrs ?: 0;
+                $item->night_diff = $nightDiffPay ?: 0;
+                $item->ot_adj = 0;
+                $item->amount = 0;
+                $item->total_pay = $item->amount;
+                $item->is_paid = 0;
+                $item->overtime_in = $overtime_in;
+
+                $overtime_in = $item->date_from;
+                $day = date('D', strtotime($overtime_in));
+                
+                continue;
+            }
+
+            $ts = $tsMap[$mapKey];
+
+            $has_shift = (int) $ts->has_shift;
+            $overtime_in = $ts->overtime_in ? $ts->overtime_in : $item->date_from;
+            $day = date('D', strtotime($overtime_in));
+
+            if (!isset($basicRateCache[$mapKey])) {
+                $basicRateCache[$mapKey] = $this->getPayrollSheetBasicRate($overtime_in, $item->emp_id);
+                $allowanceCache[$mapKey] = $this->getPayrollSheetAllowance($overtime_in, $item->emp_id);
+            }
+
+            $basicRate = (float) $basicRateCache[$mapKey];
+            $otAllowance = (float) $allowanceCache[$mapKey];
+
+            $payrateKey = $ts->payrate_id ?: ($ts->has_shift ? 'regular' : 'rest day');
+
+            if (!isset($payrateCache[$payrateKey])) {
+                $payrateCache[$payrateKey] = $ts->payrate_id
+                    ? $this->getPayrateSettingById($ts->payrate_id)
+                    : $this->getPayrateSetting($payrateKey);
+            }
+
+            $tempPayrateSetting = $payrateCache[$payrateKey];
+
+            $totalOtHrs = $ts->ot_hrs + $ts->ot_ndiff_hrs;
+            $ot_ndiff_hrs = $ts->ot_ndiff_hrs;
+
+            $otRate = max((float) $tempPayrateSetting->ot_rate, 1);
+            $otNightDiffRate = (float) $tempPayrateSetting->ot_night_diff_rate;
+
+            $tempOtRate = ($otRate * 100) - 100;
+            $perMinute = $basicRate / 8;
+
+            $totalOtPay = $perMinute * $totalOtHrs;
+            $tempOtPayWithRate = $otRate > 1 ? ($tempOtRate / 100) * $totalOtPay : 0;
+
+            $nightDiffPay = $otNightDiffRate > 0
+                ? ($perMinute * $ot_ndiff_hrs) * $otNightDiffRate
+                : 0;
+
+            $allowPaidAllowance =
+                $tempPayrateSetting->particulars !== 'regular'
+                || !$ts->has_shift
+                || $tempPayrateSetting->is_holiday;
+
+            if ((int) $tempPayrateSetting->is_holiday === 1) {
+                $allowPaidAllowance = (int) $ts->is_paid_holiday === 1;
+            }
+
+            $totalOtAllowance = $allowPaidAllowance
+                ? ($otAllowance / 8) * $totalOtHrs
+                : 0;
+
+            if (!isset($otAdjCache[$item->emp_id])) {
+                $otAdjCache[$item->emp_id] = $this->getOTAdjustment($coverageDate, $item->emp_id);
+            }
+
+            if (!isset($otPaidCache[$ts->id])) {
+                $otPaidCache[$ts->id] = $this->check_ot_paid($overtime_in, $ts->id);
+            }
+
+            $totalOtPayable = $totalOtPay + $tempOtPayWithRate;
+
+            $item->_ot_rate = $tempOtRate;
+            $item->_temp_ot_pay = $tempOtPayWithRate;
+            $item->day = $day;
+            $item->daily_rate = $basicRate;
+            $item->has_shift = $has_shift;
+            $item->pay_info = $tempPayrateSetting;
+            $item->per_minute = $perMinute;
+            $item->ot_hrs = $totalOtHrs > 0 ? $totalOtHrs : 0;
+            $item->allowance = $otAllowance > 0 ? $otAllowance : 0;
+            $item->ot_rate = $otRate;
+            $item->ot_allowance = $totalOtAllowance ?: 0;
+            $item->ot_pay = $totalOtPay;
+            $item->ot_pay_20 = ($otRate > 1 && $tempOtRate == 25) ? $tempOtPayWithRate : 0;
+            $item->ot_pay_30 = ($otRate > 1 && $tempOtRate == 30) ? $tempOtPayWithRate : 0;
+            $item->ot_ndiff_hrs = $ot_ndiff_hrs ?: 0;
+            $item->night_diff = $nightDiffPay ?: 0;
+            $item->ot_adj = $otAdjCache[$item->emp_id];
+            $item->amount = $totalOtPayable + $nightDiffPay + $totalOtAllowance;
+            $item->total_pay = $item->amount;
+            $item->is_paid = $otPaidCache[$ts->id];
+            $item->overtime_in = $overtime_in;
+        }
+
+        return $tempData;
+    }
 }

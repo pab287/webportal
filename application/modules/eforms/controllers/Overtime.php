@@ -368,4 +368,44 @@ function select_employee() {
             ->set_output(json_encode($data));
     }
 
+    public function overtime_summary() {
+        $this->load->model("payroll/payroll_m", "payroll");
+        $this->core_layout->setPageTitle("Overtime - Overtime Summary Report");
+        $this->core_layout->setPrivilegeName("overtime_summary");
+
+        $tempData = array();
+        $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
+        $tempData["company"] = $this->payroll->select2CompanyData();
+
+        $this->core_layout->addJs("js/buttons.print.min.js", true);
+        $this->core_layout->addJs("global/js/jquery.table2excel.min.js", true);
+        $this->core_layout->addJs("js/eforms/overtime/overtime_summary.script.js", true, $tempData);
+
+        $this->load->view("core/templates/header");
+        $this->load->view("eforms/overtime/overtime_summary");
+        $this->load->view("core/templates/footer");
+    }
+
+    function generate_overtime_summary(){
+        $this->load->model("payroll/reports_m", "reports");
+        $data = $this->reports->generateCustomOvertimeSummary();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+    }
+
+    public function select2_employee() {
+        $data = $this->overtime->select2Employee();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function get_payroll_group_multiple() {
+        $this->load->model("payroll/payroll_m", "payroll");
+        $data = $this->payroll->getPayrollGroupMultiple();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 }
