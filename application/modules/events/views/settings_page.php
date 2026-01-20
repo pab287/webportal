@@ -1,3 +1,21 @@
+<style>
+    .color-picker-input {
+        height: 38px;          /* match Bootstrap input height */
+        padding: 0;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    /* .color-picker-input::-webkit-color-swatch-wrapper {
+        padding: 0;
+    } */
+
+    /* .color-picker-input::-webkit-color-swatch {
+        border-radius: 6px;
+        border: none;
+    } */
+
+</style>
 <div class="m-content">
     <div class="m-portlet" id="m_portlet">
         <div class="m-portlet__head">
@@ -60,13 +78,23 @@
                                 <div class="col-12">
                                     <div class="form-group">
                                         <label for="option_name">OPTION NAME</label>
-                                        <input type="text" class="form-control" name="name">
+                                        <input id="option_name" type="text" class="form-control" data-validation="required" name="name">
                                     </div>
                                 </div>
                                 <div class="col-12">
                                     <div class="form-group">
-                                        <label for="option_name">OPTION TYPE</label>
-                                        <input type="text" class="form-control" name="type">
+                                        <label for="option_type">OPTION TYPE</label>
+                                        <input id="option_type" type="text" class="form-control" data-validation="required" name="type">
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label for="option_color">OPTION COLOR</label>
+                                        <div class="form-group input-group">
+                                            <input id="option_color" type="color" class="form-control form-control-color">
+                                            <input type="text" class="form-control" id="option_color_text" placeholder="HEX CODE" data-validation="required" name="color">
+                                        </div>
+                                        <small class="form-text text-muted">Choose a color for this option</small>
                                     </div>
                                 </div>
                             </div>
@@ -117,3 +145,21 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const colorPicker = document.getElementById("option_color");
+    const colorText   = document.getElementById("option_color_text");
+
+    colorPicker.addEventListener("input", function () {
+        colorText.value = this.value;
+    });
+
+    colorText.addEventListener("input", function () {
+        const val = this.value.trim();
+        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+            colorPicker.value = val;
+        }
+    });
+});
+</script>

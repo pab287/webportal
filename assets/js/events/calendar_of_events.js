@@ -227,8 +227,6 @@ $.validate({
                 if(res.success){
                     $(form).trigger("reset");
                     $("#addNewEvent").modal('hide');
-                    $("#company").val(null).trigger("change");
-                    $("#department").val(null).trigger("change");
                     selectedCompanies = null;
                     selectedDepartments = null;
                     toastr.success(res.message, 'Success', 5000);
@@ -771,8 +769,11 @@ function declineParticipant(id) {
 $('#addNewEvent').on('hidden.bs.modal', function () {
     $("#new_event_form").trigger("reset");
     eventVue.speakers = [{id: Date.now(), name: '', position: '', company: '' }];
-    $("#company").val(null).trigger("change");
-    $("#department").val(null).trigger("change");
+    $("#company").val([]).trigger("change");
+    $("#department").val([]).trigger("change");
+    $("#training_type").val(null).trigger("change");
+    $("#init_type").val(null).trigger("change");
+    $("#training_category").val(null).trigger("change");
 });
 
 $('#training_type').select2({

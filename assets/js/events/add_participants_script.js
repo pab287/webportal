@@ -1306,6 +1306,7 @@ $('#New_Add_File').on('submit', function(e) {
                     toastr.error(response.toastr_msg, 'Error', 5000);
                 }
                 $('#New_Add_File')[0].reset();
+                $('#attachment_type').val(null).trigger('change');
                 $('#newAttachment').modal('hide');
             }
         });

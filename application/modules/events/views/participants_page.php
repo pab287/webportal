@@ -729,7 +729,9 @@
                         <div class="row">
                             <div class="col-md-12 mb-3">
                                 <label for="attachment_type" class="form-control-label required">Attachment Type</label>
-                                <select id="attachment_type" name="attachment_type" class="form-control m-input" data-validation="required"></select>
+                                <select id="attachment_type" name="attachment_type" class="form-control m-input" data-validation="required">
+                                    <option></option>
+                                </select>
                             </div>
                             <div class="form-group col-12">
                                 <div class=" mt-4">

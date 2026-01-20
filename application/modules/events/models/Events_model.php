@@ -389,9 +389,9 @@ class Events_model extends MX_Controller {
             foreach ($post['speakers'] as $row) {
                 $speaker_data = [
                     "event_id" => $event_id,
-                    "speaker_name"     => $row['name'] ?? null,
-                    "position" => $row['position'] ?? null,
-                    "company"  => !empty($row['company']) ? $row['company'] : null,
+                    "speaker_name"     => $row['name'] ?? "",
+                    "position" => $row['position'] ?? "",
+                    "company"  => !empty($row['company']) ? $row['company'] : "",
                 ];
                 $this->db->insert($this->eventsSpeakersTable, $speaker_data);
             }
