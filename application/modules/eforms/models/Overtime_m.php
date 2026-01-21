@@ -784,6 +784,7 @@ class Overtime_m extends CI_Model {
         $this->db->select('reference_no, date_from, date_to, purpose, status');
         $this->db->where('DATE(date_from)', date('Y-m-d', strtotime($this->input->post('date_from'))));
         $this->db->where('employee', $this->input->post('employee'));
+        $this->db->where('status !=', 'Cancelled');
         $this->db->from('gcceforms.overtime');
         $query = $this->db->get();
 
@@ -1132,6 +1133,7 @@ class Overtime_m extends CI_Model {
         $this->db->select('reference_no, date_from, date_to, purpose, status');
         $this->db->where('DATE(date_from)', date('Y-m-d', strtotime($this->input->post('date_from'))));
         $this->db->where('employee', $this->input->post('employee'));
+        $this->db->where('status !=', 'Cancelled');
         $this->db->from('gcceforms.overtime');
         $query = $this->db->get();
 
