@@ -709,8 +709,7 @@ const vmTempUploadedContent = new Vue({
                                     return ' --- ';
                                 } else {
                                     html += `<div style="font-size: 13px !important">`;
-                                        html += `<p class="m-2">${row.is_valid_message}</p>`;
-
+                                        html += `<p class="m-0 text-danger m--font-boldest">${row.is_valid_message}</p>`;
                                         if (row.is_duplicate) {
                                             if (typeof row.duplicate_entry !== null) {
                                                 html += `<ul style="padding-left: 20px !important">`;
