@@ -319,7 +319,7 @@ function isValidTimeRange(from, to) {
     const diffMinutes = diffMs / (1000 * 60);
     const diffHours = diffMinutes / 60;
 
-    if (diffMinutes <= 30) {
+    if (diffMinutes < 30) {
         return { valid: false, message: "Time range must be more than 30 minutes." };
     }
 
