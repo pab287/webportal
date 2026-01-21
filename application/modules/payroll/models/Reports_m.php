@@ -4806,6 +4806,7 @@ class Reports_m extends CI_Model{
     public function generateLeaveCreditsReport(){
         $resultset = array();
         $post = $this->input->post();
+        $status = (isset($post['emp_status']) && $post['emp_status']) ? $post['emp_status'] : false;
         if(isset($post) && $post){
             $filteredCompany = null;
             if(isset($post["company"]) && $post["company"]){
@@ -4926,6 +4927,19 @@ class Reports_m extends CI_Model{
                 if($hasMonthFilter){ 
                     $this->db->where("MONTH(emp.date_start)", $post["month"]); 
                 }
+
+                // added to filtered out by employee status
+                if ($status){ 
+                    if ($status != 'All') {
+                        $this->db->where('emp.employee_status', $status);
+                    }
+
+                    if ($status == 'All' || $status == 'Active') {
+                        $this->db->where_not_in('emp.work_status', ['NO CONTRACT', 'RETIRED', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']); //added to generate only the regular and probi work status
+                    }
+                }
+                // added to filtered out by employee status
+
                 $this->db->order_by("TRIM(emp.lastname), TRIM(emp.firstname)", "ASC");
                 $this->db->group_by("emp.id");
                 $queryCredits = $this->db->get();
