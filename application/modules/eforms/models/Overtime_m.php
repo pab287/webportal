@@ -1708,21 +1708,59 @@ class Overtime_m extends CI_Model {
                                         $empRecordCount = $qTempEmployee->num_rows();
 
                                         $isValidEmployee = false;
+                                        $isDuplicate = false;
+                                        $duplicateOT = array();
+                                        $isValidMessage = null;
                                         if($empRecordCount == 1){
                                             $row = $qTempEmployee->row();
                                             if(intval($row->id) > 0){
                                                 $isValidEmployee = true;
                                                 $displayName = $row->employee_name ? $row->employee_name : "No assigned name";
 
-                                                if (date('Y-m-d', strtotime($dateFrom)) <= date('Y-m-d', strtotime($dateTo))) { //checks if date start is less than the date end
-                                                    $validOTEndDate = date('Y-m-d', strtotime($filteredData[1].' +1 day')); //added 1 day to date start to prevent extensive date to
-                                                    if (date('Y-m-d', strtotime($dateTo)) <= date('Y-m-d', strtotime($validOTEndDate))) { //checks if the date end is correct based on the added 1 day to the date start
-                                                        $isValid = strtotime(trim($filteredData[1])) > strtotime(trim($row->max_date));
+                                                // checks if duplicate entry
+                                                $this->db->select('reference_no, date_from, date_to, purpose, status');
+                                                $this->db->where('DATE(date_from)', date('Y-m-d', strtotime($filteredData[1])));
+                                                $this->db->where('employee', $row->id);
+                                                $this->db->where('status !=', 'Cancelled');
+                                                $this->db->from('gcceforms.overtime');
+                                                $_query = $this->db->get();
+                                                // checks if duplicate entry
+
+                                                if ($_query->num_rows() > 0) {
+                                                    $isValid = false;
+                                                    $isDuplicate = true;
+                                                    $duplicateOT = $_query->row();
+                                                    $isValidMessage = 'Duplicate Overtime Entry.';
+                                                } else {
+                                                    if (date('Y-m-d', strtotime($dateFrom)) <= date('Y-m-d', strtotime($dateTo))) { //checks if date start is less than the date end
+                                                        $validOTEndDate = date('Y-m-d', strtotime($filteredData[1].' +1 day')); //added 1 day to date start to prevent extensive date to
+                                                        if (date('Y-m-d', strtotime($dateTo)) <= date('Y-m-d', strtotime($validOTEndDate))) { //checks if the date end is correct based on the added 1 day to the date start
+                                                            if (strtotime(trim($filteredData[1])) > strtotime(trim($filteredData[2]))) {
+                                                                $isValid = false;
+                                                                $isValidMessage = 'Invalid date range. The “Date To” time must not be less than the “Date From” time.';
+                                                            } else {
+                                                                $tempResult = $this->isValidTimeRange(trim($filteredData[1]), trim($filteredData[2]));
+                                                                if (!$tempResult['valid']) {
+                                                                    $isValid = false;
+                                                                    $isValidMessage = $tempResult['message'];
+                                                                } else {
+                                                                    $isValid = true;
+                                                                    if (strtotime(trim($filteredData[1])) > strtotime(trim($row->max_date))) {
+                                                                        $isValid = true;
+                                                                    } else {
+                                                                        $isValid = false;
+                                                                        $isValidMessage = 'Date is already posted in the payroll sheet.';
+                                                                    }
+                                                                }
+                                                            }
+                                                        } else {
+                                                            $isValid = false;
+                                                            $isValidMessage = 'Overtime is limited to a maximum of 24 hours only.';
+                                                        }
                                                     } else {
                                                         $isValid = false;
+                                                        $isValidMessage = 'Invalid date range. The “Date To” is earlier than the “Date From”';
                                                     }
-                                                } else {
-                                                    $isValid = false;
                                                 }
 
                                                 $qSearchOt = $this->db->get_where("gcceforms.overtime",
@@ -1761,6 +1799,9 @@ class Overtime_m extends CI_Model {
                                         $tempDatax["purpose"] = $purpose;
                                         $tempDatax["is_existing"] = $empRecordCount;
                                         $tempDatax["is_valid"] = $isValid;
+                                        $tempDatax['is_valid_message'] = $isValidMessage;
+                                        $tempDatax['is_duplicate'] = $isDuplicate;
+                                        $tempDatax['duplicate_entry'] = $isDuplicate ? $duplicateOT : null;
                                         if($isRecorded === false && $employeeExist && $isValidEmployee){
                                             $arrData[] = $tempDatax;
                                         }
@@ -2099,5 +2140,36 @@ class Overtime_m extends CI_Model {
         }
 
         return $result;
+    }
+    
+    function isValidTimeRange($from, $to) {
+        // Convert "Y-m-d H:i" to DateTime
+        $fromDate = new DateTime(str_replace(' ', 'T', $from));
+        $toDate   = new DateTime(str_replace(' ', 'T', $to));
+    
+        // Get difference in seconds
+        $diffSeconds = $toDate->getTimestamp() - $fromDate->getTimestamp();
+    
+        // Convert to minutes and hours
+        $diffMinutes = $diffSeconds / 60;
+        $diffHours   = $diffMinutes / 60;
+    
+        if ($diffMinutes < 30) {
+            return [
+                'valid'   => false,
+                'message' => 'Time range must be more than 30 minutes.'
+            ];
+        }
+    
+        if ($diffHours > 24) {
+            return [
+                'valid'   => false,
+                'message' => 'Time range must not exceed 24 hours.'
+            ];
+        }
+    
+        return [
+            'valid' => true
+        ];
     }
 }

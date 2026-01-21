@@ -450,6 +450,20 @@ $(document).on('shown.bs.modal', '#modal-import-overtime', function (e) {
 
 });
 
+$(document).on('hidden.bs.modal', '#modal-import-overtime', function (e) {
+    var tempTable = vmTempUploadedContent.current_table;
+    if (typeof tempTable !== "undefined" && typeof tempTable == "object" && tempTable !== null) {
+        tempTable.clear().destroy();
+    }
+    vmTempUploadedContent.rows = {};
+    vmTempUploadedContent.count = 0;
+    vmTempUploadedContent.json_file = null;
+    vmTempUploadedContent.current_table = null;
+    vmTempUploadedContent.has_uploaded_file = false;
+    vmTempUploadedContent.employee_records = [];
+
+});
+
 const uploadOvertimeCsvFile = function () {
     const url = baseUrl("eforms/overtime/temp_upload_csv_file");
     $("#import_csv")
@@ -636,6 +650,11 @@ const vmTempUploadedContent = new Vue({
             const currentSelect2 = $(currentElement).find("#approved_by");
 
             if (typeof currentTable !== "undefined") {
+
+                if (typeof _this.current_table !== 'undefined' && _this.current_table) {
+                    currentTable.DataTable().clear().destroy();
+                }
+
                 _this.current_table = currentTable.DataTable({
                     destroy: true,
                     dom: "lftp",
@@ -681,6 +700,31 @@ const vmTempUploadedContent = new Vue({
                                 return `<span style="${isInvalid}">` + data + `</span>`;
                             }
                         },
+                        {
+                            data: null, title: 'Remarks', width: '20%',
+                            render: function(data, type, row) {
+                                let html = ``;
+
+                                if (row.is_valid) {
+                                    return ' --- ';
+                                } else {
+                                    html += `<div style="font-size: 13px !important">`;
+                                        html += `<p class="m-2">${row.is_valid_message}</p>`;
+
+                                        if (row.is_duplicate) {
+                                            if (typeof row.duplicate_entry !== null) {
+                                                html += `<ul style="padding-left: 20px !important">`;
+                                                    html += `<li><strong>Reference No: </strong> ${row.duplicate_entry.reference_no}</li>`;
+                                                    html += `<li><strong>Datetime:</strong> ${moment(row.duplicate_entry.date_from).format('YYYY-MM-DD hh:mm A')} - ${moment(row.duplicate_entry.date_to).format('YYYY-MM-DD hh:mm A')}</li>`;
+                                                html += `</ul>`;
+                                            }
+                                        }
+                                    html += `</div>`;
+                                }
+
+                                return html;
+                            }
+                        }
                     ], drawCallback: function (settings) {
                         const tableWrapper = $(settings.nTableWrapper);
                         tableWrapper.find("#uploaded_csv_table_filter input").removeClass("form-control-sm");
@@ -962,3 +1006,12 @@ $.validate({
         return false;
     }
 });
+
+function formatToBullets(text) {
+    return text
+        .split(/\r?\n|,/)
+        .map(item => item.trim())
+        .filter(item => item.length)
+        .map(item => `- ${item}`)
+        .join('<br>');
+}
