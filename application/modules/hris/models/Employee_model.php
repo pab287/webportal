@@ -13082,6 +13082,7 @@ class Employee_model extends CI_Model {
             $result['message'] = "Failed to send email. Please try again later.";
         }
         return $result;
+    }
 
 
     public function getEmployeeLoansDataCall(){
