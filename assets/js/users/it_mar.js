@@ -3,27 +3,28 @@ let selected = {};
 let ITMar = null;
 let selectedEmpId = null;
 let is_archive = 0;
+let selectedId = null;
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.employee !== "undefined" && _tempContentData.employee.length > 0){
         _employee = _tempContentData.employee;
     }
 }
 let allEmployees = _employee;
-
+console.log(allEmployees);
 $(document).on('click', '.btnArchive', function (e) {
     e.preventDefault();
     is_archive = is_archive == 0 ? 1 : 0;
     const text = is_archive == 1 ? 'Masterfile' : 'Archive';
     $(this).find('.m-nav__link-text').text(text);
+    const headerText = is_archive == 1 ? 'IT Mobile Application Archive' : 'IT Mobile Application Masterfile';
+    $('#header').text(headerText);
     ITMar.ajax.reload();
 });
 
 $(document).on('show.bs.modal', '#newITMARModal', function () {
     const selectedApp = $('input[name="app_name_select"]:checked').val();
     if (selectedApp) {
-        $('input[name="app_name"][value="' + selectedApp + '"]')
-            .prop('checked', true)
-            .trigger('change');
+        $('input[name="app_name"][value="' + selectedApp + '"]').prop('checked', true).trigger('change');
     }
 });
 
@@ -78,32 +79,33 @@ $(document).ready(function () {
             {
                 data: null,
                 sortable: false,
+                className: "text-center",
                 render: function (data, type, row, meta) {
-                    const isArchived = row.is_archive == 1;
+                    if (is_archive) {
+                        return '---'; 
+                    }
             
                     return `
-                        ${!isArchived ? `
-                            <button type="button"
-                                class="btn btn-default m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill btnEdit"
-                                data-toggle="m-tooltip"
-                                data-placement="bottom"
-                                data-skin="dark"
-                                data-original-title="Edit"
-                                data-delay='{"show":300}'
-                                onclick="editRow(${row.id})">
-                                <i class="la la-eye"></i>
-                            </button>
-                        ` : ''}
-            
                         <button type="button"
-                            class="btn btn-default m-btn m-btn--hover-${isArchived ? 'success' : 'danger'} m-btn--icon m-btn--icon-only m-btn--pill btnDelete ml-1"
+                            class="btn btn-default m-btn m-btn--hover-brand m-btn--icon m-btn--icon-only m-btn--pill btnEdit"
                             data-toggle="m-tooltip"
                             data-placement="bottom"
                             data-skin="dark"
-                            data-original-title="${isArchived ? 'Restore' : 'Archive'}"
+                            data-original-title="Edit"
+                            data-delay='{"show":300}'
+                            onclick="editRow(${row.id})">
+                            <i class="la la-edit"></i>
+                        </button>
+            
+                        <button type="button"
+                            class="btn btn-default m-btn m-btn--hover-danger m-btn--icon m-btn--icon-only m-btn--pill btnDelete ml-1"
+                            data-toggle="m-tooltip"
+                            data-placement="bottom"
+                            data-skin="dark"
+                            data-original-title="Archive"
                             data-delay='{"show":300}'
                             onclick="archiveRow(${row.id})">
-                            <i class="la ${isArchived ? 'la-reply' : 'la-archive'}"></i>
+                            <i class="la la-archive"></i>
                         </button>
                     `;
                 }
@@ -161,6 +163,33 @@ $.validate({
     }
 });
 
+$.validate({
+    form : '#edit_itmar',
+    lang: 'en',
+    onSuccess : function(form) {
+        $.ajax({
+            url: siteUrl("users/update_itmar"),
+            type: "POST",
+            dataType: "json",
+            data: {
+                csrf_token: _csrf_hash, 
+                id: selectedId,
+                purpose: $('#edit_purpose').val(),
+            },
+            success: function (response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                }
+                else{
+                    toastr.error(response.message);
+                }
+                $('#editITMARModal').modal('hide');
+                ITMar.ajax.reload();
+            }
+        });
+    }
+});
+
 $("input[name='app_name']").on("change", function () {
     loadEmployeesByApp(this.value);
 });
@@ -197,17 +226,15 @@ $("input[name='app_name_select']").on("change", function () {
 });
 
 function archiveRow(id) {
-    const willArchive = is_archive == 0; 
+    let rowData = ITMar.row('#'+id).data();
     Swal.fire({
-        title: willArchive ? 'Archive record?' : 'Restore record?',
-        text: willArchive
-            ? 'This record will be moved to archive.'
-            : 'This record will be restored to masterfile.',
+        title:'Archive record?',
+        text: 'This record will be moved to archive.',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: willArchive ? 'Yes, archive it' : 'Yes, restore it',
+        confirmButtonText: 'Yes, archive it',
         cancelButtonText: 'Cancel',
-        confirmButtonColor: willArchive ? '#d33' : '#28a745',
+        confirmButtonColor: '#d33',
         reverseButtons: true
     }).then((result) => {
         if (result.isConfirmed) {
@@ -216,19 +243,22 @@ function archiveRow(id) {
                 type: 'POST',
                 data: {
                     id: id,
-                    is_archive: willArchive ? 1 : 0,
-                    csrf_token: _csrf_hash
+                    csrf_token: _csrf_hash,
+                    itmar_id:rowData.id,
+                    emp_id:rowData.emp_id,
+                    purpose:rowData.purpose,
+                    app_name:rowData.app_name,
                 },
                 success: function (response) {
                     if (response.success) {
-                        toastr.success(
-                            willArchive
-                                ? 'Record archived successfully.'
-                                : 'Record restored successfully.'
-                        );
+                        toastr.success(response.message);
+                        allEmployees = response.employees;
+                        console.log(allEmployees);
+                        console.log(rowData.app_name);
+                        loadEmployeesByApp(rowData.app_name);
                         ITMar.ajax.reload();
                     } else {
-                        toastr.error(response.message || 'Action failed.');
+                        toastr.error(response.message);
                     }
                 },
             });
@@ -303,6 +333,7 @@ function editRow(id){
     toggleEditAppFields();
     $("#edit_employee").prop("disabled", true);
     $('input[name="edit_app_name"]').prop('disabled', true);
+    selectedId = id;
 }
 
 $('input[name="edit_app_name"]').on('change', function () {

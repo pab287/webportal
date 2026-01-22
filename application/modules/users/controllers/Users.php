@@ -393,6 +393,11 @@ class Users extends MY_Controller{
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
+    public function update_itmar(){
+        $data = $this->user->updateItmar();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
     public function archive_itmar(){
         $data = $this->user->archiveItmar();
         $this->output->set_content_type('json')->set_output(json_encode($data));

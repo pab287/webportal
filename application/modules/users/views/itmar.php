@@ -157,7 +157,7 @@
                     </div>
                     <div class="m-separator m-separator--dashed"></div>
                     <div class="form-group m-form__group row col">
-                        <label for="purpose" class="col-12 form-label">PURPOSE: </label>
+                        <label for="purpose" class="col-12 form-label required">PURPOSE: </label>
                         <textarea id="purpose" name="purpose" class="col-12 form-control m-input auto-resize" rows="4" data-validation="required" style="resize:none; overflow-y:auto;"></textarea>
                     </div>
                 </div>
@@ -234,9 +234,17 @@
                     </div>
                     <div class="m-separator m-separator--dashed"></div>
                     <div class="form-group m-form__group row col">
-                        <label for="purpose" class="col-12 form-label">PURPOSE: </label>
-                        <textarea id="edit_purpose" name="purpose" class="col-12 form-control m-input auto-resize" rows="4" data-validation="required" style="resize:none; overflow-y:auto;" readonly></textarea>
+                        <label for="purpose" class="col-12 form-label required">PURPOSE: </label>
+                        <textarea id="edit_purpose" name="purpose" class="col-12 form-control m-input auto-resize" rows="4" data-validation="required" style="resize:none; overflow-y:auto;"></textarea>
                     </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-submit btn-primary btnNew">
+                        UPDATE
+                    </button>
+                    <button type="button" class="btn btn-danger btnNew" data-dismiss="modal">
+                        CANCEL
+                    </button>
                 </div>
             </form>
         </div>

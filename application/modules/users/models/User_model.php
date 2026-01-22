@@ -945,7 +945,7 @@ class User_model extends CI_Model{
     }
 
     private function getItmarListData($search, $limit, $offset, $sortBy, $sortOrder,$filterFields, $app_name, $is_archive,$date_range){
-        $this->db->select("a.emp_id,a.is_archive,a.id,a.app_name,a.purpose,a.created_at, d.description as department_name, e.name as position_name, CONCAT(
+        $this->db->select("a.emp_id,a.id,a.app_name,a.purpose,a.created_at, d.description as department_name, e.name as position_name, CONCAT(
                 b.firstname, ' ',
                 IF(b.middlename IS NOT NULL AND b.middlename != '',
                     CONCAT(LEFT(b.middlename, 1), '. '),
@@ -965,7 +965,11 @@ class User_model extends CI_Model{
             GROUP_CONCAT(DISTINCT(`g`.`location_name`) ORDER BY `g`.`created_at`, `g`.`id` ASC SEPARATOR '|') as location_name,
             h.telegram_chat_id as telegram_id,
         ");
-        $this->db->from("gccmaster.it_mobile_application as a");
+        if($is_archive){
+            $this->db->from("gccmaster.it_mobile_application_archive as a");
+        }else{
+            $this->db->from("gccmaster.it_mobile_application as a");
+        }
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.created_by", "LEFT");
         $this->db->join("gccmaster.tblemployees as c", "c.id = a.emp_id", "LEFT");
         $this->db->join("gcchris.tbldepartments as d", "d.id = c.department_id", "LEFT");
@@ -974,7 +978,8 @@ class User_model extends CI_Model{
         $this->db->join('gcctimeutility.personnel_locations as g', 'g.personnel_id = f.id', 'LEFT');
         $this->db->join('gccmaster.tblusers as h', 'h.emp_id = c.id', 'LEFT');
         $this->db->where("a.app_name",  $app_name);
-        $this->db->where("a.is_archive",  $is_archive);
+
+        // $this->db->where("a.is_archive",  $is_archive);
 
         if (!empty($date_range['start']) && !empty($date_range['end'])) {
             $start = $date_range['start'] . ' 00:00:00';
@@ -1027,12 +1032,16 @@ class User_model extends CI_Model{
                 c.lastname
             ) as emp_name
         ");
+        if($is_archive){
+            $this->db->from("gccmaster.it_mobile_application_archive as a");
+        }else{
+            $this->db->from("gccmaster.it_mobile_application as a");
+        }
     
-        $this->db->from("gccmaster.it_mobile_application as a");
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.created_by", "LEFT");
         $this->db->join("gccmaster.tblemployees as c", "c.id = a.emp_id", "LEFT");
         $this->db->where("a.app_name",  $app_name);
-        $this->db->where("a.is_archive",  $is_archive);
+        // $this->db->where("a.is_archive",  $is_archive);
 
         if (!empty($date_range['start']) && !empty($date_range['end'])) {
             $start = $date_range['start'] . ' 00:00:00';
@@ -1081,11 +1090,11 @@ class User_model extends CI_Model{
         return $resultArray;
     }
 
-    public function archiveItmar(){
+    public function updateItmar(){
         $resultArray = array();
         $post = $this->input->post();
         $data = array(
-            "is_archive" => $post['is_archive'],
+            "purpose" => $post['purpose'],
         );
 
         $this->db->where("id", $post['id']);
@@ -1097,7 +1106,46 @@ class User_model extends CI_Model{
             $resultArray['success'] = false;
             $resultArray['message'] = "Failed to update itmar request.";
         }
+        return $resultArray;
+    }
 
+    public function archiveItmar(){
+        $resultArray = array();
+        $post = $this->input->post();
+        $post['created_by'] = $this->session->userdata('logged_in')["emp_id"];
+        $id = $post['id'];
+        unset($post['id']);
+        $this->db->trans_begin();
+        $insert = $this->db->insert('gccmaster.it_mobile_application_archive', $post);
+    
+        if (!$insert) {
+            $this->db->trans_rollback();
+            $resultArray['success'] = false;
+            $resultArray['message'] = "Failed to insert into archive table.";
+            return $resultArray;
+        }
+    
+        $this->db->where('id', $id);
+        $delete = $this->db->delete('gccmaster.it_mobile_application');
+    
+        if (!$delete) {
+            $this->db->trans_rollback();
+            $resultArray['success'] = false;
+            $resultArray['message'] = "Failed to delete from main table.";
+            return $resultArray;
+        }
+    
+        if ($this->db->trans_status() === FALSE) {
+            $this->db->trans_rollback();
+            $resultArray['success'] = false;
+            $resultArray['message'] = "Transaction failed.";
+        } else {
+            $this->db->trans_commit();
+            $resultArray['success'] = true;
+            $resultArray['message'] = "Successfully archived application request.";
+            $resultArray['employees'] = $this->select2Employee();
+        }
+    
         return $resultArray;
     }
 
