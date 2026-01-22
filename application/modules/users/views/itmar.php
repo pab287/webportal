@@ -24,7 +24,7 @@
                             <div class="col-xl-8 order-2 order-xl-1">
                                 <div class="form-group m-form__group row align-items-center">
                                     <div class="col-md-4">
-                                    <a href="javascript:void(0);" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill btnNew" data-toggle="modal" data-target="#newITMARModal">
+                                    <a id="addNew" href="javascript:void(0);" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill btnNew" data-toggle="modal" data-target="#newITMARModal">
                                         <span>
                                             <i class="la la-plus"></i>
                                             <span>New</span>

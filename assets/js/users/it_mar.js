@@ -10,7 +10,7 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     }
 }
 let allEmployees = _employee;
-console.log(allEmployees);
+
 $(document).on('click', '.btnArchive', function (e) {
     e.preventDefault();
     is_archive = is_archive == 0 ? 1 : 0;
@@ -18,6 +18,11 @@ $(document).on('click', '.btnArchive', function (e) {
     $(this).find('.m-nav__link-text').text(text);
     const headerText = is_archive == 1 ? 'IT Mobile Application Archive' : 'IT Mobile Application Masterfile';
     $('#header').text(headerText);
+    if (is_archive == 1) {
+        $('#addNew').hide();
+    } else {
+        $('#addNew').show();
+    }
     ITMar.ajax.reload();
 });
 
@@ -253,8 +258,6 @@ function archiveRow(id) {
                     if (response.success) {
                         toastr.success(response.message);
                         allEmployees = response.employees;
-                        console.log(allEmployees);
-                        console.log(rowData.app_name);
                         loadEmployeesByApp(rowData.app_name);
                         ITMar.ajax.reload();
                     } else {
