@@ -28,6 +28,17 @@ let tblEventsSettings = $('#table-events_settings').DataTable({
         { data: 'id', visible: false },
         { data: 'name' },
         { data: 'type' },
+        { data: 'hex_code',
+            render: function (data, type, row) {
+                if (!data) return 'NOT SET';
+                return `
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+                        <div style="font-weight:600;">${data}</div>
+                        <div style="width: 32px; height: 16px; border: 1px solid #ccc; background-color: ${data}; border-radius: 3px;"></div>
+                    </div>
+                `;
+            }
+        },
         { data: 'fullname' },
         { data: 'created_at' },
         { data: null, title: 'Actions', className: "text-left", orderable: false, defaultContent: '',
@@ -245,3 +256,33 @@ function openArchive() {
     }
     tblEventsSettings.ajax.reload();
 }
+
+const $colorPicker = $("#option_color");
+const $colorText   = $("#option_color_text");
+
+if (!$colorText.val() || $colorText.val().charAt(0) !== '#') {
+    $colorText.val("#000000");
+}
+$colorPicker.val($colorText.val());
+
+$colorPicker.on("input change", function () {
+    $colorText.val($(this).val().toUpperCase());
+});
+
+$colorText.on("input", function () {
+    let val = $(this).val().toUpperCase();
+    val = val.replace(/[^0-9A-F#]/g, "");
+    val = "#" + val.replace(/#/g, "");
+    val = val.substring(0, 7);
+
+    $(this).val(val);
+    if (/^#[0-9A-F]{6}$/.test(val)) {
+        $colorPicker.val(val);
+    }
+});
+$colorText.on("keydown", function (e) {
+    const pos = this.selectionStart;
+    if ((pos === 0 || pos === 1) && e.key === "Backspace") {
+        e.preventDefault();
+    }
+});

@@ -51,6 +51,7 @@
                                 <th></th>
                                 <th>OPTION NAME</th>
                                 <th>TYPE</th>
+                                <th>COLOR</th>
                                 <th>CREATED BY</th>
                                 <th>CREATED AT</th>
                                 <th>ACTION</th>
@@ -137,8 +138,8 @@
                                     <div class="form-group">
                                         <label for="option_color">OPTION COLOR</label>
                                         <div class="form-group input-group">
-                                            <input id="option_color" type="color" class="form-control form-control-color">
-                                            <input type="text" class="form-control" id="option_color_text" placeholder="HEX CODE" data-validation="required" name="hex_code">
+                                            <input id="edit_option_color" type="color" class="form-control form-control-color">
+                                            <input type="text" class="form-control" id="edit_option_color_text" placeholder="HEX CODE" data-validation="required" name="hex_code">
                                         </div>
                                         <small class="form-text text-muted">Choose a color for this option</small>
                                     </div>
@@ -155,21 +156,3 @@
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const colorPicker = document.getElementById("option_color");
-    const colorText   = document.getElementById("option_color_text");
-
-    colorPicker.addEventListener("input", function () {
-        colorText.value = this.value;
-    });
-
-    colorText.addEventListener("input", function () {
-        const val = this.value.trim();
-        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-            colorPicker.value = val;
-        }
-    });
-});
-</script>
