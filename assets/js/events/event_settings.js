@@ -237,9 +237,11 @@ function openArchive() {
     if (archive === 1) {
         $('#page_title').text('ARCHIVED EVENTS');
         $('#archive_text').text('Back to Active');
+        $('#newOption').hide();
     } else {
         $('#page_title').text('EVENTS PAGE SETTINGS');
         $('#archive_text').text('Archive');
+        $('#newOption').show();
     }
     tblEventsSettings.ajax.reload();
 }

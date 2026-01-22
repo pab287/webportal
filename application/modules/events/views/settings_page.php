@@ -38,7 +38,7 @@
         <div class="m-portlet__body">
             <div class="row">
                 <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
-                    <button type="button" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#new_option">
+                    <button id="newOption" type="button" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#new_option">
                         <i class="la la-plus"></i>
                         ADD OPTION
                     </button>
@@ -92,7 +92,7 @@
                                         <label for="option_color">OPTION COLOR</label>
                                         <div class="form-group input-group">
                                             <input id="option_color" type="color" class="form-control form-control-color">
-                                            <input type="text" class="form-control" id="option_color_text" placeholder="HEX CODE" data-validation="required" name="color">
+                                            <input type="text" class="form-control" id="option_color_text" placeholder="HEX CODE" data-validation="required" name="hex_code">
                                         </div>
                                         <small class="form-text text-muted">Choose a color for this option</small>
                                     </div>
@@ -131,6 +131,16 @@
                                     <div class="form-group">
                                         <label for="option_name">OPTION TYPE</label>
                                         <input type="text" class="form-control" name="type" v-model="optionSelected.type">
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label for="option_color">OPTION COLOR</label>
+                                        <div class="form-group input-group">
+                                            <input id="option_color" type="color" class="form-control form-control-color">
+                                            <input type="text" class="form-control" id="option_color_text" placeholder="HEX CODE" data-validation="required" name="hex_code">
+                                        </div>
+                                        <small class="form-text text-muted">Choose a color for this option</small>
                                     </div>
                                 </div>
                             </div>

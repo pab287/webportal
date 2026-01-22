@@ -1265,7 +1265,8 @@ class Events_model extends MX_Controller {
                 ),
                 ' ',
                 LOWER(e.lastname)
-            ) AS fullname
+            ) AS fullname,
+            IFNULL(hex_code, '#c4c4c4') AS hex_code
         ");
         $this->db->from($this->eventsSettingsTable . " a");
         $this->db->join($this->employeesTable.' as e','e.id = a.created_by','left');
