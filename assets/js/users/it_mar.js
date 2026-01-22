@@ -138,6 +138,7 @@ $("#employee").on("select2:select", function (e) {
 $.validate({
     form : '#new_itmar',
     lang: 'en',
+    scrollToTopOnError: false,
     onSuccess : function(form) {
         $.ajax({
             url: siteUrl("users/save_itmar"),
@@ -171,6 +172,7 @@ $.validate({
 $.validate({
     form : '#edit_itmar',
     lang: 'en',
+    scrollToTopOnError: false,
     onSuccess : function(form) {
         $.ajax({
             url: siteUrl("users/update_itmar"),
