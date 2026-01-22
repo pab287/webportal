@@ -13070,11 +13070,8 @@ class Employee_model extends CI_Model {
     public function sendHeadEmail(){
         $post = $this->input->post();
         $loans = $this->getEmployeeLoansData($post['emp_id']);
-        $ids = [4,49,8]; // 4 = FINANCE, 49 = FINANCE, 8 = HRD
-        $heads = $this->getHeadEmails($ids);
         $email_content = $this->load->view("email_templates/email-active_ca.php",array("data" => $post, "loans" => $loans), true);
-        $mailer['send_to'] = $heads['data'];
-        $result['status'] = $this->core_layout->send_email('core','GC & C Conyx PH','INACTIVE EMPLOYEE NOTIFICATION',$email_content,$mailer);
+        $result['status'] = $this->core_layout->send_email('hris_active_ca_notif','GC & C Conyx PH','INACTIVE EMPLOYEE NOTIFICATION',$email_content);
         if ($result['status']) {
             $this->core_layout->setEventLog("Email has been sent successfully", "insert", "success", "gcchris", "user");
             $result['status'] = true;
@@ -13085,7 +13082,7 @@ class Employee_model extends CI_Model {
             $result['message'] = "Failed to send email. Please try again later.";
         }
         return $result;
-    }
+
 
     public function getEmployeeLoansDataCall(){
         $post = $this->input->post();
