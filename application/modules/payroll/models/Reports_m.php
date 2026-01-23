@@ -1272,7 +1272,7 @@ class Reports_m extends CI_Model{
                 $date->modify('last day of this month');
                 $tempEndDate = $date->format('Y-m-d');
                 $filter_month = $post['filter_month'];
-            }else if(isset($post["filter_year"]) && $post["filter_year"]){
+            } elseif (isset($post["filter_year"]) && $post["filter_year"]){
                 $tempStartDate = date("{$post['filter_year']}-01-01", strtotime("{$post["filter_year"]}"));
                 $tempEndDate = date("{$post['filter_year']}-12-31", strtotime("{$post["filter_year"]}"));
                 $filter_month = "";
@@ -1339,7 +1339,7 @@ class Reports_m extends CI_Model{
                     if(strtolower($value->payout_schedule_name) !== "weekly"
                         && !in_array($value->id, $employeeIds)){
                         $employeeIds[] = $value->id;
-                    }else if(strtolower($value->payout_schedule_name) === "weekly"
+                    } elseif (strtolower($value->payout_schedule_name) === "weekly"
                         && !in_array($value->id, $isWeeklyEmployees)){
                         $isWeeklyEmployees[] = $value->id;
                     }
@@ -1411,6 +1411,10 @@ class Reports_m extends CI_Model{
                         }
                     }
                 }
+
+                /*** altered function here ***/
+                $weeklyPsIds = $this->updateWeeklyEmployeesPsId($tempStartDate, $tempEndDate, $isMonthFilter, $weeklyPsIds);
+                /*** altered function here ***/
 
                 if(is_array($employeeIds) && count($employeeIds) > 0){
                     if(isset($post["filter_year"])){
@@ -1513,6 +1517,138 @@ class Reports_m extends CI_Model{
         }
 
         return $resultset;
+    }
+
+    protected function updateWeeklyEmployeesPsId($tempStartDate, $tempEndDate, $isMonthFilter, $weeklyPsIds = []){
+        if(!empty($weeklyPsIds) && $tempStartDate && $tempEndDate && $isMonthFilter){
+            $arrSeq = array();
+            $this->db->select("id, emp_id, payroll_seq, date_start");
+            $this->db->from("payroll.payroll_sheet");
+            $this->db->where_in("id", $weeklyPsIds);
+            $this->db->order_by("emp_id, id", "asc");
+            $queryWeekly = $this->db->get();
+            if($queryWeekly->num_rows() > 0){
+                foreach ($queryWeekly->result() as $qw) {
+                    $empId = $qw->emp_id;
+                    $seq   = (int) $qw->payroll_seq;
+                    
+                    $arrSeq[$empId]["date_start"] = $qw->date_start;
+                    $arrSeq[$empId]["sequence"][] = $seq;
+                    $arrSeq[$empId]["ps_id"][] = (int) $qw->id;
+                }
+            }
+            $toRemovePsId = array();
+            $toIncludePsId = [];
+            if(is_array($arrSeq) && !empty($arrSeq)){
+                foreach ($arrSeq as $kk => $sequence) {
+                    $removeKeys = [];
+                    $sq = $sequence["sequence"];
+                    for($i=1; $i<count($sq); $i++){
+                        if ($sq[$i] < $sq[$i - 1]) {
+                            $removeKeys = range($i, count($sq) - 1);
+                            break;
+                        }
+                    }
+
+                    if(!empty($removeKeys)){
+                        $psIds = $sequence["ps_id"];
+                        foreach ($removeKeys as $psKey) {
+                            $toRemovePsId[] = $psIds[$psKey];
+                        }
+                    }
+
+
+                    if(!empty($sq) && $sq[0] !== 1){
+                        $tempEmployeeId = $kk;
+                        $prevStartDate = date("Y-m-d", strtotime("-1 month", strtotime($tempStartDate)));
+                        $prevEndDate = date("Y-m-d", strtotime("-1 month", strtotime($tempEndDate)));
+
+                        $responseWeeklyRange = $this->generateWeeklyMonthRange($prevStartDate, $prevEndDate);
+                        if($responseWeeklyRange){
+                            $_tempStartDate = $responseWeeklyRange["date_start"];
+                            $_tempEndDate = $responseWeeklyRange["date_end"];
+                            $_tempPayDateStart = $responseWeeklyRange["paydate_start"];
+                            $_tempPayDateEnd = $responseWeeklyRange["paydate_end"];
+
+                            if(strtotime($_tempEndDate) < strtotime($_tempStartDate)){
+                                $_tempEndDate = Date("Y-m-d", strtotime("+1 year", strtotime($_tempEndDate)));
+                            }
+                            if(strtotime($_tempPayDateEnd) < strtotime($_tempPayDateStart)){
+                                $_tempPayDateEnd = Date("Y-m-d", strtotime("+1 year", strtotime($_tempPayDateEnd)));
+                            }
+
+                            $this->db->select("id, emp_id, payroll_seq");
+                            $this->db->from("payroll.payroll_sheet");
+                            $this->db->where("emp_id", $tempEmployeeId);
+                            $this->db->where("posted", 1);
+                            $this->db->where("is_bonus", 0);
+                            if($isMonthFilter === true){
+                                $_monthStartDate = date("Y-m-d", strtotime("first day of this month", strtotime($tempStartDate)));
+                                $_monthEndDate = date("Y-m-d", strtotime("last day of this month", strtotime($_monthStartDate)));
+                                $this->db->group_start();
+                                    $this->db->group_start();
+                                        $this->db->where("DATE(date_start) >=", $_tempStartDate);
+                                        $this->db->where("DATE(date_end) <=", $_tempEndDate);
+                                    $this->db->group_end();
+                                    $this->db->or_group_start();
+                                        $this->db->where("DATE(date_start) >=", $_monthStartDate);
+                                        $this->db->where("DATE(date_end) <=", $_monthEndDate);
+                                    $this->db->group_end();
+                                $this->db->group_end();
+                            }
+
+                            $queryWeeklyPrev = $this->db->get();
+                            if($queryWeeklyPrev->num_rows() > 0){
+                                $arrSeqx = [];
+                                foreach ($queryWeeklyPrev->result() as $qwx) {
+                                    $empIdx = $qwx->emp_id;
+                                    $seqx   = (int) $qwx->payroll_seq;
+                                    
+                                    $arrSeqx[$empIdx]["sequence"][] = $seqx;
+                                    $arrSeqx[$empIdx]["ps_id"][] = (int) $qwx->id;
+                                }
+
+                                if(is_array($arrSeqx) && !empty($arrSeqx)){
+                                    $includeKey = [];
+                                    foreach ($arrSeqx as $sequencex) {
+                                        $sqx = $sequencex["sequence"];
+                                        for($i=1; $i<count($sqx); $i++){
+                                            if ($sqx[$i] < $sqx[$i - 1]) {
+                                                $includeKey[] = $i;
+                                                break;
+                                            }
+                                        }
+                                        if(!empty($includeKey)){
+                                            $psIdsx = $sequencex["ps_id"];
+                                            foreach ($includeKey as $psKeyx) {
+                                                $toIncludePsId[] = $psIdsx[$psKeyx];
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(!empty($toRemovePsId)){
+                foreach ($toRemovePsId as $tempPsId) {
+                    if(in_array($tempPsId, $weeklyPsIds)){
+                        $key = array_search($tempPsId, $weeklyPsIds);
+                        if($key !== false){ unset($weeklyPsIds[$key]); }
+                    }
+                }
+            }
+
+            if(!empty($toIncludePsId)){
+                $weeklyPsIds = array_merge($weeklyPsIds, $toIncludePsId);
+            }
+
+            return array_values($weeklyPsIds);
+        }else{
+            return $weeklyPsIds;
+        }
     }
 
     function generateTaxableIncomeReport(){
