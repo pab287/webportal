@@ -2725,7 +2725,7 @@ class Reports_m extends CI_Model{
                         $holidayAmountTotal = floatval($holidayAmountTotal) + floatval($value->total_holiday_amount);
                         $regularNightDiffTotal = floatval($regularNightDiffTotal) + floatval($value->total_ndiff_amount);
 
-                        $otAllowanceAmountTotal = floatval($otAllowanceAmountTotal) + floatval($value->ot_allowance_amount)
+                        $otAllowanceAmountTotal = floatval($otAllowanceAmountTotal) + floatval($value->ot_allowance_amount);
                         $basicRateTotal = floatval($basicRateTotal) + floatval($value->basic_rate);
                         $grossPayTotal = floatval($grossPayTotal) + floatval($value->gross_pay);
                         $netPayTotal = floatval($netPayTotal) + floatval($value->net_pay);
