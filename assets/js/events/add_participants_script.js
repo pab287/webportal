@@ -1457,3 +1457,51 @@ $("#employee-select").select2({
     placeholder: "Select an option",
     width: '100%'
 })
+
+function syncScheduleTime(changed) {
+    const startVal = $('#schedule_start').val();
+    const endVal = $('#schedule_end').val();
+    if (!startVal || !endVal) return;
+    const start = moment(startVal, 'h:mm A');
+    const end = moment(endVal, 'h:mm A');
+    if (!start.isValid() || !end.isValid()) return;
+    if (end.isBefore(start)) {
+        if (changed === 'start') {
+            $('#schedule_end').val(start.format('h:mm A')).trigger('change');
+        } else {
+            $('#schedule_start').val(end.format('h:mm A')).trigger('change');
+        }
+    }
+}
+
+$('#schedule_start').on('change', function () {
+    syncScheduleTime('start');
+});
+
+$('#schedule_end').on('change', function () {
+    syncScheduleTime('end');
+});
+
+function syncScheduleTimeEdit(changed) {
+    const startVal = $('#edit_schedule_start').val();
+    const endVal = $('#edit_schedule_end').val();
+    if (!startVal || !endVal) return;
+    const start = moment(startVal, 'h:mm A');
+    const end = moment(endVal, 'h:mm A');
+    if (!start.isValid() || !end.isValid()) return;
+    if (end.isBefore(start)) {
+        if (changed === 'start') {
+            $('#edit_schedule_end').val(start.format('h:mm A')).trigger('change');
+        } else {
+            $('#edit_schedule_start').val(end.format('h:mm A')).trigger('change');
+        }
+    }
+}
+
+$('#edit_schedule_start').on('change', function () {
+    syncScheduleTime('start');
+});
+
+$('#edit_schedule_end').on('change', function () {
+    syncScheduleTime('end');
+});
