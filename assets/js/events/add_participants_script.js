@@ -96,14 +96,12 @@ let eventVue = new Vue({
         $('#new_event_form input[type="text"], #new_event_form input[type="email"]')
             .not('#employee-select') 
             .prop('disabled', true);
-        $('#edit_schedule_date').daterangepicker({ 
-            singleDatePicker: true,
-            showDropdowns: true,
-            minDate: moment(this.eventsData.event_from).format('MM-DD-YYYY'),
-            maxDate: moment(this.eventsData.event_to).format('MM-DD-YYYY'),
-            locale: {
-                format: "MM-DD-YYYY",
-            },
+        $('#edit_schedule_date').datepicker({ 
+            autoclose: true,
+            pickerPosition: 'bottom left',
+            format: 'MM dd, yyyy',
+            startDate: new Date(eventsDetails.event_from),
+            endDate: new Date(eventsDetails.event_to),
         });
     },
     computed: {
@@ -289,7 +287,7 @@ let eventVue = new Vue({
         editSchedule(event) {
             selectedSchedule = JSON.parse(JSON.stringify(event));
             this.editSched = event;
-            $('#edit_schedule_date').val(moment(event.event_date).format('MM-DD-YYYY'));
+            $('#edit_schedule_date').datepicker('setDate',moment(event.event_date, 'YYYY-MM-DD').toDate());
             $('#edit_schedule_start').timepicker('setTime', moment(event.start, 'HH:mm:ss').format('hh:mm A'));
             $('#edit_schedule_end').timepicker('setTime', moment(event.end, 'HH:mm:ss').format('hh:mm A'));
             $('#edit_schedule').modal('show');
@@ -417,7 +415,6 @@ let eventVue = new Vue({
             });
         },
         takeAttendance(sched) {
-            console.log(sched);
             const btn = $(event.currentTarget);
             btn.prop("disabled", true);
             $.ajax({
@@ -1318,8 +1315,8 @@ $('#schedule_date').datepicker({
     pickerPosition: 'bottom left',
     format: 'MM dd, yyyy',
     startDate: new Date(eventsDetails.event_from),
-    endDate: new Date(eventsDetails.event_to),
-});
+    endDate: new Date(eventsDetails.event_to)
+}).datepicker('setDate', new Date(eventsDetails.event_from));
 
 $('#schedule_start').timepicker({
     defaultTime: '08:00 AM',
@@ -1430,8 +1427,8 @@ $('#edit_schedule_end').on('changeTime.timepicker', function(e) {
     eventVue.editSched.end = time24;
 });
 
-$('#edit_schedule_date').on('apply.daterangepicker', function(e, picker) {
-    eventVue.editSched.event_date = picker.startDate.format('YYYY-MM-DD');
+$('#edit_schedule_date').on('changeDate', function (e) {
+    eventVue.editSched.event_date = moment(e.date).format('YYYY-MM-DD');
 });
 
 

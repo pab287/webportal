@@ -163,6 +163,7 @@ class Events_model extends MX_Controller {
             e.description, 
             e.event_venue venue, 
             e.event_from start, 
+            a.hex_code,
             CONCAT(e.event_to, ' 23:59:59') as end,
             e.company_ids,
             e.department_ids,
@@ -182,6 +183,7 @@ class Events_model extends MX_Controller {
         ");
         $this->db->from($this->eventsCalendarTable . ' e');
         $this->db->join($this->eventsSpeakersTable . ' s', 'e.id = s.event_id', 'left');
+        $this->db->join($this->eventsSettingsTable . ' a', 'e.training_category = a.id', 'left');
         $this->db->where("e.is_archive", 0);
         $this->db->group_by('e.id');
         $events = $this->db->get()->result();

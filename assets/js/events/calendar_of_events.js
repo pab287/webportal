@@ -11,6 +11,7 @@ let Select2Category = null;
 if (_currentActions.includes("view_own_request")) {
     $(".btnNew").hide();
 }
+
 let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
     .DataTable({
         dom: 'frtlip',
@@ -299,7 +300,6 @@ function itemDatatableActions(id, status, from, to) {
 
     return _actionButton;
 }
-
 
 
 let editEventVue = new Vue({
@@ -621,24 +621,11 @@ const CalendarBasic = function () {
                             'border-radius': '4px',
                             'border': 'none'
                         });
-                        
-                        let background = '';
-                        switch (event.training_category) {
-                            case "5":
-                                background = 'linear-gradient(135deg, #36b37e 0%, #57d9a3 100%)';
-                                break;
-                            case "6":
-                                background = 'linear-gradient(135deg, #00b8d9 0%, #4cc9f0 100%)';
-                                break;
-                            case "7":
-                                background = 'linear-gradient(135deg, #ffab00 0%, #ffc94d 100%)';
-                                break;
-                            default:
-                                background = 'linear-gradient(135deg, #6c7ae0 0%, #9baaf3 100%)';
-                                break;
-                        }
-                    
-                        element.css('background', background);
+                        let background = event.hex_code && event.hex_code.trim() !== '' ? event.hex_code: '#c4c4c4';
+                        element.css({
+                            'background-color': background,
+                            'border-color': background
+                        });
                     },
                 });
             calendarInitialized = true;

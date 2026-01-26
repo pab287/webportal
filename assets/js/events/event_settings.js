@@ -28,7 +28,7 @@ let tblEventsSettings = $('#table-events_settings').DataTable({
         { data: 'id', visible: false },
         { data: 'name' },
         { data: 'type' },
-        { data: 'hex_code',
+        { data: 'hex_code', orderable: false,
             render: function (data, type, row) {
                 if (!data) return 'NOT SET';
                 return `
@@ -40,7 +40,13 @@ let tblEventsSettings = $('#table-events_settings').DataTable({
             }
         },
         { data: 'fullname' },
-        { data: 'created_at' },
+        {
+            data: 'created_at',
+            render: function (data) {
+                if (!data) return '';
+                return moment(data).format('MMM DD, YYYY');
+            }
+        },
         { data: null, title: 'Actions', className: "text-left", orderable: false, defaultContent: '',
             render: function (data, type, row, meta) {
                 return itemDatatableActions(row.id);
@@ -123,6 +129,9 @@ function onEditEvent(id) {
     selectedData = rowData; 
     eventVue.optionSelected = JSON.parse(JSON.stringify(rowData));
     $("#edit_options").modal("show");
+    bindColorSync("#edit_option_color", "#edit_option_color_text", "#000000");
+    $('#edit_option_color').val(rowData.hex_code || '#000000');
+    $('#edit_option_color_text').val(rowData.hex_code || '#000000');
 }
 
 
@@ -257,32 +266,38 @@ function openArchive() {
     tblEventsSettings.ajax.reload();
 }
 
-const $colorPicker = $("#option_color");
-const $colorText   = $("#option_color_text");
+function bindColorSync(colorPickerSelector, colorTextSelector, defaultColor = "#000000") {
+    const $colorPicker = $(colorPickerSelector);
+    const $colorText   = $(colorTextSelector);
 
-if (!$colorText.val() || $colorText.val().charAt(0) !== '#') {
-    $colorText.val("#000000");
+    let initial = $colorText.val();
+    if (!initial || !/^#[0-9A-Fa-f]{6}$/.test(initial)) {
+        $colorText.val("");
+        $colorPicker.val(defaultColor);
+    } else {
+        $colorPicker.val(initial);
+    }
+
+    $colorPicker.on("input change", function () {
+        $colorText.val($(this).val().toUpperCase());
+    });
+
+    $colorText.on("input", function () {
+        let raw = $(this).val().toUpperCase();
+        raw = raw.replace(/[^0-9A-F]/g, "");
+        raw = raw.substring(0, 6);
+        if (raw.length === 0) {
+            $(this).val("");
+            return;
+        }
+        let val = "#" + raw;
+        $(this).val(val);
+        if (raw.length === 6) {
+            $colorPicker.val(val);
+        }
+    });
 }
-$colorPicker.val($colorText.val());
 
-$colorPicker.on("input change", function () {
-    $colorText.val($(this).val().toUpperCase());
-});
-
-$colorText.on("input", function () {
-    let val = $(this).val().toUpperCase();
-    val = val.replace(/[^0-9A-F#]/g, "");
-    val = "#" + val.replace(/#/g, "");
-    val = val.substring(0, 7);
-
-    $(this).val(val);
-    if (/^#[0-9A-F]{6}$/.test(val)) {
-        $colorPicker.val(val);
-    }
-});
-$colorText.on("keydown", function (e) {
-    const pos = this.selectionStart;
-    if ((pos === 0 || pos === 1) && e.key === "Backspace") {
-        e.preventDefault();
-    }
+$(document).ready(function () {
+    bindColorSync("#option_color", "#option_color_text", "#000000");
 });
