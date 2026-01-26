@@ -13066,6 +13066,84 @@ class Employee_model extends CI_Model {
     
         return ["response" => false,"toastr_msg" => "Failed to " . ($type === "insert" ? "add" : "update") . " Auto Overtime."];
     }
+
+    public function sendHeadEmail(){
+        $post = $this->input->post();
+        $loans = $this->getEmployeeLoansData($post['emp_id']);
+        $ids = [4,49,8]; // 4 = FINANCE, 49 = FINANCE, 8 = HRD
+        $heads = $this->getHeadEmails($ids);
+        $email_content = $this->load->view("email_templates/email-active_ca.php",array("data" => $post, "loans" => $loans), true);
+        $mailer['send_to'] = $heads['data'];
+        $result['status'] = $this->core_layout->send_email('core','GC & C Conyx PH','INACTIVE EMPLOYEE NOTIFICATION',$email_content,$mailer);
+        if ($result['status']) {
+            $this->core_layout->setEventLog("Email has been sent successfully", "insert", "success", "gcchris", "user");
+            $result['status'] = true;
+            $result['message'] = "Email has been sent successfully";
+        } else {
+            $this->core_layout->setEventLog("Failed to send email", "insert", "error", "gcchris", "system");
+            $result['status'] = false;
+            $result['message'] = "Failed to send email. Please try again later.";
+        }
+        return $result;
+    }
+
+    public function getEmployeeLoansDataCall(){
+        $post = $this->input->post();
+        $loans = $this->getEmployeeLoansData($post['emp_id']);
+        return $loans;
+    }
+
+    private function getEmployeeLoansData($employee_id){
+        $arrData = array();
+        $this->db->select("emp_loans.amount,emp_loans.active, master_loans.loan_name, emp_loans.remarks, emp_loans.loan_id as loan_code, 
+            ROUND(SUM(IFNULL(psloanpayments.amount_due, 0)),2) as total_amount_paid, 
+            GROUP_CONCAT(DISTINCT psloanpayments.amount_due, '||', ps.id) as temp_amount_paid, emp_loans.reference as ref");
+        $this->db->where("emp_loans.emp_id", $employee_id);
+        $this->db->where("emp_loans.is_archived", 0);
+        $this->db->where("emp_loans.active !=", 3);
+        $this->db->join("payroll.loans master_loans", "master_loans.id = emp_loans.loan_id");
+        $this->db->join("payroll.payroll_sheet_loan_payments psloanpayments", "psloanpayments.loan_id = emp_loans.id", "LEFT");
+        $this->db->join("payroll.payroll_sheet ps", "ps.id = psloanpayments.payroll_sheet_id AND ps.posted = 1", "LEFT");
+        $this->db->group_by("emp_loans.id, emp_loans.loan_id");
+        $this->db->order_by("emp_loans.id", "DESC");
+        $query = $this->db->get("gcchris.loans emp_loans");
+
+        if($query->num_rows() > 0){
+            foreach ($query->result() as $key => $value) {
+                $tempTotal = 0;
+                $tempAmount = $value->temp_amount_paid;
+                $tempAmount = explode(",", $tempAmount);
+                foreach ($tempAmount as $kk => $vv) {
+                    $tempDD = explode("||", $vv);
+                    $tempTotal += floatval($tempDD[0]);
+                }
+                $tempTotal = round($tempTotal, 2);
+                if($tempTotal !== floatval($value->total_amount_paid)){ $value->total_amount_paid = $tempTotal; }
+                // $tempCreatedBy = $value->created_by ? $this->core_layout->getEmployeeData($value->created_by)['display_name_1']: "[ System Generated: Cash Advance ]"; 
+                // $value->created_by = $tempCreatedBy;
+                // $value->created_at = date('Y-m-d', strtotime($value->created_at));
+                $arrData[$key] = $value;
+            }
+        }
+        return $arrData;
+    }
+
+    private function getHeadEmails($ids){
+        $this->db->select('b.email');
+        $this->db->from($this->departmentTable . ' AS a');
+        $this->db->join($this->tblUsers . ' AS b', 'b.emp_id = a.head_id', 'LEFT');
+        $this->db->where('b.email IS NOT NULL');
+        $this->db->where('b.email !=', '');
+        $this->db->where_in('a.id', $ids); // 4 = FINANCE, 49 = FINANCE, 8 = HRD
+    
+        $query = $this->db->get();
+    
+        return [
+            'success' => $query->num_rows() > 0,
+            'data'    => array_column($query->result_array(), 'email')
+        ];
+    }
+    
     
 
 }
