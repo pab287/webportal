@@ -254,8 +254,13 @@ class Overtime_m extends CI_Model {
                 $time1 = date_create($rs->date_from);
                 $time2 = date_create($rs->date_to);
                 $time_diff = date_diff($time1, $time2);
-                $tempHr = $time_diff->h;
-                $tempMn = $time_diff->i;
+                // $tempHr = $time_diff->h; //commented because it returns 0 when in 24hrs
+                // $tempMn = $time_diff->i;
+                $totalMinutes = ($time_diff->days * 24 * 60) + ($time_diff->h * 60) + $time_diff->i;
+
+                $tempHr = intdiv($totalMinutes, 60);
+                $tempMn = $totalMinutes % 60;
+
                 $tempHrLabel = ($tempHr == 1)? "Hour": "Hours";
                 $tempMnLabel = ($tempMn == 1)? "Minute": "Minutes";
                 $tempDuration = "{$tempHr} {$tempHrLabel} {$tempMn} {$tempMnLabel}";
@@ -776,70 +781,86 @@ class Overtime_m extends CI_Model {
         $attachment = ($this->input->post('attachment_image') !== '' && $this->input->post('attachment_image')) ? $this->input->post('attachment_image'): array();
         $attachment = serialize($attachment);
 
+        $this->db->select('reference_no, date_from, date_to, purpose, status');
+        $this->db->where('DATE(date_from)', date('Y-m-d', strtotime($this->input->post('date_from'))));
+        $this->db->where('employee', $this->input->post('employee'));
+        $this->db->where('status !=', 'Cancelled');
+        $this->db->from('gcceforms.overtime');
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $resultset['state'] = false;
+            $resultset['ot_data'] = $query->row();
+            $resultset['message'] = "You already have an overtime application for this date. Only one overtime is allowed per day.";
+
+            return $resultset;
+        }
+
         $list = $this->overtime->get_series($year, $month, "new");
-            $series = '';
-            if (sizeof($list) > 0) {
-                foreach ($list as $arr) {
-                    $x = $arr->ref_series;
-                }
-                $series = intval($x) + 1;
-                if (strlen($series) == 1) {
-                    $series = '000' . $series;
-                } else if (strlen($series) == 2) {
-                    $series = '00' . $series;
-                } else if (strlen($series) == 3) {
-                    $series = '0' . $series;
-                } else {
-                    $series = $series;
-                }
+        $series = '';
+        if (sizeof($list) > 0) {
+            foreach ($list as $arr) {
+                $x = $arr->ref_series;
+            }
+            $series = intval($x) + 1;
+            if (strlen($series) == 1) {
+                $series = '000' . $series;
+            } else if (strlen($series) == 2) {
+                $series = '00' . $series;
+            } else if (strlen($series) == 3) {
+                $series = '0' . $series;
             } else {
-                $series = '0001';
+                $series = $series;
             }
-            if((in_array("approve_action", $this->current_action))){
-                $data = array(
-                    'ref_yr' => $year,
-                    'ref_series' => $series,
-                    'ref_month' => $month,
-                    'reference_no' => 'OT' . $year . '-' . $month . '-' . $series,
-                    'status' => 'Pending',
-                    'employee' => $this->input->post('employee'),
-                    'company' => $this->input->post('company'),
-                    'department' => $this->input->post('department'),
-                    'position' => $this->input->post('position'),
-                    'requested_by' => $this->input->post('requested_by'),
-                    'requested_at' => $date,
-                    'requested_remarks' => $this->input->post('remarks'),
-                    'purpose' => $this->input->post('purpose'),
-                    'date_from' => $this->input->post('date_from'),
-                    'date_to' => $this->input->post('date_to'),
-                    'created_by' => $this->user_data['emp_id'],
-                    'created_at' => $date,
-                    'attachment_image' => $attachment,
-                    'status' => 'Approved',
-                    'approved_by' => $this->user_data['emp_id'],
-                    'approved_at' => $date,
-                );
-            }else{
-                $data = array(
-                    'ref_yr' => $year,
-                    'ref_series' => $series,
-                    'ref_month' => $month,
-                    'reference_no' => 'OT' . $year . '-' . $month . '-' . $series,
-                    'status' => 'Pending',
-                    'employee' => $this->input->post('employee'),
-                    'company' => $this->input->post('company'),
-                    'department' => $this->input->post('department'),
-                    'position' => $this->input->post('position'),
-                    'requested_by' => $this->input->post('requested_by'),
-                    'requested_at' => $date,
-                    'requested_remarks' => $this->input->post('remarks'),
-                    'purpose' => $this->input->post('purpose'),
-                    'date_from' => $this->input->post('date_from'),
-                    'date_to' => $this->input->post('date_to'),
-                    'created_by' => $this->user_data['emp_id'],
-                    'created_at' => $date
-            )   ;
-            }
+        } else {
+            $series = '0001';
+        }
+
+        if((in_array("approve_action", $this->current_action))){
+            $data = array(
+                'ref_yr' => $year,
+                'ref_series' => $series,
+                'ref_month' => $month,
+                'reference_no' => 'OT' . $year . '-' . $month . '-' . $series,
+                'status' => 'Pending',
+                'employee' => $this->input->post('employee'),
+                'company' => $this->input->post('company'),
+                'department' => $this->input->post('department'),
+                'position' => $this->input->post('position'),
+                'requested_by' => $this->input->post('requested_by'),
+                'requested_at' => $date,
+                'requested_remarks' => $this->input->post('remarks'),
+                'purpose' => $this->input->post('purpose'),
+                'date_from' => $this->input->post('date_from'),
+                'date_to' => $this->input->post('date_to'),
+                'created_by' => $this->user_data['emp_id'],
+                'created_at' => $date,
+                'attachment_image' => $attachment,
+                'status' => 'Approved',
+                'approved_by' => $this->user_data['emp_id'],
+                'approved_at' => $date,
+            );
+        }else{
+            $data = array(
+                'ref_yr' => $year,
+                'ref_series' => $series,
+                'ref_month' => $month,
+                'reference_no' => 'OT' . $year . '-' . $month . '-' . $series,
+                'status' => 'Pending',
+                'employee' => $this->input->post('employee'),
+                'company' => $this->input->post('company'),
+                'department' => $this->input->post('department'),
+                'position' => $this->input->post('position'),
+                'requested_by' => $this->input->post('requested_by'),
+                'requested_at' => $date,
+                'requested_remarks' => $this->input->post('remarks'),
+                'purpose' => $this->input->post('purpose'),
+                'date_from' => $this->input->post('date_from'),
+                'date_to' => $this->input->post('date_to'),
+                'created_by' => $this->user_data['emp_id'],
+                'created_at' => $date
+            );
+        }
 
         $this->db->insert('gcceforms.overtime', $data);
         $data_id = $this->db->insert_id();
@@ -1108,6 +1129,23 @@ class Overtime_m extends CI_Model {
 
     function updateOvertime($id){
         $this->input->post();
+
+        $this->db->select('reference_no, date_from, date_to, purpose, status');
+        $this->db->where('DATE(date_from)', date('Y-m-d', strtotime($this->input->post('date_from'))));
+        $this->db->where('employee', $this->input->post('employee'));
+        $this->db->where('id != ', $id);
+        $this->db->where('status !=', 'Cancelled');
+        $this->db->from('gcceforms.overtime');
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $resultset['state'] = false;
+            $resultset['ot_data'] = $query->row();
+            $resultset['message'] = "You already have an overtime application for this date. Only one overtime is allowed per day.";
+
+            return $resultset;
+        }
+        
         $date = date('Y-m-d H:i:s');
         $data = array(
                 'employee' => $this->input->post('employee'),
@@ -1591,6 +1629,7 @@ class Overtime_m extends CI_Model {
         return $resultset;
     }
 
+    //here temp upload
     function tempUploadCsvFile() {
         $resultset = array();
         $session = $this->core_layout->getCurrentSession();
@@ -1637,11 +1676,13 @@ class Overtime_m extends CI_Model {
                         $bioNotFound = array();
 
                         if (($handle = fopen($currentFile, "r")) !== false) {
+                            $keys = array();
+
                             while (($data = fgetcsv($handle, 100000, ",")) !== false) {
                                 if($tempIndex !== 0){
                                     $tempDatax = array();
                                     $filteredData = array_filter($data);
-                                    if(is_array($filteredData) && !empty($filteredData) && count($filteredData) == 5){
+                                    if(is_array($filteredData) && !empty($filteredData) && count($filteredData) == 5){                                    
                                         $biometricNo = trim($filteredData[0]);
                                         $dateFrom = trim($filteredData[1]);
                                         $dateTo = trim($filteredData[2]);
@@ -1669,13 +1710,78 @@ class Overtime_m extends CI_Model {
                                         $empRecordCount = $qTempEmployee->num_rows();
 
                                         $isValidEmployee = false;
+                                        $isDuplicate = false;
+                                        $duplicateOT = array();
+                                        $isValidMessage = null;
                                         if($empRecordCount == 1){
                                             $row = $qTempEmployee->row();
                                             if(intval($row->id) > 0){
                                                 $isValidEmployee = true;
                                                 $displayName = $row->employee_name ? $row->employee_name : "No assigned name";
-                                                $isValid = strtotime(trim($filteredData[1])) > strtotime(trim($row->max_date));
+                                                $_key = $biometricNo.'_'.date('Y-m-d', strtotime($dateFrom));
+
+                                                if (in_array($_key, $keys)) {
+                                                    $isValid = false;
+                                                    $isValidMessage = 'Duplicate Overtime Entry.';
+                                                } else {
+                                                    // checks if duplicate entry
+                                                    $this->db->select('reference_no, date_from, date_to, purpose, status');
+                                                    $this->db->where('DATE(date_from)', date('Y-m-d', strtotime($filteredData[1])));
+                                                    $this->db->where('employee', $row->id);
+                                                    $this->db->where('status !=', 'Cancelled');
+                                                    $this->db->from('gcceforms.overtime');
+                                                    $_query = $this->db->get();
+                                                    // checks if duplicate entry
     
+                                                    if ($_query->num_rows() > 0) {
+                                                        $isValid = false;
+                                                        $isDuplicate = true;
+                                                        $duplicateOT = $_query->row();
+                                                        $isValidMessage = 'Duplicate Overtime Entry.';
+                                                    } else {
+                                                        if (strtotime($dateFrom) && strtotime($dateTo)) {
+                                                            if (date('Y-m-d', strtotime($dateFrom)) <= date('Y-m-d', strtotime($dateTo))) { //checks if date start is less than the date end
+                                                                $validOTEndDate = date('Y-m-d', strtotime($filteredData[1].' +1 day')); //added 1 day to date start to prevent extensive date to
+                                                                if (date('Y-m-d', strtotime($dateTo)) <= date('Y-m-d', strtotime($validOTEndDate))) { //checks if the date end is correct based on the added 1 day to the date start
+                                                                    if (strtotime(trim($filteredData[1])) > strtotime(trim($filteredData[2]))) {
+                                                                        $isValid = false;
+                                                                        $isValidMessage = 'Invalid date range. The “Date To” time must not be less than the “Date From” time.';
+                                                                    } else {
+                                                                        $tempResult = $this->isValidTimeRange(trim($filteredData[1]), trim($filteredData[2]));
+                                                                        if (!$tempResult['valid']) {
+                                                                            $isValid = false;
+                                                                            $isValidMessage = $tempResult['message'];
+                                                                        } else {
+                                                                            $isValid = true;
+                                                                            if (strtotime(trim($filteredData[1])) > strtotime(trim($row->max_date))) {
+                                                                                $isValid = true;
+                                                                            } else {
+                                                                                $isValid = false;
+                                                                                $isValidMessage = 'Date is already posted in the payroll sheet.';
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                } else {
+                                                                    $isValid = false;
+                                                                    $isValidMessage = 'Overtime is limited to a maximum of 24 hours only.';
+                                                                }
+                                                            } else {
+                                                                $isValid = false;
+                                                                $isValidMessage = 'Invalid date range. The “Date To” is earlier than the “Date From”';
+                                                            }
+                                                        } else {
+                                                            $isValid = false;
+                                                            $range = array();
+    
+                                                            if (!strtotime($dateFrom)) { array_push($range, 'from'); }
+                                                            if (!strtotime($dateTo)) { array_push($range, 'to'); }
+    
+                                                            $invalidDate = implode(', ', $range);
+                                                            $isValidMessage = 'Invalid Date: '.$invalidDate;
+                                                        }
+                                                    }
+                                                }
+
                                                 $qSearchOt = $this->db->get_where("gcceforms.overtime",
                                                     array(
                                                         "employee"=>$row->id,
@@ -1712,12 +1818,19 @@ class Overtime_m extends CI_Model {
                                         $tempDatax["purpose"] = $purpose;
                                         $tempDatax["is_existing"] = $empRecordCount;
                                         $tempDatax["is_valid"] = $isValid;
+                                        $tempDatax['is_valid_message'] = $isValidMessage;
+                                        $tempDatax['is_duplicate'] = $isDuplicate;
+                                        $tempDatax['duplicate_entry'] = $isDuplicate ? $duplicateOT : null;
                                         if($isRecorded === false && $employeeExist && $isValidEmployee){
                                             $arrData[] = $tempDatax;
+                                            $keys[] = $biometricNo.'_'.date('Y-m-d', strtotime($dateFrom));
                                         }
 
-                                        if($isValid === false && $empRecordCount == 1 && $isRecorded === false && $isValidEmployee === false){ $invalidCtr++; }
-                                        elseif($isValid === true && $empRecordCount == 1 && $isRecorded === false && $isValidEmployee){ $validCtr++; }
+                                        if ($isValid === false && $empRecordCount == 1 && $isRecorded === false && ($isValidEmployee === false || $isValidEmployee === true) && ($isDuplicate === false || $isDuplicate === true)) {
+                                            $invalidCtr++;
+                                        } elseif($isValid === true && $empRecordCount == 1 && $isRecorded === false && $isValidEmployee && ($isDuplicate === false || $isDuplicate === true)) {
+                                            $validCtr++;
+                                        }
                                     }
                                 }
                                 $tempIndex++;
@@ -2105,8 +2218,39 @@ class Overtime_m extends CI_Model {
                 $data["text"] = $display_employee;
                 $resultarray[] = $data;
             } ***/
-           $resultarray = $query->result();
+            $resultarray = $query->result();
         }
         return array("results" => $resultarray);
+    }
+    
+    function isValidTimeRange($from, $to) {
+        // Convert "Y-m-d H:i" to DateTime
+        $fromDate = new DateTime(str_replace(' ', 'T', $from));
+        $toDate   = new DateTime(str_replace(' ', 'T', $to));
+    
+        // Get difference in seconds
+        $diffSeconds = $toDate->getTimestamp() - $fromDate->getTimestamp();
+    
+        // Convert to minutes and hours
+        $diffMinutes = $diffSeconds / 60;
+        $diffHours   = $diffMinutes / 60;
+    
+        if ($diffMinutes < 30) {
+            return [
+                'valid'   => false,
+                'message' => 'Time range must be more than 30 minutes.'
+            ];
+        }
+    
+        if ($diffHours > 24) {
+            return [
+                'valid'   => false,
+                'message' => 'Time range must not exceed 24 hours.'
+            ];
+        }
+    
+        return [
+            'valid' => true
+        ];
     }
 }
