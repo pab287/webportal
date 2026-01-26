@@ -1839,6 +1839,16 @@ class Overtime_m extends CI_Model {
                         }
 
                         if(is_array($arrData) && !empty($arrData)){
+                            usort($arrData, function ($a, $b) {
+                                if ($a['emp_id'] !== $b['emp_id']) {
+                                    return $a['emp_id'] <=> $b['emp_id'];
+                                }
+                                $dateA = new DateTime(trim($a['date_from']));
+                                $dateB = new DateTime(trim($b['date_from']));
+
+                                return $dateA <=> $dateB;
+                            });
+
                             $tempJson = json_encode(array("data" => $arrData));
                             $dateToday = Date("Ymd");
                             $jsonFileName = "temp_{$session["emp_id"]}_{$dateToday}.json";
@@ -2225,8 +2235,8 @@ class Overtime_m extends CI_Model {
     
     function isValidTimeRange($from, $to) {
         // Convert "Y-m-d H:i" to DateTime
-        $fromDate = new DateTime(str_replace(' ', 'T', $from));
-        $toDate   = new DateTime(str_replace(' ', 'T', $to));
+        $fromDate = new DateTime(str_replace('TT', 'T', $from));
+        $toDate   = new DateTime(str_replace('TT', 'T', $to));
     
         // Get difference in seconds
         $diffSeconds = $toDate->getTimestamp() - $fromDate->getTimestamp();
