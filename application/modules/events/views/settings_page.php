@@ -125,13 +125,13 @@
                                 <div class="col-12">
                                     <div class="form-group">
                                         <label for="option_name">OPTION NAME</label>
-                                        <input type="text" class="form-control" name="name" v-model="optionSelected.name">
+                                        <input type="text" class="form-control" name="name" v-model="optionSelected.name" data-validation="required">
                                     </div>
                                 </div>
                                 <div class="col-12">
                                     <div class="form-group">
                                         <label for="option_name">OPTION TYPE</label>
-                                        <input type="text" class="form-control" name="type" v-model="optionSelected.type">
+                                        <input type="text" class="form-control" name="type" v-model="optionSelected.type" data-validation="required">
                                     </div>
                                 </div>
                                 <div class="col-12">
