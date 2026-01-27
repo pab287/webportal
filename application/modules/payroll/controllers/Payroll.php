@@ -819,4 +819,25 @@ class Payroll extends MY_Controller {
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
+
+    public function select_payroll_group_by_status() {
+        $data = $this->payroll->selectPayrollGroupByStatus();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function get_payroll_group_multiple_by_status() {
+        $data = $this->payroll->getPayrollGroupMultipleByStatus();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function select_employee_by_status() {
+        $data = $this->payroll->selectEmployeeByStatus();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 }
