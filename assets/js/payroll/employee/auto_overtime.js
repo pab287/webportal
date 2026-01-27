@@ -131,13 +131,8 @@ $("#payroll_group").select2({
 
 });
 
-$('#generalSearch').donetyping(function (_callback) {
-    searchRequest = $(this).val();
-    dtTable.ajax.reload();
-});
-
 const dtTable = $('#tbl-employee-auto-overtime').DataTable({
-    dom: "<'row mb-3'<'col-xl-4 col-lg-4 col-md-4 col-sm-12 exportDropdown'><'col-xl-4 col-lg-4 col-md-4 col-sm-12 p-0 exportSearch'f>>" +
+    dom: "<'row justify-content-between mb-3'<'col-xl-4 col-lg-4 col-md-4 col-sm-12 exportDropdown'><'col-xl-4 col-lg-4 col-md-4 col-sm-12 exportSearch'f>>" +
     "<'row'<'col-12'rt>>" +
     "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'li><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
     processing: true,
@@ -278,16 +273,9 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
         .attr('id', 'generalSearch');
     filterDiv.append(searchInput);
     $(filterDiv).appendTo("#tbl-employee-auto-overtime_wrapper .exportSearch");
-    $('#generalSearch').donetyping(function(callback) {
-        search_val = $(this).val();
+    $('#generalSearch').donetyping(function (_callback) {
+        searchRequest = $(this).val();
         dtTable.ajax.reload();
-      },1000,3);
-      $("#generalSearch").on('keyup', function (e) {
-        var val = $(this).val();
-        if (val == ""){
-            search_val="";
-            dtTable.ajax.reload();
-        }
     });
     },
 
