@@ -198,3 +198,7 @@ $('#filter-year')
         minViewMode: "years",
         autoclose: true
     });
+
+    $('#search-holidays').donetyping(function () {
+        tblCalendarOfHolidays.ajax.reload();
+    });
