@@ -137,8 +137,11 @@ $('#generalSearch').donetyping(function (_callback) {
 });
 
 const dtTable = $('#tbl-employee-auto-overtime').DataTable({
-    dom: '<"toolbar">rtlip',
+    dom: "<'row mb-3'<'col-xl-4 col-lg-4 col-md-4 col-sm-12 exportDropdown'><'col-xl-4 col-lg-4 col-md-4 col-sm-12 p-0 exportSearch'f>>" +
+    "<'row'<'col-12'rt>>" +
+    "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'li><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
     processing: true,
+    searching: false,
     serverSide: true,
     ordering: false,
     rowId: 'employee_id',
@@ -226,7 +229,67 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
                 .addClass('m-btn--hover-success')
                 .attr('data-original-title', 'Activate Auto Overtime');
         } 
-    }
+    },
+    initComplete: function () {
+        console.log("aaaaaa");
+        const dropdown = '' +
+        '       <div class="m-dropdown m-dropdown--inline m-dropdown--align-left" ' +
+        '             data-dropdown-toggle="hover" aria-expanded="true">' +
+        '            <button class="m-dropdown__toggle btn btn-success dropdown-toggle export-as">' +
+        '                EXPORT AS' +
+        '            </button>' +
+        '            <div class="m-dropdown__wrapper">' +
+        '                <div class="m-dropdown__inner">' +
+        '                    <div class="m-dropdown__body">' +
+        '                        <div class="m-dropdown__content">' +
+        '                            <ul class="m-nav">' +
+        '                                <li class="m-nav__item">' +
+        '                                    <a id="export-as-excel" style="cursor:pointer;" ' +
+        '                                       onclick="exportAs(\'excel\'); return false;" class="m-nav__link">' +
+        '                                        <i class="m-nav__link-icon fa fa-file-excel-o m--font-success"></i>' +
+        '                                        <span class="m-nav__link-text" style="text-transform: none;">' +
+        '                                           Excel File' +
+        '                                        </span>' +
+        '                                    </a>' +
+        '                                </li>' +
+        '                                <li class="m-nav__item">' +
+        '                                    <a id="export-as-pdf" style="cursor:pointer;" ' +
+        '                                       onclick="exportAs(\'pdf\'); return false;" class="m-nav__link">' +
+        '                                        <i class="m-nav__link-icon fa fa-file-pdf-o m--font-danger"></i>' +
+        '                                        <span class="m-nav__link-text" style="text-transform: none;">' +
+        '                                          PDF File' +
+        '                                        </span>' +
+        '                                    </a>' +
+        '                                </li>' +
+        '                            </ul>' +
+        '                        </div>' +
+        '                    </div>' +
+        '                </div>' +
+        '            </div>' +
+        '        </div>';
+
+    $(dropdown).appendTo("#tbl-employee-auto-overtime_wrapper .exportDropdown");
+    dropdownEl = $(".m-dropdown__toggle.export-as");
+    const filterDiv = $('<div>').addClass('dataTables_filter');
+    const searchInput = $('<input>')
+        .attr('type', 'text')
+        .addClass('form-control')
+        .attr('placeholder', 'Search...')
+        .attr('id', 'generalSearch');
+    filterDiv.append(searchInput);
+    $(filterDiv).appendTo("#tbl-employee-auto-overtime_wrapper .exportSearch");
+    $('#generalSearch').donetyping(function(callback) {
+        search_val = $(this).val();
+        dtTable.ajax.reload();
+      },1000,3);
+      $("#generalSearch").on('keyup', function (e) {
+        var val = $(this).val();
+        if (val == ""){
+            search_val="";
+            dtTable.ajax.reload();
+        }
+    });
+    },
 
 });
 
