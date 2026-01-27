@@ -788,8 +788,10 @@ function itemDatatableActions(id, status, awarded) {
     let isUpcoming = today.isBefore(fromDate, 'day');
     let isDone     = today.isAfter(toDate, 'day');
 
-    if (isUpcoming && status === 'pending') {
-        _actionButton += `
+    if (!isDone) {
+
+        if(status != 'confirmed'){
+            _actionButton += `
             <a href="javascript:void(0)" 
                 class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
                 onclick="confirmParticipant(${id})" 
@@ -802,9 +804,8 @@ function itemDatatableActions(id, status, awarded) {
                 title="Decline Attendance">
                 <i class="la la-times-circle text-danger"></i>
             </a>`;
-    }
+        }
 
-    if (!isDone) {
         _actionButton += `
             <a href="javascript:void(0)" 
                 class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnEdit" 
