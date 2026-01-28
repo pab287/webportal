@@ -585,7 +585,7 @@ class Events_model extends MX_Controller {
         $post  = $this->input->post();
         $id    = $post['id'];
         $event_title = $post['event_title'];
-        unset($post['csrf_token'], $post['fullname'], $post['id'], $post['event_title'], $post['cert_attachment']);
+        unset($post['csrf_token'], $post['fullname'], $post['id'], $post['event_title'], $post['cert_attachment'], $post['department_head_fullname']);
         $update = $this->db->where('id', $id)->update($this->eventsParticipantsTable, $post);
         if($update){
             $resultArray['participants'] = $this->getEventParticipants($post['event_id']);
