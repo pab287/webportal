@@ -1497,9 +1497,9 @@ function syncScheduleTimeEdit(changed) {
 }
 
 $('#edit_schedule_start').on('change', function () {
-    syncScheduleTime('start');
+    syncScheduleTimeEdit('start');
 });
 
 $('#edit_schedule_end').on('change', function () {
-    syncScheduleTime('end');
+    syncScheduleTimeEdit('end');
 });
