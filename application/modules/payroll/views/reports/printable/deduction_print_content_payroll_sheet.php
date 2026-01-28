@@ -126,6 +126,7 @@
                                 <tr>
                                     <th class="text-center">OT</th>
                                     <th class="text-center">N.DIFF</th>
+                                    <th class="text-center">REG.NDIFF</th>
                                     <th class="text-center">HOLIDAY</th>
                                     <th class="text-center">BASIC</th>
                                     <th class="text-center">ALLOWANCES</th>
@@ -138,6 +139,7 @@
                                 <tr>
                                     <td class="text-right m--font-bolder">{{rowFormatNumber(grand_total.ot_amount)}}</td>
                                     <td class="text-right m--font-bolder">{{rowFormatNumber(grand_total.ot_ndiff_amount)}}</td>
+                                    <td class="text-right m--font-bolder">{{rowFormatNumber(grand_total.total_ndiff_amount)}}</td>
                                     <td class="text-right m--font-bolder">{{rowFormatNumber(grand_total.holiday_amount)}}</td>
                                     <td class="text-right m--font-bolder">{{rowFormatNumber(grand_total.basic_rate)}}</td>
                                     <td class="text-right m--font-bolder">{{rowFormatNumber(grand_total.allowances)}}</td>
