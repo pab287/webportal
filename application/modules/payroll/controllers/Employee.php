@@ -99,6 +99,7 @@
             
             $tempData = array();
             $tempData["company"] = $this->payroll->select2CompanyData();
+            $this->core_layout->addJs("js/buttons.html5.min.js", true);
             $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
             $this->core_layout->addJs("js/payroll/employee/auto_overtime.js", true, $tempData);

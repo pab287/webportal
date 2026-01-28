@@ -1,6 +1,7 @@
 let searchRequest = '';
 let _companies = [];
 let globalRequest = {};
+const dropdownToggle = $(".m-dropdown__toggle.export-as");
 
 let _statusOptions =[
     { id: ' ', text: 'All' },
@@ -146,13 +147,28 @@ $("#payroll_group").select2({
 
 const dtTable = $('#tbl-employee-auto-overtime').DataTable({
     dom: "<'row justify-content-between mb-3'<'col-xl-4 col-lg-4 col-md-4 col-sm-12 exportDropdown'><'col-xl-4 col-lg-4 col-md-4 col-sm-12 exportSearch'f>>" +
-    "<'row'<'col-12'rt>>" +
-    "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'li><'col-xl-6 col-lg-6 col-md-6 col-sm-12'p>>",
+    "<'row'<'col-12'liprt>>" +
+    "<'row mt-3'<'col-xl-6 col-lg-6 col-md-6 col-sm-12 pl-0'><'col-xl-6 col-lg-6 col-md-6 col-sm-12'>>",
     processing: true,
     searching: false,
     serverSide: true,
     ordering: false,
     rowId: 'employee_id',
+    buttons: [
+        {
+            extend: 'excelHtml5',
+            title: 'CRS - APPLICANT REPORT',
+            action: function (e, dt, button, config) {
+                $.fn.dataTable.ext.buttons.excelHtml5.action.call(this, e, dt, button, config);
+            }
+        },
+        {
+            extend: 'pdfHtml5',
+            title: 'CRS - APPLICANT REPORT',
+            action: function (e, dt, node, config) {
+            }
+        },
+    ],
     ajax: {
         url: baseUrl('payroll/employee/get_employee_auto_overtime_list'),
         type: 'POST',
@@ -179,7 +195,7 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
                 const recordDate = data ? moment(data).format("LLL") : "";
                 const _html = recordDate ? `<p class="m--font-bolder mb-0">${row.last_updated_by}</p><p class=" mb-0"><small>${recordDate}</small></p>` : `---`;
                 return _html;
-        }}, { data: 'allow_auto_overtime', title: "auto overtime", className: 'text-center', width: '10%',
+        }}, { data: 'allow_auto_overtime', title: "Auto Overtime", className: 'text-center', width: '10%',
             render: function (data) { return parseInt(data) === 1 ? "<i class='fa fa-check-circle text-success m--icon-font-size-lg3'></i>" : "<i class='fa fa-times-circle text-danger m--icon-font-size-lg3'></i>" } 
         }, { data: null,    
             title: `
@@ -239,7 +255,6 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
         } 
     },
     initComplete: function () {
-        console.log("aaaaaa");
         const dropdown = '' +
         '       <div class="m-dropdown m-dropdown--inline m-dropdown--align-left" ' +
         '             data-dropdown-toggle="hover" aria-expanded="true">' +
@@ -276,20 +291,21 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
         '            </div>' +
         '        </div>';
 
-    $(dropdown).appendTo("#tbl-employee-auto-overtime_wrapper .exportDropdown");
-    dropdownEl = $(".m-dropdown__toggle.export-as");
-    const filterDiv = $('<div>').addClass('dataTables_filter');
-    const searchInput = $('<input>')
-        .attr('type', 'text')
-        .addClass('form-control')
-        .attr('placeholder', 'Search...')
-        .attr('id', 'generalSearch');
-    filterDiv.append(searchInput);
-    $(filterDiv).appendTo("#tbl-employee-auto-overtime_wrapper .exportSearch");
-    $('#generalSearch').donetyping(function (_callback) {
-        searchRequest = $(this).val();
-        dtTable.ajax.reload();
-    });
+        $(dropdown).appendTo("#tbl-employee-auto-overtime_wrapper .exportDropdown");
+        dropdownEl = $(".m-dropdown__toggle.export-as");
+        const filterDiv = $('<div>').addClass('dataTables_filter');
+        const searchInput = $('<input>')
+            .attr('type', 'text')
+            .addClass('form-control')
+            .attr('placeholder', 'Search...')
+            .attr('id', 'generalSearch');
+        filterDiv.append(searchInput);
+        $(filterDiv).appendTo("#tbl-employee-auto-overtime_wrapper .exportSearch");
+        $('#generalSearch').donetyping(function (_callback) {
+            searchRequest = $(this).val();
+            dtTable.ajax.reload();
+        });
+        $('#tbl-employee-auto-overtime_paginate').css('padding-top', '0');
     },
 
 });
@@ -452,3 +468,26 @@ $('#btnMassToggle').on('click', function () {
         }
     });
 });
+
+function exportAs(type) {
+    dropdownToggle.addClass("m-btn--custom m-loader m-loader--light m-loader--left");
+    let clearHere = false;
+
+    setTimeout(() => {
+        switch (type) {
+            case "excel":
+                dtTable.button(".buttons-excel").trigger();
+                break;
+            case "pdf":
+                dtTable.button(".buttons-pdf").trigger();
+                break;
+            case "print":
+                dtTable.button(".buttons-print").trigger();
+                break;
+        }
+
+        if (clearHere) {
+            dropdownToggle.removeClass("m-btn--custom m-loader m-loader--light m-loader--left");
+        }
+    }, 150);
+}
