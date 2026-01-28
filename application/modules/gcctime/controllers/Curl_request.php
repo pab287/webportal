@@ -782,6 +782,62 @@ class Curl_request extends MY_Controller {
 	public function testview(){
 		$this->load->view("attendance/getLateToday");
 	}
+
+	public function testemail(){
+		$currentLate = $this->shift_manangement->emailLateNotification();
+		// echo "<pre>";
+		// var_dump($currentLate);
+		// echo "</pre>";
+
+		die();
+		// $currentLate = $this->attendance->getCurrentLate();
+
+		$state = (isset($currentLate["current_state"]) && $currentLate["current_state"])? $currentLate["current_state"]: "";
+		
+		// $currentState = ($state)? strtolower($state): "";
+		$currentState = 'am';
+
+		$data = (isset($currentLate["checklate_{$currentState}"]) && $currentLate["checklate_{$currentState}"])? $currentLate["checklate_{$currentState}"]: array();
+
+		echo count($data);
+
+		echo "<pre>";
+		var_dump($data);
+		echo "</pre>";
+
+		die();
+		
+		foreach($data as $station => $emp_per_station){
+			$config = Array(
+				'protocol' => 'smtp',
+				'smtp_host' => 'smtp.googlemail.com',
+				// 'smtp_port' => 465,
+				'smtp_port' => 587,
+				'smtp_user' => 'gcceforms@gmail.com',
+				'smtp_pass' => 'jkfh ofqu vgke qwiw',
+				'smtp_crypto' => 'tls',
+				'newline'  => "\r\n", 
+				'mailtype'  => 'html', 
+				'charset'   => 'utf-8',
+			);
+
+			$this->email->initialize($config);
+			$this->email->from('gcceforms@gmail.com', 'GC&C TIME ATTENDANCE');
+			$this->email->to('test4jp05@armyspy.com');
+			// $this->email->to('cawebe8896@juhxs.com');
+			$this->email->cc('malvindelacruz40@gmail.com');
+			
+			$message = "";
+			$message .= $this->load->view("templates/email/email-late_template-copy", array("station_title"=>$station, "data"=>[$station => $emp_per_station], "state"=>$state), true);
+			
+			$this->email->subject('Late Report'. " - " .date("F d, Y"));
+			$this->email->message($message);
+			$result = $this->email->send();
+			
+			echo $this->email->print_debugger();
+			sleep(5);
+		}
+	}
 	
 	public function email_lateNotification(){
 		$currentLate = $this->attendance->getCurrentLate();
