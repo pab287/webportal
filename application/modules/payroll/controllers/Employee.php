@@ -102,6 +102,8 @@
             $this->core_layout->addJs("js/buttons.html5.min.js", true);
             $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+            $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
+            $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
             $this->core_layout->addJs("js/payroll/employee/auto_overtime.js", true, $tempData);
 
             $this->load->view('core/templates/header');

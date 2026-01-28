@@ -152,22 +152,28 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
     processing: true,
     searching: false,
     serverSide: true,
-    ordering: false,
+    // ordering: false,
     rowId: 'employee_id',
+    order: [[1, 'asc']],
     buttons: [
         {
             extend: 'excelHtml5',
-            title: 'CRS - APPLICANT REPORT',
+            title: 'Auto Overtime Report',
+            exportOptions: {
+                columns: function (idx, data, node) {
+                    return idx !== 1 && idx !== 5 && idx !== 6 && idx !== 8;
+                },
+            },
             action: function (e, dt, button, config) {
                 $.fn.dataTable.ext.buttons.excelHtml5.action.call(this, e, dt, button, config);
             }
         },
-        {
-            extend: 'pdfHtml5',
-            title: 'CRS - APPLICANT REPORT',
-            action: function (e, dt, node, config) {
-            }
-        },
+        // {
+        //     extend: 'pdfHtml5',
+        //     title: 'CRS - APPLICANT REPORT',
+        //     action: function (e, dt, node, config) {
+        //     }
+        // },
     ],
     ajax: {
         url: baseUrl('payroll/employee/get_employee_auto_overtime_list'),
@@ -182,22 +188,37 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
         }
     },
     columns: [
-        { data: 'idno', title: "ID No" },
+        { data: 'idno', title: "ID No", orderable: false,  },
         { data: 'employee_name', title: "Employee Name",
             render: function (data, _type, row) { 
                 return `<p class="mb-0">${data}</p>
                 <p class="mb-0"><small class="m--font-bolder">${row.position}</small></p>`; 
             }
         },
+        {
+            data: 'employee_name', title: "Employee ID", visible: false
+        },
+        {
+            data: 'position', title: "Position", visible: false
+        },
         { data: 'company_code', title: "Company", width: '15%' },
-        { data: 'last_updated_at', title: "Last Updated By", 
+        { data: 'last_updated_at', title: "Last Updated By", orderable: false,
             render: function (data, _type, row) {
                 const recordDate = data ? moment(data).format("LLL") : "";
                 const _html = recordDate ? `<p class="m--font-bolder mb-0">${row.last_updated_by}</p><p class=" mb-0"><small>${recordDate}</small></p>` : `---`;
                 return _html;
-        }}, { data: 'allow_auto_overtime', title: "Auto Overtime", className: 'text-center', width: '10%',
-            render: function (data) { return parseInt(data) === 1 ? "<i class='fa fa-check-circle text-success m--icon-font-size-lg3'></i>" : "<i class='fa fa-times-circle text-danger m--icon-font-size-lg3'></i>" } 
-        }, { data: null,    
+            }
+        }, 
+        { data: 'allow_auto_overtime', title: "Auto Overtime", className: 'text-center', width: '10%', orderable: false,
+            render: function (data,type) { 
+                return parseInt(data) === 1 ? "<i class='fa fa-check-circle text-success m--icon-font-size-lg3'></i>" : "<i class='fa fa-times-circle text-danger m--icon-font-size-lg3'></i>" } 
+        },
+        { data: 'allow_auto_overtime', title: "Auto Overtime", className: 'text-center', visible: false,
+            render: function (data) { 
+                return data == 1 ? 'ACTIVE' : 'INACTIVE';
+            }
+        },
+        { data: null,    
             title: `
             Action 
                 <button type='button' 
@@ -208,7 +229,7 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
                     <i class='fa fa-toggle-off'></i>
                 </button>
             `, 
-            className: 'text-center', width: '7%',
+            className: 'text-center', width: '7%', orderable: false,
             render: function (_data, _type, row) {
                 let actionCtr = 0;
                 let _actionButton = "";
@@ -275,15 +296,6 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
         '                                        </span>' +
         '                                    </a>' +
         '                                </li>' +
-        '                                <li class="m-nav__item">' +
-        '                                    <a id="export-as-pdf" style="cursor:pointer;" ' +
-        '                                       onclick="exportAs(\'pdf\'); return false;" class="m-nav__link">' +
-        '                                        <i class="m-nav__link-icon fa fa-file-pdf-o m--font-danger"></i>' +
-        '                                        <span class="m-nav__link-text" style="text-transform: none;">' +
-        '                                          PDF File' +
-        '                                        </span>' +
-        '                                    </a>' +
-        '                                </li>' +
         '                            </ul>' +
         '                        </div>' +
         '                    </div>' +
@@ -303,7 +315,7 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
         $(filterDiv).appendTo("#tbl-employee-auto-overtime_wrapper .exportSearch");
         $('#generalSearch').donetyping(function (_callback) {
             searchRequest = $(this).val();
-            dtTable.ajax.reload();
+            dtTable.ajax.reload(null, true);
         });
         $('#tbl-employee-auto-overtime_paginate').css('padding-top', '0');
     },
@@ -359,13 +371,13 @@ const resetFilter = function (event) {
                 if (multi) {
                     $(v).val([]).trigger("change").prop("disabled", false);
                 } else {
-                    $(v).val("").trigger("change");
+                    $(v).val(" ").trigger("change");
                 }
             });
         }
     }
     globalRequest = {};
-    dtTable.ajax.reload();
+    dtTable.order([[1, 'asc']]).ajax.reload(null, true);
 }
 
 $.validate({
@@ -491,3 +503,35 @@ function exportAs(type) {
         }
     }, 150);
 }
+
+$.validate({
+    form: "#approve_overtime_form",
+    lang: "en",
+    scrollToTopOnError: false,
+    onSuccess: function (form) {
+        console.log("Success");
+    }
+});
+
+$('#approve_overtime_daterange').daterangepicker({
+    autoUpdateInput: false,
+    opens: 'left',
+    showDropdowns: true,
+    minDate: moment().subtract(1, 'months'),
+    maxDate: moment(),
+    locale: {
+        cancelLabel: 'Clear',
+        format: 'MMMM DD, YYYY'   // 👈 display format
+    }
+});
+
+$('#approve_overtime_daterange').on('apply.daterangepicker', function(ev, picker) {
+    $(this).val(
+        picker.startDate.format('MMMM DD, YYYY') + ' - ' +
+        picker.endDate.format('MMMM DD, YYYY')
+    );
+});
+
+$('#approve_overtime_daterange').on('cancel.daterangepicker', function() {
+    $(this).val('');
+});

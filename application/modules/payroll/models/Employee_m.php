@@ -2383,13 +2383,29 @@ public function getEmployeeNightDiffList(){
         $this->db->join($this->employeeTable." as cemp", "cemp.id = auto.created_by", "left");
         $this->db->join($this->employeeTable." as uemp", "uemp.id = auto.last_updated_by", "left");
         $this->db->where("emp.employee_status", "Active");
-        if(isset($filters["company"]) && intval($filters["company"]) > 0) { $this->db->where("cmp.id", $filters["company"]); }
+        
+        if(isset($filters["company"]) && intval($filters["company"]) > 0) { 
+            $this->db->where("cmp.id", $filters["company"]); 
+        }
+
         if(isset($filters["serialized_employees"]) && $filters["serialized_employees"]) {
             $arrIds = explode(",", $filters["serialized_employees"]);
             $this->db->where_in("emp.id", $arrIds);
         } elseif (isset($filters["employees"]) && is_array($filters["employees"]) && !empty($filters["employees"])) {
             $this->db->where_in("emp.id", $filters["employees"]);
         }
+
+        if(isset($filters['status']) && $filters['status'] != ' '){
+            if(intval($filters['status']) === 1){
+                $this->db->where("auto.allow_auto_overtime", 1);
+            }elseif(intval($filters['status']) === 0){
+                $this->db->group_start();
+                $this->db->where("auto.allow_auto_overtime", 0);
+                $this->db->or_where("auto.allow_auto_overtime IS NULL", null, false);
+                $this->db->group_end();
+            }
+        }
+
         if (isset($search) && $search) {
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
