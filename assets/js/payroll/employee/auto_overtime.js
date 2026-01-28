@@ -509,7 +509,27 @@ $.validate({
     lang: "en",
     scrollToTopOnError: false,
     onSuccess: function (form) {
-        console.log("Success");
+        console.log("SUCCESS");
+        // $.ajax({
+        //     url: baseUrl('payroll/employee/approve_overtime'),
+        //     type: 'POST',
+        //     dataType: 'json',
+        //     data: $(form).serialize(),
+        //     success: function (res) {
+        //         if (res.status === true || res.status === 'success') {
+        //             toastr.success(res.message || 'Overtime approved successfully');
+        //             $('#approveOvertimeModal').modal('hide');
+
+        //         } else {
+        //             toastr.error(res.message || 'Failed to approve overtime');
+        //         }
+        //     },
+        //     error: function () {
+        //         toastr.error('Server error. Please try again.');
+        //     }
+        // });
+
+        return false; // IMPORTANT: prevent normal form submit
     }
 });
 
