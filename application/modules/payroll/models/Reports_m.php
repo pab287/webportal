@@ -2366,8 +2366,8 @@ class Reports_m extends CI_Model{
             $this->db->join("gcchris.tblcompanies b", "b.id = ps.company_id", "LEFT");
             $this->db->join("payroll.payout_schedule c", "c.id = a.payout_sched", "INNER");
             $this->db->where("b.id", $post["company"]);
-            if (isset($post["employee"]) && $post["employee"]){
-                $this->db->where_in("a.id", $post["employee"]);
+            if (isset($post["employees"]) && $post["employees"]){
+                $this->db->where_in("a.id", $post["employees"]);
             } elseif (isset($post["serialized_employees"]) && $post["serialized_employees"]){
                 $this->db->where_in("a.id", explode(",",$post["serialized_employees"]));
             }
@@ -2483,6 +2483,7 @@ class Reports_m extends CI_Model{
                             $resultset["grand_total_footer"] = $tempData["grand_total_footer"];
                             $resultset["grand_total"] = $tempData["grand_total"];
                             $resultset["count"] = count($tempData["data"]);
+                            $resultset["raw_data"] = $tempData["_temp"];
                         }else{ $resultset["response"] = false; }
                     }else{ $resultset["response"] = false; }
                 }else{ $resultset["response"] = false; }
@@ -2572,10 +2573,13 @@ class Reports_m extends CI_Model{
                     if(is_array($tempArrData) && !empty($tempArrData)){ $contributionCode = $tempArrData; }
                 }
 
+                $arrTempData = array();
+
                 $adjustmentsTotal = 0;
                 $otAmountTotal = 0;
                 $otNdiffAmountTotal = 0;
                 $holidayAmountTotal = 0;
+                $regularNightDiffTotal = 0;
                 
                 $basicRateTotal = 0;
                 $allowancesTotal = 0;
@@ -2583,7 +2587,7 @@ class Reports_m extends CI_Model{
                 $netPayTotal = 0;
 
                 $arrFields = array("sss", "sss_prov", "ph", "hdmf", "tax");
-                $sqlSelect = "ps.id, ps.emp_id, emp.idno, ps.basic_rate, ps.total_allowances, ps.ot_amount, ps.ot_ndiff_amount, ps.total_holiday_amount, ps.gross_pay, ps.net_pay, ps.sss, ps.sss_prov, ps.ph, ps.hdmf, ps.tax,
+                $sqlSelect = "ps.id, ps.emp_id, emp.idno, ps.basic_rate, ps.total_allowances, ps.ot_amount, ps.ot_ndiff_amount, ps.total_ndiff_amount, ps.total_holiday_amount, ps.gross_pay, ps.net_pay, ps.sss, ps.sss_prov, ps.ph, ps.hdmf, ps.tax,
                 GROUP_CONCAT(DISTINCT(CONCAT(ps_custom_adj.particulars,'||',ps_custom_adj.amount, '||', ps_custom_adj.cadj_type))) custom_adjustments,
                 GROUP_CONCAT(DISTINCT(CONCAT(ps_created_adj.particulars,'||', ps_created_adj.amount, '||', ps_created_adj.adj_type, '||', ps_created_adj.description))) created_adjustments,
                 GROUP_CONCAT(DISTINCT(CONCAT(ps_loans.code,'||',ps_loan_payment.amount_due, '||', ps_loans.loan_class,'||',ps_loan_payment.id))) sss_hdmf_loan_deduction";
@@ -2718,12 +2722,14 @@ class Reports_m extends CI_Model{
                         $otAmountTotal = floatval($otAmountTotal) + floatval($value->ot_amount);
                         $otNdiffAmountTotal = floatval($otNdiffAmountTotal) + floatval($value->ot_ndiff_amount);
                         $holidayAmountTotal = floatval($holidayAmountTotal) + floatval($value->total_holiday_amount);
+                        $regularNightDiffTotal = floatval($regularNightDiffTotal) + floatval($value->total_ndiff_amount);
 
                         $basicRateTotal = floatval($basicRateTotal) + floatval($value->basic_rate);
                         $grossPayTotal = floatval($grossPayTotal) + floatval($value->gross_pay);
                         $netPayTotal = floatval($netPayTotal) + floatval($value->net_pay);
 
                         $arrPsData[$key] = $tempRow;
+                        $arrTempData[$key] = $value;
                     }
                 }
             }
@@ -2734,6 +2740,7 @@ class Reports_m extends CI_Model{
                 "ot_amount"=>round($otAmountTotal, 2),
                 "ot_ndiff_amount"=>round($otNdiffAmountTotal, 2),
                 "holiday_amount"=>round($holidayAmountTotal, 2),
+                "total_ndiff_amount"=>round($regularNightDiffTotal, 2),
                 "adjustments"=>round($adjustmentsTotal, 2),
                 "gross_pay"=>round($grossPayTotal, 2),
                 "net_pay"=>round($netPayTotal, 2),
@@ -2788,7 +2795,9 @@ class Reports_m extends CI_Model{
             $arrData["column_count"] = count($tempHeaderColumns);
             $arrData["grand_total_footer"] = $grandTotalFooter;
             $arrData["grand_total"] = $grandTotal;
+            $arrData["_temp"] = $arrTempData;
         }
+
         return $arrData;
     }
 
@@ -3098,10 +3107,14 @@ class Reports_m extends CI_Model{
                     $this->db->join($this->tbl_ps_loan_payments." ps_loan_payment", "ps_loan_payment.payroll_sheet_id = ps.id", "left");
                     $this->db->join($this->tbl_hris_loans." loans", "loans.id = ps_loan_payment.loan_id", "left");
                     $this->db->join($this->tbl_ps_loans." ps_loans", "ps_loans.id = loans.loan_id", "left");
+                    $this->db->group_start();
+                    $this->db->where("ps_loans.code !=", "");
+                    $this->db->or_where("ps_loans.code !=", null);
+                    $this->db->group_end();
                     $this->db->where_in("ps.id", $tempIds);
                     $this->db->group_by("ps.id");
                     $qx = $this->db->get();
-                    foreach ($qx->result() as $kkk => $vvv) {
+                    foreach ($qx->result() as $vvv) {
                         if($vvv->loan_code){
                             $arrD = explode(",", $vvv->loan_code);
                             $arx = array_count_values($arrD);
