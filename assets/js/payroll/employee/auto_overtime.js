@@ -2,11 +2,24 @@ let searchRequest = '';
 let _companies = [];
 let globalRequest = {};
 
+let _statusOptions =[
+    { id: ' ', text: 'All' },
+    { id: '1', text: 'Active' },
+    { id: '0', text: 'Inactive' },
+]
+
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){
         _companies = _tempContentData.company;
     }
 }
+
+$("#status").select2({
+    width: '100%',
+    data: _statusOptions,
+    placeholder: 'Select an option',
+    allowClear: false,
+});
 
 $("#company").select2({
     width: '100%',
@@ -323,7 +336,7 @@ $(document).on("click", ".btnAutoOvertime", function () {
 const resetFilter = function (event) {
     const form = $(event).closest("form");
     if (typeof form !== "undefined" && form.length == 1) {
-        const select2 = form.find("#employees, #payroll_group, #company");
+        const select2 = form.find("#employees, #payroll_group, #company, #status");
         if (typeof select2 !== "undefined" && select2.length > 0) {
             $.each(select2, function (i, v) {
                 const multi = $(v)[0].multiple;
