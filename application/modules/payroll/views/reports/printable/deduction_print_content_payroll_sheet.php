@@ -126,7 +126,7 @@
                                 <tr>
                                     <th class="text-center">OT</th>
                                     <th class="text-center">N.DIFF</th>
-                                    <th class="text-center">REG.DIFF</th>
+                                    <th class="text-center">REG.NDIFF</th>
                                     <th class="text-center">HOLIDAY</th>
                                     <th class="text-center">BASIC</th>
                                     <th class="text-center">ALLOWANCES</th>
