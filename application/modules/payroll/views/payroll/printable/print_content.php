@@ -168,6 +168,7 @@
                                 <h5 class="m--font-boldest m--marginless">( <?php echo $item->total_unrendered_amount; ?> )</h5>
                             </div>
                         </div>
+                        <?php if(floatval($item->absent_hours) > 0 || floatval($item->undertime_hours) > 0): ?>
                         <div class="row">
                             <div class="col-md-6 printable-width-6 text-right">
                                 <h5 class="m--marginless"><span class="m--font-bolder">ABSENT HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo floatval($item->absent_hours) > 0 ? $item->absent_hours : "0.00"; ?></span></h5>
@@ -176,6 +177,7 @@
                                 <h5 class="m--marginless"><span class="m--font-bolder">UT HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo floatval($item->undertime_hours) > 0 ? $item->undertime_hours : "0.00"; ?></span></h5>
                             </div>
                         </div>
+                        <?php endif; ?>
                         <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                         <?php endif; ?>
 
