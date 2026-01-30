@@ -787,10 +787,10 @@ function itemDatatableActions(id, status, awarded) {
     let today    = moment();
     let isUpcoming = today.isBefore(fromDate, 'day');
     let isDone     = today.isAfter(toDate, 'day');
-
+    console.log(status);
     if (!isDone) {
 
-        if(status != 'confirmed'){
+        if(status != 'confirmed' && status != 'declined'){
             _actionButton += `
             <a href="javascript:void(0)" 
                 class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
