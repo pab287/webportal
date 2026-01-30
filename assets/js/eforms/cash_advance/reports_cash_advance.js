@@ -356,6 +356,29 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                 }
             })
         },
+        footerCallback: function(row, data, start, end, display) {
+            let api = this.api();
+            let numVal = function(i) {
+                return typeof i === 'string' ? parseFloat(i.replace(/[₱,\s]/g, '')) : typeof i === 'number' ? i : 0;
+            };
+        
+            let amtApprovedTotal = api.column(8, { page: 'current' }).data().reduce((a, b) => numVal(a) + numVal(b), 0);
+            let medLoanTotal = api.column(9, { page: 'current' }).data().reduce((a, b) => numVal(a) + numVal(b), 0);
+            let totalDeductionSum = api.column(11, { page: 'current' }).data().reduce((a, b) => numVal(a) + numVal(b), 0);
+            let remBalanceSum = api.column(12, { page: 'current' }).data().reduce((a, b) => numVal(a) + numVal(b), 0);
+            $(api.column(8).footer()).html(
+                amtApprovedTotal.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })
+            );
+            $(api.column(9).footer()).html(
+                medLoanTotal.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })
+            );
+            $(api.column(11).footer()).html(
+                totalDeductionSum.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })
+            );
+            $(api.column(12).footer()).html(
+                remBalanceSum.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })
+            );
+        }
     });
 
     function exportAs(type) {

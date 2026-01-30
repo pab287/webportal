@@ -16,7 +16,7 @@
                         <div class="m-form m-form--label-align-right m--marginless">
 
                         </div>
-                        <div class="col-12 table-responsive">
+                        <div class="col-12">
                             <table id="cash_advance_reports" class="table table-bordered table-hover">
                                 <!-- <thead>
                                     <tr>
@@ -39,6 +39,28 @@
                                     </tr>
                                 </thead> -->
                                 <tbody></tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th></th> <!-- id -->
+                                        <th>Total:</th> <!-- employee -->
+                                        <th></th> <!-- name -->
+                                        <th></th> <!-- lastname -->
+                                        <th></th> <!-- department -->
+                                        <th></th> <!-- position -->
+                                        <th></th> <!-- company -->
+                                        <th></th> <!-- reference_no -->
+                                        <th></th> <!-- amt_approved - will show total -->
+                                        <th></th> <!-- med_loan - will show total -->
+                                        <th></th> <!-- deduction type - label -->
+                                        <th></th> <!-- total_deduction - will show total -->
+                                        <th></th> <!-- rembalance - will show total -->
+                                        <th></th> <!-- purpose -->
+                                        <th></th> <!-- approved_by -->
+                                        <th></th> <!-- approved_by hidden -->
+                                        <th></th> <!-- approved_dt -->
+                                        <th></th> <!-- date_created -->
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>
