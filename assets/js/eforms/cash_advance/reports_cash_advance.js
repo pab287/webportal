@@ -327,6 +327,8 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                 startDate: thisMonth.clone().startOf('month'),
                 endDate: thisMonth,
                 maxDate: moment().format("MM/DD/YYYY"),
+                showDropdowns: true,
+                minDate: '01/01/2020',
                 buttonClasses: 'm-btn btn',
                 applyClass: 'btn-primary',
                 cancelClass: 'btn-secondary',
