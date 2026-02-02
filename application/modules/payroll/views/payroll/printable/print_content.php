@@ -500,8 +500,8 @@
                             </div>
                         </div>
                     <?php endif; ?>
-
-                    <?php if($item->total_loans && (floatval($item->total_loans) > 0 || (is_array($item->loans) && count($item->loans) > 0))): ?>
+                    <?php $overall_total_loans = floatval($_tempDeductions) + floatval($item->total_loans_interest) + floatval($temp_totalLoan) + floatval($_temp_total_others); ?>
+                    <?php if(floatval($overall_total_loans) > 0): ?>
                         <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--margin-bottom-5"></div>
                         <div class="row m--margin-top-5 m--margin-bottom-5">
                             <div class="col-md-8 printable-width-8">
@@ -509,7 +509,6 @@
                             </div>
                             <div class="col-md-4 printable-width-4 text-right">
                                 <h5 class="m--font-boldest m--marginless">
-                                    <?php $overall_total_loans = floatval($_tempDeductions) + floatval($item->total_loans_interest) + floatval($temp_totalLoan) + floatval($_temp_total_others); ?>
                                     ( <?= number_format($overall_total_loans, 2); ?> )
                                 </h5>
                             </div>
