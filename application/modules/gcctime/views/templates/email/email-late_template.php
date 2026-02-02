@@ -182,41 +182,41 @@ table { font-size: 14px; border: 0; }
 						?>
 									<tr>
 										<td align="center" style="vertical-align: top;">
-											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000;"; ?> font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1.4;">
+											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000;"; ?> font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
 												<?php echo (isset($emp_info["biometric_id"]) && $emp_info["biometric_id"])? $emp_info["biometric_id"]:"---"; ?>
 											</span>
 										</td>
 
 										<td align="left" style="vertical-align: top;">
-											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1.4;">
+											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
 												<?php echo (isset($emp_info["name"]) && $emp_info["name"])? strtoupper($emp_info["name"]): strtoupper("No Name"); ?> 
 											</span><br>
 
-											<span style="font-size: 10px; color: #888888; font-weight:400; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1.4;">
+											<span style="font-size: 10px; color: #888888; font-weight:400; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
 												<?php echo (isset($emp_info["position"]) && $emp_info["position"])? strtoupper($emp_info["position"]): strtoupper("No Position"); ?>
 											</span>
 										</td>
 
 										<td align="left" style="vertical-align: top;">
-											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600;font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1.4;">
+											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600;font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
 												<?php echo (isset($emp_info["department"]) && $emp_info["department"])? strtoupper($emp_info["department"]): strtoupper("No Department"); ?>
 											</span>
 										</td>
 
 										<td align="center" style="vertical-align: top;">
-											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600;font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1.4;">
+											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600;font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
 												<?php echo (isset($emp_info["date"]) && $emp_info["date"])? $emp_info["date"]:"No Date"; ?>
 											</span>
 										</td>
 
 										<td align="center" style="vertical-align: top;">
-											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600;font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1.4;">
+											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600;font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
 												<?php echo (isset($emp_info["time"]) && $emp_info["time"])? $emp_info["time"]:"No Time"; ?>
 											</span>
 										</td>
 
 										<td align="center" style="vertical-align: top;">
-											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600;font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1.4;">
+											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600;font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
 												<?php echo (isset($emp_info["minlate"]) && $emp_info["minlate"])? $emp_info["minlate"]:"---"; ?>
 											</span>
 										</td>

@@ -3,13 +3,6 @@
 <?php
 $dateToday = date("h:i:s A, F d, Y");
 $ampm = date("A");
-$station_title = (isset($station_title) && $station_title) ? $station_title : "";
-
-echo "<pre>";
-echo $ampm;
-print_r($data);
-print_r($meridiem);
-echo "</pre>";
 ?>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -205,7 +198,7 @@ echo "</pre>";
             <td height="40" style="font-size: 40px; line-height: 40px;">&nbsp;</td>
         </tr>
 		<?php if(isset($data) && $data): ?>
-			<?php if(isset($meridiem) && $meridiem && $ampm == "PM"): ?>
+			<?php if(isset($data["pm"]) && $data["pm"] && $ampm == "PM"): ?>
 			<tr>
 				<td align="center">
                 <table border="0" align="center" width="980" cellpadding="0" cellspacing="0" class="container980">
@@ -222,65 +215,37 @@ echo "</pre>";
 			</tr>
 			<tr>
 				<td align="center">
-                    <table border="0" align="center" width="980" cellpadding="0" cellspacing="0" class="container980 table table-striped" style="width: 980px;border-spacing: 0px 15px;">
-                        <col width="145">
-                        <col width="320">
-                        <col width="230">
-                        <col width="100">
-                        <col width="145">
-                        <thead>
-                            <tr>
-                                <th align="left" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; text-align: center; line-height: 1.4;">BIOMETRIC #</th>
-                                <th align="left" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; text-align: left; line-height: 1.4;">EMPLOYEE NAME</th>
-                                <th align="center" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 1.4; text-align: left;">DEPARTMENT</th>
-                                <th align="center" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 1.4; text-align: center;">AM/PM</th>
-                                <th align="center" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 1.4; text-align: center; ">LOA/TO REF#</th>
-                            </tr>
-                        </thead>
+					<table border="0" align="center" width="980" cellpadding="0" cellspacing="0" class="container980 table table-striped" style="width: 980px;">
+						<col width="145">
+						<col width="245">
+						<col width="345">
+						<col width="100">
+						<col width="145">
+						<thead>
+							<tr>
+                                <th align="left" style="color: #333333; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: left; padding: 0 12.5px 5px;">BIOMETRIC #</th>
+								<th align="left" style="color: #333333; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: left; padding: 0 12.5px 5px;">EMPLOYEE NAME</th>
+								<th align="center" style="color: #333333; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: center; padding: 0 12.5px 5px;">DEPARTMENT</th>
+								<th align="center" style="color: #333333; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: center; padding: 0 12.5px 5px;">AM/PM</th>
+								<th align="center" style="color: #333333; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: center;  padding: 0 12.5px 5px;">LOA/TO REF#</th>
+							</tr>
+						</thead>
 					   <tbody>
-					   <?php foreach ($data as $biometric_id => $emp_info) : ?>
-                            <tr>
-                                <td align="center" style="vertical-align: top;">
-                                    <span style="color: #888888;font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-                                        <?php echo (isset($emp_info["biometricno"]) && $emp_info["biometricno"])? $emp_info["biometricno"]: "N/A"; ?>
-                                    </span>
-                                </td>
-
-                                <td align="left" style="vertical-align: top;">
-                                    <span style="color: #888888;font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-                                        <?php echo (isset($emp_info["name"]) && $emp_info["name"])? strtoupper($emp_info["name"]): strtoupper("No Name"); ?> 
-                                    </span><br>
-
-                                    <span style="font-size: 10px; color: #888888; font-weight:400; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-                                        <?php echo (isset($emp_info["position"]) && $emp_info["position"])? strtoupper($emp_info["position"]): strtoupper("No Position"); ?>
-                                    </span>
-                                </td>
-
-                                <td align="left" style="vertical-align: top;">
-                                    <span style="color: #888888;font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-                                        <?php echo (isset($emp_info["department"]) && $emp_info["department"])? strtoupper($emp_info["department"]): strtoupper("No Department"); ?>
-                                    </span>
-                                </td>
-
-                                <td align="center" style="vertical-align: top;">
-                                    <span style="color: #888888;font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-                                        <?php echo (isset($emp_info["mrdn"]) && $emp_info["mrdn"])? strtoupper($emp_info["mrdn"]): strtoupper("---"); ?>
-                                    </span>
-                                </td>
-
-                                <td align="center" style="vertical-align: top;">
-                                    <span style="color: #888888;font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-                                        <?php echo (isset($emp_info["content"]) && $emp_info["content"])? strtoupper($emp_info["content"]): strtoupper("N/A"); ?>
-                                    </span>
-                                </td>
-                            </tr>
+					   <?php foreach($data["pm"] as $pm): ?>
+						<tr>
+                            <td align="left" style="color: #888888; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 18px; padding: 5px 12.5px;"><?php echo (isset($pm["biometricno"]) && $pm["biometricno"])? $pm["biometricno"]: "N/A"; ?></td>
+							<td align="left" style="color: #888888; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 18px; padding: 5px 12.5px;"><?php echo (isset($pm["name"]) && $pm["name"])? strtoupper($pm["name"]): "No name"; ?></td>
+							<td align="center" style="color: #888888; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 18px; padding: 5px 12.5px;"><?php echo (isset($pm["department"]) && $pm["department"])? $pm["department"]: "No Department"; ?></td>
+							<td align="center" style="color: #888888; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 18px; padding: 5px 12.5px;"><?php echo (isset($pm["mrdn"]) && $pm["mrdn"])? $pm["mrdn"]: "---"; ?></td>
+							<td align="center" style="color: #888888; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 18px; padding: 5px 12.5px;"><?php echo (isset($pm["content"]) && $pm["content"])? $pm["content"]: "N/A"; ?></td>
+						</tr>
 						<?php endforeach; ?>
 					   </tbody>
 					</table>
 				</td>
 			</tr>
 			<?php endif; ?>
-			<?php if(isset($meridiem) && $meridiem && $ampm == "AM"): ?>
+			<?php if(isset($data["am"]) && $data["am"] && $ampm == "AM"): ?>
 			<tr>
 				<td align="center">
                 <table border="0" align="center" width="980" cellpadding="0" cellspacing="0" class="container980">
@@ -297,65 +262,33 @@ echo "</pre>";
 			</tr>
 			<tr>
 				<td align="center">
-                    <table border="0" align="center" width="980" cellpadding="0" cellspacing="0" class="container980 table table-striped" style="width: 980px;border-spacing: 0px 15px;">
-                        <col width="145">
-                        <col width="320">
-                        <col width="230">
-                        <col width="100">
-                        <col width="145">
-                        <thead>
-                            <tr>
-                                <th align="left" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; text-align: center; line-height: 1.4;">BIOMETRIC #</th>
-                                <th align="left" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; text-align: left; line-height: 1.4;">EMPLOYEE NAME</th>
-                                <th align="center" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 1.4; text-align: left;">DEPARTMENT</th>
-                                <th align="center" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 1.4; text-align: center;">AM/PM</th>
-                                <th align="center" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 1.4; text-align: center; ">LOA/TO REF#</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                        <?php
-                            foreach ($data as $biometric_id => $emp_info) :
-                        ?>
-                                <tr>
-                                    <td align="center" style="vertical-align: top;">
-                                        <span style="color: #888888;font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-                                            <?php echo (isset($emp_info["biometricno"]) && $emp_info["biometricno"])? $emp_info["biometricno"]: "N/A"; ?>
-                                        </span>
-                                    </td>
-
-                                    <td align="left" style="vertical-align: top;">
-                                        <span style="color: #888888;font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-                                            <?php echo (isset($emp_info["name"]) && $emp_info["name"])? strtoupper($emp_info["name"]): strtoupper("No Name"); ?> 
-                                        </span><br>
-
-                                        <span style="font-size: 10px; color: #888888; font-weight:400; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-                                            <?php echo (isset($emp_info["position"]) && $emp_info["position"])? strtoupper($emp_info["position"]): strtoupper("No Position"); ?>
-                                        </span>
-                                    </td>
-
-                                    <td align="left" style="vertical-align: top;">
-                                        <span style="color: #888888;font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-                                            <?php echo (isset($emp_info["department"]) && $emp_info["department"])? strtoupper($emp_info["department"]): strtoupper("No Department"); ?>
-                                        </span>
-                                    </td>
-
-                                    <td align="center" style="vertical-align: top;">
-                                        <span style="color: #888888;font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-                                            <?php echo (isset($emp_info["mrdn"]) && $emp_info["mrdn"])? strtoupper($emp_info["mrdn"]): strtoupper("---"); ?>
-                                        </span>
-                                    </td>
-
-                                    <td align="center" style="vertical-align: top;">
-                                        <span style="color: #888888;font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-                                            <?php echo (isset($emp_info["content"]) && $emp_info["content"])? strtoupper($emp_info["content"]): strtoupper("N/A"); ?>
-                                        </span>
-                                    </td>
-                                </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                    </table>
+					<table border="0" align="center" width="980" cellpadding="0" cellspacing="0" class="container980 table table-striped" style="width: 980px;">
+						<col width="145">
+						<col width="245">
+						<col width="345">
+						<col width="100">
+						<col width="145">
+						<thead>
+							<tr>
+                                <th align="left" style="color: #333333; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: left; padding: 0 12.5px 5px;">BIOMETRIC #</th>
+								<th align="left" style="color: #333333; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: left; padding: 0 12.5px 5px;">EMPLOYEE NAME</th>
+								<th align="center" style="color: #333333; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: center; padding: 0 12.5px 5px;">DEPARTMENT</th>
+								<th align="center" style="color: #333333; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: center; padding: 0 12.5px 5px;">AM/PM</th>
+								<th align="center" style="color: #333333; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: center;  padding: 0 12.5px 5px;">LOA/TO REF#</th>
+							</tr>
+						</thead>
+					   <tbody>
+					   <?php foreach($data["am"] as $am): ?>
+						<tr>
+                            <td align="left" style="color: #888888; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 18px; padding: 5px 12.5px;"><?php echo (isset($am["biometricno"]) && $am["biometricno"])? $am["biometricno"]: "N/A"; ?></td>
+							<td align="left" style="color: #888888; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 18px; padding: 5px 12.5px;"><?php echo (isset($am["name"]) && $am["name"])? strtoupper($am["name"]): "No name"; ?></td>
+							<td align="center" style="color: #888888; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 18px; padding: 5px 12.5px;"><?php echo (isset($am["department"]) && $am["department"])? $am["department"]: "No Department"; ?></td>
+							<td align="center" style="color: #888888; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 18px; padding: 5px 12.5px;"><?php echo (isset($am["mrdn"]) && $am["mrdn"])? $am["mrdn"]: "---"; ?></td>
+							<td align="center" style="color: #888888; font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 18px; padding: 5px 12.5px;"><?php echo (isset($am["content"]) && $am["content"])? $am["content"]: "N/A"; ?></td>
+						</tr>
+						<?php endforeach; ?>
+					   </tbody>
+					</table>
 				</td>
 			</tr>
 			<?php endif; ?>

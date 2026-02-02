@@ -2757,6 +2757,196 @@
         function getCurrentAbsent($limit = null) {
             $resultset = array();
 
+            // $todays = $this->adm_attendance->getLastSyncDate();
+            // $ndate = date("Y-m-d", strtotime($todays));
+            $todays = date("Y-m-d H:i:00", strtotime("2026-01-02 09:31:00"));
+            $ndate = date("Y-m-d", strtotime($todays));
+
+            $this->db->from($this->absentTable);
+            $this->db->like("updated_at", $ndate);
+            $this->db->order_by("id", "DESC");
+
+            if($limit){
+                $this->db->limit($limit);
+            }
+            
+            $queryget = $this->db->get();
+            $getAbsentCollection = $queryget->result_array();;
+
+            // echo "<pre>";
+            // print_r($getAbsentCollection); 
+            // echo "</pre>";
+
+            // exit;
+
+            $data = array();
+            $checker = array();
+
+            $weekday = date("l", strtotime($todays));
+            $weekday = strtolower($weekday);
+
+            if ($getAbsentCollection) {
+                foreach ($getAbsentCollection as $_getAbsentCollection) {
+                    $biometric_id = $_getAbsentCollection["biometric_id"];
+                    $current_meredien = $_getAbsentCollection["meredien"];
+                    $meredien = date_format(date_create($_getAbsentCollection["updated_at"]), "A");
+                    $ampm = strtolower($meredien);
+
+                    // $current_meredien = "am";
+                    // $ampm = "am";
+
+                    $personnel = $this->getPersonnelShift($biometric_id);
+                    // echo "<pre>";
+                    // var_dump($personnel);
+                    // echo "</pre>";
+
+                    if ($personnel) {
+                        $department = $this->getPersonnelDepartment($personnel->biometricno);
+                        $position = $this->getPersonnelPosition($personnel->biometricno);
+                        $station = $this->getPersonnelStation($personnel->biometricno);
+                        
+                        $this->db->from("gcctimeutility.location");
+                        $this->db->where("id", $personnel->location_id);
+                        $this->db->where("allow_notification", 1);
+                        $queryLocation = $this->db->get();
+                        if ($queryLocation->num_rows() == 1) {
+                            $current_data = array();
+                            $shift = $personnel->shift_id;
+                            $personnel_biometricno = $personnel->biometricno;
+                            $isFlexibleTime = (intval($personnel->is_flexi) == 1) ? true : false;
+
+                            $shiftResource = $this->getShiftResource($shift);
+                            if ($shiftResource) {
+                                $ids = $shiftResource->shift_resource;
+                                $todayShift = array();
+                                if ($ids) {
+                                    foreach ($ids as $id) {
+                                        $today = $this->getDailyResource($id, $weekday);
+                                        if ($today) {
+                                            $todayShift = $today;
+                                            break;
+                                        }
+                                    }
+                                }
+                                // echo "<pre>";   
+                                // print_r($todayShift);
+                                // echo "</pre>";  
+                                if ($todayShift) {
+                                    
+                                    /***
+                                     * $queryShiftToday = $this->db->get_where("custom_personnel_shift", array("personnel_id"=>$personnel->id, "weekday"=>$weekday));
+                                     * if($queryShiftToday->num_rows() == 1){
+                                     * $row = $queryShiftToday->row();
+                                     * $todayShift->am_start = $row->am_start;
+                                     * $todayShift->am_end = $row->am_end;
+                                     * $todayShift->pm_start = $row->pm_start;
+                                     * $todayShift->pm_end = $row->pm_end;
+                                     * }
+                                     ***/
+
+                                    $shiftAmStart = $todayShift->am_start;
+                                    $shiftAmEnd = $todayShift->am_end;
+                                    $shiftPmStart = $todayShift->pm_start;
+                                    $shiftPmEnd = $todayShift->pm_end;
+                                    $reference_no = "N/A";
+
+                                    // $department = $this->getAttendanceDepartment($personnel->department_id);
+                                    // $currentDepartment = (isset($department->description) && $department->description) ? $department->description : "N/A";
+                                    // $currentDepartment = (isset($department) && $department) ? $department : "N/A";
+                                    $isFlexibleEmployeeTime = $this->isFlexibleAttendance($biometric_id, $ndate, $isFlexibleTime);
+                                    $tempType = "Regular";
+                                    if(intval($personnel->is_flexi) == 1){ $tempType = "Flexible Time"; }
+                                    else if(intval($personnel->is_flexi) == 2){ $tempType = "1 IN / 1 OUT ONLY"; }
+                                    else{ $tempType = "Regular"; }
+
+                                    $current_data["biometricno"] = $biometric_id;
+                                    $current_data["name"] = $personnel->name;
+                                    $current_data["department"] = ($department) ? $department : "N/A";
+                                    $current_data["position"] = ($position) ? $position : "N/A";
+                                    $current_data["station"] = ($station) ? $station : "NO STATION";
+                                    $current_data["mrdn"] = $meredien;
+                                    $current_data["type"] = $tempType;
+
+                                    // var_dump($shiftAmStart, $shiftAmEnd, $current_meredien);
+
+                                    if (($shiftAmStart !== "00:00:00" && $shiftAmStart) && ($shiftAmEnd !== "00:00:00" && $shiftAmEnd) && ($current_meredien == "AM")) {
+                                        $personnelAttendance = $this->getPersonnelAttendance($biometric_id, $ndate, $current_meredien);
+                                        $countx = $this->getPersonnelCount($biometric_id, $ndate, $current_meredien);
+                                        /*** $countx = $this->getPersonnelCount($biometric_id, $ndate); ***/
+
+                                        if ($personnelAttendance == false && $countx == 0) {
+                                            $loa_data = $this->getAvailableLoa($personnel_biometricno, $ndate);
+                                            if (isset($loa_data["response"]) && $loa_data["response"]) {
+                                                $reference_no = $loa_data["reference_no"];
+                                            }
+                                            $toData = $this->getAvailableToByDate($personnel_biometricno, $ndate);
+                                            if (isset($toData["response"]) && $toData["response"]) {
+                                                $reference_no = $toData["reference_no"];
+                                            }
+                                            $current_data["content"] = $reference_no;
+                                            $data[$ampm][$biometric_id] = $current_data;
+                                        }
+                                    }
+                                    if (($shiftPmStart !== "00:00:00" && $shiftPmStart) && ($shiftPmEnd !== "00:00:00" && $shiftPmEnd) && ($current_meredien == "PM")) {
+                                        $personnelAttendance = $this->getPersonnelAttendance($biometric_id, $ndate, $current_meredien);
+                                        $countx = $this->getPersonnelCount($biometric_id, $ndate, $current_meredien);
+                                        /*** $countx = $this->getPersonnelCount($biometric_id, $ndate); ***/
+
+                                        if ($personnelAttendance == false && $countx == 0) {
+                                            $loa_data = $this->getAvailableLoa($personnel_biometricno, $ndate);
+                                            if (isset($loa_data["response"]) && $loa_data["response"]) {
+                                                $reference_no = $loa_data["reference_no"];
+                                            }
+                                            $toData = $this->getAvailableToByDate($personnel_biometricno, $ndate);
+                                            if (isset($toData["response"]) && $toData["response"]) {
+                                                $reference_no = $toData["reference_no"];
+                                            }
+                                            $current_data["content"] = $reference_no;
+                                            if ($isFlexibleEmployeeTime == false) {
+                                                $data[$ampm][$biometric_id] = $current_data;
+                                            }
+                                        }
+
+                                        $dataTime = array();
+                                        $dataTime["start"] = date("Y-m-d H:i:s", strtotime("{$ndate} 12:00:00"));
+                                        $dataTime["end"] = date("Y-m-d H:i:s", strtotime("{$ndate} 13:00:00"));
+
+                                        $afternoonAttendance = $this->getSingleAttendanceByDateRangeData($biometric_id, $dataTime);
+
+                                        if ($afternoonAttendance == true && $countx == 0) {
+                                            $loa_data = $this->getAvailableLoa($personnel_biometricno, $ndate);
+                                            if (isset($loa_data["response"]) && $loa_data["response"]) {
+                                                $reference_no = $loa_data["reference_no"];
+                                            }
+                                            $toData = $this->getAvailableToByDate($personnel_biometricno, $ndate);
+                                            if (isset($toData["response"]) && $toData["response"]) {
+                                                $reference_no = $toData["reference_no"];
+                                            }
+                                            $current_data["content"] = $reference_no;
+
+                                            if ($isFlexibleEmployeeTime == false) {
+                                                $data[$ampm][$biometric_id] = $current_data;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            $resultset["check_absent"] = $data;
+            $resultset["ndate"] = $ndate;
+
+            /** Group data by station */
+
+            $resultset = $this->groupAbsentByStation($resultset);
+            return $resultset;
+        }
+
+        function getCurrentAbsent_old($limit = null) {
+            $resultset = array();
+
             $todays = $this->adm_attendance->getLastSyncDate();
             $ndate = date("Y-m-d", strtotime($todays));
 
@@ -3764,6 +3954,12 @@
 
         /*** email section 122018 ***/
 
+        /** Functions for getting 
+         * Department,
+         * Position,
+         * Station
+         * Via biometric no
+         *  */
         function getPersonnelDepartment($biometric_no = null) {
             if (empty($biometric_no)) { return false; }
 
@@ -3840,7 +4036,12 @@
 
             return $station ? strtoupper($station->station_description) : false;
         }
+        /** Department, Position, Station END */
 
+        /** 
+         * START
+         * Ths function is used in getting the Late & Absentee email report
+         */
         function groupLateByStation($resultset) {
             $grouped = array();
 
@@ -3866,4 +4067,30 @@
 
             return $grouped;
         }
+
+        function groupAbsentByStation($resultset) {
+            if (!isset($resultset['check_absent'])) {
+                return $resultset; // Nothing to group
+            }
+
+            foreach ($resultset['check_absent'] as $meridian => $records) {
+                $groupedByStation = [];
+
+                foreach ($records as $biometric_id => $record) {
+                    $station = $record['station'] ?? 'NO STATION';
+
+                    if (!isset($groupedByStation[$station])) {
+                        $groupedByStation[$station] = [];
+                    }
+
+                    $groupedByStation[$station][$biometric_id] = $record;
+                }
+
+                  // replace AM / PM with grouped data
+                $resultset['check_absent'][$meridian] = $groupedByStation;
+            }
+
+            return $resultset;
+        }
+        /** END */
     }

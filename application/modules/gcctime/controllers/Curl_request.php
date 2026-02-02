@@ -783,60 +783,66 @@ class Curl_request extends MY_Controller {
 		$this->load->view("attendance/getLateToday");
 	}
 
-	public function testemail(){
-		$currentLate = $this->shift_manangement->emailLateNotification();
+	public function test_late_email(){
+		// To check late date
+		$ampm = date("A");
+		$currentLate = $this->shift_manangement->getCurrentLate();
+		$state = (isset($currentLate["current_state"]) && $currentLate["current_state"]) ? $currentLate["current_state"] : $ampm;
+
+		// $currentState = ($state) ? strtolower($state) : strtolower($ampm);
+		$currentState = "am";
+		$data = (isset($currentLate["checklate_{$currentState}"]) && $currentLate["checklate_{$currentState}"]) ? $currentLate["checklate_{$currentState}"] : array();
+
 		// echo "<pre>";
-		// var_dump($currentLate);
+		// var_dump($data);
 		// echo "</pre>";
 
+		// =============================================================
+		// View late email template
+
+		/**
+		 * station_title is came from the looped data key per station
+		 * data is the array data per station
+		 * static data here is for testing purposes only
+		 */
+
+		$arrData = array(
+			"station_title" => "GC&C BATA", 
+			"data" => ["GC&C BATA" => $data["GC&C BATA"]], 
+			"state" => $currentState
+		);
+
+		return $this->load->view("templates/email/email-late_template", $arrData);
 		die();
-		// $currentLate = $this->attendance->getCurrentLate();
+		// =============================================================
 
-		$state = (isset($currentLate["current_state"]) && $currentLate["current_state"])? $currentLate["current_state"]: "";
-		
-		// $currentState = ($state)? strtolower($state): "";
-		$currentState = 'am';
+		// To trigge late email
+		// $this->shift_manangement->emailLateNotification();
+		// die();
+	}
 
-		$data = (isset($currentLate["checklate_{$currentState}"]) && $currentLate["checklate_{$currentState}"])? $currentLate["checklate_{$currentState}"]: array();
+	public function test_absent_email(){
+		// To check absent date
+		$currentAbsent = $this->shift_manangement->getCurrentAbsent();
 
-		echo count($data);
+		// echo "<pre>";
+		// var_dump($currentAbsent['check_absent']["am"]["GC&C BATA"]);
+		// echo "</pre>";
 
-		echo "<pre>";
-		var_dump($data);
-		echo "</pre>";
+		$data = (isset($currentAbsent["check_absent"]) && $currentAbsent["check_absent"]) ? $currentAbsent["check_absent"] : array();
+		$meridiem = "am"; // AM or PM, get the meridiem from currentAbsent
+		$arrData = array(
+			"station_title" => "TCD", 
+			"meridiem" => $meridiem,
+			"data" => $data[$meridiem]['GC&C BATA'], 
+		);
 
+		return $this->load->view("templates/email/email-absent_template", $arrData);
 		die();
-		
-		foreach($data as $station => $emp_per_station){
-			$config = Array(
-				'protocol' => 'smtp',
-				'smtp_host' => 'smtp.googlemail.com',
-				// 'smtp_port' => 465,
-				'smtp_port' => 587,
-				'smtp_user' => 'gcceforms@gmail.com',
-				'smtp_pass' => 'jkfh ofqu vgke qwiw',
-				'smtp_crypto' => 'tls',
-				'newline'  => "\r\n", 
-				'mailtype'  => 'html', 
-				'charset'   => 'utf-8',
-			);
 
-			$this->email->initialize($config);
-			$this->email->from('gcceforms@gmail.com', 'GC&C TIME ATTENDANCE');
-			$this->email->to('test4jp05@armyspy.com');
-			// $this->email->to('cawebe8896@juhxs.com');
-			$this->email->cc('malvindelacruz40@gmail.com');
-			
-			$message = "";
-			$message .= $this->load->view("templates/email/email-late_template-copy", array("station_title"=>$station, "data"=>[$station => $emp_per_station], "state"=>$state), true);
-			
-			$this->email->subject('Late Report'. " - " .date("F d, Y"));
-			$this->email->message($message);
-			$result = $this->email->send();
-			
-			echo $this->email->print_debugger();
-			sleep(5);
-		}
+		// To trigge absent email
+		$this->shift_manangement->emailAbsentNotification();
+		die();
 	}
 	
 	public function email_lateNotification(){
@@ -1777,4 +1783,78 @@ class Curl_request extends MY_Controller {
         }else{ return false; }
         
     }
+
+	public function test_generateMorningAbsenteeData(){
+		$getPersonnel = $this->getActivePersonnels();
+		if($getPersonnel){
+			$meredien="AM";
+			$absenteeCount = 0;
+			$_currentTime = strtotime(Date("Y-m-d H:i"));
+			$_currentWeekday = strtolower(Date("l"));
+
+			// echo "<pre>";
+			// var_dump($meredien, $absenteeCount, $_currentTime, $_currentWeekday);
+			// echo "</pre>";
+			// die();
+			
+			foreach($getPersonnel as $_getPersonnel){
+				$shiftStarted = false;
+				$arrData = array();
+				$arrData["biometric_id"] = $_getPersonnel["biometric_id"];
+				$arrData["meredien"] = $meredien;
+
+				$shiftStarted = $this->checkEmployeeShiftStarted($_getPersonnel["biometric_id"], $_currentTime, $_currentWeekday, $meredien);
+
+				if($shiftStarted){
+					$response = $this->getTodayAbsentRecord($arrData);
+					
+					$getSingleAttendanceByDateRange = $this->attendance->getSingleAttendanceByDateRange($_getPersonnel["biometric_id"], $this->getDateRangeToday());
+					if(!$getSingleAttendanceByDateRange && $response == true){
+						if($_getPersonnel["department_id"] !== "0" && $_getPersonnel["shift_id"] !== "0"){
+							$added = $this->db->insert("gcctimeutility.absent", $arrData);
+							if($added){	$absenteeCount++; }
+						}
+					}
+				}
+			}
+
+			if($absenteeCount){
+				$this->core_layout->logNotification("Morning sync data, ({$absenteeCount}) absentee records found", "success", "gcctimeV2");				
+			}else{
+				$this->core_layout->logNotification("Morning sync data, no absentee record", "success", "gcctimeV2");				
+			}
+			return true;
+		}else{
+			$this->core_layout->logNotification("No active personnels found!", "error", "gcctimeV2");				
+			return false;
+		}
+	}
+
+	public function test_forceAllAbsentToday(){
+		$getPersonnel = $this->getActivePersonnels();
+		$absenteeCount = 0;
+
+		foreach ($getPersonnel as $person) {
+			if($person["department_id"] !== "0" && $person["shift_id"] !== "0"){
+
+				$arrData = [
+					"biometric_id" => $person["biometric_id"],
+					"meredien"     => "PM"
+				];
+
+				if ($this->getTodayAbsentRecord($arrData)) {
+					if ($this->db->insert("gcctimeutility.absent", $arrData)) {
+						$absenteeCount++;
+					}
+				}
+			}
+		}
+
+		$this->core_layout->logNotification(
+			"TEST MODE: Forced {$absenteeCount} absentees",
+			"warning",
+			"gcctimeV2"
+		);
+	}
+
 }
