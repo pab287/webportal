@@ -11,11 +11,15 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                 {
                     extend: 'excelHtml5',
                     title: 'CASH ADVANCE REPORTS',
+                    footer: true,
                     exportOptions: {
                         columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
+                            },
+                            footer: function(data, column) {
+                                return data;
                             }
                         }
                     },
@@ -30,11 +34,15 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                 {
                     extend: 'pdfHtml5',
                     title: 'CASH ADVANCE REPORTS',
+                    footer: true,
                     exportOptions: {
                         columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
+                            },
+                            footer: function(data, column) {
+                                return data;
                             }
                         }
                     },
@@ -58,6 +66,13 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                             fillColor: '#f3f3f3',
                             alignment: 'center'
                         };
+
+                        doc.styles.tableFooter = {
+                            fontSize: 6,
+                            bold: true,
+                            fillColor: '#e0e0e0',
+                            alignment: 'right'
+                        };
                         
                         doc.styles.tableBodyEven = {
                             fontSize: 6
@@ -71,7 +86,12 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                         doc.content[1].layout = {
                             hLineWidth: function(i, node) { return 0.1; },
                             vLineWidth: function(i, node) { return 0.1; },
-                            fillColor: function(i, node) { return (i % 2 === 0) ? '#f3f3f3' : null; }
+                            fillColor: function(i, node) { 
+                                if (i === node.table.body.length - 1) {
+                                    return '#e0e0e0';
+                                }
+                                return (i % 2 === 0) ? '#f3f3f3' : null; 
+                            }
                         };
                     },
                     action: function(e, dt, node, config) {
@@ -86,11 +106,15 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                 {
                     extend: 'print',
                     title: 'CASH ADVANCE REPORTS',
+                    footer: true,
                     exportOptions: {
                         columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
+                            },
+                            footer: function(data, column) {
+                                return data;
                             }
                         }
                     },

@@ -41,24 +41,24 @@
                                 <tbody></tbody>
                                 <tfoot>
                                     <tr>
-                                        <th></th> <!-- id -->
-                                        <th>Total:</th> <!-- employee -->
-                                        <th></th> <!-- name -->
-                                        <th></th> <!-- lastname -->
-                                        <th></th> <!-- department -->
-                                        <th></th> <!-- position -->
-                                        <th></th> <!-- company -->
-                                        <th></th> <!-- reference_no -->
-                                        <th></th> <!-- amt_approved - will show total -->
-                                        <th></th> <!-- med_loan - will show total -->
-                                        <th></th> <!-- deduction type - label -->
-                                        <th></th> <!-- total_deduction - will show total -->
-                                        <th></th> <!-- rembalance - will show total -->
-                                        <th></th> <!-- purpose -->
-                                        <th></th> <!-- approved_by -->
-                                        <th></th> <!-- approved_by hidden -->
-                                        <th></th> <!-- approved_dt -->
-                                        <th></th> <!-- date_created -->
+                                        <th></th>
+                                        <th>Total:</th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
                                     </tr>
                                 </tfoot>
                             </table>
