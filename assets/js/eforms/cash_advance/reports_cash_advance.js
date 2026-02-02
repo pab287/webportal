@@ -19,6 +19,9 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
                             },
                             footer: function(data, column) {
+                                if (column === 7) {
+                                    return 'TOTAL: ';
+                                }
                                 return data;
                             }
                         }
@@ -42,6 +45,9 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
                             },
                             footer: function(data, column) {
+                                if (column === 7) {
+                                    return 'TOTAL: ';
+                                }
                                 return data;
                             }
                         }
@@ -114,6 +120,9 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
                             },
                             footer: function(data, column) {
+                                if (column === 7) {
+                                    return 'TOTAL: ';
+                                }
                                 return data;
                             }
                         }
