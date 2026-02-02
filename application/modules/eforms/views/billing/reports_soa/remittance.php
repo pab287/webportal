@@ -221,6 +221,12 @@
                     <h3 class="m-portlet__head-text">Remittance Collection</h3>
                 </div>
             </div>
+
+            <div id="exportButtons" class="m-portlet__head-tools">
+                <button @click="exportPDF" class="btn btn-danger btnExportpdf" type="button" id="ExportPDF" data-toggle="m-tooltip" title="" data-original-title="EXPORT PDF">
+                    <span><i class="fa fa-file-pdf-o"></i></span>
+                </button>
+            </div>
         </div>
 
         <div class="m-portlet__body">
@@ -335,7 +341,7 @@
                                 <div id="remit_filter" class="remit_inputs_wrapper m-alert m-alert--outline alert alert-metal py-4 mb-4">
                                     <div class="form-group m-form__group w-100 mb-4">
                                         <label for="employee" class="mb-2">Payment Collector: <span class="text-danger" style="font-weight: 900;">*</span></label>
-                                        <select id="employee" class="form-control w-100" multiple></select>
+                                        <select id="employee" class="form-control w-100"></select>
                                     </div>
 
                                     <div class="form-group m-form__group w-100 mb-4">

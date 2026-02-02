@@ -7068,6 +7068,9 @@ class Billing_m extends CI_Model {
     }
 
     private function build_virtual_cashier(array $cashier_ids) {
+
+        // var_dump($cashier_ids);die;
+
         if (empty($cashier_ids)) {
             return null;
         }
@@ -7556,8 +7559,10 @@ class Billing_m extends CI_Model {
     public function archive_remittance() {
         $post = $this->input->post();
         $id = $post["id"];
+        $remarks = $post["remarks"];
 
         $data_to_update = [
+            "remarks" => $remarks,
             "is_archive" => 1,
             "is_archive_by" => $this->getUserdata()['emp_id'],
             "is_archive_at" => date("Y-m-d H:i:s")
@@ -7576,7 +7581,7 @@ class Billing_m extends CI_Model {
             $resultarray["msg"] = "Archive successfully saved.";
 
             $this->core_layout->setEventLog(
-                "Remittance - Archived remittance of " . $post["ref_no"],
+                "Remittance - Archived remittance of " . $post["ref_no"] . " with remarks: " . $remarks,
                 "archived",
                 "success",
                 "hydra_billing",
@@ -7587,7 +7592,7 @@ class Billing_m extends CI_Model {
             $resultarray["msg"] = "Error archiving remittance.";
 
             $this->core_layout->setEventLog(
-                "Remittance - Error archiving remittance of " . $post["ref_no"],
+                "Remittance - Error archiving remittance of " . $post["ref_no"] . " with remarks: " . $remarks,
                 "archived",
                 "error",
                 "hydra_billing",

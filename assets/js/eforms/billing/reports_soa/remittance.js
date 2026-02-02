@@ -30,6 +30,11 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
                 d.endDate = '';
             }
         },
+        dataSrc: function(json) {
+            exportBtns.collection = json.data || [];
+
+            return json.data;
+        },
         error: function (xhr, error, code) {
             console.log(error);
         }
@@ -48,19 +53,19 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
         { 
             data: "payment_collected", render: function(data, type, row) {
                 const amount = parseFloat(data).toFixed(2);
-                return g_numberWithCommas(amount);
+                return "₱ " + g_numberWithCommas(amount);
             }
         },
         { 
             data: "deposit", render: function(data, type, row) {
                 const amount = parseFloat(data).toFixed(2);
-                return g_numberWithCommas(amount);
+                return "₱ " + g_numberWithCommas(amount);
             }
         },
         { 
             data: "variance", render: function(data, type, row) {
                 const amount = parseFloat(data).toFixed(2);
-                return g_numberWithCommas(amount);
+                return "₱ " + g_numberWithCommas(amount);
             }
         },
         { data: "virtual_cashier", width: "20%" },
@@ -140,7 +145,7 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
             }, 0 );
         variance_total_collected = total_collection;
         $( api.column( 1 ).footer() ).html('<b class="d-block text-center">Total</b>');
-        $( api.column( 2 ).footer() ).html('<b class="d-block text-right">'+g_numberWithCommas(parseFloat(total_collection).toFixed(2))+'</b>');
+        $( api.column( 2 ).footer() ).html('<b class="d-block text-right">₱ '+g_numberWithCommas(parseFloat(total_collection).toFixed(2))+'</b>');
 
         // Total Balance Covered
         const total_deposit = api
@@ -150,10 +155,10 @@ const tbl_remittance = $('#tbl-remittance').DataTable({
                 return parseFloat(a) + parseFloat(b);
             }, 0 );
         variance_total_deposit = total_deposit;
-        $( api.column( 3 ).footer() ).html('<b class="d-block text-right">'+g_numberWithCommas(parseFloat(total_deposit).toFixed(2))+'</b>');
+        $( api.column( 3 ).footer() ).html('<b class="d-block text-right">₱ '+g_numberWithCommas(parseFloat(total_deposit).toFixed(2))+'</b>');
 
         variance_total = total_deposit - total_collection;
-        $( api.column( 4 ).footer() ).html('<b class="d-block text-right">'+g_numberWithCommas(parseFloat(variance_total).toFixed(2))+'</b>');
+        $( api.column( 4 ).footer() ).html('<b class="d-block text-right">₱ '+g_numberWithCommas(parseFloat(variance_total).toFixed(2))+'</b>');
     }
 });
 // Datatable end
@@ -179,7 +184,7 @@ function itemDatatableActions(row) {
 
                             <div class="dropdown-menu dropdown-menu-right">
                                 <a class="dropdown-item" data-toggle='modal' data-target='#modal_view_remittance' href="javascript:void(0);" id='view_remit_modal' data-id='${row.id}'><i class="la la-eye"></i>View</a>
-                                <a class="dropdown-item" style="color: #FF8383;" href="javascript:void(0);" onclick='modalArchive( `+ row.id +`,`+`\"`+ row.ref_no + `\" )'><i class="la la-trash" style="color: #FF8383;"></i> Cancel</a>
+                                <a class="dropdown-item" style="color: #FF8383;" href="javascript:void(0);" onclick='cancelRemittance( `+ row.id +`,`+`\"`+ row.ref_no + `\" )'><i class="la la-trash" style="color: #FF8383;"></i> Cancel</a>
                             </div>
                         </div>`;
             return tempHtml;
@@ -190,33 +195,84 @@ function itemDatatableActions(row) {
 }
 // Action in datatable End
 
-function modalArchive(id, name){
-    const temp = `<p>Are you sure you wan't to cancel <strong class='m--font-boldest'>${name}</strong>?</p>`;
-    $('#m_archived').modal('show');
-    $('#archive_text').empty().html(temp);
-    $("#m_archived input[name=id]").val(id);
-    $("#m_archived input[name=archive_ref_no]").val(name);
-}
+function cancelRemittance(id, ref_no) {
+    const minChars = 15;
 
-function cancel_remit(){
-    const remittance_id = document.getElementById('archive_id').value;
-    const ref_no = document.getElementById('archive_ref_no').value;
+    Swal.fire({
+        title: 'Cancel Remittance',
+        input: 'textarea',
+        html: `
+            <span class="text-danger">
+                Are you sure you want to cancel
+                <strong class="text-danger">${ref_no}</strong>?
+            </span>
 
-    $.ajax({
-        url: baseUrl("eforms/billing/archive_remittance"),
-        type: 'post',
-        data: { csrf_token: _csrf_hash, id: remittance_id, ref_no:ref_no },
-        success: function (data) {
-            if(data.status){
-                toastr.success('Remittance archived successfully.', 'Success');
+            <hr>
 
-                $('#m_archived').modal('hide');
-                tbl_remittance.ajax.reload();
-            }
+            <span class="text-danger">
+                Please provide remarks.
+            </span>
+
+            <div style="margin-top:8px; font-size:12px; color:#666;">
+                <span id="cancelCharCount">0</span> / ${minChars} required
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Proceed',
+        confirmButtonColor: '#36a3f7',
+        cancelButtonText: 'No',
+        allowOutsideClick: true,
+        didOpen: () => {
+            const textarea = Swal.getInput();
+            const charCount = document.getElementById('cancelCharCount');
+            const confirmBtn = Swal.getConfirmButton();
+
+            confirmBtn.disabled = true;
+
+            textarea.addEventListener('input', () => {
+                const len = textarea.value.length;
+                charCount.textContent = len;
+                confirmBtn.disabled = len < minChars;
+            });
         },
-        error: function(data){
-            toastr.error("Please check your internet connection.", "Connection error");
+        preConfirm: (value) => {
+            const remarks = value.trim();
+
+            console.log(remarks);
+
+            if (remarks.length < minChars) {
+                Swal.showValidationMessage(
+                    `Remarks must be at least ${minChars} characters`
+                );
+                return false;
+            }
+
+            return remarks;
         }
+    }).then((result) => {
+        if (!result.isConfirmed) return;
+
+        $.ajax({
+            url: baseUrl("eforms/billing/archive_remittance"),
+            type: "POST",
+            data: {
+                csrf_token: _csrf_hash,
+                id: id,
+                ref_no: ref_no,
+                remarks: result.value
+            },
+            success: function (data) {
+                if (data.status) {
+                    toastr.success('Remittance archived successfully.', 'Success');
+                    tbl_remittance.ajax.reload();
+                } else {
+                    toastr.error('Failed to archive remittance.', 'Error');
+                }
+            },
+            error: function () {
+                toastr.error('Please check your internet connection.', 'Connection error');
+            }
+        });
     });
 }
 
@@ -630,7 +686,7 @@ const vm_save_remit = new Vue({
             // Check for variance if short or over
             const variance = data.variance;
 
-            if (variance < 0 && !vm.remarksApproved) {
+            if (variance < 0 && !vm.remarksApproved || variance > 0 && !vm.remarksApproved) {
                 vm.openRemarks();
                 return;
             }
@@ -641,7 +697,7 @@ const vm_save_remit = new Vue({
                 dataType: "json",
                 data: {
                     csrf_token: _csrf_hash,
-                    cashiers: data.cashiers,
+                    cashiers: Array.isArray(data.cashiers) ? data.cashiers : [data.cashiers], // This will be accept array of cashier_ids or not array id
                     date_range_selected: data.date_range_picked,
                     date_range_from: data.date_range_from,
                     date_range_to: data.date_range_to,
@@ -749,6 +805,154 @@ const vm_remittance_view = new Vue({
         grand_total_per_cashier: [],
     },
     methods: {
+        numberWithCommas(data) {
+            return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        },
+    }
+});
+
+const exportBtns = new Vue({
+    el: '#exportButtons',
+    data: {
+        collection: [],
+    },
+    methods: {
+        exportPDF() {
+            const vm = this;
+
+            if (!vm.collection.length) {
+                toastr.error("No data selected.", "Warning");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+
+            let startY = 10;
+
+            const pageWidth = doc.internal.pageSize.getWidth();
+
+            // TITLE
+            doc.setFontSize(14);
+            doc.text(
+                'REMITTANCE COLLECTION REPORT',
+                pageWidth / 2,
+                startY,
+                { align: 'center' }
+            );
+            startY += 8;
+
+            // GENERATED DATE
+            doc.setFontSize(10);
+            doc.text(
+                `Generated Date: ${new Date().toLocaleString()}`,
+                pageWidth / 2,
+                startY,
+                { align: 'center' }
+            );
+            startY += 10;
+
+            const body = vm.collection.map(p => ([
+                p.ref_no,
+                p.date_range_selected.toUpperCase(),
+                vm.numberWithCommas(p.payment_collected),
+                vm.numberWithCommas(p.deposit),
+                vm.numberWithCommas(p.variance),
+                p.virtual_cashier,
+                p.depositor.toUpperCase(),
+                moment(p.deposit_date).format('MMM DD, YYYY').toUpperCase(),
+                moment(p.created_date).format('MMM DD, YYYY').toUpperCase(),
+                p.is_archive,
+            ]));
+
+            let totalPayment = 0;
+            let totalDeposit = 0;
+            let totalVariance = 0;
+
+            vm.collection.forEach(p => {
+                totalPayment += parseFloat(p.payment_collected);
+                totalDeposit +=  parseFloat(p.deposit);
+                totalVariance +=  parseFloat(p.variance);
+            });
+
+            doc.autoTable({
+                startY,
+                head: [[
+                    'Ref #', 'Date Range', 'Total Collection', 'Deposit', 'Variance', 'Payment collector', 'Received By', 'Date Deposit', 'Date Log'
+                ]],
+                body,
+
+                foot: [[
+                    '',
+                    'TOTAL',
+                    vm.numberWithCommas(totalPayment.toFixed(2)),
+                    vm.numberWithCommas(totalDeposit.toFixed(2)),
+                    vm.numberWithCommas(totalVariance.toFixed(2)),
+                    '',
+                    '',
+                    '',
+                    '',
+                ]],
+
+                styles: { 
+                    fontSize: 7,
+                    halign: 'center'
+                },
+
+                // CENTER HEADERS
+                headStyles: {
+                    halign: 'center'
+                },
+
+                footStyles: {
+                    fillColor: [240, 240, 240],
+                    textColor: 20,
+                    fontStyle: 'bold'
+                },
+
+                // COLUMN-SPECIFIC ALIGNMENT
+                columnStyles: {
+                    2: { halign: 'right' }, // Total Collection
+                    3: { halign: 'right' }, // Deposit
+                    4: { halign: 'right' }, // Variance
+                    9: { cellWidth: 0 } // Setting width to 0 to hide is_archive column
+                },
+
+                // This block is for changing row color based on IS_ARCHIVED value
+                didParseCell: function (data) {
+                    // Right-align footer numeric columns
+                    if (data.section === 'foot' && [2, 3, 4].includes(data.column.index)) {
+                        data.cell.styles.halign = 'right';
+                    }
+
+                    // Keep TOTAL label left
+                    if (data.section === 'foot' && data.column.index === 0) {
+                        data.cell.styles.halign = 'left';
+                    }
+                    
+                    // Body rows only
+                    if (data.section === 'body') {
+                        const isArchived = data.row.raw[9] == 1; // index of is_archived
+
+                        if (isArchived) {
+                            data.cell.styles.fillColor = [220, 53, 69]; // Bootstrap danger red
+                            data.cell.styles.textColor = 255;
+                        }
+                    }
+
+                    // Hide IS_ARCHIVED column
+                    if (data.column.index === 9) {
+                        data.cell.text = '';
+                    }
+                },
+            });
+
+            startY = doc.lastAutoTable.finalY + 10;
+
+            doc.save('payment_collection.pdf');
+            // saveExportLogs('Accounts - Export PDF');
+        },
+
         numberWithCommas(data) {
             return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         },

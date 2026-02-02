@@ -1085,6 +1085,9 @@ class Billing extends MY_Controller {
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
 
+        $this->core_layout->addJs("plugins/export_plugins/jspdf.umd.min.js", true);
+        $this->core_layout->addJs("plugins/export_plugins/jspdf-autotable.js", true);
+
         $this->core_layout->addJs("js/eforms/billing/reports_soa/remittance.js", true);
         $this->load->view('core/templates/header');
         $this->load->view('eforms/billing/reports_soa/remittance');
