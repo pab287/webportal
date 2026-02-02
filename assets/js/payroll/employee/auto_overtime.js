@@ -152,7 +152,6 @@ const dtTable = $('#tbl-employee-auto-overtime').DataTable({
     processing: true,
     searching: false,
     serverSide: true,
-    // ordering: false,
     rowId: 'employee_id',
     order: [[1, 'asc']],
     buttons: [
@@ -509,27 +508,29 @@ $.validate({
     lang: "en",
     scrollToTopOnError: false,
     onSuccess: function (form) {
-        console.log("SUCCESS");
-        // $.ajax({
-        //     url: baseUrl('payroll/employee/approve_overtime'),
-        //     type: 'POST',
-        //     dataType: 'json',
-        //     data: $(form).serialize(),
-        //     success: function (res) {
-        //         if (res.status === true || res.status === 'success') {
-        //             toastr.success(res.message || 'Overtime approved successfully');
-        //             $('#approveOvertimeModal').modal('hide');
-
-        //         } else {
-        //             toastr.error(res.message || 'Failed to approve overtime');
-        //         }
-        //     },
-        //     error: function () {
-        //         toastr.error('Server error. Please try again.');
-        //     }
-        // });
-
-        return false; // IMPORTANT: prevent normal form submit
+        $.ajax({
+            url: baseUrl('payroll/employee/approve_auto_overtime'),
+            type: 'POST',
+            dataType: 'json',
+            data:{
+                csrf_token: _csrf_hash,
+                date: $('#approve_overtime_daterange').val()
+            },
+            success: function (res) {
+                if (res.status) {
+                    toastr.success(res.message);
+                } else {
+                    toastr.error(res.message);
+                }
+                $('#approve_overtime').modal('hide');
+                $('#approve_overtime_daterange').val('');
+                $(form)[0].reset();
+            },
+            error: function () {
+                toastr.error('Server error. Please try again.');
+            }
+        });
+        return false;
     }
 });
 
@@ -541,7 +542,7 @@ $('#approve_overtime_daterange').daterangepicker({
     maxDate: moment(),
     locale: {
         cancelLabel: 'Clear',
-        format: 'MMMM DD, YYYY'   // 👈 display format
+        format: 'MMMM DD, YYYY'   
     }
 });
 
