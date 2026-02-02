@@ -733,7 +733,7 @@ const vm_save_remit = new Vue({
         },
 
         openRemarks() {
-            const minChars = 30;
+            const minChars = 15;
 
             Swal.fire({
                 title: "Remarks",
