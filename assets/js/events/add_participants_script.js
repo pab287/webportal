@@ -6,6 +6,7 @@ let attachments = null;
 let schedule = null;
 let selectedSchedule = null;
 let modalTraining = null;
+let selectedEmployee = null;
 const maxFileSize = 50 * 1024 * 1024; // 50MB
 const allowedTypes = [
     'application/pdf',
@@ -155,6 +156,7 @@ let eventVue = new Vue({
             return `${fmt(start, { ...optMD, ...optY })} - ${fmt(end, { ...optMD, ...optY })}`;
         },
         toggleEmployeeFields() {
+
             if ($('#nonEmployeeToggle').is(':checked')) {
                 $('#employee-select').prop('disabled', false);
                 $('#new_event_form input[type="text"], #new_event_form input[type="email"]')
@@ -166,6 +168,7 @@ let eventVue = new Vue({
                     $('#new_event_form')[0].reset(); 
                     $("#employee-select").val(empId).trigger('change');
                     $('#nonEmployeeToggle').prop('checked', toggle);
+                    console.log(selectedEmployee,selectedNonEmployee);
             } else {
                 $('#employee-select').prop('disabled', true);
                 $('#new_event_form input[type="text"], #new_event_form input[type="email"]').prop('disabled', false);
@@ -787,7 +790,6 @@ function itemDatatableActions(id, status, awarded) {
     let today    = moment();
     let isUpcoming = today.isBefore(fromDate, 'day');
     let isDone     = today.isAfter(toDate, 'day');
-    console.log(status);
     if (!isDone) {
 
         if(status != 'confirmed' && status != 'declined'){
@@ -1077,6 +1079,7 @@ function archiveParticipant(id) {
                     } else {
                         toastr.error(res.message || 'Failed to archive participant.', 'Error', { timeOut: 5000 });
                     }
+                    selectedEmployee = "";
                 },
                 error: function(xhr, status, error) {
                     toastr.error('Something went wrong. Please try again.', 'Error', { timeOut: 5000 });
