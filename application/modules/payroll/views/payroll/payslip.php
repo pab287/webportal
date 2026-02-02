@@ -391,6 +391,7 @@
                             </div>
                         </div>
                     </template>
+                    
                     <template v-if="parseInt(row.is_bonus) === 0">
                         <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
                         <template v-if="parseFloat(row.total_unrendered_amount) > 0">
@@ -423,22 +424,6 @@
                                     <span class="m--font-boldest">{{row.total_allowances}}</span>
                                 </div>
                             </div>
-                            <!-- div class="row text-right">
-                                <div class="col-md-5">
-                                    <small class="m--font-bold">ABSENT HOURS</small>
-                                </div>
-                                <div class="col-md-7 text-left">
-                                    <span class="m--font-bold">{{parseFloat(row.absent_hours) > 0 ? row.absent_hours : "0.00"}}</span>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-5 text-right">
-                                    <small class="m--font-bold">UT HOURS</small>
-                                </div>
-                                <div class="col-md-7 text-left">
-                                    <span class="m--font-bold">{{parseFloat(row.undertime_hours) > 0 ? row.undertime_hours : "0.00"}}</span>
-                                </div>
-                            </div -->
                             <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
                         </template>
 

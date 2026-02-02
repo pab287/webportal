@@ -64,7 +64,7 @@
                     <template v-if="parseFloat(row.holiday_hours) > 0">
                         <div class="row">
                             <div class="col-md-8">
-                                <span class="m--font-bolder">HOLIDAY PAY</span>
+                                <span class="m--font-bolder">HOLIDAY PAY <small class="m--font-boldest">(BASIC PAY INC)</small></span>
                             </div>
                             <div class="col-md-4 text-right">
                                 <span class="m--font-boldest">{{row.total_holiday_amount}}</span>
@@ -79,80 +79,68 @@
 
                     <template v-if="parseInt(row.is_bonus) === 0">
                         <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
-                        <div class="row m--margin-bottom-5 m--margin-top-5">
-                            <div class="col-md-8">
-                                <span class="m--font-bolder">LATES/ABSENCES</span>
+                        <template v-if="parseFloat(row.total_unrendered_amount) > 0">
+                            <div class="row m--margin-bottom-5 m--margin-top-5">
+                                <div class="col-md-8">
+                                    <span class="m--font-bolder">LATES/ABSENCES</span>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <span class="m--font-boldest">( {{row.total_unrendered_amount}} )</span>
+                                    <span class="m--font-boldest">&nbsp;</span>
+                                </div>
                             </div>
-                            <div class="col-md-4 text-right">
-                                <span class="m--font-boldest">( {{row.total_unrendered_amount}} )</span>
-                                <span class="m--font-boldest">&nbsp;</span>
+                            <div class="row" v-if="parseFloat(row.absent_hours) > 0 || parseFloat(row.undertime_hours) > 0">
+                                <div class="col-md-6 text-right" v-if="parseFloat(row.absent_hours) > 0">
+                                    <small class="m--font-bold">ABSENT HRS:</small>&nbsp;<span class="m--font-bolder">{{row.absent_hours}}</span>
+                                </div>
+                                <div class="col-md-6 text-left" v-if="parseFloat(row.undertime_hours) > 0">
+                                    <small class="m--font-bold">UT HRS:</small>&nbsp;<span class="m--font-bolder">{{row.undertime_hours}}</span>
+                                </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 text-right">
-                                <small class="m--font-bold">ABSENT HRS:</small>&nbsp;<span class="m--font-bolder">{{row.absent_hours}}</span>
-                            </div>
-                            <div class="col-md-6 text-left">
-                                <small class="m--font-bold">UT HRS:</small>&nbsp;<span class="m--font-bolder">{{row.undertime_hours}}</span>
-                            </div>
-                        </div>
 
-                        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+                            <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+                        </template>
 
-                        <div class="row">
-                            <div class="col-md-8">
-                                <span class="m--font-bolder">ALLOWANCES </span>
+                        <template v-if="parseFloat(row.total_allowances) > 0">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <span class="m--font-bolder">ALLOWANCES </span>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <span class="m--font-boldest">{{row.total_allowances}}</span>
+                                </div>
                             </div>
-                            <div class="col-md-4 text-right">
-                                <span class="m--font-boldest">{{row.total_allowances}}</span>
-                            </div>
-                        </div>
-
-                        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5 m--margin-top-5"></div>
-
-                        <div class="row text-right">
-                            <div class="col-md-5">
-                                <small class="m--font-bold">UT HOURS</small>
-                            </div>
-                            <div class="col-md-7 text-left">
-                                <span class="m--font-bold">{{row.undertime_hours}}</span>
-                            </div>
-                        </div>
-
-                        <div class="row text-right">
-                            <div class="col-md-5">
-                                <small class="m--font-bold">ABSENT HOURS</small>
-                            </div>
-                            <div class="col-md-7 text-left">
-                                <span class="m--font-bold">{{row.absent_hours}}</span>
-                            </div>
-                        </div>
-                    
-                    <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+                            <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5 m--margin-top-5"></div>
+                        </template>
 
                         <template v-if="row.ot_amount > 0">
                         <div class="row m--margin-top-5">
                             <div class="col-md-5">
                                 <span class="m--font-bolder">OVERTIME </span>
                             </div>
-                            <div class="col-md-3 text-left">
-                                <span class="m--font-bold">{{ ot_hrs }}</span>
-                            </div>
-                            <div class="col-md-4 text-right">
+                            <div class="col-md-7 text-right">
                                 <span class="m--font-boldest">{{ ot_computation }}</span>
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 text-right">
+                            <div class="col-md-6 text-right" v-if="parseFloat(row.ot_minutes) > 0">
                                 <small class="m--font-bold">OT HRS:</small>&nbsp;<span class="m--font-bolder">{{ ot_hrs }}</span>
                             </div>
-                            <div class="col-md-6 text-left">
+                            <div class="col-md-6 text-left" v-if="parseFloat(row.ot_ndiff_minutes) > 0">
                                 <small class="m--font-bold">OT NDIFF HRS:</small>&nbsp;<span class="m--font-bolder">{{ ot_ndiff_hrs }}</span>
                             </div>
                         </div>
+                        <div class="row m--margin-top-5" v-if="parseFloat(row.ot_allowance_amount) > 0">
+                            <div class="col-md-5">
+                                <span class="m--font-bolder">OT ALLOWANCE </span>
+                            </div>
+                            <div class="col-md-7 text-right">
+                                <span class="m--font-boldest">{{ row.ot_allowance_amount }}</span>
+                            </div>
+                        </div>
+                        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
                         </template>
                     </template>
-                    <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
 
                     <template v-if="row.adjustment_e_count > 0">
                     <h6>ADJUSTMENTS</h6>
