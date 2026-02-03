@@ -416,7 +416,7 @@
 
 						<div id="soa_ledger_vue_wrap">
 							<div class="table-header">
-								<div class="row align-items-center justify-content-between mx-0">
+								<div class="row align-items-start justify-content-between mx-0">
 									<div class="col">
 										<h6 class="text-center mb-0">Due / Payment Date</h6>
 									</div>
@@ -427,10 +427,12 @@
 
 									<div class="col">
 										<h6 class="text-center mb-0">DEBIT</h6>
+										<small class="d-block text-center mt-1 mb-0" style="font-size: 9px;">Total Charges + Penalties + RF = Debit</small>
 									</div>
 
 									<div class="col">
 										<h6 class="text-center mb-0">CREDIT</h6>
+										<small class="d-block text-center mt-1 mb-0" style="font-size: 9px;">Rec Amt + Bal Cov = Debit</small>
 									</div>
 
 									<div class="col">
@@ -493,13 +495,11 @@
 								<div class="row align-items-center justify-content-between mx-0 mt-4">
 									<div class="col"></div>
 									<div class="col"></div>
+									<div class="col"></div>
 									<div class="col text-right">
-										<small class="text-right mb-0" style="font-size: 9px;">Total Charges + Penalties + RF = Debit</small>
+										 <h5 style="font-weight: 900;color: #737373;">TOTAL</h5>
 									</div>
-									<div class="col text-right">
-										<small class=" mb-0" style="font-size: 9px;">Rec Amt + Bal Cov = Debit</small>
-									</div>
-									<div class="col text-right"><h5 style="font-weight: 900;color: #737373;">₱ {{ totalBalance }}</h5></div>
+									<div class="col text-right"><h5 style="font-weight: 900;color: #737373;">₱ {{ totalBalance < 0 ? 0 : totalBalance}}</h5></div>
 								</div>
 							</div>
 						</div>

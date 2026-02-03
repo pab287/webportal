@@ -5211,11 +5211,13 @@ class Billing_m extends CI_Model {
         $data['lastbill'] = $balance; // Useless but as is
 
         $penalty = $balance["total_penalty"] - $first_unpaid_penalty;
+
+        $_total = $total_balance + $penalty;
         
-        $data['overdue_charges'] = number_format($total_balance_data["balance"], 2, '.', ''); 
+        $data['overdue_charges'] = number_format(($total_balance_data["balance"] < 0) ? 0 : $total_balance_data["balance"], 2, '.', ''); 
         $data['overpayment'] = $overpayment;
         $data['total_penalty'] = number_format($penalty, 2, '.', '');
-        $data["total_balance"] = number_format($total_balance + $penalty, 2, '.', '');
+        $data["total_balance"] = number_format($_total < 0 ? 0 : $_total, 2, '.', '');
 
         return $data;
     }
