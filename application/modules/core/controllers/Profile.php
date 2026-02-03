@@ -32,6 +32,9 @@ class Profile extends MY_Controller {
 		$this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
 		$this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
 
+		$this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+
 		$this->core_layout->addCss("css/hris/view_employee_masterfile.css", true);
 		$this->core_layout->addCss("plugins/star-rating/css/star-rating-svg.css", true);
 		$this->core_layout->addCss('css/hris/index.css', true);
