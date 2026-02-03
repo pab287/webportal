@@ -654,6 +654,7 @@ $("#m_soa").on('hidden.bs.modal', function(){
     $(".report-wrapper").addClass("m--hide");
 
     $("#report-tbl-wrapper table>tbody").empty();
+    $("#payment_footer_total").html('₱ 0.00');
 
     $("#date-range").val("");
     generateDateTimePicker(null, null);

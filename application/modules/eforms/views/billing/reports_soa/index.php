@@ -353,7 +353,7 @@
 									<th style="text-align: right;"></th>
 									<th></th>
 									<th></th>
-									<th style="font-weight: bold; color: #525252;"></th>
+									<th id="payment_footer_total" style="font-weight: bold; color: #525252;"></th>
 								</tr>
 							</tfoot>
 						</table>
