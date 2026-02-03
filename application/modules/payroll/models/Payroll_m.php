@@ -5416,7 +5416,7 @@ class Payroll_m extends CI_Model{
     public function getCurrentPayrollPayslip($id=null){
         $resultset = array();
         if($id){
-            $sqlSelect = "ps.*, DATE_FORMAT(ps.date_start, '%m/%d/%y') as date_start, DATE_FORMAT(ps.date_end, '%m/%d/%y') as date_end, emp.payroll_type, emp.basic_rate,
+            $sqlSelect = "ps.*, DATE_FORMAT(ps.date_start, '%m/%d/%y') as date_start, DATE_FORMAT(ps.date_end, '%m/%d/%y') as date_end, DATE_FORMAT(ps.pay_date, '%m/%d/%y') as pay_date, emp.payroll_type, emp.basic_rate,
             IFNULL(comp.description, emp.company_id) as company_description, IFNULL(dept.description, emp.department_id) as department_description,
             IFNULL(pos.name, emp.position) as position_description, GROUP_CONCAT(DISTINCT(loan_payments.id)) as loan_payments,
             GROUP_CONCAT(DISTINCT(CONCAT(custom_adjustments.particulars,'||',custom_adjustments.amount, '||', custom_adjustments.cadj_type))) custom_adjustments,

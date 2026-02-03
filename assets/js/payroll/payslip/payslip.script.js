@@ -1513,10 +1513,10 @@ function triggerPrintable(ids = []) {
                         const printableContainer = printWindow.document.getElementById('append_printable-container');
                         if (printableContainer) {
                             printableContainer.innerHTML = tempHtml;
-                            /*** setTimeout(() => {
+                            setTimeout(() => {
                                 printWindow.print();
                                 printWindow.close();
-                            }, 250); ***/
+                            }, 250);
                         } else {
                             toastr.info('Print detail(s) is still in progress!', 'Payroll / Payslip');
                             printWindow.close();

@@ -2,6 +2,14 @@
     <div class="row">
         <div class="col-md-12 text-left"><h5>{{row.company_description}}</h5></div>
     </div>
+        <div class="row">
+        <div class="col-md-4">
+            <h6 class="m--font-boldest">Pay Date</h6>
+        </div>
+        <div class="col-md-8 text-right">
+            <h6 class="m--font-boldest">{{row.pay_date}}</h6>
+        </div>
+    </div>
     <div class="row">
         <div class="col-md-4">
             <h6 class="m--font-boldest">Pay Period</h6>
@@ -68,7 +76,6 @@
                 </div>
                 <div class="col-md-4 text-right">
                     <span class="m--font-boldest">( {{row.total_unrendered_amount}} )</span>
-                    <span class="m--font-boldest">&nbsp;</span>
                 </div>
             </div>
             <div class="row" v-if="parseFloat(row.absent_hours) > 0 || parseFloat(row.undertime_hours) > 0">
@@ -80,8 +87,22 @@
                 </div>
             </div>
             <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
-
-            {{ row.unpaid_holiday_amount }}
+        </template>
+        <template v-if="parseFloat(row.unpaid_holiday_amount) > 0">
+            <div class="row m--margin-top-5">
+                <div class="col-md-8">
+                    <span class="m--font-bolder">UNPAID HOLIDAY</span>
+                </div>
+                <div class="col-md-4 text-right">
+                    <span class="m--font-boldest">( {{row.unpaid_holiday_amount}} )</span>
+                </div>
+            </div>
+            <div class="row" v-if="parseFloat(row.unpaid_holiday_hours) > 0">
+                <div class="col-md-6 text-right">
+                    <small class="m--font-bold">HOL HRS:</small>&nbsp;<span class="m--font-bolder">{{row.unpaid_holiday_hours}}</span>
+                </div>
+            </div>
+            <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
         </template>
         <template v-if="parseFloat(row.total_allowances) > 0">
             <div class="row">

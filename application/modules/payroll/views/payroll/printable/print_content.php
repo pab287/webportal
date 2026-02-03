@@ -93,6 +93,15 @@
 
                     <div class="row">
                         <div class="col-md-6 printable-width-6 text-left">
+                            <h5 class="m--font-boldest">PAY DATE</h5>
+                        </div>
+                        <div class="col-md-6 printable-width-6 text-right">
+                            <h5 class="m--font-boldest"><?php echo $item->pay_date; ?></h5>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 printable-width-6 text-left">
                             <h5 class="m--font-boldest">PAY PERIOD</h5>
                         </div>
                         <div class="col-md-6 printable-width-6 text-right">
@@ -180,43 +189,17 @@
                             </div>
                             <div class="col-md-4 printable-width-4 text-right">
                                 <h5 class="m--font-boldest m--marginless">( <?php echo $item->unpaid_holiday_amount; ?> )</h5>
-                                <h5 class="m--font-boldest m--marginless">&nbsp;</h5>
                             </div>
                         </div>
-                        <?php if(floatval($item->absent_hours) > 0 || floatval($item->undertime_hours) > 0): ?>
+                        <?php if(floatval($item->unpaid_holiday_hours) > 0): ?>
                         <div class="row">
                             <div class="col-md-6 printable-width-6 text-right">
-                                <h5 class="m--marginless"><span class="m--font-bolder">ABSENT HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo floatval($item->absent_hours) > 0 ? $item->absent_hours : "0.00"; ?></span></h5>
-                            </div>
-                            <div class="col-md-6 printable-width-6 text-left">
-                                <h5 class="m--marginless"><span class="m--font-bolder">UT HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo floatval($item->undertime_hours) > 0 ? $item->undertime_hours : "0.00"; ?></span></h5>
+                                <h5 class="m--marginless"><span class="m--font-bolder">HOL HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo floatval($item->unpaid_holiday_hours) > 0 ? $item->unpaid_holiday_hours : "0.00"; ?></span></h5>
                             </div>
                         </div>
                         <?php endif; ?>
                         <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                         <?php endif; ?>
-
-                        <?php if(floatval($item->unpaid_holiday_amount) > 0 && floatval($item->total_unrendered_amount) > 0): ?>
-                        <div class="row m--margin-top-5">
-                            <div class="col-md-8 printable-width-8">
-                                <h5 class="m--font-bolder m--marginless">UNPAID HOLIDAY</h5>
-                            </div>
-                            <div class="col-md-4 printable-width-4 text-right">
-                                <h5 class="m--font-boldest m--marginless">( <?php echo $item->unpaid_holiday_amount; ?> )</h5>
-                                <h5 class="m--font-boldest m--marginless">&nbsp;</h5>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 printable-width-6 text-right">
-                                <h5 class="m--marginless"><span class="m--font-bolder">DAYS:</span>&nbsp;<span class="m--font-bolder"><?php echo floatval($item->unpaid_holiday_hours) / 8; ?></span></h5>
-                            </div>
-                            <div class="col-md-6 printable-width-6 text-left">
-                                <h5 class="m--marginless"><span class="m--font-bolder">HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo $item->unpaid_holiday_hours; ?></span></h5>
-                            </div>
-                        </div>
-                        <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
-                        <?php endif; ?>
-
                         <?php if(floatval($item->total_allowances) > 0): ?>
                         <div class="row m--margin-top-5 m--margin-bottom-5">
                             <div class="col-md-8 printable-width-8">
