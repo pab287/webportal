@@ -259,8 +259,6 @@ $(document).ready(function () {
             $(this).prop('checked', isChecked);
         })
         isMass = $('.selectedOvertime:checked').length > 0;
-
-        console.log(isMass);
     })
     $(document).on("click",".selectedOvertime",function(){
         if ( $('.selectedOvertime:checked').length !== $('.selectedOvertime').length) {
@@ -584,7 +582,6 @@ const approveModalFileUpload = function () {
 $.formUtils.addValidator({
     name: 'checkbox_group_min1',
     validatorFunction: function (value, $el, config, language, $form) {
-        console.log(value);
         return parseInt(value) > 0;
     },
     errorMessage: 'Select at least 1 image option!',
@@ -601,28 +598,58 @@ $.validate({
         const formData = $(currentForm).serialize();
         const currentModal = $(currentForm).closest(".modal");
 
-        if(vmTempUploadedContent.count > 0){
-            $.ajax({
-                url: formUrl,
-                type: "post",
-                data: formData,
-                dataType: "json",
-                beforeSend: function () {
-                    $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                },
-                success: function (json) {
-                    if (json.response) {
-                        toastr.success(json.toastr_msg, "Import Overtime");
-                        tblOvertime.ajax.reload();
-                        if (typeof currentModal !== "undefined") { currentModal.modal("hide"); }
-                    } else {
-                        toastr.error(json.toastr_msg, "Import Overtime");
-                    }
-                }
-            });
-        }else{
-            toastr.error('Please Upload Attachment Image First.', "Import Overtime");
-        }
+        Swal.fire({
+            icon: 'question',
+            title: 'Overtime Summary',
+            text: 'Would you like to print the overtime summary?',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                
+            } else {
+            }
+            if (typeof currentModal !== "undefined") { currentModal.modal("hide"); }
+        });
+        // if(vmTempUploadedContent.count > 0){
+        //     $.ajax({
+        //         url: formUrl,
+        //         type: "post",
+        //         data: formData,
+        //         dataType: "json",
+        //         beforeSend: function () {
+        //             $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+        //         },
+        //         success: function (json) {
+        //             if (json.response) {
+        //                 toastr.success(json.toastr_msg, "Import Overtime");
+        //                 tblOvertime.ajax.reload();
+
+        //                 Swal.fire({
+        //                     icon: 'question',
+        //                     title: 'Overtime Summary',
+        //                     text: 'Would you like to print the overtime summary?',
+        //                     showCancelButton: true,
+        //                     confirmButtonColor: '#3085d6',
+        //                     cancelButtonColor: '#d33',
+        //                     confirmButtonText: 'Yes'
+        //                 }).then((result) => {
+        //                     if (result.isConfirmed) {
+
+        //                     } else {
+        //                     }
+        //                     if (typeof currentModal !== "undefined") { currentModal.modal("hide"); }
+        //                 });
+        //             } else {
+        //                 toastr.error(json.toastr_msg, "Import Overtime");
+        //             }
+        //         }
+        //     });
+        // }else{
+        //     toastr.error('Please Upload Attachment Image First.', "Import Overtime");
+        // }
 
         return false;
     }
