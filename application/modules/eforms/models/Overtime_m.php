@@ -2271,4 +2271,76 @@ class Overtime_m extends CI_Model {
             'valid' => true
         ];
     }
+
+    public function select_signatory_employee(){
+        $get = $this->input->get();
+        $resultarray = array();
+        $employee_ids = array();
+        $companyIds = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: null;
+        $search = (isset($get["q"]) && $get["q"])? $get["q"]: null;
+
+        $this->db->select("a.id, a.firstname, a.lastname, a.middlename, a.suffix");
+        $this->db->from("gccmaster.tblemployees a");
+        $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
+        $this->db->where("a.employee_status", "Active"); 
+        $this->db->where("b.id", $companyIds);
+
+        if (isset($search) && $search) {
+            $this->db->group_start();
+            $this->db->like("a.firstname",  $search, "both");
+            $this->db->or_like("a.lastname",  $search, "both");
+            $this->db->limit(10);
+            $this->db->group_end();
+        }
+
+        $query = $this->db->get();
+
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $data = array();
+                $data["id"] = $_query["id"];
+                $data["text"] = $_query["firstname"] . " " . $_query["middlename"] . " " . $_query["lastname"];
+                if ($_query["suffix"] != "N/A" && $_query["suffix"] != "none") {
+                    $data["text"] .= " " . $_query["suffix"];
+                }
+                $resultarray[] = $data;
+            }
+
+        }
+        return array("results" => $resultarray);
+    }
+
+    public function get_signatory(){
+        $resultset = array();
+        $post = $this->input->post();
+        $order_val = array(array("column"=>"0", "dir"=>"desc"));
+        $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+        $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
+        $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+        $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+        $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
+
+        $rowCount = 0;
+        $rowData = array();
+
+        $rowData = $this->get_item($limit, $offset, $sortBy, $sortOrder, $search);
+        $rowCount = $this->get_item_count($search);
+
+        $resultset["recordsTotal"] = $rowCount;
+        $resultset["recordsFiltered"] = $rowCount;
+        $resultset["data"] = $rowData;
+
+        return $resultset;
+    }
+
+    public function get_item($limit, $offset, $sortBy, $sortOrder, $search = null) {
+        $result = array();
+
+        return $result;
+    }
+
+    public function get_item_count($search = null) {
+        return 0;
+    }
 }

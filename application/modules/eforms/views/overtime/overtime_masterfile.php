@@ -11,7 +11,37 @@
 						</div>
 					</div>
 					<div class="m-portlet__head-tools">
-						
+						<ul class="m-portlet__nav">
+							<li class="m-portlet__nav-item m-dropdown m-dropdown--inline m-dropdown--arrow m-dropdown--align-right m-dropdown--align-push" data-dropdown-toggle="hover" aria-expanded="true">
+								<a href="javascript:void(0);" class="m-portlet__nav-link m-portlet__nav-link--icon m-portlet__nav-link--icon-lg m-dropdown__toggle">
+									<i class="la la-ellipsis-h m--font-brand"></i>
+								</a>
+								<div class="m-dropdown__wrapper">
+									<span class="m-dropdown__arrow m-dropdown__arrow--right m-dropdown__arrow--adjust" style="left: auto; right: 72.242px;"></span>
+									<div class="m-dropdown__inner">
+										<div class="m-dropdown__body">
+											<div class="m-dropdown__content">
+												<ul class="m-nav">
+                                                    <li class="m-nav__section m-nav__section--first">
+														<span class="m-nav__section-text">
+															Quick Action
+														</span>
+                                                    </li>
+                                                    <li class="m-nav__item">
+                                                        <a href="<?=base_url('eforms/overtime/signatories') ?>" class="m-nav__link btnView">
+                                                            <i class="m-nav__link-icon flaticon-open-box"></i>
+                                                            <span class="m-nav__link-text">
+																OT Signatories
+															</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+											</div>
+										</div>
+									</div>
+								</div>
+							</li>
+						</ul>
 					</div>
 				</div>
 				<div class="m-portlet__body">
