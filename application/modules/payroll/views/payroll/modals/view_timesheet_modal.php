@@ -1,6 +1,5 @@
-<div class="modal fade" role="dialog"
-     id="view-timesheet-modal">
-    <div class="modal-dialog" role="document">
+<div class="modal fade" id="view-timesheet-modal">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">

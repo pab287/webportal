@@ -765,6 +765,8 @@ $(document)
                                 }
                             }
 
+                            const paidHolidayState = parseInt(row.paid_holiday) === 1 ? 'm--font-success' : '';
+                            const paidHolidayText = parseInt(row.paid_holiday) === 1 ? 'Paid Holiday' : 'Holiday';
                             let HolidayIcon = ``;
                             if (parseInt(row.is_holiday) == 1) {
                                 const isPaidHoliday = parseInt(row.paid_holiday) == 1;

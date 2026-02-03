@@ -146,7 +146,6 @@
                                         <h5 class="m--font-bolder m--marginless">ALLOWANCES </h5>
                                     </div>
                                     <div class="col-md-4 printable-width-4 text-right">
-                                        <!-- span class="m--font-boldest"><?=$item->psa_total; ?></span -->
                                         <h5 class="m--font-boldest m--marginless"><?=number_format($item->total_allowances, 2); ?></h5>
                                     </div>
                                 </div>

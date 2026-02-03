@@ -7,6 +7,8 @@
 .row.m-row--col-separator-xl > div:first-child{ border-right: 1px solid #000018; }
 .m--printable-line { border-top: 1px solid #000018; padding-top: 5px; }
 .mt-3 { margin-top: 1rem !important; }
+.mr-3 { margin-right: 1rem !important; }
+.mr-5 { margin-right: 2rem !important; }
 </style>
 <style type="text/css" media="print">
 @media print {
@@ -80,7 +82,6 @@
     <?php $_temp_total_others = 0; $temp_totalLoan = 0; $_tempDeductions = 0; ?>
 <div class="row justify-content-md-center">
     <div class="col-md-6 col-lg-6 col-xl-6 printable-width-5--5">
-        <!-- div class="m-portlet m-portlet--full-height m--padding-10" -->
         <div class="m-portlet m--padding-10 m--marginless">
             <div class="m-portlet__body m-portlet__body--no-padding">
                 <div class="m-form m-form--fit m-form--label-align-right">
@@ -141,7 +142,9 @@
                         </div>
                     </div>
 
-                    <?php if(floatval($item->holiday_hours) > 0): ?>
+                    <?php if(intval($item->is_bonus) == 0): ?>
+                        <?php if(floatval($item->total_unrendered_amount) > 0): ?>
+                        <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                         <div class="row m--margin-top-5">
                             <div class="col-md-8 printable-width-8">
                                 <h5 class="m--font-bolder m--marginless">HOLIDAY PAY <small class="m--font-boldest">(BASIC PAY INC)</small></h5>
@@ -150,22 +153,34 @@
                                 <h5 class="m--font-boldest mr-3"><?php echo $item->total_holiday_amount; ?></h5>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 printable-width-6 text-right">
-                                <h5 class="m--marginless"><span class="m--font-bolder">HOL HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo $item->holiday_hours; ?></span></h5>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if(intval($item->is_bonus) == 0): ?>
-                        <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
-                        <?php if(floatval($item->total_unrendered_amount) > 0): ?>
                         <div class="row m--margin-top-5">
                             <div class="col-md-8 printable-width-8">
                                 <h5 class="m--font-bolder m--marginless">LATES/ABSENCES</h5>
                             </div>
                             <div class="col-md-4 printable-width-4 text-right">
                                 <h5 class="m--font-boldest m--marginless">( <?php echo $item->total_unrendered_amount; ?> )</h5>
+                                <h5 class="m--font-boldest m--marginless">&nbsp;</h5>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 printable-width-6 text-right">
+                                <h5 class="m--marginless"><span class="m--font-bolder">ABSENT HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo $item->absent_hours; ?></span></h5>
+                            </div>
+                            <div class="col-md-6 printable-width-6 text-left">
+                                <h5 class="m--marginless"><span class="m--font-bolder">UT HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo $item->undertime_hours; ?></span></h5>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <?php if(floatval($item->unpaid_holiday_amount) > 0): ?>
+                        <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
+                        <div class="row m--margin-top-5">
+                            <div class="col-md-8 printable-width-8">
+                                <h5 class="m--font-bolder m--marginless">UNPAID HOLIDAY</h5>
+                            </div>
+                            <div class="col-md-4 printable-width-4 text-right">
+                                <h5 class="m--font-boldest m--marginless">( <?php echo $item->unpaid_holiday_amount; ?> )</h5>
+                                <h5 class="m--font-boldest m--marginless">&nbsp;</h5>
                             </div>
                         </div>
                         <?php if(floatval($item->absent_hours) > 0 || floatval($item->undertime_hours) > 0): ?>
@@ -203,7 +218,7 @@
                         <?php endif; ?>
 
                         <?php if(floatval($item->total_allowances) > 0): ?>
-                        <div class="row m--margin-top-5">
+                        <div class="row m--margin-top-5 m--margin-bottom-5">
                             <div class="col-md-8 printable-width-8">
                                 <h5 class="m--font-bolder m--marginless">ALLOWANCES </h5>
                             </div>
@@ -271,6 +286,7 @@
                     <?php endif; ?>
 
                     <?php if($item->adjustment_e_count > 0): ?>
+                        <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                         <div class="row m--margin-top-5">
                             <div class="col-md-6 printable-width-6">
                                 <h5 class="m--font-bolder m--marginless">ADJUSTMENTS </h5>
@@ -278,7 +294,6 @@
                         </div>
 
                         <?php foreach ($item->adjustment_earnings as $kk => $vv): ?>
-                        
                             <div class="row text-right">
                                 <div class="col-md-5 printable-width-5">
                                     <h5 class="m--marginless m--font-boldest"><?php echo strtoupper($vv->label); ?></h5>
@@ -288,10 +303,8 @@
                                 </div>
                             </div>
                         <?php endforeach; ?>
-
-                        <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                     <?php endif; ?>
-
+                    <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                     <div class="row m--margin-top-5 <?php echo intval($item->is_bonus) == 0 ? "m--margin-bottom-5":""; ?>">
                         <div class="col-md-8 printable-width-8">
                             <h5 class="m--font-bolder m--marginless">GROSS PAY </h5>
@@ -308,12 +321,9 @@
 
                     <?php if(intval($item->is_bonus) == 0): ?>
                         <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--margin-bottom-5"></div>
-                        
                         <?php if(floatval($item->sss) != 0 || floatval($item->sss_prov) != 0 || floatval($item->ph) != 0 || floatval($item->hdmf) != 0 || floatval($item->tax) != 0 || floatval($item->sss_loan) != 0 || floatval($item->hdmf_loan) != 0) { ?>
-                            <h5 class="m--marginless mt-3"><span class="">DEDUCTIONS</span></h5>
-                        <?php } ?>
-                    
-                        <?php if($item->sss && floatval($item->sss) > 0): ?>
+                        <h5 class="m--marginless mt-3"><span class="">DEDUCTIONS</span></h5>
+                            <?php if($item->sss && floatval($item->sss) > 0): ?>
                             <div class="row text-right">
                                 <div class="col-md-5 printable-width-5">
                                     <h5 class="m--font-bolder m--marginless">SSS </h5>
@@ -322,48 +332,49 @@
                                     <h5 class="m--font-bolder m--marginless"><?php echo $item->sss; ?></h5>
                                 </div>
                             </div>
-                        <?php endif; ?>
+                            <?php endif; ?>
 
-                        <?php if($item->sss_prov && floatval($item->sss_prov) > 0): ?>
-                            <div class="row text-right">
-                                <div class="col-md-5 printable-width-5">
-                                    <h5 class="m--font-bolder m--marginless">SSS PROVIDENT</h5>
+                            <?php if($item->sss_prov && floatval($item->sss_prov) > 0): ?>
+                                <div class="row text-right">
+                                    <div class="col-md-5 printable-width-5">
+                                        <h5 class="m--font-bolder m--marginless">SSS PROVIDENT</h5>
+                                    </div>
+                                    <div class="col-md-7 printable-width-7 text-left">
+                                        <h5 class="m--font-bolder m--marginless"><?php echo $item->sss_prov; ?></h5>
+                                    </div>
                                 </div>
-                                <div class="col-md-7 printable-width-7 text-left">
-                                    <h5 class="m--font-bolder m--marginless"><?php echo $item->sss_prov; ?></h5>
-                                </div>
-                            </div>
-                        <?php endif; ?>
+                            <?php endif; ?>
 
-                        <?php if($item->ph && floatval($item->ph) > 0): ?>
-                            <div class="row text-right">
-                                <div class="col-md-5 printable-width-5">
-                                    <h5 class="m--font-bolder m--marginless">PHILHEALTH </h5>
+                            <?php if($item->ph && floatval($item->ph) > 0): ?>
+                                <div class="row text-right">
+                                    <div class="col-md-5 printable-width-5">
+                                        <h5 class="m--font-bolder m--marginless">PHILHEALTH </h5>
+                                    </div>
+                                    <div class="col-md-7 printable-width-7 text-left">
+                                        <h5 class="m--font-bolder m--marginless"><?php echo $item->ph; ?></h5>
+                                    </div>
                                 </div>
-                                <div class="col-md-7 printable-width-7 text-left">
-                                    <h5 class="m--font-bolder m--marginless"><?php echo $item->ph; ?></h5>
-                                </div>
-                            </div>
-                        <?php endif; ?>
+                            <?php endif; ?>
 
-                        <?php if($item->hdmf && floatval($item->hdmf) > 0): ?>
-                            <div class="row text-right">
-                                <div class="col-md-5 printable-width-5">
-                                    <h5 class="m--font-bolder m--marginless">HDMF </h5>
+                            <?php if($item->hdmf && floatval($item->hdmf) > 0): ?>
+                                <div class="row text-right">
+                                    <div class="col-md-5 printable-width-5">
+                                        <h5 class="m--font-bolder m--marginless">HDMF </h5>
+                                    </div>
+                                    <div class="col-md-7 printable-width-7 text-left">
+                                        <h5 class="m--font-bolder m--marginless"><?php echo $item->hdmf; ?></h5>
+                                    </div>
                                 </div>
-                                <div class="col-md-7 printable-width-7 text-left">
-                                    <h5 class="m--font-bolder m--marginless"><?php echo $item->hdmf; ?></h5>
-                                </div>
-                            </div>
-                        <?php endif; ?>
+                            <?php endif; ?>
 
-                        <?php if($item->tax && floatval($item->tax) > 0): ?>
-                            <div class="row text-right">
-                                <div class="col-md-5 printable-width-5">
-                                    <h5 class="m--font-bolder m--marginless">TAX </h5>
-                                </div>
-                                <div class="col-md-7 printable-width-7 text-left">
-                                    <h5 class="m--font-bolder m--marginless"><?php echo $item->tax; ?></h5>
+                            <?php if($item->tax && floatval($item->tax) > 0): ?>
+                                <div class="row text-right">
+                                    <div class="col-md-5 printable-width-5">
+                                        <h5 class="m--font-bolder m--marginless">TAX </h5>
+                                    </div>
+                                    <div class="col-md-7 printable-width-7 text-left">
+                                        <h5 class="m--font-bolder m--marginless"><?php echo $item->tax; ?></h5>
+                                    </div>
                                 </div>
                             </div>
                         <?php endif; ?>
@@ -387,7 +398,8 @@
                                     </h5>
                                 </div>
                             </div>
-                        <?php endif; ?>
+                            <?php endif; ?>
+                        <?php } ?>
 
                         <?php if($item->total_loans && (floatval($item->total_loans) > 0 || (is_array($item->loans) && count($item->loans) > 0))): ?>
                             <?php if($item->deductions && floatval($item->deductions) > 0): ?>
@@ -473,7 +485,7 @@
                                     <h5 class="m--font-bolder m--marginless">TOTAL LOANS</h5>
                                 </div>
                                 <div class="col-md-4 printable-width-4 text-right">
-                                    <h5 class="m--font-boldest" style="margin: 0 2px 0 0">( <?php echo number_format($temp_totalLoan, 2); ?> )</h5>
+                                    <h5 class="m--font-boldest mr-3">( <?php echo number_format($temp_totalLoan, 2); ?> )</h5>
                                 </div>
                             </div>
                         <?php endif; ?>
@@ -486,7 +498,7 @@
                                 <h5 class="m--font-bolder m--marginless">TOTAL LOANS INTEREST</h5>
                             </div>
                             <div class="col-md-4 printable-width-4 text-right">
-                                <h5 class="m--font-boldest" style="margin: 0 2px 0 0">( <?php echo $item->total_loans_interest; ?> )</h5>
+                                <h5 class="m--font-boldest mr-3">( <?php echo $item->total_loans_interest; ?> )</h5>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -512,7 +524,7 @@
                                 <h5 class="m--font-bolder m--marginless">TOTAL OTHERS DEDUCTIONS</h5>
                             </div>
                             <div class="col-md-4 printable-width-4 text-right">
-                                <h5 class="m--font-boldest" style="margin: 0 2px 0 0">( <?php echo number_format($_temp_total_others, 2); ?> )</h5>
+                                <h5 class="m--font-boldest mr-3">( <?php echo number_format($_temp_total_others, 2); ?> )</h5>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -531,7 +543,7 @@
                         </div>
                     <?php endif; ?>
 
-                    <div class="m-portlet m-portlet--bordered m--margin-bottom-5 mt-3">
+                    <div class="m-portlet m-portlet--unair m-portlet--bordered m--margin-bottom-5 mt-3 mb-0">
                         <div class="m-portlet__body m-portlet__body--no-padding">
                             <div class="row m-row--col-separator-xl">
                                 <div class="col-md-4 printable-width-4">

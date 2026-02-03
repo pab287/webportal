@@ -147,6 +147,13 @@
                         </div>
 
                         <div class="legends__item d-flex flex-row align-items-center mt-3">
+                            <div class="legends__item__identifier mr-3 d-flex flex-column align-items-center justify-content-center">
+                            <i class="fa fa-flag m--font-success" style="font-size: 20px;"></i>
+                            </div>
+                            <div class="legends__item__description m--font-bolder">PAID HOLIDAY</div>
+                        </div>
+
+                        <div class="legends__item d-flex flex-row align-items-center mt-3">
                             <div class="legends__item__identifier legends__item__identifier--absent mr-3"></div>
                             <div class="legends__item__description m--font-bolder">ABSENT</div>
                         </div>

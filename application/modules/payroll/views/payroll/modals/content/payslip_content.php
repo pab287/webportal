@@ -1,4 +1,3 @@
-
 <div class="m-form m-form--fit m-form--label-align-right">
     <div class="row">
         <div class="col-md-12 text-left"><h5>{{row.company_description}}</h5></div>
