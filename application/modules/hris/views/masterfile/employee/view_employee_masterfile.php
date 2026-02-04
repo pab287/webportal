@@ -574,7 +574,9 @@
         const viewPayrollPayslipModal = $("#view-payroll-payslip-modal");
         var vmPayslipContent = new Vue({
             el: "#temp-payslip_content",
-            data: { row: {} },
+            data: { row: {}, ot_computation: {},
+            total_ot_hrs: 0, ot_hrs: 0, ot_ndiff_hrs: 0, ot_ndiff_computation: 0, regndiff_hrs: 0, regndiff_computation: 0,
+            total_ndiff_hrs: 0, total_ndiff_computation: 0, raw_tl: 0, raw_tod: 0, raw_tli: 0 },
         });
 
         $(document).ready( function () {
@@ -726,6 +728,10 @@
                     vmPayslipContent.row.overall_total_deductions = numberFormat(overAllTotal);
                     vmPayslipContent.row.adjustment_d_count = vmPayslipContent.row.adjustment_deductions.length;
 
+                    vmPayslipContent.raw_tl = parseFloat(totalLoan);
+                    vmPayslipContent.raw_tod = parseFloat(totalOthersDeductions);
+                    vmPayslipContent.raw_tli = parseFloat(vmPayslipContent.row.total_loans_interest);
+                    
                     if(json.response){ viewPayrollPayslipModal.modal("show"); }
                 });
             }
