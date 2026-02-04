@@ -95,6 +95,11 @@
                                                 </a>
                                             </li>
                                             <li>
+                                                <a class="dropdown-item btn btnMass_approve" href="javascript:void(0);" data-toggle="modal" data-target="#modal-mass-approve">
+                                                    Mass Approve
+                                                </a>
+                                            </li>
+                                            <li>
                                                 <a class="dropdown-item btn btnMass_approve" href="javascript:void(0);" data-toggle="modal" data-target="#modal-mass-disapprove">
                                                     Mass Disapprove
                                                 </a>

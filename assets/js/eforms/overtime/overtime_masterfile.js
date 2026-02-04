@@ -116,7 +116,7 @@ $("#ExportExcel").on("click", function (e) {
         global: false,
         dataType: "json",
         data: {
-           csrf_token : _csrf_hash,
+            csrf_token : _csrf_hash,
             search : search_val,
             query_builder : query_builder
         }
@@ -132,7 +132,7 @@ $("#ExportCSV").on("click", function (e) {
         global: false,
         dataType: "json",
         data: {
-           csrf_token : _csrf_hash,
+            csrf_token : _csrf_hash,
             search : search_val,
             query_builder : query_builder
         }
@@ -148,7 +148,7 @@ $("#ExportPDF").on("click", function (e) {
         global: false,
         dataType: "json",
         data: {
-           csrf_token : _csrf_hash,
+            csrf_token : _csrf_hash,
             search : search_val,
             query_builder : query_builder
         }
@@ -294,9 +294,9 @@ function clear_query_builder() {
 }
 
 $('#refresh').click(function() {
-  enabledFilter = false;
-  filteredIds = [];
-  tblOvertime.ajax.reload();
+    enabledFilter = false;
+    filteredIds = [];
+    tblOvertime.ajax.reload();
 });
 
 // $("#frm-advance-search").on("submit", function (e) {
@@ -357,41 +357,41 @@ $.validate({
 })
 
 $("#employee").select2({
-  placeholder: 'Select an option',
-  width: '100%',
-  dropdownParent: $("#modal-advance-search"),
-  minimumInputLength: 3,
-    ajax: {
-      url: baseUrl("eforms/overtime/get_employee"),
-      dataType: "json",
-      delay: 250,
-      global: false,
-      data: function (params) {
-        return {
-          company: $("#company").val(),
-          q: params.term
-        };
-      },
-      processResults: function (data) {
-          return data;
-      }
-}
+    placeholder: 'Select an option',
+    width: '100%',
+    dropdownParent: $("#modal-advance-search"),
+    minimumInputLength: 3,
+        ajax: {
+        url: baseUrl("eforms/overtime/get_employee"),
+        dataType: "json",
+        delay: 250,
+        global: false,
+        data: function (params) {
+            return {
+            company: $("#company").val(),
+            q: params.term
+            };
+        },
+        processResults: function (data) {
+            return data;
+        }
+    }
 });
 
 $("#company").select2({
-  placeholder: 'Select an option',
-  width: '100%',
-  dropdownParent: $("#modal-advance-search"),
-  minimumInputLength: 3,
-  ajax: {
-      url: baseUrl("eforms/overtime/get_company"),
-      dataType: "json",
-      delay: 250,
-      global: false,
-      processResults: function (data) {
-          return data;
-      }
-  }
+    placeholder: 'Select an option',
+    width: '100%',
+    dropdownParent: $("#modal-advance-search"),
+    minimumInputLength: 3,
+    ajax: {
+        url: baseUrl("eforms/overtime/get_company"),
+        dataType: "json",
+        delay: 250,
+        global: false,
+        processResults: function (data) {
+            return data;
+        }
+    }
 });
 
 
@@ -406,13 +406,13 @@ var startDate = moment().startOf('week');
 var endDate = moment().endOf('week');
 
 $("#date_time").daterangepicker({
-  startDate: startDate,
-  endDate: endDate,
-  locale: {
-    format: 'MM/DD/YYYY',
-    cancelLabel: 'Clear'
-  },
-  autoUpdateInput: false
+    startDate: startDate,
+    endDate: endDate,
+    locale: {
+        format: 'MM/DD/YYYY',
+        cancelLabel: 'Clear'
+    },
+    autoUpdateInput: false
 });
 
 $("#date_time").on('apply.daterangepicker', function(ev, picker) {
@@ -427,11 +427,11 @@ $("#date_time").on('cancel.daterangepicker', function(ev, picker) {
 });
 
 $("#modal-advance-search").on("hidden.bs.modal", function () {
-  $('#status').val(null).trigger('change');
-  $('#company').val(null).trigger('change');
-  $('#employee').val(null).trigger('change');
+    $('#status').val(null).trigger('change');
+    $('#company').val(null).trigger('change');
+    $('#employee').val(null).trigger('change');
 
-  $("#frm-advance-search").trigger('reset');
+    $("#frm-advance-search").trigger('reset');
 })
 
 $(document).on('shown.bs.modal', '#modal-import-overtime', function (e) {
@@ -605,11 +605,13 @@ $.validate({
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes'
+            confirmButtonText: 'Yes, Print it',
+            cancelButtonText: 'No, Approve only'
         }).then((result) => {
             if (result.isConfirmed) {
                 
             } else {
+
             }
             if (typeof currentModal !== "undefined") { currentModal.modal("hide"); }
         });
