@@ -4767,93 +4767,93 @@ class Billing_m extends CI_Model {
 
     // ==========================================================================
 
-    function get_distribution_reports() {
-        $arrData = [];
+    // function get_distribution_reports() {
+    //     $arrData = [];
 
-        $mos = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    //     $mos = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
-        $resultarray = array(); 
-        $post = $this->input->post();
-        $current_date = date("Y-m-d");
+    //     $resultarray = array(); 
+    //     $post = $this->input->post();
+    //     $current_date = date("Y-m-d");
 
-        $order_val = array(array("column"=>"9", "dir"=>"desc"));
-        $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
-        $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
-        $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
-        $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
-        $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
-        $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
-        $year = (isset($post["year"]) && $post["year"]) ? $post["year"] : date("Y");
+    //     $order_val = array(array("column"=>"9", "dir"=>"desc"));
+    //     $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
+    //     $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
+    //     $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+    //     $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+    //     $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
+    //     $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
+    //     $year = (isset($post["year"]) && $post["year"]) ? $post["year"] : date("Y");
         
-        // $filterFields = array("a.distribute","a.reading_date", "b.firstname", "b.lastname", "c.name");
+    //     // $filterFields = array("a.distribute","a.reading_date", "b.firstname", "b.lastname", "c.name");
 
-        $this->db->select('id, name');
-        $this->db->from('hydra_billing.subdivision');
-        $this->db->where('status', 1);
+    //     $this->db->select('id, name');
+    //     $this->db->from('hydra_billing.subdivision');
+    //     $this->db->where('status', 1);
 
-        if($search != ""){
-            $this->db->group_start();
-            foreach ($filterFields as $key => $field) {
-                if ($key == 0) {
-                    $this->db->like($field, $search, "both");
-                } else {
-                    $this->db->or_like($field, $search, "both");
-                }
-            }
-            $this->db->group_end();
-        }
+    //     if($search != ""){
+    //         $this->db->group_start();
+    //         foreach ($filterFields as $key => $field) {
+    //             if ($key == 0) {
+    //                 $this->db->like($field, $search, "both");
+    //             } else {
+    //                 $this->db->or_like($field, $search, "both");
+    //             }
+    //         }
+    //         $this->db->group_end();
+    //     }
 
-        if($limit != -1){
-            $this->db->limit($limit, $offset);
-        }
+    //     if($limit != -1){
+    //         $this->db->limit($limit, $offset);
+    //     }
     
-        $this->db->order_by("date_added","DESC");
+    //     $this->db->order_by("date_added","DESC");
 
-        $query = $this->db->get();
+    //     $query = $this->db->get();
 
-        if($query->num_rows() > 0) {
-            foreach($query->result_array() as $_query) {
-                $data = array();
-                $data["id"] = $_query["id"];
-                $data["name"] = $_query["name"];
-                $data["report"] = $this->get_distribution_report_per_mos($_query["id"], $year, $mos);
+    //     if($query->num_rows() > 0) {
+    //         foreach($query->result_array() as $_query) {
+    //             $data = array();
+    //             $data["id"] = $_query["id"];
+    //             $data["name"] = $_query["name"];
+    //             $data["report"] = $this->get_distribution_report_per_mos($_query["id"], $year, $mos);
 
-                if ($this->authenticate->getRoleId() == "1") {
-                    $data["isArchiveHide"] = false;
-                } else {
-                    $data["isArchiveHide"] = $current_date > data('Y-m-d', strtotime($_query["date_added"])) ? true : false;
-                }
+    //             if ($this->authenticate->getRoleId() == "1") {
+    //                 $data["isArchiveHide"] = false;
+    //             } else {
+    //                 $data["isArchiveHide"] = $current_date > data('Y-m-d', strtotime($_query["date_added"])) ? true : false;
+    //             }
 
-                $resultarray[] = $data;
-            }
-        }
+    //             $resultarray[] = $data;
+    //         }
+    //     }
 
-        $total = $this->getSubdivisionCount();
-        return array(
-            "data" => $resultarray, 
-            "total_per_mos" => $this->get_total_per_mos($year, $mos),
-            "recordsTotal" => $total, 
-            "recordsFiltered" => $total
-        );
-    }
+    //     $total = $this->getSubdivisionCount();
+    //     return array(
+    //         "data" => $resultarray, 
+    //         "total_per_mos" => $this->get_total_per_mos($year, $mos),
+    //         "recordsTotal" => $total, 
+    //         "recordsFiltered" => $total
+    //     );
+    // }
 
-    function get_distribution_report_per_mos($id, $year, $mos) {
-        $this->db->select("MONTH(reading_date) as month, distribute");
-        $this->db->from("hydra_billing.distribution");
-        $this->db->where('is_archive', 0);
-        $this->db->where('subdivision_id', $id);
-        $this->db->where('YEAR(reading_date)', $year);
-        $query = $this->db->get();
-        $result = $query->result_array();
+    // function get_distribution_report_per_mos($id, $year, $mos) {
+    //     $this->db->select("MONTH(reading_date) as month, distribute");
+    //     $this->db->from("hydra_billing.distribution");
+    //     $this->db->where('is_archive', 0);
+    //     $this->db->where('subdivision_id', $id);
+    //     $this->db->where('YEAR(reading_date)', $year);
+    //     $query = $this->db->get();
+    //     $result = $query->result_array();
 
-        $report = [];
-        foreach ($result as $row) {
-            $month = $mos[$row['month'] - 1];
-            $report[] = [$month => number_format($row['distribute'], 2, '.', '')];
-        }
+    //     $report = [];
+    //     foreach ($result as $row) {
+    //         $month = $mos[$row['month'] - 1];
+    //         $report[] = [$month => number_format($row['distribute'], 2, '.', '')];
+    //     }
 
-        return $report;
-    }
+    //     return $report;
+    // }
 
     function get_total_per_mos($year, $mos) {
         $report = [];
