@@ -8415,7 +8415,7 @@ class Payroll_m extends CI_Model{
                         }
 
                         if ($status == 'All' || $status == 'Active') {
-                            $this->db->where_not_in('work_status', ['NO CONTRACT', 'RETIRED', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']);  //added to generate only the regular and probi work status
+                            $this->db->where_not_in('work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']);  //added to generate only the regular and probi work status
                         }
                     }
                     // added to filtered out by employee status
@@ -8482,7 +8482,7 @@ class Payroll_m extends CI_Model{
                     }
 
                     if ($status == 'All' || $status == 'Active') {
-                        $this->db->where_not_in('work_status', ['NO CONTRACT', 'RETIRED', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']);  //added to generate only the regular and probi work status
+                        $this->db->where_not_in('work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']);  //added to generate only the regular and probi work status
                     }
                 }
                 // added to filtered out by employee status
@@ -8537,7 +8537,7 @@ class Payroll_m extends CI_Model{
             }
 
             if ($status == 'All' || $status == 'Active') {
-                $this->db->where_not_in('a.work_status', ['NO CONTRACT', 'RETIRED', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']); //added to generate only the regular and probi work status
+                $this->db->where_not_in('a.work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']); //added to generate only the regular and probi work status
             }
         }
         // added to filtered out by employee status
@@ -8613,7 +8613,7 @@ class Payroll_m extends CI_Model{
                 $data["text"] = $display_employee;
                 $resultarray[] = $data;
             } ***/
-           $resultarray = $query->result();
+            $resultarray = $query->result();
         }
         return array("results" => $resultarray);
     }
