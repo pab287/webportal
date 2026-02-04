@@ -5078,7 +5078,7 @@ class Reports_m extends CI_Model{
                     $this->db->where("MONTH(emp.date_start)", $post["month"]); 
                 }
 
-                $this->db->where('DATE_ADD(emp.date_start, INTERVAL 1 YEAR) <= NOW()'); //added 1 year to date_start of employee and restrict employee if 1year below
+                $this->db->where('DATE_ADD(emp.date_start, INTERVAL 1 YEAR) < NOW()'); //added 1 year to date_start of employee and restrict employee if 1year below
 
                 // added to filtered out by employee status
                 if ($status){ 
