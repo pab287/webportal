@@ -7190,11 +7190,20 @@ class Billing_m extends CI_Model {
                 $_query["variance"] = 0;
             }
 
+            $variance_color = 0; // White
+
+            if ($_query["variance"] > 0) {
+                $variance_color = 1; // Blue for excess
+            } else if ($_query["variance"] < 0) {
+                $variance_color = 2; // Yellow for short
+            }
+
             $_query["deposited_cashier"] = $this->get_deposited_cashier_name($_query['id']);
             $_query["created_date"] = date('Y-m-d', strtotime($_query['created_date']));
             $_query["date_from"] = date('Y-m-d', strtotime($_query['date_from']));
             $_query["date_to"] = date('Y-m-d', strtotime($_query['date_to']));
             $_query["is_archive"] = $is_archive;
+            $_query["variance_color"] = $variance_color;
             $resultarray[] = $_query;
         }
 

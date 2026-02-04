@@ -863,6 +863,7 @@ const exportBtns = new Vue({
                 moment(p.deposit_date).format('MMM DD, YYYY').toUpperCase(),
                 moment(p.created_date).format('MMM DD, YYYY').toUpperCase(),
                 p.is_archive,
+                p.variance_color
             ]));
 
             let totalPayment = 0;
@@ -915,7 +916,8 @@ const exportBtns = new Vue({
                     2: { halign: 'right' }, // Total Collection
                     3: { halign: 'right' }, // Deposit
                     4: { halign: 'right' }, // Variance
-                    9: { cellWidth: 0 } // Setting width to 0 to hide is_archive column
+                    9: { cellWidth: 0 }, // Setting width to 0 to hide is_archive column
+                    10: { cellWidth: 0 } // Setting width to 0 to hide variance color column
                 },
 
                 // This block is for changing row color based on IS_ARCHIVED value
@@ -933,15 +935,28 @@ const exportBtns = new Vue({
                     // Body rows only
                     if (data.section === 'body') {
                         const isArchived = data.row.raw[9] == 1; // index of is_archived
+                        const variance_color = data.row.raw[10];
 
                         if (isArchived) {
                             data.cell.styles.fillColor = [220, 53, 69]; // Bootstrap danger red
-                            data.cell.styles.textColor = 255;
+                            data.cell.styles.textColor = 255; // text white
+                        } else {
+                            switch(variance_color) {
+                                case 1: 
+                                    data.cell.styles.fillColor = [0, 224, 251]; // Bootstrap yellow
+                                    break;
+                                case 2:
+                                    data.cell.styles.fillColor = [255, 205, 74]; // Bootstrap yellow
+                                    data.cell.styles.textColor = 255; // text white
+                                    break;
+                                default:
+                                    data.cell.styles.fillColor = [255, 255, 255];
+                            }
                         }
                     }
 
-                    // Hide IS_ARCHIVED column
-                    if (data.column.index === 9) {
+                    // Hide IS_ARCHIVED and VARIANCE_COLOR column
+                    if (data.column.index === 9 || data.column.index === 10) {
                         data.cell.text = '';
                     }
                 },
