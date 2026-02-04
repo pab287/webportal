@@ -5,6 +5,7 @@ class Overtime_m extends CI_Model {
     protected $companyTable = "gcchris.tblcompanies";
     protected $tbl_employees = "gccmaster.tblemployees";
     protected $employeeTable = "gccmaster.tblemployees";
+    protected $otSignatory = 'gcceforms.ot_signatory';
 
     private $current_action =  array();
     private $user_data = array();
@@ -322,28 +323,28 @@ class Overtime_m extends CI_Model {
         }
 
         if($qBuilder){ $this->db->where($qBuilder); }
-        if ($search) {
-          $this->db->group_start();
-          foreach ($filterFields as $key => $field) {
-              if ($key == 0) {
-                  $this->db->like($field, $search, "both");
-              } else {
-                  $this->db->or_like($field, $search, "both");
-              }
-          }
-          $this->db->group_end();
-      }
-      if($filtered=="true"){
-        if (is_array($filter)) {
-
-            $chucked = array_chunk($filter, 100);
+            if ($search) {
             $this->db->group_start();
-            foreach ($chucked as $value) {
-                $this->db->or_where_in("a.id", $value);
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
             }
             $this->db->group_end();
         }
-      }
+        if($filtered=="true"){
+            if (is_array($filter)) {
+
+                $chucked = array_chunk($filter, 100);
+                $this->db->group_start();
+                foreach ($chucked as $value) {
+                    $this->db->or_where_in("a.id", $value);
+                }
+                $this->db->group_end();
+            }
+        }
 
         $query = $this->db->get();
         $count = $query->num_rows();
@@ -364,7 +365,7 @@ class Overtime_m extends CI_Model {
             $query = $this->db->get();
             return $query->result();
         }
-       
+    
     }
 
     function generateReferenceDetails(){
@@ -559,48 +560,48 @@ class Overtime_m extends CI_Model {
     }
 
     function getEmployee(){
-      $post = $this->input->get();
-      $resultarray = array();
-      $privilege = $this->core_layout->getCurrentActions();
+        $post = $this->input->get();
+        $resultarray = array();
+        $privilege = $this->core_layout->getCurrentActions();
 
-      $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
+        $view_by_company = (in_array("view_by_company", $privilege)) ? true : false;
 
-      $this->db->select('id, firstname, lastname, middlename, suffix');
-      $this->db->from('gccmaster.tblemployees');
-      $this->db->where('employee_status', 'Active');
+        $this->db->select('id, firstname, lastname, middlename, suffix');
+        $this->db->from('gccmaster.tblemployees');
+        $this->db->where('employee_status', 'Active');
 
-      if(isset($post['q'])){
-        $this->db->group_start();
-        $this->db->like('firstname', $post['q']);
-        $this->db->or_like('lastname', $post['q']);
-        $this->db->group_end();
-      }
+        if(isset($post['q'])){
+            $this->db->group_start();
+            $this->db->like('firstname', $post['q']);
+            $this->db->or_like('lastname', $post['q']);
+            $this->db->group_end();
+        }
 
-      if ($view_by_company) {
-        $this->db->where('company_id', $this->user_data['company']);
-     }
+        if ($view_by_company) {
+            $this->db->where('company_id', $this->user_data['company']);
+        }
 
-      if(isset($post['company']) && !empty($post['company'])){
-          $this->db->where('company_id', $post['company']);
-      }
+        if(isset($post['company']) && !empty($post['company'])){
+            $this->db->where('company_id', $post['company']);
+        }
 
-      $this->db->order_by('firstname', 'ASC');
-      $this->db->limit(10);
-      $query = $this->db->get();
-      if($query->num_rows() > 0){
-          foreach($query->result_array() as $_query){
-              $data = array();
-              $tempRs = (array) $_query;
-              $fullname = $this->core_layout->getDisplayName($tempRs);
-              $tempFullname = (object) $fullname;
-              $data["id"] = $_query["id"];
-              $data["text"] = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
-              $resultarray[] = $data;
-          }
-      }
-      return array("results" => $resultarray);
-  }
-  
+        $this->db->order_by('firstname', 'ASC');
+        $this->db->limit(10);
+        $query = $this->db->get();
+        if($query->num_rows() > 0){
+            foreach($query->result_array() as $_query){
+                $data = array();
+                $tempRs = (array) $_query;
+                $fullname = $this->core_layout->getDisplayName($tempRs);
+                $tempFullname = (object) $fullname;
+                $data["id"] = $_query["id"];
+                $data["text"] = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+                $resultarray[] = $data;
+            }
+        }
+        return array("results" => $resultarray);
+    }
+    
 
     function getCompanyList(){
         $get = $this->input->get();
@@ -1521,7 +1522,7 @@ class Overtime_m extends CI_Model {
             }
 
             if(isset($post["employee"]) && $post["employee"]){
-               $this->db->where("employeetbl.id", $post["employee"]);
+                $this->db->where("employeetbl.id", $post["employee"]);
             }
 
             if(isset($post["company"]) && $post["company"]){
@@ -2273,17 +2274,17 @@ class Overtime_m extends CI_Model {
     }
 
     public function select_signatory_employee(){
-        $get = $this->input->get();
+        $post = $this->input->post();
         $resultarray = array();
         $employee_ids = array();
-        $companyIds = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: null;
-        $search = (isset($get["q"]) && $get["q"])? $get["q"]: null;
+        $companyIds = (isset($post["company_id"]) && $post["company_id"])? $post["company_id"]: null;
+        $search = (isset($post["q"]) && $post["q"])? $post["q"]: null;
+        $employee_ids = (isset($post['ids']) && $post['ids']) ? $post['ids'] : array();
 
         $this->db->select("a.id, a.firstname, a.lastname, a.middlename, a.suffix");
         $this->db->from("gccmaster.tblemployees a");
         $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
         $this->db->where("a.employee_status", "Active"); 
-        $this->db->where("b.id", $companyIds);
 
         if (isset($search) && $search) {
             $this->db->group_start();
@@ -2299,11 +2300,14 @@ class Overtime_m extends CI_Model {
         if ($query->num_rows() > 0) {
             foreach ($query->result_array() as $_query) {
                 $data = array();
+
+                $tempRs = (array) $_query;
+                $fullname = $this->core_layout->getDisplayName($tempRs);
+                $name = $fullname ? $fullname['display_name_0'] : 'No Employee Name';
+
                 $data["id"] = $_query["id"];
-                $data["text"] = $_query["firstname"] . " " . $_query["middlename"] . " " . $_query["lastname"];
-                if ($_query["suffix"] != "N/A" && $_query["suffix"] != "none") {
-                    $data["text"] .= " " . $_query["suffix"];
-                }
+                $data['text'] = $name;
+
                 $resultarray[] = $data;
             }
 
@@ -2335,12 +2339,186 @@ class Overtime_m extends CI_Model {
     }
 
     public function get_item($limit, $offset, $sortBy, $sortOrder, $search = null) {
-        $result = array();
+        $resultset = array();
+        $filterFields = array("b.code", "a.meta");
+        $sqlSelect = "a.id, b.code as company, a.meta";
+        $this->db->select($sqlSelect);
+        $this->db->from('gcceforms.ot_signatory a');
+        $this->db->join('gcchris.tblcompanies b', 'b.id = a.company_id');
+        if (isset($search)) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                ($key == 0) ? $this->db->like($field, $search, "both") : $this->db->or_like($field, $search, "both");
+            }
+            $this->db->group_end();
+        }
 
-        return $result;
+        if ($limit != -1) {
+            $this->db->limit($limit, $offset);
+        }
+        $this->db->group_by("a.id");
+        if (isset($sortOrder)) {
+            $i = $sortOrder[0]['column'];
+            $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        } else {
+            $this->db->order_by('b.code', 'asc');
+        }
+
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $data = array();
+            foreach ($query->result() as $key => $item) {
+                $metaField = @unserialize($item->meta);
+                if(is_array($metaField) && count($metaField) > 0){
+                    $item->meta = $metaField;
+                }else{
+                    $item->meta = array();
+                }
+                $data[$key] = $item;                
+            }
+
+            $resultset = $data;
+        }
+
+        return $resultset;
     }
 
     public function get_item_count($search = null) {
-        return 0;
+        $count = 0;
+        $filterFields = array("b.code", "a.meta");
+        $sqlSelect = "a.id, b.code as company, a.meta";
+        $this->db->select($sqlSelect);
+        $this->db->from('gcceforms.ot_signatory a');
+        $this->db->join('gcchris.tblcompanies b', 'b.id = a.company_id');
+        if (isset($search)) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                ($key == 0) ? $this->db->like($field, $search, "both") : $this->db->or_like($field, $search, "both");
+            }
+            $this->db->group_end();
+        }
+        $this->db->group_by("a.id");
+
+        $query = $this->db->get();
+        $count = $query->num_rows();
+
+        return $count;
+    }
+
+    public function create_printable_signatory(){
+        $resultset = array();
+        $post = $this->input->post();
+        if(isset($post) && $post){
+            $arrMetaValue = array();
+            $tempLabel = $post["label"];
+            $tempValue = $post["value"];
+            unset($post["label"], $post["value"]);
+
+            if(isset($tempLabel) && is_array($tempLabel) && count($tempLabel) > 0){
+                foreach ($tempLabel as $key => $value) {
+                    $rowMeta = array();
+                    $label = $value ? strtoupper(trim($value)): $value;
+                    $empName = isset($tempValue[$key]) && $tempValue[$key] ? $tempValue[$key]: "";
+                    $empName = $empName ? strtoupper(trim($empName)): $empName;
+
+                    $rowMeta["label"] = $label;
+                    $rowMeta["value"] = $empName;
+                    $arrMetaValue[$key] = $rowMeta;
+                }
+            }
+            
+            $qSearch = $this->db->get_where($this->otSignatory, array("company_id"=>$post["company_id"]));
+            if($qSearch->num_rows() == 0){
+                $post["meta"] = serialize($arrMetaValue);
+                $post["created_by"] = $this->core_layout->getCurrentEmployeeId();
+                $post["created_at"] = date("Y-m-d H:i:s");
+
+                $add = $this->db->insert($this->otSignatory, $post);
+                if($add){
+                    $resultset["response"] = true;
+                    $resultset["toastr_msg"] = "Signatory data has been added.";
+                }else{
+                    $resultset["response"] = false;
+                    $resultset["toastr_msg"] = "Failed to add signatory data!";
+                }
+            }else{
+                $resultset["response"] = false;
+                $resultset["toastr_msg"] = "Failed to add signatory data, signatory company and type already exist!";
+            }
+        }else{
+            $resultset["response"] = false;
+            $resultset["toastr_msg"] = "No post data found!";
+        }
+
+        return $resultset;
+    }
+
+    function updatePrintableSignatory(){
+        $resultset = array();
+        $post = $this->input->post();
+        if(isset($post) && $post){
+            $tempWhere = array();
+            $tempWhere["id"] = $post["id"];
+
+            $arrMetaValue = array();
+            $tempLabel = $post["label"];
+            $tempValue = $post["value"];
+            unset($post["label"], $post["value"], $post["id"]);
+
+            if(isset($tempLabel) && is_array($tempLabel) && count($tempLabel) > 0){
+                foreach ($tempLabel as $key => $value) {
+                    $rowMeta = array();
+                    $label = $value ? strtoupper(trim($value)): $value;
+                    $empName = isset($tempValue[$key]) && $tempValue[$key] ? $tempValue[$key]: "";
+                    $empName = $empName ? strtoupper(trim($empName)): $empName;
+
+                    $rowMeta["label"] = $label;
+                    $rowMeta["value"] = $empName;
+                    $arrMetaValue[$key] = $rowMeta;
+                }
+            }
+
+            $post["meta"] = serialize($arrMetaValue);
+            $post["updated_by"] = $this->core_layout->getCurrentEmployeeId();
+            $post["updated_at"] = date("Y-m-d H:i:s");
+            
+            $updated = $this->db->update($this->otSignatory, $post, $tempWhere);
+            if($updated){
+                $resultset["response"] = true;
+                $resultset["toastr_msg"] = "Signatory data has been updated.";
+            }else{
+                $resultset["response"] = false;
+                $resultset["toastr_msg"] = "Failed to update signatory data!";
+            }
+        }else{
+            $resultset["response"] = false;
+            $resultset["toastr_msg"] = "No post data found!";
+        }
+        return $resultset;
+    }
+
+    public function getCurrentSignatory($id=null){
+        $resultset = array();
+        if($id){
+            $this->db->select("a.*, b.code as company_description");
+            $this->db->join($this->companyTable." b", "b.id = a.company_id");
+            $qTemp = $this->db->get_where($this->otSignatory." a", array("a.id"=>$id));
+            if($qTemp->num_rows() == 1){
+                $tempRow = $qTemp->row();
+                $metaField = @unserialize($tempRow->meta);
+                if(is_array($metaField) &&  count($metaField) > 0){ $metaField = $metaField; }
+                else{ $metaField = array(); }
+                $tempRow->meta = $metaField;
+                $resultset["response"] = true;
+                $resultset["data"] = $tempRow;
+                $resultset["count"] = count($metaField);
+            }else{
+                $resultset["response"] = false;
+            }
+        }else{
+            $resultset["response"] = false;
+        }
+        return $resultset;
     }
 }

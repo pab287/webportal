@@ -3,7 +3,7 @@ let editSignatoryModal = $("#payroll--edit-signatory-modal");
 let dtSignatory, search_val, _companies, selectedEmployee = [];
 let tempRowData = {
     company_description: "", company_id: 0, created_at: "0000-00-00 00:00:00", created_by: 0, id: 0,
-    meta_field: [], status: 0, type: 0, updated_at: "0000-00-00 00:00:00", updated_by: 0
+    meta: [], status: 0, type: 0, updated_at: "0000-00-00 00:00:00", updated_by: 0
 };
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
@@ -11,7 +11,6 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
         _companies = _tempContentData.company;
     }
 }
-
 
 var PortletDraggable = function () {
     return {
@@ -56,7 +55,7 @@ var vmSignatoryFields = new Vue({
             if (typeof _container !== "undefined") {
                 const tempPortlet = _container.find("#m_sortable_portlets");
                 $.ajax({
-                    url: siteUrl("payroll/create_signatory_content"),
+                    url: siteUrl("eforms/overtime/create_signatory_content"),
                     dataType: "json",
                     global: false,
                     success: function (json) {
@@ -100,6 +99,8 @@ var initSelect2Employee = function (tempModal, portlet) {
         let tempSelector = tempModal.find("select.select2--value");
         if (typeof portlet !== "undefined") { tempSelector = portlet.find("select.select2--value"); }
         if (typeof tempSelector !== "undefined") {
+            let prevValue = null;
+
             tempSelector.select2({
                 tags: true,
                 allowClear: true,
@@ -109,9 +110,13 @@ var initSelect2Employee = function (tempModal, portlet) {
                 ajax: {
                     url: baseUrl("eforms/overtime/select_signatory_employee"),
                     type: 'POST',
-                    data: {
-                        csrf_token: _csrf_hash,
-                        emp_ids: selectedEmployee
+                    data: function ({ term }) {
+                        return {
+                            csrf_token: _csrf_hash,
+                            q: term,
+                            ids: selectedEmployee,
+                            company_id: tempModal.find("#company").val()
+                        }  
                     },
                     dataType: "json",
                     delay: 250,
@@ -119,14 +124,66 @@ var initSelect2Employee = function (tempModal, portlet) {
                     processResults: function (data) {
                         let tempData = [];
                         $.each(data.results, function (i, v) {
-                            const dd = { id: v.text, text: v.text };
+                            const dd = { id: v.text, text: v.text, empId: v.id };
                             tempData.push(dd);
                         });
                         return { results: tempData };
                     }
                 }
+            }).on('select2:opening.select2Events', function (e) {
+                let _temp = $(this).select2("data")[0];
+                prevValue = typeof _temp !== 'undefined' && _temp ? _temp : null; 
+            }).on('select2:select', function(e) {
+                var data = e.params.data;
+                let _temp = prevValue;
+                let empId = parseInt(data.empId);
+                let _prevId = typeof _temp !== 'null' && _temp ? parseInt(_temp.empId) : null;
+
+                if (typeof _prevId !== null && _prevId !== empId){
+                    if (!selectedEmployee.includes(empId)) {
+                        const index = selectedEmployee.indexOf(_prevId);
+                        if (index > -1) {
+                            selectedEmployee.splice(index, 1);
+                        }
+                    } else {
+                        Swal.fire({
+                            title: 'Employee already selected!',
+                            text: 'Overtime Summary Signatory',
+                            icon: 'warning',
+                            allowOutsideClick: false,
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $(this).val(_prevId ?? null).trigger('change');
+                            }
+                        });
+                    }
+                }
+
+                if (!selectedEmployee.includes(empId)) { //prevent duplication due to rendering the select2 whenever new or removing field is ticked
+                    selectedEmployee.push(empId);
+                } else {
+                    Swal.fire({
+                        title: 'Employee already selected!',
+                        text: 'Overtime Summary Signatory',
+                        icon: 'warning',
+                        allowOutsideClick: false,
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $(this).val(_prevId ?? null).trigger('change');
+                        }
+                    });
+                }
+            }).on('select2:unselect', function(e) {
+                var data = e.params.data;
+                const index = selectedEmployee.indexOf(data.empId);
+
+                if (index > -1) {
+                    selectedEmployee.splice(index, 1);
+                }
             });
         }
+
+        tempSelector.data("select2-initialized", true);
     }
 }
 initSelect2Employee(createSignatoryModal);
@@ -157,7 +214,7 @@ dtSignatory = $("#table-signatory").DataTable({
         { data: "company", title: "Company", width: "18%" },
         {
             data: null, title: "Signatories", className: "custom-signatory", render: function (data, meta, row) {
-                const metaFields = row.meta_field;
+                const metaFields = row.meta;
                 let tempHtml = ``;
                 $.each(metaFields, function (i, v) {
                     tempHtml += `<span class="m-badge m-badge--metal m-badge--wide m-badge--rounded mr-1">${v.label}: <strong>${v.value}</strong></span>`;
@@ -191,4 +248,161 @@ dtSignatory = $("#table-signatory").DataTable({
         targets: "all",
         defaultContent: "",
     }]
+});
+
+$.validate({
+    form: "#frmCreateSignatory",
+    lang: 'en',
+    scrollToTopOnError: false,
+    onSuccess: function (form) {
+        var currentForm = form[0];
+        var formUrl = currentForm.action;
+        var formData = $(currentForm).serialize();
+
+        $.ajax({
+            url: formUrl,
+            type: "post",
+            dataType: "json",
+            data: formData,
+            success: function (json) {
+                if (json.response) {
+                    toastr.success("Create Signatory", json.toastr_msg);
+                    dtSignatory.ajax.reload(null, false);
+                    createSignatoryModal.modal("hide");
+                } else {
+                    toastr.error("Create Signatory", json.toastr_msg);
+                }
+            }
+        });
+        return false;
+    }
+});
+
+$(document).on("click", ".btnEditSignatory", function (e) {
+    const _this = $(this);
+    const tempId = _this.data("id");
+    $.ajax({
+        url: siteUrl("eforms/overtime/get_current_signatory/" + tempId),
+        dataType: "json",
+        success: function (json) {
+            let tempRow = {};
+            let ctr = 0;
+            if (json.response) {
+                tempRow = Object.assign({}, json.data);
+                ctr = json.count;
+            }
+            vmEditSignatory.row = Object.assign({}, tempRow);
+            vmEditSignatory.count = ctr;
+            vmEditSignatory.$mount();
+            companySelect2(editSignatoryModal);
+            initSelect2Employee(editSignatoryModal);
+            editSignatoryModal.find("#m_sortable_portlets").sortable();
+            editSignatoryModal.modal("show");
+        }
+    });
+});
+
+$("#payroll--edit-signatory-modal").on('hidden.bs.modal', function () {
+    vmEditSignatory.row = Object.assign({});
+});
+
+var vmEditSignatory = new Vue({
+    el: "#editSignatoryContent",
+    data: { row: tempRowData, count: 0 },
+    methods: {
+        appendCurrentCompany: function () {
+            const _this = this;
+            const currentElement = _this.$el;
+            const currentRow = _this.row;
+            const select2Company = $(currentElement).find("select#company");
+            if (typeof select2Company !== "undefined" && select2Company.length == 1) {
+                let tempOption = new Option(currentRow.company_description, currentRow.company_id, true, true);
+                select2Company
+                    .empty()
+                    .html(tempOption);
+            }
+        }, appendCurrentSignatory: function () {
+            const _this = this;
+            const currentElement = _this.$el;
+            const currentRow = _this.row;
+            $.each(currentRow.meta, function (i, v) {
+                const cPortlet = $(currentElement).find("#m--portlet_append_" + i);
+                if (typeof cPortlet !== "undefined" && cPortlet.length == 1) {
+                    cPortlet.mPortlet();
+                    const currentSelect2 = cPortlet.find("select.select2--value");
+                    if (typeof currentSelect2 !== "undefined" && currentSelect2.length == 1) {
+                        let tempOption = new Option(v.value, v.value, true, true);
+                        currentSelect2
+                            .empty()
+                            .html(tempOption);
+                    }
+                }
+            });
+        }, addSignatoryField: function (e) {
+            const _this = this;
+            const _container = $(_this.$el);
+            if (typeof _container !== "undefined") {
+                const tempPortlet = _container.find("#m_sortable_portlets");
+                $.ajax({
+                    url: siteUrl("eforms/overtime/create_signatory_content"),
+                    dataType: "json",
+                    global: false,
+                    success: function (json) {
+                        const portlet = tempPortlet.prepend(json.html);
+                        const temp_portlet = portlet.find(".m-portlet.m-portlet--bordered.m-portlet--head-sm.m-portlet--mobile.m-portlet--sortable");
+                        if (typeof temp_portlet !== "undefined" && temp_portlet.length > 0) {
+                            let ctr = temp_portlet.length;
+                            let tempId = "m--portlet_append_" + ctr;
+                            if (tempPortlet.find("#" + tempId).length > 0) {
+                                ctr += 1;
+                                tempId += ctr;
+                            }
+                            let lastChild = $(tempPortlet).find("div.m-portlet:first-child");
+                            lastChild.prop("id", tempId);
+                            $(tempPortlet).find("#" + tempId).mPortlet();
+                        }
+                        initSelect2Employee(editSignatoryModal);
+                    }
+                });
+            }
+        }, validateFields: function () {
+            const _this = this;
+            const _container = $(_this.$el);
+            if (typeof _container !== "undefined") {
+                const _currentForm = _container.find("#frmEditSignatory");
+                $.validate({
+                    form: _currentForm,
+                    lang: 'en',
+                    scrollToTopOnError: false,
+                    onSuccess: function (form) {
+                        var currentForm = form[0];
+                        var formUrl = currentForm.action;
+                        var formData = $(currentForm).serialize();
+
+                        $.ajax({
+                            url: formUrl,
+                            type: "post",
+                            dataType: "json",
+                            data: formData,
+                            success: function (json) {
+                                if (json.response) {
+                                    toastr.success("Update Signatory", json.toastr_msg);
+                                    dtSignatory.ajax.reload(null, false);
+                                    editSignatoryModal.modal("hide");
+                                } else {
+                                    toastr.error("Update Signatory", json.toastr_msg);
+                                }
+                            }
+                        });
+                        return false;
+                    }
+                });
+            }
+        }
+    }, mounted: function () {
+        const _this = this;
+        _this.appendCurrentCompany();
+        _this.appendCurrentSignatory();
+        setTimeout(_this.validateFields(), 500);
+    }
 });

@@ -423,6 +423,9 @@ class Overtime extends MY_Controller {
         $tempData = array();
         $tempData["company"] = $this->overtime->select2CompanyData();
 
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
+
         $this->core_layout->addJs("vendors/custom/jquery-ui/jquery-ui.bundle.js");
         $this->core_layout->addJs("js/eforms/overtime/signatory.script.js", true, $tempData);
         $this->core_layout->setPrivilegeName("overtime_masterfile");
@@ -441,6 +444,35 @@ class Overtime extends MY_Controller {
 
     public function select_signatory_employee() {
         $data = $this->overtime->select_signatory_employee();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function create_signatory_content(){
+        $html = $this->load->view("eforms/overtime/modals/signatory_portlet", null, true);
+        $data = array("html"=>$html);
+        $this->output
+        ->set_content_type('json')
+        ->set_output(json_encode($data));
+    }
+
+    public function create_printable_signatory(){
+        $data = $this->overtime->create_printable_signatory();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function get_current_signatory($id=null){
+        $data = $this->overtime->getCurrentSignatory($id);
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function update_printable_signatory(){
+        $data = $this->overtime->updatePrintableSignatory();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));

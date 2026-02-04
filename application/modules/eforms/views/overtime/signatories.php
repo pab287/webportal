@@ -108,7 +108,7 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form id="frmCreateSignatory" method="post" action="<?php echo site_url("payroll/create_printable_signatory"); ?>">
+            <form id="frmCreateSignatory" method="post" action="<?php echo site_url("eforms/overtime/create_printable_signatory"); ?>">
                 <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
                 <div class="modal-body">
                     <div class="row">
@@ -122,23 +122,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-6 col-md-6 col-lg-6 col-sm-12">
-                            <div class="m-form__group form-group" hidden>
-                                <label>Signatory Type *</label>
-                                <div class="m-radio-inline mt-2">
-                                    <label class="m-radio">
-                                        <input type="radio" name="type" value="1" checked data-validation="required" />
-                                        Payroll Sheet
-                                        <span></span>
-                                    </label>
-                                    <label class="m-radio">
-                                        <input type="radio" name="type" value="2" data-validation="required" />
-                                        Reports
-                                        <span></span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
+                        <div class="col-6 col-md-6 col-lg-6 col-sm-12"></div>
                     </div>
                     <div id="signatory--container" class="signatory_field">
                         <div class="row">
@@ -173,7 +157,7 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form id="frmEditSignatory" method="post" action="<?php echo site_url("payroll/update_printable_signatory"); ?>">
+            <form id="frmEditSignatory" method="post" action="<?php echo site_url("eforms/overtime/update_printable_signatory"); ?>">
                 <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
                 <input type="hidden" name="id" v-model="row.id" />
                 <div class="modal-body">
@@ -188,23 +172,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-6 col-md-6 col-lg-6 col-sm-12">
-                            <div class="m-form__group form-group" hidden>
-                                <label>Signatory Type *</label>
-                                <div class="m-radio-inline mt-2">
-                                    <label class="m-radio">
-                                        <input type="radio" name="type" value="1" data-validation="required" v-model="row.type" />
-                                        Payroll Sheet
-                                        <span></span>
-                                    </label>
-                                    <label class="m-radio">
-                                        <input type="radio" name="type" value="2" data-validation="required" v-model="row.type" />
-                                        Reports
-                                        <span></span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
+                        <div class="col-6 col-md-6 col-lg-6 col-sm-12"></div>
                     </div>
                     <div id="signatory--container" class="signatory_field">
                         <div class="row">
@@ -215,7 +183,7 @@
                         <div class="row mt-3">
                             <div class="col-12 col-md-12 col-lg-12 col-sm-12">
                                 <div class="ui-sortable" id="m_sortable_portlets">
-                                    <?php $this->load->view("payroll/payroll/modals/content/edit_signatory_portlet"); ?>
+                                    <?php $this->load->view("eforms/overtime/modals/edit_signatory_portlet"); ?>
                                 </div>
                             </div>
                         </div>
