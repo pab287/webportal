@@ -2521,4 +2521,150 @@ class Overtime_m extends CI_Model {
         }
         return $resultset;
     }
+
+    public function print_summary(){
+        $result = array();
+        $post = $this->input->post();
+
+        if (isset($post) && $post) {
+            $date = date('Y-m-d H:i:s');
+            $year = substr($date, 2, 2);
+            $month = substr($date, 5, 2);
+            $session = $this->core_layout->getCurrentSession();
+
+            if (isset($session["emp_id"], $post["json_file"]) && $session["emp_id"] && $post["json_file"]) {
+                $filePath = "./uploads/files/csv/overtime/temp_{$session["emp_id"]}";
+                $tempFile = "{$filePath}/{$post["json_file"]}";
+
+                if(file_exists($tempFile)){
+                    $fileContent = file_get_contents($tempFile);
+                    $arrData = json_decode($fileContent, true);
+
+                    if(isset($arrData["data"]) && $arrData["data"] && is_array($arrData["data"]) && count($arrData["data"]) > 0){
+                        $ctrUploaded = 0;
+                        $_arrData = array();
+                        foreach ($arrData["data"] as $value) {
+                            $rs = (object) $value;
+                            if(intval($rs->is_existing) == 1 && $rs->is_valid === true){
+                                $sqlSelect = "a.id as employee, UPPER(IFNULL(b.description, a.company_id)) as company,
+                                UPPER(IFNULL(c.description, a.department_id)) as department,
+                                UPPER(IFNULL(d.name, a.position)) as position, MAX(ps.date_end) as max_date, a.biometricno, e.name as payroll_sched, a.firstname, a.lastname, a.middlename, a.suffix";
+                                $this->db->select($sqlSelect);
+                                $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id OR b.description = a.company_id OR b.code = a.company_id", "LEFT");
+                                $this->db->join("gcchris.tbldepartments c", "c.id = a.department_id OR c.description = a.department_id OR c.code = a.department_id", "LEFT");
+                                $this->db->join("gcchris.tblposition d", "d.id = a.position OR d.name = a.position", "LEFT");
+                                $this->db->join("payroll.payroll_sheet ps", "ps.emp_id = a.id AND ps.posted = 1", "LEFT");
+                                $this->db->join("payroll.payout_schedule e", "e.id = ps.payroll_sched", "LEFT");
+                                $this->db->group_by("a.id");
+                                $qTemp = $this->db->get_where("gccmaster.tblemployees a", array("a.id"=>$rs->emp_id, "a.employee_status"=>"Active"));
+
+                                if($qTemp->num_rows() == 1){
+                                    $currentRow = $qTemp->row();
+                                    $currentRow->date_from = date("Y-m-d H:i:s", strtotime($rs->date_from));
+                                    $currentRow->date_to = date("Y-m-d H:i:s", strtotime($rs->date_to));
+                                    $currentRow->purpose = $rs->purpose;
+                                    $currShift = $this->getPersonnelShift($rs->date_from, $rs->date_from, $currentRow->biometricno);
+                                    $currentRow->regular_shift = date('h:i A', strtotime($currShift->am_start)).' - '.date('h:i A', strtotime($currShift->pm_end));
+                                    $currentRow->employee_name = $this->format_name($currentRow->employee);
+
+                                    $isValidDate = strtotime(trim($rs->date_from)) > strtotime(trim($currentRow->max_date));
+                                    unset($currentRow->max_date);
+
+                                    $tempWhere = array();
+                                    $tempWhere["employee"] = $rs->emp_id;
+                                    $tempWhere["date_from"] = date("Y-m-d H:i:s", strtotime($rs->date_from));
+                                    $tempWhere["date_to"] = date("Y-m-d H:i:s", strtotime($rs->date_to));
+                                    $tempWhere["status"] = "Approved";
+                                    $checkExisting = $this->db->get_where("gcceforms.overtime", $tempWhere);
+
+                                    if($isValidDate && $checkExisting->num_rows() == 0){
+                                        $_arrData[] = $currentRow;
+                                    }
+                                }
+                            }
+                        }
+
+                        var_dump($_arrData);
+                    }
+                } else {
+                    // no data here
+                }
+            } else {
+                //error here
+            }
+        }
+
+        return $result;
+    }
+
+    public function getPersonnelShift($date, $empId, $bio) {
+        $result = array();
+        if ($bio) {
+            $weekday = date("l", strtotime($date));
+            $weekday = strtolower($weekday);
+
+            $this->db->select('location_id, biometricno, is_flexi, shift_id, name, department_id');
+            $arrWhere = array("shift_id !=" => 0, "is_active" => 1);
+            $this->db->where($arrWhere);
+            $this->db->group_start();
+            $this->db->where("biometric_id", $bio);
+            $this->db->or_where("biometricno", $bio);
+            $this->db->group_end();
+            $personnel = $this->db->get('gcctimeutility.personnel');
+            if ($personnel->num_rows() == 1) {
+                $rows = $personnel->row();
+
+                $shift = $rows->shift_id;
+                $personnel_biometricno = $rows->biometricno;
+                $shiftResource = $this->getShiftResource($shift);
+
+                if ($shiftResource) {
+                    $ids = $shiftResource->shift_resource;
+                    $todayShift = array();
+                    if ($ids) {
+                        foreach ($ids as $id) {
+                            $todayDR = $this->getDailyResource($id, $weekday);
+                            if ($todayDR) {
+                                $todayShift = $todayDR;
+                                break;
+                            }
+                        }
+                    }
+
+                    $result = $todayShift;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    function getShiftResource($shift = null) {
+        $result = array();
+        if ($shift) {
+            $this->db->select('shift_resource');
+            $resource = $this->db->get_where("gcctimeutility.shift_schedule_resource", array("shift_id" => $shift));
+            if ($resource->num_rows() == 1) {
+                $row = $resource->row();
+                $row->shift_resource = ($row->shift_resource) ? unserialize($row->shift_resource) : array();
+                $result = $row;
+            }
+        }
+
+        return $result;
+    }
+
+    function getDailyResource($id = null, $weekday = null) {
+        $result = array();
+        if ($id && $weekday) {
+            $this->db->select('am_start, am_end, pm_start, pm_end');
+            $query = $this->db->get_where("gcctimeutility.shift_schedule_list", array("id" => $id, "weekday" => $weekday, "is_active" => 1));
+            if ($query->num_rows() == 1) {
+                $row = $query->row();
+                $result = $row;
+            }
+        }
+
+        return $result;
+    }
 }

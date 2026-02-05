@@ -477,4 +477,11 @@ class Overtime extends MY_Controller {
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
+
+    public function print_summary(){
+        $data = $this->overtime->print_summary();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 }

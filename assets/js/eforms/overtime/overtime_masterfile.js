@@ -609,7 +609,16 @@ $.validate({
             cancelButtonText: 'No, Approve only'
         }).then((result) => {
             if (result.isConfirmed) {
-                
+                $.ajax({
+                    url: baseUrl('eforms/overtime/print_summary'),
+                    type: 'post',
+                    data: formData,
+                    dataType: 'json',
+                    beforeSend: function () {
+                        $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    },
+                    success: function (json) {}
+                });
             } else {
 
             }
