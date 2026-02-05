@@ -4975,7 +4975,15 @@ class Reports_m extends CI_Model{
                     $this->db->from($this->tbl_employees);
                     $this->db->where("MONTH(date_start)", $post["month"]);
                     $this->db->where("company_id", $post["company"]);
-                    $this->db->where("employee_status", "Active");
+                    
+                    if ($status != 'All') {
+                        $this->db->where('employee_status', $status);
+                    }
+
+                    if ($status == 'All' || $status == 'Active') {
+                        $this->db->where_not_in('work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']); //added to generate only the regular and probi work status
+                    }
+
                     $this->db->group_by("id");
                     $qFilter = $this->db->get();
                     if($qFilter->num_rows() > 0){
@@ -4991,7 +4999,15 @@ class Reports_m extends CI_Model{
                     $this->db->select("id");
                     $this->db->from($this->tbl_employees);
                     $this->db->where("company_id", $post["company"]);
-                    $this->db->where("employee_status", "Active");
+                    
+                    if ($status != 'All') {
+                        $this->db->where('employee_status', $status);
+                    }
+
+                    if ($status == 'All' || $status == 'Active') {
+                        $this->db->where_not_in('work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']); //added to generate only the regular and probi work status
+                    }
+
                     $this->db->group_by("id");
                     $qFilter = $this->db->get();
                     if($qFilter->num_rows() > 0){
