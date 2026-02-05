@@ -694,9 +694,8 @@
                     <p>
                         <small>
                             TRAVEL ORDER
-
                             <template v-if="vm_to_data.is_emergency == 1">
-                                - <span style="font-weight: 700"> [ Emergency ]</span>
+                                <span style="font-weight: 700"> [ Emergency ]</span> 
                             </template>
                         </small>
                     <p>
