@@ -74,7 +74,7 @@
             $role_id = $this->authenticate->getRoleId();
             $current_date = date("Y-m-d");
 
-            $sql = "a.id, a.reference_no, a.company,a.driver, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt, tod.destination, toe.firstname, toe.lastname, a.created_dt, a.accomplished";
+            $sql = "a.id, a.reference_no, a.company,a.driver, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt, tod.destination, toe.firstname, toe.lastname, a.created_dt, a.accomplished, a.is_emergency";
 
             $this->db->select($sql);
             $this->db->from("gcceforms.travel_order a");
@@ -3771,6 +3771,7 @@
             $commute = isset($post['is_commute']) ? $post['is_commute'] : 0;
             $personal = isset($post['is_personal']) ? $post['is_personal'] : 0;
             $other = isset($post['is_other']) ? $post['is_other'] : 0;
+            $is_emergency = isset($post['is_emergency']) && $post['is_emergency'] ? $post['is_emergency'] : 0;
 
             $vehicle = isset($post['vehicle']) ? $post['vehicle'] : 0;
             $driver = isset($post['driver']) ? $post['driver'] : 0;
@@ -3798,6 +3799,7 @@
                 'created_dt' => $current_date,
                 'created_id' => $this->user_data['emp_id'],
                 'status' => 'Pending',
+                'is_emergency' => $is_emergency
             );
 
             // commented for rollback
@@ -3876,6 +3878,7 @@
             $vehicle = isset($post['vehicle']) ? $post['vehicle'] : 0;
             $driver = isset($post['driver']) ? $post['driver'] : 0;
             $driver_name = isset($post['driver']) ? $this->getName($driver) : '';
+            $is_emergency = isset($post['is_emergency']) && $post['is_emergency'] ? $post['is_emergency'] : 0;
 
             $data = array(
                 'company' => $post['company_id'],
@@ -3894,6 +3897,7 @@
                 'vehicle_id' => $vehicle,
                 'driver_id' => $driver,
                 'driver' => $driver_name,
+                'is_emergency' => $is_emergency
             );
 
             // commented for rollback

@@ -123,6 +123,11 @@ $.ajax({
       radiobtn.checked = true;
     }
 
+    if (parseInt(data.data.is_emergency) === 1) {
+      const _switch = document.getElementById("is_emergency");
+      _switch.checked = true;
+    }
+
     $("[name='station']").val(data.data.station);
     $("[name='remark']").val(data.data.others_remarks);
 

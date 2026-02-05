@@ -289,14 +289,14 @@ $.ajax({
 
     switch(data.data.status){
       case "Pending":
-          $('#status').append('<div class="m-badge text-white m-badge--warning m-badge--wide m--margin-top-5" role="alert"><strong>For Recommendation</strong></div>');
+          $('#status').append('<div class="m-badge text-white m-badge--warning m-badge--wide" role="alert"><strong>For Recommendation</strong></div>');
           $("#btnrecommentapprove").show();
           $("#btndisapprove").show();
           $("#btnedit").show();
           $("#btncancel").show();
         break;
       case "Recommend_Approved":
-          $('#status').append('<div class="m-badge text-white m-badge--info m-badge--wide m--margin-top-5" role="alert"><strong>Pending Approval</strong></div>');
+          $('#status').append('<div class="m-badge text-white m-badge--info m-badge--wide" role="alert"><strong>Pending Approval</strong></div>');
           if(date1>=date2){
             $("#btnapprove").show();
             $("#btndisapprove").show();
@@ -307,6 +307,16 @@ $.ajax({
             $("#btnback").hide();
             $("#btnback2").show();
         }  
+
+        const dateRange = data.data.duration;
+        const [startStr, endStr] = dateRange.split(' - ');
+        const now = moment().format('YYYY-MM-DD');
+        const from = moment(startStr).format('YYYY-MM-DD');
+
+        if (now == from) {
+          $("#btnapprove").prop('disabled', true);
+        }
+
         break;
       case "Approved":
           if(data.data.accomplishment_dt=="0000-00-00 00:00:00" || data.data.accomplished == 0){
@@ -321,24 +331,15 @@ $.ajax({
             $("#btnnote").show();
             //$("#btnaccomplish").show();
             document.getElementById('recommend_by').style.removeProperty( 'display' );
-            
-            // if(data.data.accomplishment_dt=="0000-00-00 00:00:00"){
-            //   $("#btnaccomplish").show();
-            //   $("#btnundoaccomplish").hide();
-            //   $("#btnundoapprove").show();
-            // }else{
-            //   $("#btnaccomplish").hide();
-            //   $("#btnundoaccomplish").show();
-            // }
           }else{
             $("#btnback").hide();
             $("#btnback2").show();
           }
           if(data.data.accomplishment_dt=="0000-00-00 00:00:00" || data.data.accomplished == 0){
-            $('#status').append('<div class="m-badge m-badge--success m-badge--wide m--margin-top-5" role="alert"><strong>Approved</strong></div>');
+            $('#status').append('<div class="m-badge m-badge--success m-badge--wide" role="alert"><strong>Approved</strong></div>');
             $("#accomplish_dt").hide();
           }else{
-            $('#status').append('<div class="m-badge m-badge--success m-badge--wide m--margin-top-5" role="alert"><strong>Accomplished</strong></div>');
+            $('#status').append('<div class="m-badge m-badge--success m-badge--wide" role="alert"><strong>Accomplished</strong></div>');
             $("#accomplish_dt").show();
           }
           $("#approve").show();
@@ -347,13 +348,12 @@ $.ajax({
 
           var dateDiff = dateDifference(moment(data.data.approved_dt).format("YYYY-MM-DD"), getCurrentDate());
           if(dateDiff > 7){
-            //$("#btnaccomplish").hide();
             $("#btnapprove").hide();
           }
 
         break;
         case "Disapproved":
-            $('#status').append('<div class="m-badge m-badge--danger m-badge--wide m--margin-top-5" role="alert"><strong>Disapproved</strong></div>');
+            $('#status').append('<div class="m-badge m-badge--danger m-badge--wide" role="alert"><strong>Disapproved</strong></div>');
             if(date1>=date2){
               $("#btnundodisapprove").show();
             }else{
@@ -363,7 +363,7 @@ $.ajax({
             $("#disapprove").hide();
         break;
         case "HR Noted":
-            $('#status').append('<div class="m-badge m-badge--accent m-badge--wide m--margin-top-5" role="alert"><strong>HR Noted</strong></div>');
+            $('#status').append('<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>HR Noted</strong></div>');
             if(date1>=date2){
             document.getElementById('btnundonote').style.removeProperty( 'display' );
           }else{
@@ -377,7 +377,7 @@ $.ajax({
             document.getElementById('btnprint2').style.removeProperty( 'display' );
         break;
         default:
-            $('#status').append('<div class="m-badge m-badge--metal text-white m-badge--wide m--margin-top-5" role="alert"><strong>Cancelled</strong></div>');
+            $('#status').append('<div class="m-badge m-badge--metal text-white m-badge--wide" role="alert"><strong>Cancelled</strong></div>');
             if(date1>=date2){
               document.getElementById('btnundocancel').style.removeProperty( 'display' );
             }
@@ -387,6 +387,11 @@ $.ajax({
               document.getElementById('cancel_remark').style.removeProperty( 'display' );
         break;
     }
+
+      if (data.data.is_emergency == 1) {
+        $('#status').append('<span class="m-badge m-badge--info m-badge--wide ml-2" style="font-weight: 700"><strong>Emergency</strong></span>');
+      }
+
       if (data.data.is_service == 1) {
         data.data.ref_yr = data.plateno;
         document.getElementById('driver').style.removeProperty( 'display' );           
@@ -424,7 +429,7 @@ $.ajax({
         $('#vehicle_label').text('Remarks');
         $('#vehicle_print').text(data.data.others_remarks.toUpperCase());
       }
-     
+    
     vmTab1.vm_tab1 = Object.assign({}, data.data);
     vmPrintArea.vm_to_data = Object.assign({}, data.data);
     vmPrintArea.vm_destination = Object.assign({}, data.destination);
@@ -1252,7 +1257,7 @@ function printArea2(){
         $('#plate_no_print2').text(data.data.vehicle.toUpperCase());
         $('#driver_print2').text(data.data.driver.toUpperCase());
       }
-       if (data.data.is_commute == 1) {
+      if (data.data.is_commute == 1) {
         $('#vehicle_print2').text('COMMUTE');
       } if (data.data.is_personal == 1) {
         $('#vehicle_print2').text('PERSONAL VEHICLE');

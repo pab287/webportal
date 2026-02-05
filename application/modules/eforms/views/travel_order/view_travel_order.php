@@ -109,7 +109,7 @@
                                         <b v-text="vm_tab1.approved_recommend_by"></b>
                                     </div>   
                                     <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                       
+                                        
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="remark">
                                         Remarks: <b v-text="vm_tab1.approved_recommend_remarks"></b>
@@ -165,7 +165,7 @@
                                         <b v-text="vm_tab1.hr_noted_by"></b>
                                     </div>   
                                     <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                       
+
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="remark">
                                         Remarks: <b v-text="vm_tab1.hr_noted_remarks"></b>
@@ -175,18 +175,14 @@
                                 <div class="form-group m-form__group row" id="noted_remark"></div>
                                 <div class="form-group m-form__group row" id="accomplish_dt">
                                     <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                        <!-- Official Date Return --> Date Accomplished
+                                        Date Accomplished
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="recieved">
                                         <b v-text="vm_tab1.accomplished_by"></b>
-                                        <!-- <b v-text="moment(vm_tab1.accomplishment_dt).format('LLL')"></b> -->
                                     </div>  
                                     <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                       
+
                                     </label>
-                                    <!-- <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="remark">
-                                        Remarks: <b v-text="vm_tab1.accomplishment_remarks"></b>
-                                    </div> -->
                                 </div>
                             </div>
                         </div>
@@ -201,21 +197,11 @@
                                         <b v-text="vm_tab1.station"></b>
                                     </div>
                                 </div>
-                                <!-- <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                    Origin
-                                    </label>
-                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="ref_no">
-                                        <b v-text="vm_tab1.origin"></b>
-                                    </div>
-                                </div>     -->
                                 <div class="form-group m-form__group row">
                                     <label class="col-3">
                                     Status
                                     </label>
-                                    <div class="col-9"  id="status">
-                                    
-                                    </div>
+                                    <div class="col-9"  id="status"></div>
                                 </div>  
                             </div> 
                             <div class="col-md-6 col-sm-12">
