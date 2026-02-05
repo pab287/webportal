@@ -579,7 +579,7 @@
                                         <input name="last_name" type="text" class="form-control m-input" placeholder="Last Name" data-validation="required"  v-model="participantDataSelected.lastname" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
                                     </div>
                                     <div class="col-sm-12 col-md-3 mb-3">
-                                        <input name="suffix" type="text" class="form-control m-input" placeholder="Suffix" data-validation="required"  v-model="participantDataSelected.suffix" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
+                                        <input name="suffix" type="text" class="form-control m-input" placeholder="Suffix" v-model="participantDataSelected.suffix" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
                                     </div>
                                 </div>
                             </div>
