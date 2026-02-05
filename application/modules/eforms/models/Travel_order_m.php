@@ -4114,13 +4114,12 @@
                 $dest = implode("=", (array)$destination['telegram']);
                 $pers = implode(" ", (array)$personnel);
                 $telegram_msg = '';
+                $tempEmergency = ($row->is_emergency && $row->is_emergency == 1) ? ' - [ EMERGENCY ]' : '';
 
-                if ($row->is_emergency && $row->is_emergency == 1) {
-                    $telegram_msg = '<b>EMERGENCY</b>'.chr(10).chr(10);
-                }
-
+                $telegram_msg = "<b>".strtoupper($row->station).$tempEmergency."</b>".chr(10).chr(10);
+                
                 $telegram_msg .= '<b>TO #</b>: '.$row->reference_no.chr(10);
-                $telegram_msg .= '<b>FILE: </b>'.strtoupper($row->company).chr(10);
+                $telegram_msg .= '<b>FILE UNDER: </b>'.strtoupper($row->company).chr(10);
                 $telegram_msg .= '<b>PREP BY: </b>'.strtoupper($row->created_by).chr(10);
                 $telegram_msg .= '<b>APPROVED BY: </b>'.strtoupper($row->approved_by).chr(10);
                 $telegram_msg .= '<b>APPROVED DATE: </b>'.date('F d, Y h:i A', strtotime($row->approved_dt)).chr(10);
