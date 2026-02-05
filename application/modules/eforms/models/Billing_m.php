@@ -7287,13 +7287,7 @@ class Billing_m extends CI_Model {
             }
             $this->db->group_end();
         }
-
-        // Check for datatable pagination
-        // =============================================
-        if ($limit != -1) {
-            $this->db->limit($limit, $offset);
-        }
-
+        
         $query = $this->db->get();
         return $query->num_rows();
     }
