@@ -313,7 +313,7 @@ $.ajax({
         const now = moment().format('YYYY-MM-DD');
         const from = moment(startStr).format('YYYY-MM-DD');
 
-        if (now == from) {
+        if (now == from && data.data.is_emergency == 0) {
           $("#btnapprove").prop('disabled', true);
         }
 
