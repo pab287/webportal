@@ -147,66 +147,84 @@
                         </div>
                     </div>
                     <div class="row">
-    <!-- Requested By -->
-    <div class="col-md-4">
-        <div class="card h-100 ">
-            <div class="card-body bg-secondary">
-                <div class="form-group mb-0">
-                    <label for="requested_by" class="form-control-label required">
-                        Requested By
-                    </label>
-                    <input type="text"
-                           id="requested_by"
-                           name="requested_by"
-                           class="form-control bg-light color-white"
-                           autocomplete="off"
-                           readonly>
-                    <small class="text-muted">Project-In-Charge</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Checked By -->
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body">
-                <div class="form-group mb-0">
-                    <label for="checked_by" class="form-control-label required">
-                        Checked By
-                    </label>
-                    <input type="text"
-                           id="checked_by"
-                           name="checked_by"
-                           class="form-control"
-                           autocomplete="off"
-                           readonly>
-                    <small class="text-muted">Planning Head</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Noted By -->
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body">
-                <div class="form-group mb-0">
-                    <label for="noted_by" class="form-control-label required">
-                        Noted By
-                    </label>
-                    <input type="text"
-                           id="noted_by"
-                           name="noted_by"
-                           class="form-control"
-                           autocomplete="off"
-                           readonly>
-                    <small class="text-muted">Operations Manager</small>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                        <div class="col-md-4">
+                            <div class="card h-100 ">
+                                <div class="card-body bg-secondary">
+                                    <div class="form-group mb-0">
+                                        <label for="requested_by" class="form-control-label required">
+                                            Requested By
+                                        </label>
+                                        <input type="text"
+                                            id="requested_by"
+                                            name="requested_by"
+                                            class="form-control bg-light color-white"
+                                            autocomplete="off"
+                                            readonly>
+                                        <small class="text-muted">Project-In-Charge</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="form-group mb-0">
+                                        <label for="checked_by" class="form-control-label required">
+                                            Checked By
+                                        </label>
+                                        <input type="text" id="checked_by" name="checked_by" class="form-control" autocomplete="off" readonly>
+                                        <small class="text-muted">Planning Head</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="form-group mb-0">
+                                        <label for="noted_by" class="form-control-label required">
+                                            Noted By
+                                        </label>
+                                        <input type="text"
+                                            id="noted_by"
+                                            name="noted_by"
+                                            class="form-control"
+                                            autocomplete="off"
+                                            readonly>
+                                        <small class="text-muted">Operations Manager</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="send_to" class="form-control-label required">
+                                    TO:
+                                </label>
+                                <input type="text" id="send_to" name="send_to" class="form-control m-input" autocomplete="off" readonly>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label for="cc_to" class="form-control-label required">
+                                    CC:
+                                </label>
+                                <input type="text" id="cc_to" name="cc_to" class="form-control m-input" autocomplete="off" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="consultant" class="form-control-label required">
+                                    ATTENTION: (Name of Consultant)
+                                </label>
+                                <input type="text" id="consultant" name="consultant" class="form-control m-input" autocomplete="off" readonly>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-submit btn-primary btnNew">
