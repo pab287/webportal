@@ -690,7 +690,17 @@
             <table style="font-size:small;" width="100%" border="0" id="table_to_data">
                 <tr>
                 <td width="35%" style="font: 23px arial, sans-serif;"><p id="company" style="text-transform: uppercase;">{{vm_to_data.company}}</p></td>
-                <td style="text-align: right;  font: 20px arial, sans-serif;"  width="30%"><p><small>TRAVEL ORDER</small><p></td>
+                <td style="text-align: right;  font: 20px arial, sans-serif;"  width="30%">
+                    <p>
+                        <small>
+                            TRAVEL ORDER
+
+                            <template v-if="vm_to_data.is_emergency == 1">
+                                - <span style="font-weight: 700"> [ Emergency ]</span>
+                            </template>
+                        </small>
+                    <p>
+                </td>
                 <td style="text-align: right; font: 23px arial, sans-serif;"  width="35%"><p id="reference_no">{{vm_to_data.reference_no}}</p></td>
                 <td id="qr_code"></td>
                 </tr>
