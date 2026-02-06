@@ -4967,6 +4967,7 @@ class Reports_m extends CI_Model{
             }
             $hasEmployeeFilter = isset($post["employee"]) && is_array($post["employee"]) && count($post["employee"]) > 0;
             $hasMonthFilter = false;
+            $hasYearFilter = false;
 
             if(isset($post["filter_by"], $post["month"]) && ($post["filter_by"] == 2 && $post["month"])){
                 if($hasEmployeeFilter == false){
@@ -4974,7 +4975,15 @@ class Reports_m extends CI_Model{
                     $this->db->from($this->tbl_employees);
                     $this->db->where("MONTH(date_start)", $post["month"]);
                     $this->db->where("company_id", $post["company"]);
-                    $this->db->where("employee_status", "Active");
+                    
+                    if ($status != 'All') {
+                        $this->db->where('employee_status', $status);
+                    }
+
+                    if ($status == 'All' || $status == 'Active') {
+                        $this->db->where_not_in('work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']); //added to generate only the regular and probi work status
+                    }
+
                     $this->db->group_by("id");
                     $qFilter = $this->db->get();
                     if($qFilter->num_rows() > 0){
@@ -4990,7 +4999,15 @@ class Reports_m extends CI_Model{
                     $this->db->select("id");
                     $this->db->from($this->tbl_employees);
                     $this->db->where("company_id", $post["company"]);
-                    $this->db->where("employee_status", "Active");
+                    
+                    if ($status != 'All') {
+                        $this->db->where('employee_status', $status);
+                    }
+
+                    if ($status == 'All' || $status == 'Active') {
+                        $this->db->where_not_in('work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']); //added to generate only the regular and probi work status
+                    }
+
                     $this->db->group_by("id");
                     $qFilter = $this->db->get();
                     if($qFilter->num_rows() > 0){
@@ -5077,6 +5094,8 @@ class Reports_m extends CI_Model{
                     $this->db->where("MONTH(emp.date_start)", $post["month"]); 
                 }
 
+                $this->db->where('DATE_ADD(emp.date_start, INTERVAL 1 YEAR) < NOW()'); //added 1 year to date_start of employee and restrict employee if 1year below
+
                 // added to filtered out by employee status
                 if ($status){ 
                     if ($status != 'All') {
@@ -5084,7 +5103,7 @@ class Reports_m extends CI_Model{
                     }
 
                     if ($status == 'All' || $status == 'Active') {
-                        $this->db->where_not_in('emp.work_status', ['NO CONTRACT', 'RETIRED', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']); //added to generate only the regular and probi work status
+                        $this->db->where_not_in('emp.work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']); //added to generate only the regular and probi work status
                     }
                 }
                 // added to filtered out by employee status
@@ -5099,6 +5118,8 @@ class Reports_m extends CI_Model{
                     $nCharges = array();
                     foreach ($queryCredits->result() as $key => $credits) {
                         $credits->charges = 0;
+                        $empDateStart = date('Y-m-d', strtotime($credits->date_start));
+                        $empAddYear = date('Y-m-d', strtotime($empDateStart.' +1year'));
                         if(isset($arrCharges[$credits->id]["amount"]) && $arrCharges[$credits->id]["amount"]){
                             $credits->charges = $arrCharges[$credits->id]["amount"];
                             if(isset($arrCharges[$credits->id]["charges"]) && $arrCharges[$credits->id]["charges"]){
@@ -5108,6 +5129,7 @@ class Reports_m extends CI_Model{
                                 $nCharges[] = $rowCharges;
                             }
                         }
+                        $credits->add_year = $empAddYear;
                         $nResult[$key] = $credits;
                     }
 
