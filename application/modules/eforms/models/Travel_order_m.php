@@ -930,7 +930,7 @@
             $this->db->from('gcchris.tblcompanies');
             $this->db->where('id', $company);
             $query = $this->db->get();
-            return is_array($query->row_array()) && iseet($query->row_array()['description']) ? $query->row_array()['description'] : "No Data Found!";
+            return is_array($query->row_array()) && isset($query->row_array()['description']) ? $query->row_array()['description'] : "No Data Found!";
         }
 
         function driver() {
@@ -3847,6 +3847,11 @@
                 $resultarray['status'] = true;
                 $resultarray['msg'] = 'Travel order has been created successfully.';
                 $resultarray["redirect"] = site_url("eforms/travel_order/view_travel_order?id={$to_last_id}");
+
+                if ($is_emergency == 1) {
+                    $msg = "User has tagged the Travel Order Reference # `{$ref_no}` as emergency.";
+                    $this->core_layout->setEventLog($msg,"save", "success", "gcceforms", "user");
+                }
             } else {
                 $resultarray['status'] = false;
                 $resultarray['msg'] = 'Failed to create new travel order entry!';
@@ -3904,10 +3909,20 @@
             // $checkPersonnel = $this->checkPersonnelEditTO($to_id);
 
             $reference_no = $this->db->get_where("gcceforms.travel_order", array("id"=>$to_id))->row('reference_no');
+            $last_data = $this->db->select('is_emergency')->get_where('gcceforms.travel_order', array('id' => $to_id))->row('is_emergency');
             if($this->update_travel_order(array('id' => $to_id), $data)){
                 $resultarray['status'] = true;
                 $resultarray['msg'] = 'Successfully update';
-                $this->core_layout->setEventLog("Updated ".$reference_no.".","update", "success", "gcceforms", "user");
+
+                $msg = "User has updated the Travel Order Reference # `{$reference_no}`";
+
+                if ($last_data != $is_emergency) {
+                    $last_description = $last_data == 1 ? 'Active' : 'Inactive';
+                    $new_description = $is_emergency == 1 ? 'Active' : 'Inactive';
+                    $msg .= "and changed the status of Emergency from `{$last_description}` to `{$new_description}`";
+                }
+
+                $this->core_layout->setEventLog($msg,"update", "success", "gcceforms", "user");
             }else{
                 $resultarray['status'] = false;
                 $resultarray['msg'] = 'Failed to update';
@@ -3942,7 +3957,13 @@
             if($this->checkAssignTravelType($id)){
                 $post = $this->update_travel_order(array('id' => $id), $data);
                 if ($post) {
-                    $this->sendTelegram($id);
+
+                    $destinationFrom = $this->db->select('date_from')->get_where('gcceforms.travel_destination', array('travel_order_id' => $id))->row('date_from');
+
+                    // prevents sending notification when approving a backlogs
+                    if (date('Y-m-d', strtotime($date)) <= date('Y-m-d', strtotime($destinationFrom))) {
+                        $this->sendTelegram($id);
+                    }
 
                     $message = "View Travel Order - Approve travel order ".$this->getReferenceNo($id).".";
                     $type = "success";
@@ -4018,6 +4039,8 @@
             $array_response = array();
             $telegram = "";
             $sms = "";
+            $tg_date_from = null;
+            $tg_date_to = null;
             if ($query->num_rows() > 0) {
                 foreach ($query->result() as $row) {
                     $tg_date_from = date_format(date_create($row->date_from),"F j, Y g:i a");
@@ -4034,6 +4057,8 @@
                 }
             }
             $array_response['telegram'] = $telegram;
+            $array_response['date_from'] = $tg_date_from;
+            $array_response['date_to'] = $tg_date_to;
             $array_response['sms'] = $sms;
             return $array_response;
         }

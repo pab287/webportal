@@ -58,11 +58,11 @@ function toggleAccomplishDisable(checked){
     // $("#btnaccomplish").removeClass('btn-metal');
     // $("#btnaccomplish").addClass('btn-success');
     if(checked){
-      $("#btnaccomplish").removeAttr('disabled');
+      // $("#btnaccomplish").removeAttr('disabled');
       $("#btnaccomplish").removeClass('btn-metal');
       $("#btnaccomplish").addClass('btn-success');
     }else{
-      $("#btnaccomplish").attr('disabled',"disabled");
+      // $("#btnaccomplish").attr('disabled',"disabled");
       $("#btnaccomplish").removeClass('btn-success');
       $("#btnaccomplish").addClass('btn-metal');
     }
@@ -314,7 +314,7 @@ $.ajax({
         const from = moment(startStr).format('YYYY-MM-DD');
 
         if (now == from && data.data.is_emergency == 0) {
-          $("#btnapprove").prop('disabled', true);
+          $("#btnapprove").attr('onclick', 'unable_approve()');
         }
 
         break;
@@ -878,6 +878,16 @@ function open_accomplish(){
     $("#modal_form_accomplish #remarks").hide();
   }
 
+  if (dates.length == 0) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Accomplish Travel Order',
+      text: 'Please select atleast one (1) Destination to Accomplish.'
+    });
+
+    return;
+  }
+
   const uniqueArray = unique(dates);
   var _date = "";
   var _time = "";
@@ -1410,3 +1420,10 @@ function printArea2(){
   });
 }
 
+function unable_approve(){
+  Swal.fire({
+    icon: 'warning',
+    title: 'Approve Travel Order',
+    text: 'Travel orders must be approved at least one day before the travel date. Approval for today’s travel is not allowed.'
+  })
+}
