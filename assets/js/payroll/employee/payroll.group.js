@@ -487,8 +487,35 @@ var renderNotificationRecords = function () {
     })
 }
 
+const getEmployeesWithoutPayrollGroup = function () {
+    $.ajax({
+        url: siteUrl("payroll/employee/get_employees_without_payroll_group"),
+        dataType: "json",
+        success: function (json) {
+            if (json.response) {
+                const { data: arrEmpRecord } = json;
+
+                const ctr = arrEmpRecord.length;
+                let tempHtml = `<div class='row swal--custom-list'>`;
+                arrEmpRecord.forEach((row, _index) => {
+                    tempHtml += `<div class='col-6 col-md-6 col-lg-6 col-sm-12'><span class='m--font-bolder text-left ml-1'>${row.employee_name} - ${row.company_code}</span></div>`;
+                });
+                tempHtml += `</div>`;
+
+                Swal.fire({
+                    title: 'EMPLOYEES WITHOUT PAYROLL GROUP!',
+                    html: `A TOTAL OF <b>${ctr}</b> EMPLOYEES WITHOUT PAYROLL GROUP FOUND!<br>${tempHtml}`,
+                    icon: 'warning',
+                    width: '1024px',
+                });
+            }
+        }
+    });
+}
+
 $(document).ready(function () {
     renderNotificationRecords();
+    getEmployeesWithoutPayrollGroup();
 });
 
 var vmNotification = new Vue({
