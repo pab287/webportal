@@ -544,7 +544,7 @@ const getEmployeesWithoutPayrollGroup = function (isClicked = false) {
                     html: `A TOTAL OF <b>${ctr}</b> EMPLOYEES WITHOUT PAYROLL GROUP FOUND!<br>${tempHtml}`,
                     icon: 'warning',
                     width: '1024px',
-                    confirmButtonText: 'Yes, Print it!',
+                    confirmButtonText: 'Export Excel',
                     showCancelButton: true,
                     cancelButtonText: 'Close',
                     allowOutsideClick: () => !Swal.isLoading(),
