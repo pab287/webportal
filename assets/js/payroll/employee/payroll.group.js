@@ -466,28 +466,65 @@ $(document).on("click", "button.btnDeleteGroup", function () {
     });
 });
 
-var renderNotificationRecords = function () {
+const renderNotificationRecords = function () {
     $.ajax({
         url: siteUrl("payroll/employee/get_duplicate_payroll_group"),
         dataType: "json",
         success: function (json) {
             if (json.response) {
-                vmNotification.count = json.duplicate_count;
-                vmModalEntries.count = json.duplicate_count;
-                vmModalEntries.data = Object.assign({}, json.data);
+                const { duplicate_count, data } = json;
+                vmNotification.count = duplicate_count;
+                vmModalEntries.count = duplicate_count;
+                vmModalEntries.data = { ...data };
                 if(json.duplicate_count > 0){
                     toastr.info("A total of ("+json.duplicate_count+") duplicate payroll group found!", "Duplicate Payroll Group", { timeOut: 0, extendedTimeOut: 0 });
                 }
             } else {
                 vmNotification.count = 0;
                 vmModalEntries.count = 0;
-                vmModalEntries.data = Object.assign({});
+                vmModalEntries.data = {};
             }
         }
     })
 }
 
-const getEmployeesWithoutPayrollGroup = function () {
+const vmNotification = new Vue({
+    el: "#group_notification",
+    data: { count: 0, notification_clicked: false, no_payroll_group: false },
+    methods: {
+        toggleClicked: function () {
+            let _this = this;
+            if (_this.notification_clicked === false) { _this.notification_clicked = true; }
+            toastr.clear();
+            return _this.notification_clicked;
+        }, addPayrollGroup: function () {
+            getEmployeesWithoutPayrollGroup(true);
+        }
+    }
+});
+
+const vmModalEntries = new Vue({
+    el: "#modal-duplicate-entries",
+    data: { count: 0, data: {} }
+});
+
+function normalizeKey(key) {
+  return key.replace(/_/g, " ").replace(/\w\S*/g, txt =>
+      txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+    );
+}
+
+function normalizeArrayKeys(data) {
+  return data.map(row => {
+    const newRow = {};
+    Object.keys(row).forEach(key => {
+      newRow[normalizeKey(key)] = row[key];
+    });
+    return newRow;
+  });
+}
+
+const getEmployeesWithoutPayrollGroup = function (isClicked = false) {
     $.ajax({
         url: siteUrl("payroll/employee/get_employees_without_payroll_group"),
         dataType: "json",
@@ -501,37 +538,63 @@ const getEmployeesWithoutPayrollGroup = function () {
                     tempHtml += `<div class='col-6 col-md-6 col-lg-6 col-sm-12'><span class='m--font-bolder text-left ml-1'>${row.employee_name} - ${row.company_code}</span></div>`;
                 });
                 tempHtml += `</div>`;
-
-                Swal.fire({
+                
+                let swalFireOption = {
                     title: 'EMPLOYEES WITHOUT PAYROLL GROUP!',
                     html: `A TOTAL OF <b>${ctr}</b> EMPLOYEES WITHOUT PAYROLL GROUP FOUND!<br>${tempHtml}`,
                     icon: 'warning',
                     width: '1024px',
+                    confirmButtonText: 'Yes, Print it!',
+                    showCancelButton: true,
+                    cancelButtonText: 'Close',
+                    allowOutsideClick: false
+                };
+
+                if(isClicked === false){
+                    vmNotification.no_payroll_group = true;
+                    swalFireOption.timer = 10000;
+                    swalFireOption.timerProgressBar = true;
+                    swalFireOption.didOpen = () => {
+                        setTimeout(() => {
+                            const popup = Swal.getPopup();
+                            if (popup) popup.classList.add('swal2-fade-out');
+                        }, 9800);
+
+                        const confirmBtn = Swal.getConfirmButton();
+                        if (confirmBtn) {
+                            confirmBtn.addEventListener('click', () => {
+                                const popup = Swal.getPopup();
+                                if (popup) popup.classList.add('swal2-fade-out');
+
+                                setTimeout(() => Swal.close(), 500);
+                            });
+                        }
+                    };
+
+                    swalFireOption.willClose = () => {
+                        return new Promise(resolve => setTimeout(resolve, 500));
+                    };
+                }
+
+                Swal.fire(swalFireOption).then((result) => {
+                    if (result.value) {
+                        const formattedData = normalizeArrayKeys(arrEmpRecord);
+                        console.log(formattedData);
+
+                        const ws = XLSX.utils.json_to_sheet(formattedData);
+                        const wb = XLSX.utils.book_new();
+                        XLSX.utils.book_append_sheet(wb, ws, "EMPLOYEES WITHOUT PAYROLL GROUP");
+                        XLSX.writeFile(wb, "EMPLOYEES WITHOUT PAYROLL GROUP.xlsx");
+                    }
                 });
+            }else{
+                vmNotification.no_payroll_group = false;
             }
         }
     });
 }
 
 $(document).ready(function () {
-    renderNotificationRecords();
     getEmployeesWithoutPayrollGroup();
-});
-
-var vmNotification = new Vue({
-    el: "#group_notification",
-    data: { count: 0, notification_clicked: false },
-    methods: {
-        toggleClicked: function () {
-            let _this = this;
-            if (_this.notification_clicked === false) { _this.notification_clicked = true; }
-            toastr.clear();
-            return _this.notification_clicked;
-        }
-    }
-});
-
-var vmModalEntries = new Vue({
-    el: "#modal-duplicate-entries",
-    data: { count: 0, data: {} }
+    renderNotificationRecords();
 });

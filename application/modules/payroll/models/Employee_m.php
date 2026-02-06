@@ -2561,22 +2561,22 @@ public function getEmployeeNightDiffList(){
                 }
             }
 
-            $this->db->select("emp.id as employee_id,
-                UPPER(TRIM(CONCAT(emp.firstname, ' ', CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+            $this->db->select("UPPER(TRIM(CONCAT(emp.firstname, ' ', CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
                         TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
                     THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
                 END, ' ', `emp`.`lastname`, CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
                     UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
                     emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''
-                END))) as employee_name,
-            emp.employee_status, UPPER(comp.code) as company_code");
+                END))) as employee_name, UPPER(comp.code) as company_code, emp.employee_status");
             $this->db->from($this->employeeTable.' emp');
             $this->db->join($tempTableName.' temp', 'temp.temp_id = emp.id', 'left');
             $this->db->join($this->companyTable.' comp', 'comp.id = emp.company_id', 'left');
             $this->db->where('temp.temp_id IS NULL', null, false);
             $this->db->where('emp.employee_status', 'Active');
-            $this->db->order_by('emp.lastname', 'ASC');
+            $this->db->order_by('comp.code', 'ASC');
+            $this->db->order_by('emp.firstname', 'ASC');
             $query = $this->db->get();
+
             if($query->num_rows() > 0){
                 $resultset["response"] = true;
                 $resultset["data"] = $query->result();
