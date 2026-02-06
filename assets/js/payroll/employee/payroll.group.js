@@ -547,28 +547,23 @@ const getEmployeesWithoutPayrollGroup = function (isClicked = false) {
                     confirmButtonText: 'Yes, Print it!',
                     showCancelButton: true,
                     cancelButtonText: 'Close',
-                    allowOutsideClick: false
+                    allowOutsideClick: () => !Swal.isLoading(),
+                    allowEscapeKey: () => !Swal.isLoading()
                 };
 
-                if(isClicked === false){
+                if (isClicked === false) {
                     vmNotification.no_payroll_group = true;
                     swalFireOption.timer = 10000;
                     swalFireOption.timerProgressBar = true;
+                    let isManualClose = false;
                     swalFireOption.didOpen = () => {
+                        const popup = Swal.getPopup();
+                        // Fade before timer ends
                         setTimeout(() => {
-                            const popup = Swal.getPopup();
-                            if (popup) popup.classList.add('swal2-fade-out');
+                            if (!isManualClose && popup) {
+                                popup.classList.add('swal2-fade-out');
+                            }
                         }, 9800);
-
-                        const confirmBtn = Swal.getConfirmButton();
-                        if (confirmBtn) {
-                            confirmBtn.addEventListener('click', () => {
-                                const popup = Swal.getPopup();
-                                if (popup) popup.classList.add('swal2-fade-out');
-
-                                setTimeout(() => Swal.close(), 500);
-                            });
-                        }
                     };
 
                     swalFireOption.willClose = () => {
@@ -576,17 +571,43 @@ const getEmployeesWithoutPayrollGroup = function (isClicked = false) {
                     };
                 }
 
-                Swal.fire(swalFireOption).then((result) => {
-                    if (result.value) {
+                swalFireOption.preConfirm = async () => {
+                    try {
+                        Swal.showLoading();
+                        Swal.stopTimer();
+                        await new Promise(r => setTimeout(r, 50));
                         const formattedData = normalizeArrayKeys(arrEmpRecord);
-                        console.log(formattedData);
+                        const CHUNK_SIZE = 5000;
+                        let worksheet = XLSX.utils.json_to_sheet([]);
+                        for (let i = 0; i < formattedData.length; i += CHUNK_SIZE) {
+                            const chunk = formattedData.slice(i, i + CHUNK_SIZE);
+                            XLSX.utils.sheet_add_json(worksheet, chunk);
+                            await new Promise(r => setTimeout(r, 0));
+                        }
 
-                        const ws = XLSX.utils.json_to_sheet(formattedData);
-                        const wb = XLSX.utils.book_new();
-                        XLSX.utils.book_append_sheet(wb, ws, "EMPLOYEES WITHOUT PAYROLL GROUP");
-                        XLSX.writeFile(wb, "EMPLOYEES WITHOUT PAYROLL GROUP.xlsx");
+                        const workbook = XLSX.utils.book_new();
+                        XLSX.utils.book_append_sheet(
+                            workbook,
+                            worksheet,
+                            "WITHOUT PAYROLL GROUP"
+                        );
+
+                        XLSX.writeFile(
+                            workbook,
+                            "EMPLOYEES WITHOUT PAYROLL GROUP.xlsx",
+                            { compression: true }
+                        );
+
+                        return true;
+
+                    } catch (err) {
+                        Swal.showValidationMessage(
+                            `Export failed: ${err.message || err}`
+                        );
+                        return false;
                     }
-                });
+                };
+                Swal.fire(swalFireOption);
             }else{
                 vmNotification.no_payroll_group = false;
             }
