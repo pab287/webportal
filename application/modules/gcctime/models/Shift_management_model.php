@@ -3756,10 +3756,13 @@
 
         function emailAbsentNotification() {
             $dateToday = date("F d, Y");
+            $ampm = date("A");
 
             $currentAbsent = $this->getCurrentAbsent();
             $this->saveAbsenteeReport($currentAbsent);
             $data = (isset($currentAbsent["check_absent"]) && $currentAbsent["check_absent"]) ? $currentAbsent["check_absent"] : array();
+
+
 
             $arrData = array();
             $arrData["data"] = $data;
