@@ -168,7 +168,9 @@ class Travel_order extends MY_Controller
 
         $this->core_layout->setPageTitle("Travel Order - New Travel Order");
         $this->core_layout->setPrivilegeName("to_masterfile");
-        $this->core_layout->addJs("js/eforms/travel_order/new_travel_order.js", true, $tempData,"?v=0.0.1");
+
+        $version = filemtime(FCPATH.'assets/js/eforms/travel_order/new_travel_order.js');
+        $this->core_layout->addJs("js/eforms/travel_order/new_travel_order.js", true, $tempData,"?v={$version}");
         // $this->core_layout->addJs("js/eforms/travel_order/travel_order_sites.js", true);
 
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
@@ -190,7 +192,8 @@ class Travel_order extends MY_Controller
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
 
-        $this->core_layout->addJs("js/eforms/travel_order/view_travel_order.js", true,"?v=0.0.1");
+        $version = filemtime(FCPATH.'assets/js/eforms/travel_order/view_travel_order.js');
+        $this->core_layout->addJs("js/eforms/travel_order/view_travel_order.js", true,array(),"?v={$version}");
         $this->load->view('core/templates/header');
         $this->load->view('eforms/travel_order/view_travel_order');
         $this->load->view('core/templates/footer');
@@ -204,7 +207,9 @@ class Travel_order extends MY_Controller
         
         $this->core_layout->setPageTitle("Travel Order - Edit Travel Order");
         $this->core_layout->setPrivilegeName("to_masterfile");
-        $this->core_layout->addJs("js/eforms/travel_order/edit_travel_order.js", true,"?v=0.0.1");
+
+        $version = filemtime(FCPATH.'assets/js/eforms/travel_order/edit_travel_order.js');
+        $this->core_layout->addJs("js/eforms/travel_order/edit_travel_order.js", true,array(),"?v={$version}");
 
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);

@@ -308,12 +308,10 @@ $.ajax({
             $("#btnback2").show();
         }  
 
-        const dateRange = data.data.duration;
-        const [startStr, endStr] = dateRange.split(' - ');
         const now = moment().format('YYYY-MM-DD');
-        const from = moment(startStr).format('YYYY-MM-DD');
+        const dateFromArray = data.destination.map(item => moment(item.date_from).format('YYYY-MM-DD'));
 
-        if (now == from && data.data.is_emergency == 0) {
+        if (jQuery.inArray(now, dateFromArray) !== -1 && data.data.is_emergency == 0) {
           $("#btnapprove").attr('onclick', 'unable_approve()');
         }
 
@@ -1421,9 +1419,39 @@ function printArea2(){
 }
 
 function unable_approve(){
+  const result = getByDate(vmPrintArea.vm_destination, moment().format('YYYY-MM-DD'));
+
+  let html = ``;
+  html += '<div>';
+    html += `<p class="m-0">Travel orders must be approved at least one day before the travel date. Approval for today’s travel is not allowed.</p>`;
+
+    if (result.length > 0) {
+      html += `<ul style="text-align: left; margin-top: 10px">`;
+        $.each(result, function(index, item){
+          html += `<li>`;
+            html += `<p class="mb-1"><b>${item.destination}</b></p>`;
+            html += moment(item.date_from).format('lll') + ' - ' + moment(item.date_to).format('lll');
+          html += `</li>`;
+        });
+      html += `</ul>`;
+    }
+  html += '</div>';
+
+
   Swal.fire({
     icon: 'warning',
     title: 'Approve Travel Order',
-    text: 'Travel orders must be approved at least one day before the travel date. Approval for today’s travel is not allowed.'
+    html: html
   })
+}
+
+function getByDate(dataObj, targetDate) {
+  targetDate = new Date(targetDate).toISOString().split('T')[0];
+  return Object.values(dataObj).filter(item => {
+    const dateOnly = new Date(item.date_from)
+      .toISOString()
+      .split('T')[0];
+
+    return dateOnly == targetDate;
+  });
 }
