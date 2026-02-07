@@ -91,7 +91,7 @@ table { font-size: 14px; border: 0; }
 										<h1 style="font-family: Quicksand, Calibri, sans-serif; color:#343434;">GC&amp;C - GCCTIME</h1>
 										<?php if($state): ?>
 										<h2 style="font-family: Quicksand, Calibri, sans-serif; color:#343434; margin-top: 15px; text-transform: uppercase;">
-											<!-- <?php //echo ($station_title != "OTHERS") ? $station_title . " | " : ""; ?> Late Report - <?php echo ($state == "AM")? $state: $state; ?> -->
+											<!-- <?php //echo ($station_title != "OTHERS") ? $station_title . " | " : ""; ?> Late Report - <?php //echo ($state == "AM")? $state: $state; ?> -->
 											<?php echo $station_title; ?> Late Report - <?php echo ($state == "AM")? $state: $state; ?>
 										</h2>
 										<?php else: ?>
@@ -188,13 +188,13 @@ table { font-size: 14px; border: 0; }
 										</td>
 
 										<td align="left" style="vertical-align: top;">
-											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
+											<p style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1.4;">
 												<?php echo (isset($emp_info["name"]) && $emp_info["name"])? strtoupper($emp_info["name"]): strtoupper("No Name"); ?> 
-											</span><br>
+											</p>
 
-											<span style="font-size: 10px; color: #888888; font-weight:400; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
+											<p style="font-size: 10px; color: #888888; font-weight:400; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1.4;">
 												<?php echo (isset($emp_info["position"]) && $emp_info["position"])? strtoupper($emp_info["position"]): strtoupper("No Position"); ?>
-											</span>
+											</p>
 										</td>
 
 										<td align="left" style="vertical-align: top;">

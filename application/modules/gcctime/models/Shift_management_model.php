@@ -2757,10 +2757,10 @@
         function getCurrentAbsent($limit = null) {
             $resultset = array();
 
-            // $todays = $this->adm_attendance->getLastSyncDate();
-            // $ndate = date("Y-m-d", strtotime($todays));
-            $todays = date("Y-m-d H:i:00", strtotime("2026-01-02 09:31:00"));
+            $todays = $this->adm_attendance->getLastSyncDate();
             $ndate = date("Y-m-d", strtotime($todays));
+            // $todays = date("Y-m-d H:i:00", strtotime("2026-01-02 09:31:00"));
+            // $ndate = date("Y-m-d", strtotime($todays));
 
             $this->db->from($this->absentTable);
             $this->db->like("updated_at", $ndate);
@@ -2772,12 +2772,6 @@
             
             $queryget = $this->db->get();
             $getAbsentCollection = $queryget->result_array();;
-
-            // echo "<pre>";
-            // print_r($getAbsentCollection); 
-            // echo "</pre>";
-
-            // exit;
 
             $data = array();
             $checker = array();
@@ -2792,13 +2786,7 @@
                     $meredien = date_format(date_create($_getAbsentCollection["updated_at"]), "A");
                     $ampm = strtolower($meredien);
 
-                    // $current_meredien = "am";
-                    // $ampm = "am";
-
                     $personnel = $this->getPersonnelShift($biometric_id);
-                    // echo "<pre>";
-                    // var_dump($personnel);
-                    // echo "</pre>";
 
                     if ($personnel) {
                         $department = $this->getPersonnelDepartment($personnel->biometricno);
@@ -2828,9 +2816,7 @@
                                         }
                                     }
                                 }
-                                // echo "<pre>";   
-                                // print_r($todayShift);
-                                // echo "</pre>";  
+                                
                                 if ($todayShift) {
                                     
                                     /***
@@ -2938,8 +2924,10 @@
             $resultset["check_absent"] = $data;
             $resultset["ndate"] = $ndate;
 
-            /** Group data by station */
+            // Save first before grouping
+            $this->saveAbsenteeReport($resultset);
 
+            /** Group data by station */
             $resultset = $this->groupAbsentByStation($resultset);
             return $resultset;
         }
@@ -3756,32 +3744,43 @@
 
         function emailAbsentNotification() {
             $dateToday = date("F d, Y");
-            $ampm = date("A");
+            $ampm = date("a");
 
             $currentAbsent = $this->getCurrentAbsent();
-            $this->saveAbsenteeReport($currentAbsent);
+
+            /**
+             * Old code of saving the absentee
+             * New code of saving the absentee data is inside the function of getCurrentAbsent()
+             */
+            // $this->saveAbsenteeReport($currentAbsent); 
+
             $data = (isset($currentAbsent["check_absent"]) && $currentAbsent["check_absent"]) ? $currentAbsent["check_absent"] : array();
 
+            $sentCount = 0;
+            $totalStations = count($data[$ampm]);
 
+            foreach($data[$ampm] as $station => $emp_per_station) {
+                $arrData = array();
+                $arrData["station_title"] = strtoupper($station);
+                $arrData["data"] = [$station => $emp_per_station];
+                $arrData["meridiem"] = strtoupper($ampm);
 
-            $arrData = array();
-            $arrData["data"] = $data;
+                $message = "";
+                $message .= $this->load->view("gcctime/templates/email/email-absent_template", $arrData, true);
 
-            $message = "";
-            $message .= $this->load->view("gcctime/templates/email/email-absent_template", $arrData, true);
+                $module = "gcctime_absentee_reports";
+                $email_title = "Gcctime - Webportal | " . strtoupper($station);
+                $content_title = "Absentee Report - {$dateToday}";
+                $content = $message;
 
-            $module = "gcctime_absentee_reports";
-            $email_title = "Gcctime - Webportal";
-            $content_title = "Absentee Report - {$dateToday}";
-            $content = $message;
+                $sent = $this->core_layout->send_email($module, $email_title, $content_title, $content);
 
-            $sent = $this->core_layout->send_email($module, $email_title, $content_title, $content);
-
-            if ($sent) {
-                return true;
-            } else {
-                return false;
+                if ($sent) {
+                    $sentCount++;
+                }
             }
+
+            return ($sentCount === $totalStations && $totalStations > 0);
         }
 
         function saveAbsenteeReport($currentAbsent) {

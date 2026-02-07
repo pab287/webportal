@@ -823,24 +823,27 @@ class Curl_request extends MY_Controller {
 
 	public function test_absent_email(){
 		// To check absent date
-		$currentAbsent = $this->shift_manangement->getCurrentAbsent();
+		// $meridiem = "am"; // AM or PM, get the meridiem from currentAbsent
+		// $currentAbsent = $this->shift_manangement->getCurrentAbsent();
 
-		echo "<pre>";
-		print_r($currentAbsent);
-		echo "</pre>";
 
-		die();
 
-		$data = (isset($currentAbsent["check_absent"]) && $currentAbsent["check_absent"]) ? $currentAbsent["check_absent"] : array();
-		$meridiem = "am"; // AM or PM, get the meridiem from currentAbsent
-		$arrData = array(
-			"station_title" => "TCD", 
-			"meridiem" => $meridiem,
-			"data" => $data[$meridiem]['GC&C BATA'], 
-		);
+		// $data = (isset($currentAbsent["check_absent"]) && $currentAbsent["check_absent"]) ? $currentAbsent["check_absent"] : array();
 
-		return $this->load->view("templates/email/email-absent_template", $arrData);
-		die();
+		// echo "<pre>";
+		// print_r($data["am"]);
+		// echo "</pre>";
+
+		// die();
+		
+		// $arrData = array(
+		// 	"station_title" => "TCD", 
+		// 	"meridiem" => $meridiem,
+		// 	"data" => $data[$meridiem]['GC&C BATA'], 
+		// );
+
+		// return $this->load->view("templates/email/email-absent_template", $arrData);
+		// die();
 
 		// To trigge absent email
 		$this->shift_manangement->emailAbsentNotification();
