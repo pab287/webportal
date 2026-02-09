@@ -422,7 +422,7 @@
                             <div class="form-group">
                                 <label class="control-label col-md-2 col-sm-2 col-xs-12 m--font-bolder required">Remarks</label>
                                 <div class="col-md-12">
-                                    <textarea name="remarks"  class="form-control" data-validation="required"> </textarea> 
+                                    <textarea name="remarks"  class="form-control" data-validation="required length" data-validation-length="min30" data-validation-error-msg="Remarks must be at least 30 characters"> </textarea> 
                                 </div>
                             </div>
                         </div>

@@ -522,62 +522,74 @@ function open_recommend_approve(){
   $('.modal-title').text('Recommendation'); // Set Title to Bootstrap modal title
 }
 
-function approve_recommend(){
-  $.ajax({
-    url : baseUrl("eforms/travel_order/approve_recommend_travel_v2/"),
-    type: "POST",
-    dataType: "JSON",
-    data: { csrf_token: _csrf_hash, id: param_id, approved_recommend_remarks: $('[name="approved_recommend_remarks"]').val() },
-    beforeSend: function(){
-      $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-    },
-    success: function(data){
-      
-      if(data.status == 'success'){
-        location.reload();
-        toastr.success("Travel order has been approved recommend!");
-        $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-      } else {
-        toastr.error(data.msg, "Error");
+$.validate({
+  form : '#recommend-approve',
+  lang: 'en',
+  onSuccess: function( form ){
+    $.ajax({
+      url : baseUrl("eforms/travel_order/approve_recommend_travel_v2/"),
+      type: "POST",
+      dataType: "JSON",
+      data: { csrf_token: _csrf_hash, id: param_id, approved_recommend_remarks: $('[name="approved_recommend_remarks"]').val() },
+      beforeSend: function(){
+        $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+      },
+      success: function(data){
+        
+        if(data.status == 'success'){
+          location.reload();
+          toastr.success("Travel order has been approved recommend!");
+          $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+        } else {
+          toastr.error(data.msg, "Error");
+        }
+      },
+      error: function (jqXHR, textStatus, errorThrown){
+        alert('Error: "ajax_approve"');
       }
-    },
-    error: function (jqXHR, textStatus, errorThrown){
-      alert('Error: "ajax_approve"');
-    }
-  });
-}
+    });
+
+    return false;
+  }
+});
 
 function open_approve(){
   $('#modal_form_approve').modal('show'); // show bootstrap modal
   $('.modal-title').text('Approve Travel Order'); // Set Title to Bootstrap modal title
 }
 
-function approve(){
-  $.ajax({
-    url : baseUrl("eforms/travel_order/approve_travel_v2/"),
-    type: "POST",
-    dataType: "JSON",
-    data: { csrf_token: _csrf_hash, approve_remarks : $('[name="approved_remarks"]').val(), id: param_id },
-    beforeSend: function(){
-      $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-    },
-    success: function(data){
-      
-      if(data.status == 'success'){
-        location.reload();
-        toastr.success("Travel order has been approved!");
-        $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-      } else if(data.status == 'no_vehicle'){
-        toastr.warning(data.msg, "No assigned vehicle or driver");
-      } else {
-        toastr.error(data.msg, "Error");
+$.validate({
+  form : '#approve-form',
+  lang: 'en',
+  onSuccess: function( form ){
+    $.ajax({
+      url : baseUrl("eforms/travel_order/approve_travel_v2/"),
+      type: "POST",
+      dataType: "JSON",
+      data: { csrf_token: _csrf_hash, approve_remarks : $('[name="approved_remarks"]').val(), id: param_id },
+      beforeSend: function(){
+        $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+      },
+      success: function(data){
+        
+        if(data.status == 'success'){
+          location.reload();
+          toastr.success("Travel order has been approved!");
+          $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+        } else if(data.status == 'no_vehicle'){
+          toastr.warning(data.msg, "No assigned vehicle or driver");
+        } else {
+          toastr.error(data.msg, "Error");
+        }
+      },
+      error: function (jqXHR, textStatus, errorThrown){
+        alert('Error: "ajax_approve"');
       }
-    },
-    error: function (jqXHR, textStatus, errorThrown){
-      alert('Error: "ajax_approve"');
-    }
-  });
-}
+    });
+
+    return false;
+  }
+});
 
 function open_disapprove(){
   $('#modal_form_disapprove').modal('show'); // show bootstrap modal
@@ -998,7 +1010,7 @@ $.validate({
     return false;
     },
 });
-       
+
 function restore(){
   $('#restore_modal').modal('show'); // show bootstrap modal
   $('.modal-title').text('Restore'); 

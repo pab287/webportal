@@ -278,7 +278,7 @@
     </div>
 
 
- 
+
     <div class="modal fade" id="modal_form_personnel" role="dialog">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -307,121 +307,118 @@
 		</div>
 	</div>
     <div class="modal fade" id="modal_form_destination" role="dialog">
-            <div class="modal-dialog modal-xl">
-              <div class="modal-content">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
                 <div class="modal-header">
-                  <h3 class="modal-title"></h3>
-                  <button type="button" id="editDestinationClose" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                  
+                    <h3 class="modal-title"></h3>
+                    <button type="button" id="editDestinationClose" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body form">
                     <div class="col-lg-12 p-0 text-center mb-2">
-                    <div id="mapEditTO2" class="travelOrderMap" style="width: 100%;height: 500px;border: 1px solid #cccccc;" class="p-0"></div>
+                        <div id="mapEditTO2" class="travelOrderMap" style="width: 100%;height: 500px;border: 1px solid #cccccc;" class="p-0"></div>
                     </div>
-                  <form action="#" id="form_destination" class="form-horizontal">
-                    <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-                    <div class="modal-body form">
-                        <input type="hidden" id="edit_id" value="" name="id_destination"/>
-                        <input type="hidden" value="" id="formTravelFrom" name="formTravelFrom"/>
-                        <input type="hidden" value="" id="formTravelTo" name="formTravelTo"/>
-                        <div class="row">
-                            <div class="col-lg-6 col-sm-12">
-                                <div class="form-group">
-                                    <label class="control-label col-md-2 m--font-bolder required">From</label>
-                                    <div class="col-md-12 travel-order-control">
-                                        <div class="col-md-12 p-0 input-control">
-                                            <input type="text" id="travelFrom" class="form-control" placeholder="" name="from" data-validation="required">
+                    <form action="#" id="form_destination" class="form-horizontal">
+                        <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                        <div class="modal-body form">
+                            <input type="hidden" id="edit_id" value="" name="id_destination"/>
+                            <input type="hidden" value="" id="formTravelFrom" name="formTravelFrom"/>
+                            <input type="hidden" value="" id="formTravelTo" name="formTravelTo"/>
+                            <div class="row">
+                                <div class="col-lg-6 col-sm-12">
+                                    <div class="form-group">
+                                        <label class="control-label col-md-2 m--font-bolder required">From</label>
+                                        <div class="col-md-12 travel-order-control">
+                                            <div class="col-md-12 p-0 input-control">
+                                                <input type="text" id="travelFrom" class="form-control" placeholder="" name="from" data-validation="required">
+                                            </div>
+                                            <div id="travelOrderFromIcon" class="icon-control">
+                                                <i class="la la-angle-down icon"></i>
+                                                <div id="travelOrderOptionFrom">
+                                                    <ul id="travel_option_from" v-if="checker === true">
+                                                        <li v-for="sites in vm_tab3" v-on:click="selectedSite(sites.id)">{{ sites.site_name }}</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div id="travelOrderFromIcon" class="icon-control">
-                                            <i class="la la-angle-down icon"></i>
-                                            <div id="travelOrderOptionFrom">
-                                                <ul id="travel_option_from" v-if="checker === true">
-                                                    <li v-for="sites in vm_tab3" v-on:click="selectedSite(sites.id)">{{ sites.site_name }}</li>
-                                                </ul>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 col-sm-12">
+                                    <div class="form-group m-form__group">
+                                        <label class="control-label col-md-2 m--font-bolder required">To</label>
+                                        <div class="col-md-12 travel-order-control">
+                                            <div class="col-md-12 p-0 input-control">
+                                                <input type="text" id="travelTo" class="form-control" placeholder="" name="to" data-validation="required">
+                                            </div>
+                                            <div id="travelOrderToIcon" class="icon-control">
+                                                <i class="la la-angle-down icon"></i>
+                                                <div id="travelOrderOptionTo">
+                                                    <ul id="travel_option_to" v-if="checker === true">
+                                                        <li v-for="sites in vm_tab2" v-on:click="selectedSite(sites.id)">{{ sites.site_name }}</li>
+                                                    </ul>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-6 col-sm-12">
-                                <div class="form-group m-form__group">
-                                    <label class="control-label col-md-2 m--font-bolder required">To</label>
-                                    <div class="col-md-12 travel-order-control">
-                                        <div class="col-md-12 p-0 input-control">
-                                            <input type="text" id="travelTo" class="form-control" placeholder="" name="to" data-validation="required">
+                            <div class="form-group" id="requested-by">
+                                <label class="control-label col-md-4 m--font-bolder required">Requested By</label>
+                                <div class="col-md-12">
+                                    <select id="select2_req" name="requested_by" data-validation="required" ></select> 
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-2 m--font-bolder required">Purpose</label>
+                                <div class="col-md-12">
+                                    <textarea name="purpose" row="2" class="form-control" data-validation="required"></textarea> 
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-6 col-sm-12">
+                                    <div class="form-group">
+                                        <label class="control-label col-md-3 m--font-bolder required">Date From</label>
+                                        <div class="col-12 input-group date" id="date_from">
+                                            <input class="form-control m-input" type="text" name="date_from" id="issue_dt" data-validation="required" maxlength="22" />
+                                            <span class="input-group-addon">
+                                                    <i class="la la-calendar glyphicon-th"></i>
+                                            </span>
                                         </div>
-                                        <div id="travelOrderToIcon" class="icon-control">
-                                            <i class="la la-angle-down icon"></i>
-                                            <div id="travelOrderOptionTo">
-                                                <ul id="travel_option_to" v-if="checker === true">
-                                                    <li v-for="sites in vm_tab2" v-on:click="selectedSite(sites.id)">{{ sites.site_name }}</li>
-                                                </ul>
-                                            </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 col-sm-12">
+                                    <div class="form-group">
+                                        <label class="control-label col-md-3 m--font-bolder required">Date To</label>
+                                        <div class="col-12 input-group date" id="date_to">
+                                            <input class="form-control m-input" type="text" name="date_to" id="issue_dt" data-validation="required" maxlength="22"/>
+                                            <span class="input-group-addon">
+                                                    <i class="la la-calendar glyphicon-th"></i>
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="form-group" id="requested-by">
-                            <label class="control-label col-md-4 m--font-bolder required">Requested By</label>
-                            <div class="col-md-12">
-                                <select id="select2_req" name="requested_by" data-validation="required" ></select> 
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label col-md-2 m--font-bolder required">Purpose</label>
-                            <div class="col-md-12">
-                                <textarea name="purpose" row="2" class="form-control" data-validation="required"></textarea> 
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-6 col-sm-12">
-                                <div class="form-group">
-                                    <label class="control-label col-md-3 m--font-bolder required">Date From</label>
-                                    <div class="col-12 input-group date" id="date_from">
-                                        <input class="form-control m-input" type="text" name="date_from" id="issue_dt" data-validation="required" maxlength="22" />
-                                        <span class="input-group-addon">
-                                                <i class="la la-calendar glyphicon-th"></i>
-                                        </span>
-                                    </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-8 m--font-bolder">Special Instruction</label>
+                                <div class="col-md-12">
+                                    <textarea name="special"  class="form-control"></textarea> 
                                 </div>
                             </div>
-                            <div class="col-lg-6 col-sm-12">
-                                <div class="form-group">
-                                    <label class="control-label col-md-3 m--font-bolder required">Date To</label>
-                                    <div class="col-12 input-group date" id="date_to">
-                                        <input class="form-control m-input" type="text" name="date_to" id="issue_dt" data-validation="required" maxlength="22"/>
-                                        <span class="input-group-addon">
-                                                <i class="la la-calendar glyphicon-th"></i>
-                                        </span>
-                                    </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-2 m--font-bolder required">Remarks</label>
+                                <div class="col-md-12">
+                                    <textarea name="remarks" class="form-control" data-validation="required length" data-validation-length="min30" data-validation-error-msg="Remarks must be at least 30 characters"></textarea> 
                                 </div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label class="control-label col-md-8 m--font-bolder">Special Instruction</label>
-                            <div class="col-md-12">
-                                <textarea name="special"  class="form-control"></textarea> 
-                            </div>
+                        <div class="modal-footer">
+                            <button type="button" id="btnSave2" onclick="save_destination()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
+                            <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon  btnCancel" data-dismiss="modal">Cancel</button>
                         </div>
-                        <div class="form-group">
-                            <label class="control-label col-md-2 m--font-bolder required">Remarks</label>
-                            <div class="col-md-12">
-                                <textarea name="remarks" class="form-control" data-validation="required"></textarea> 
-                            </div>
-                        </div>
-                    </div>
-                   <div class="modal-footer">
-                      
-                     <button type="button" id="btnSave2" onclick="save_destination()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
-                      <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon  btnCancel" data-dismiss="modal">Cancel</button>
-                    </div>
                     </form>
-                  </div><!-- /.modal-content -->
-                </div>
+                </div><!-- /.modal-content -->
+            </div>
 		</div>
 	</div>
-  
 </div>
 
 <div class="modal fade" id="modal_form_delete" role="dialog">
@@ -520,10 +517,10 @@
                 <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                 <div class="modal-body form">
                     <input type="hidden" value="<?php echo $_GET["id"] ? $_GET["id"]: 0; ?>" name="id"/>
-                    <div class="form-group">
-                        <label class="control-label col-md-2 required">Remarks</label>
-                        <div class="col-md-12">
-                            <textarea name="approved_recommend_remarks"  class="form-control" rows="5" data-validation="required"></textarea> 
+                    <div class="row">
+                        <div class="col-md-12 col-lg-12 col-sm-12">
+                            <label class="control-label required">Remarks</label>
+                            <textarea name="approved_recommend_remarks" class="form-control" rows="5" data-validation="required"></textarea> 
                         </div>
                     </div>
                 </div>
