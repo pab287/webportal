@@ -104,12 +104,12 @@
 									</label>
 								</div>
 								<div class="col-3">
-								<span class="m-switch m-switch--sm">
-									<label>
-										<input type="checkbox" value="1" id="all_company_filter">
-										<span></span>
-									</label>
-								</span>
+									<span class="m-switch m-switch--sm">
+										<label>
+											<input type="checkbox" value="1" id="all_company_filter">
+											<span></span>
+										</label>
+									</span>
 								</div>
 							</div>
 							</div>
@@ -128,7 +128,7 @@
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-					<button type="submit" form="formTransferGroup" class="btn btn-primary">Transfer</button>
+					<button type="submit" id="btnSaveTransfer" class="btn btn-primary">Transfer</button>
 				</div>
 			</form>
 		</div>
