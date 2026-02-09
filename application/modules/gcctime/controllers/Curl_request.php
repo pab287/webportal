@@ -826,7 +826,11 @@ class Curl_request extends MY_Controller {
 		// $meridiem = "am"; // AM or PM, get the meridiem from currentAbsent
 		// $currentAbsent = $this->shift_manangement->getCurrentAbsent();
 
+		// echo "<pre>";
+		// print_r($currentAbsent);
+		// echo "</pre>";
 
+		// die();
 
 		// $data = (isset($currentAbsent["check_absent"]) && $currentAbsent["check_absent"]) ? $currentAbsent["check_absent"] : array();
 

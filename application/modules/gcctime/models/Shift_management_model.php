@@ -2756,11 +2756,210 @@
 
         function getCurrentAbsent($limit = null) {
             $resultset = array();
-
+            $data = array();
+            $amFlag = false;
+            $pmFlag = false;
+            $afternoonFlag = false;
+            
             $todays = $this->adm_attendance->getLastSyncDate();
-            $ndate = date("Y-m-d", strtotime($todays));
-            // $todays = date("Y-m-d H:i:00", strtotime("2026-01-02 09:31:00"));
+            $ndate = ($todays) ? date("Y-m-d", strtotime($todays)) : date("Y-m-d");
+
+            $availableLoa = $this->getAvailableLoav3($ndate);
+            $this->db->reset_query();
+
+            $currentAttendance = $this->getAllAttendance($ndate);
+            $this->db->reset_query();
+
+            $personnelTempAttendance = $this->getPersonneCurrentAttendance($ndate);
+            $this->db->reset_query();
+
+            $this->db->select('a.biometric_id, a.meredien, a.updated_at, b.id as emp_id');
+            $this->db->join('gccmaster.tblemployees as b', 'a.biometric_id = b.biometricno', 'INNER');
+            $this->db->from($this->absentTable.' as a');
+            $this->db->where("DATE(updated_at)", $ndate);
+            $this->db->order_by("a.id", "DESC");
+            $queryget = $this->db->get();
+
+            $weekday = strtolower(date('l', strtotime($todays)));
+            
+            if ($queryget->num_rows() > 0) {
+                foreach ($queryget->result() as $_getAbsentCollection) {
+                    $biometric_id = $_getAbsentCollection->biometric_id;
+                    $current_meredien = $_getAbsentCollection->meredien;
+                    $empId = $_getAbsentCollection->emp_id;
+                    $meredien = date('A', strtotime($_getAbsentCollection->updated_at));
+                    $ampm = strtolower($meredien);
+
+                    $personnel = $this->getPersonnelShift($biometric_id, true);
+                    $this->db->reset_query();
+
+                    if ($personnel) {
+                        $department = $this->getPersonnelDepartment($personnel->biometricno);
+                        $position = $this->getPersonnelPosition($personnel->biometricno);
+                        $station = $this->getPersonnelStation($personnel->biometricno);
+
+                        $this->db->select('id');
+                        $this->db->from("gcctimeutility.location");
+                        $this->db->where("id", $personnel->location_id);
+                        $this->db->where("allow_notification", 1);
+                        $queryLocation = $this->db->get();
+
+                        if ($queryLocation->num_rows() == 1) {
+                            $this->db->reset_query();
+
+                            $shift = $personnel->shift_id;
+                            $personnel_biometricno = $personnel->biometricno;
+                            $isFlexibleTime = (intval($personnel->is_flexi) == 1) ? true : false;
+
+                            $shiftResource = $this->getShiftResource($shift, true);
+                            $ids = $shiftResource->shift_resource;
+                            $todayShift = array();
+
+                            if ($ids) {
+                                foreach ($ids as $id) {
+                                    $today = $this->getDailyResource($id, $weekday, true);
+                                    if ($today) {
+                                        $todayShift = $today;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            $this->db->reset_query();
+
+                            if ($todayShift) {
+                                $shiftAmStart = $todayShift->am_start;
+                                $shiftAmEnd = $todayShift->am_end;
+                                $shiftPmStart = $todayShift->pm_start;
+                                $shiftPmEnd = $todayShift->pm_end;
+                                $reference_no = "N/A";
+
+                                $isFlexibleEmployeeTime = ($isFlexibleTime && !empty($personnelTempAttendance) && (isset($personnelTempAttendance[$biometric_id]) && $personnelTempAttendance[$biometric_id])) ? true : false;
+
+                                $tempType = "Regular";
+                                if(intval($personnel->is_flexi) == 1){ $tempType = "Flexible Time"; }
+                                else if(intval($personnel->is_flexi) == 2){ $tempType = "1 IN / 1 OUT ONLY"; }
+                                else{ $tempType = "Regular"; }
+
+                                $current_data["biometricno"] = $biometric_id;
+                                $current_data["name"] = $personnel->name ? strtoupper($personnel->name) : $biometric_id;
+                                $current_data["department"] = ($department) ? $department : "N/A";
+                                $current_data["position"] = ($position) ? $position : "N/A";
+                                $current_data["station"] = ($station) ? $station : "NO STATION";
+                                $current_data["mrdn"] = $meredien;
+                                $current_data["type"] = $tempType;
+
+                                if (($shiftAmStart !== "00:00:00" && $shiftAmStart) && ($shiftAmEnd !== "00:00:00" && $shiftAmEnd) && ($current_meredien == "AM")) {
+                                    $amFlag = false;
+                                    $amCount = 0;
+
+                                    if (isset($personnelTempAttendance[$biometric_id]) && $personnelTempAttendance[$biometric_id]) {
+                                        foreach ($personnelTempAttendance[$biometric_id]['meredien'] as $key => $value) {
+                                            if ($value == 'am'){
+                                                $amFlag = true;
+                                            }
+                                        }
+                                    }
+
+                                    if (isset($personnelTempAttendance[$biometric_id]['count']['am']) && $personnelTempAttendance[$biometric_id]['count']['am']) {
+                                        $amCount = $personnelTempAttendance[$biometric_id]['count']['am'] % 2;
+                                    }
+
+                                    if ($amFlag == false && $amCount == 0) {
+                                        if (isset($availableLoa[$empId]) && $availableLoa[$empId]) {
+                                            $reference_no = $availableLoa[$empId]->reference_no;
+                                        }
+                                
+                                        $toData = $this->getAvailableToByDatev2($personnel_biometricno, $ndate);
+                                        if (isset($toData["response"]) && $toData["response"]) {
+                                            $reference_no = $toData["reference_no"];    
+                                        }
+                                
+                                        $current_data["content"] = $reference_no;
+                                        $data[$ampm][$biometric_id] = $current_data;
+                                    }
+                                }
+
+                                if (($shiftPmStart !== "00:00:00" && $shiftPmStart) && ($shiftPmEnd !== "00:00:00" && $shiftPmEnd) && ($current_meredien == "PM")) {
+                                    $pmFlag = false;
+                                    $pmCount = 0;
+
+                                    if (isset($personnelTempAttendance[$biometric_id]) && $personnelTempAttendance[$biometric_id]) {
+                                        foreach ($personnelTempAttendance[$biometric_id]['meredien'] as $key => $value) {
+                                            if ($value == 'pm'){
+                                                $pmFlag = true;
+                                            }
+                                        }
+                                    }
+
+                                    if (isset($personnelTempAttendance[$biometric_id]['count']['pm']) && $personnelTempAttendance[$biometric_id]['count']['pm']) {
+                                        $amCount = $personnelTempAttendance[$biometric_id]['count']['pm'] % 2;
+                                    }
+
+                                    if ($pmFlag == false && $pmCount == 0) {
+                                        if (isset($availableLoa[$empId]) && $availableLoa[$empId]) {
+                                            $reference_no = $availableLoa[$empId]->reference_no;
+                                        }
+
+                                        $toData = $this->getAvailableToByDatev2($personnel_biometricno, $ndate, $empId);
+                                        if (isset($toData["response"]) && $toData["response"]) {
+                                            $reference_no = $toData["reference_no"];
+                                        }
+
+                                        $current_data["content"] = $reference_no;
+                                        if ($isFlexibleEmployeeTime){
+                                            $data[$ampm][$biometric_id] = $current_data;
+                                        }
+                                    }
+
+                                    $dataTime = array();
+                                    $dataTime["start"] = date("Y-m-d H:i:s", strtotime("{$ndate} 12:00:00"));
+                                    $dataTime["end"] = date("Y-m-d H:i:s", strtotime("{$ndate} 13:00:00"));
+
+                                    $afternoonAttendance = $this->getSingleAttendanceByDateRangeDataV2($biometric_id, $dataTime['start'], $dataTime['end'], $currentAttendance);
+                                    if ($afternoonAttendance == true && $pmCount == 0) {
+                                        if (isset($availableLoa[$empId]) && $availableLoa[$empId]) {
+                                            $reference_no = $availableLoa[$empId]->reference_no;
+                                        }
+
+                                        $toData = $this->getAvailableToByDatev2($personnel_biometricno, $ndate, $empId);
+                                        if (isset($toData["response"]) && $toData["response"]) {
+                                            $reference_no = $toData["reference_no"];
+                                        }
+
+                                        $current_data["content"] = $reference_no;
+                                        if ($isFlexibleEmployeeTime){
+                                            $data[$ampm][$biometric_id] = $current_data;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            $resultset["check_absent"] = $data;
+            $resultset["ndate"] = $ndate;
+
+            // Save first before grouping
+            $this->saveAbsenteeReport($resultset);
+
+            /** Group data by station */
+            $resultset = $this->groupAbsentByStation($resultset);
+
+            return $resultset;
+        }
+
+        function getCurrentAbsent_old($limit = null) {
+            $resultset = array();
+
+            // $todays = $this->adm_attendance->getLastSyncDate();
             // $ndate = date("Y-m-d", strtotime($todays));
+            $todays = date("Y-m-d H:i:00", strtotime("2026-01-02"));
+            $ndate = date("Y-m-d", strtotime($todays));
+
+            // var_dump($ndate);die();
 
             $this->db->from($this->absentTable);
             $this->db->like("updated_at", $ndate);
@@ -2924,6 +3123,11 @@
             $resultset["check_absent"] = $data;
             $resultset["ndate"] = $ndate;
 
+            echo "<pre>";
+            print_r($resultset);
+            echo "</pre>";
+            die();
+
             // Save first before grouping
             $this->saveAbsenteeReport($resultset);
 
@@ -2932,7 +3136,7 @@
             return $resultset;
         }
 
-        function getCurrentAbsent_old($limit = null) {
+        function getCurrentAbsent_old_old($limit = null) {
             $resultset = array();
 
             $todays = $this->adm_attendance->getLastSyncDate();
@@ -3755,32 +3959,38 @@
             // $this->saveAbsenteeReport($currentAbsent); 
 
             $data = (isset($currentAbsent["check_absent"]) && $currentAbsent["check_absent"]) ? $currentAbsent["check_absent"] : array();
-
+            $firstkey = array_key_first($data); // am or pm
+            $_data = $data[$firstkey];
+            
             $sentCount = 0;
-            $totalStations = count($data[$ampm]);
+            $totalStations = count($_data);
 
-            foreach($data[$ampm] as $station => $emp_per_station) {
-                $arrData = array();
-                $arrData["station_title"] = strtoupper($station);
-                $arrData["data"] = [$station => $emp_per_station];
-                $arrData["meridiem"] = strtoupper($ampm);
+            if (isset($_data) && is_array($_data) && !empty($_data)) {
+                foreach($_data as $station => $emp_per_station) {
+                    $arrData = array();
+                    $arrData["station_title"] = strtoupper($station);
+                    $arrData["data"] = [$station => $emp_per_station];
+                    $arrData["meridiem"] = strtoupper($ampm);
 
-                $message = "";
-                $message .= $this->load->view("gcctime/templates/email/email-absent_template", $arrData, true);
+                    $message = "";
+                    $message .= $this->load->view("gcctime/templates/email/email-absent_template", $arrData, true);
 
-                $module = "gcctime_absentee_reports";
-                $email_title = "Gcctime - Webportal | " . strtoupper($station);
-                $content_title = "Absentee Report - {$dateToday}";
-                $content = $message;
+                    $module = "gcctime_absentee_reports";
+                    $email_title = "Gcctime - Webportal | " . strtoupper($station);
+                    $content_title = "Absentee Report - {$dateToday}";
+                    $content = $message;
 
-                $sent = $this->core_layout->send_email($module, $email_title, $content_title, $content);
+                    $sent = $this->core_layout->send_email($module, $email_title, $content_title, $content);
 
-                if ($sent) {
-                    $sentCount++;
+                    if ($sent) {
+                        $sentCount++;
+                    }
                 }
+
+                return ($sentCount === $totalStations && $totalStations > 0);
             }
 
-            return ($sentCount === $totalStations && $totalStations > 0);
+            return false;
         }
 
         function emailAbsentNotification_old() {
@@ -4122,4 +4332,140 @@
             return $resultset;
         }
         /** END */
+
+        // For getting the getCurrentAbsent
+        function getAvailableLoav3($date = null) {
+            $resultset = array();
+
+            if ($date) {
+                $lastSyncDate = date("Y-m-d", strtotime($date));
+                $nowMeredian = date("A");
+
+                $this->db->select('date_from, date_to, reference_no, type, employee');
+                $this->db->order_by("id", "desc");
+
+                $this->db->group_start();
+                    $this->db->where('DATE(date_from) >=', $lastSyncDate);
+                    $this->db->where('DATE(date_to) <=', $lastSyncDate);
+                $this->db->group_end();
+
+                $this->db->group_start();
+                    $this->db->or_where('DATE(date_from)', $lastSyncDate);
+                    $this->db->where('date_to', '0000-00-00');
+                $this->db->group_end();
+
+                $query = $this->db->get("gcceforms.loa");
+
+                if ($query->num_rows() > 0) {
+                    foreach($query->result() as $row) {
+                        $resultset[$row->employee] = $row;
+                    }
+
+                } else {
+                    $resultset["response"] = false;
+                }
+            }
+
+            return $resultset;
+        }
+
+        function getAllAttendance($currentDate = null){
+            $data = array();
+
+            if ($currentDate) {
+                $this->db->select('biometric_id, datetime, device_id');
+                $this->db->from("gcctimeutility.attendance");
+                $this->db->where("DATE(datetime)", date("Y-m-d", strtotime($currentDate)));
+                $query = $this->db->get();
+
+                if ($query->num_rows() > 0){
+                    $data = $query->result();
+                    // foreach($query->result() as $row){
+                    //     array_push($data, $row->biometric_id);
+                    // }
+                }
+            }
+
+            return $data;
+        }
+
+        function getPersonneCurrentAttendance($currentDate = null, $biometricId = null) {
+            $data = array();
+
+            if ($currentDate) {
+                $this->db->select('biometric_id, DATE_FORMAT(datetime, "%p") as meredien, datetime');
+                $this->db->from($this->attendanceTable);
+                $this->db->where("DATE(datetime)", date("Y-m-d", strtotime($currentDate)));
+
+                if ($biometricId) {
+                    $this->db->where("biometric_id", $biometricId);
+                }
+
+                $query = $this->db->get();
+
+                if($query->num_rows() > 0){
+                    $arrData = array();
+                    foreach ($query->result() as $key => $rs){
+                        $rs->meredien = strtolower($rs->meredien);
+
+                        $data[$rs->biometric_id]['meredien'][] = $rs->meredien;                        
+                        $data[$rs->biometric_id]['count'] = array_count_values($data[$rs->biometric_id]['meredien']);
+                        $data[$rs->biometric_id]['dates'][] = $rs->datetime;
+                    }
+
+                    foreach($data as $key => $value){
+                        $data[$key]['meredien'] = array_unique($value['meredien']);
+                    }
+                }
+            }
+
+
+            return $data;
+        }
+
+        function getAvailableToByDateV2($biometric = null, $date = null, $empId = 0) {
+            $resultset = array();
+            $lastSyncDate = date("Y-m-d", strtotime($date));
+            $nowMeredian = date("A");
+
+            if ($biometric && $empId){
+                $employeeTo = $this->getEmployeeTo($empId, $lastSyncDate);
+
+                if ($employeeTo) {
+                    $resultset["response"] = true;
+                    $resultset["reference_no"] = $employeeTo->reference_no;
+                } else {
+                    $driverTo = $this->getEmployeeToDriver($empId, $lastSyncDate);
+                    if ($driverTo) {
+                        $resultset["response"] = true;
+                        $resultset["reference_no"] = $driverTo->reference_no;
+                    }
+                }
+            } else{
+                $resultset['response'] = false;
+            }
+
+            return $resultset;
+        }
+
+        function getSingleAttendanceByDateRangeDataV2($biometric_id = null, $start_date = null, $end_date = null, $yesterdayAttendance = array()) {
+            $flag = false;
+
+            if ($biometric_id) {
+                $count = 0;
+                foreach($yesterdayAttendance as $key => $value) {
+                    if ($value->biometric_id == $biometric_id) {
+                        if (date('Y-m-d H:i:s', strtotime($value->datetime)) >= date('Y-m-d H:i:s', strtotime($start_date)) && date('Y-m-d H:i:s', strtotime($value->datetime)) <= date('Y-m-d H:i:s', strtotime($end_date))) {
+                            $count++;
+                        }
+                    }
+                }
+
+                if ($count == 1 && $count !== 0) {
+                    $flag = true;
+                }
+            }
+
+            return $flag;
+        }
     }
