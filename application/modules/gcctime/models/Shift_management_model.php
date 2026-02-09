@@ -3783,6 +3783,33 @@
             return ($sentCount === $totalStations && $totalStations > 0);
         }
 
+        function emailAbsentNotification_old() {
+            $dateToday = date("F d, Y");
+
+            $currentAbsent = $this->getCurrentAbsent();
+            $this->saveAbsenteeReport($currentAbsent);
+            $data = (isset($currentAbsent["check_absent"]) && $currentAbsent["check_absent"]) ? $currentAbsent["check_absent"] : array();
+
+            $arrData = array();
+            $arrData["data"] = $data;
+
+            $message = "";
+            $message .= $this->load->view("gcctime/templates/email/email-absent_template", $arrData, true);
+
+            $module = "gcctime_absentee_reports";
+            $email_title = "Gcctime - Webportal";
+            $content_title = "Absentee Report - {$dateToday}";
+            $content = $message;
+
+            $sent = $this->core_layout->send_email($module, $email_title, $content_title, $content);
+
+            if ($sent) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
         function saveAbsenteeReport($currentAbsent) {
             $this->db->trans_begin();
             $resultSet = array();
