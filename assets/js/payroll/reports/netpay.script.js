@@ -497,23 +497,38 @@ var vmNavigation = new Vue({
 
 var setPrintableWindow = function (html) {
     if (typeof html !== "undefined" && html) {
-        var printWindow = window.open(siteUrl('payroll/reports/printable_form'), '_blank');
-        printWindow.focus();
-        printWindow.onload = function(){
-            setTimeout(function () {
-                const appendContainer = printWindow.document.getElementById('append_printable-container');
-                if (typeof appendContainer !== "undefined" && appendContainer !== null) {
-                    appendContainer.innerHTML = html;
+        Swal.fire({
+            icon: 'warning',
+            title: 'Print NetPay Summary',
+            text: 'Printing the NetPay Summary will lock all related payroll sheet records. This action cannot be undone. Do you want to proceed?',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, Print it!',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                var printWindow = window.open(siteUrl('payroll/reports/printable_form'), '_blank');
+                printWindow.focus();
+                printWindow.onload = function(){
                     setTimeout(function () {
-                        printWindow.print();
-                        printWindow.close();
+                        const appendContainer = printWindow.document.getElementById('append_printable-container');
+                        if (typeof appendContainer !== "undefined" && appendContainer !== null) {
+                            appendContainer.innerHTML = html;
+                            setTimeout(function () {
+                                printWindow.print();
+                                printWindow.close();
+                            }, 500);
+                            
+
+                            printPayrollSheet();
+                        } else {
+                            toastr.info("Print detail(s) is still in progress!", "Contribution / Deduction");
+                            printWindow.close();
+                        }
                     }, 500);
-                } else {
-                    toastr.info("Print detail(s) is still in progress!", "Contribution / Deduction");
-                    printWindow.close();
                 }
-            }, 500);
-        }
+            }
+        });
     }
     return false;
 }
@@ -523,11 +538,25 @@ function printNetpayReport(el) {
     $("i", el).addClass("fa fa-spinner fa-spin");
     $("i", el).css({ right: 0, left: 0 });
 
-    setTimeout(() => {
-        dtNetPayReport.button(".buttons-print").trigger();
-        $("i", el).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
-        $("i", el).css({ top: "50%", left: "50%" });
-    }, 150);
+    Swal.fire({
+        icon: 'warning',
+        title: 'Print NetPay Summary',
+        text: 'Printing the NetPay Summary will lock all related payroll sheet records. This action cannot be undone. Do you want to proceed?',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, Print it!',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            setTimeout(() => {
+                dtNetPayReport.button(".buttons-print").trigger();
+                $("i", el).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
+                $("i", el).css({ top: "50%", left: "50%" });
+            }, 150);
+
+            printPayrollSheet();
+        }
+    });
 }
 
 /** added for payroll group */
@@ -655,4 +684,27 @@ function exportNetpayReport(el){
 
 function removeSpecials(str){
     return str.replace(/[^a-z0-9\s]/gi, '').replace(/[_\s]/g, '-');
+}
+
+function printPayrollSheet() {
+    var currentForm = $("#frm-filter-payroll-neypay_report")[0];
+    var formData = $(currentForm).serialize();
+
+    /** added for payroll group */
+    var emptyEmployeeList = $(currentForm).find("#employees").serialize() ? true : false;
+    if (emptyEmployeeList == false && $(currentForm).find("#employees").val().length > 0) {
+        formData += '&serialized_employees=' + $(currentForm).find("#employees").val().toString();
+    }
+    var payrollGroup = $(currentForm).find("#payroll_group").text();
+    if(payrollGroup){ formData += '&payroll_group='+payrollGroup; }
+
+    $.ajax({
+        url: baseUrl("payroll/reports/update_print_payrollsheet_netpay"),
+        dataType: "json",
+        data: formData,
+        type: 'post',
+        success: function (response) {
+            console.log(response);
+        }
+    })
 }

@@ -255,7 +255,7 @@
 								<i class="la la-warning"></i>
 							</div>
 							<div class="m-alert__text">
-							  	<strong>Invalid Overtime Entries!</strong> There are <strong>`{{ invalid_ctr }}`</strong> invalid entries that are not allowed to be imported.
+                                <strong>Invalid Overtime Entries!</strong> There are <strong>`{{ invalid_ctr }}`</strong> invalid entries that are not allowed to be imported. Please read <strong>remarks</strong>.
 							</div>
 						</div>
                     </template>

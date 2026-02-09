@@ -43,17 +43,24 @@
             }
             curl_close($ch);
             $data = json_decode($output, true);
-
-            if (!in_array($data[0]['status'], ['Failed', 'Refunded'])) {
-                $result['status'] = true;
-                $result['output'] = $data;
-                $result['message'] = 'Message sent successfully';
-            } else {
-                $result['status'] = false;
-                $result['output'] = false;
-                $result['message'] = 'Message sending failed. ' . $data[0]['status'];
+            $messageText = is_array($data[0] ?? null)? ($data[0]['message'] ?? '') : ($data[0] ?? '');
+            
+            if ($messageText && str_contains(strtolower($messageText), 'not sufficient')) {
+                return [
+                    'status'  => false,
+                    'output'  => $data,
+                    'message' => 'Your current balance of credits is not sufficient. This transaction requires credits.'
+                ];
             }
-            return $result;
+            $status = is_array($data[0] ?? null) ? ($data[0]['status'] ?? null) : null;
+            if ($status && !in_array($status, ['Failed', 'Refunded'])) {
+                return [
+                    'status'  => true,
+                    'output'  => $data,
+                    'message' => 'Message sent successfully'
+                ];
+            }
+            return ['status'  => false,'output'  => $data,'message' => 'Message sending failed.' . ($status ? " $status" : '')];
         }
 
         function sendPlaySMS($phone, $msg){

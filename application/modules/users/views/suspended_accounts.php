@@ -8,8 +8,26 @@
             </div>
         </div>
         <div class="m-portlet__body">
-            <div class="row">
-                <div class="offset-xl-9 offset-lg-9 offset-md-9 offset-sm-0"></div>
+            <div class="row align-items-center">
+                <div class="col-xl-9 col-lg-9 col-md-9 offset-sm-0">
+                    <div class="m-form__group form-group">
+                        <label for="">Filter by: </label>
+                        <div class="m-radio-inline">
+                            <label class="m-radio">
+                                <input type="radio" name="filter" value="0" checked onclick="filterTable(event)"> All
+                                <span></span>
+                            </label>
+                            <label class="m-radio">
+                                <input type="radio" name="filter" value="1" onclick="filterTable(event)"> System-Generated Suspension
+                                <span></span>
+                            </label>
+                            <label class="m-radio">
+                                <input type="radio" name="filter" value="2" onclick="filterTable(event)"> User
+                                <span></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
                 <div class="col-xl-3 col-lg-3 col-md-3 col-sm-12">
                     <div class="form-group m-form__group pb-0">
                         <div class="m-input-icon m-input-icon--left">
@@ -19,8 +37,7 @@
                                         </span>
                                     </span>
                             <div class="input-group">
-                                <input type="search" class="form-control" placeholder="Search Here..."
-                                       style="height: auto;" id="generalSearch">
+                                <input type="search" class="form-control" placeholder="Search Here..." style="height: auto;" id="generalSearch">
                                 <span class="input-group-btn">
                                     <button class="btn btn-secondary" title="Clear Filter"
                                             style="border-color: #cdcdcd;"

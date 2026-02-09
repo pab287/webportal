@@ -43,43 +43,35 @@
             </div>
         </div>
 
-        <!-- <div class="form-group mt-2">
-            <label class="col-form-label form-control-label">
-                Email To:
-            </label>
-                <select id="edit_email_to" name="email_to[]">
-                    
-                </select>
-        </div>
-
-        <div class="form-group mt-2">
-            <label class="col-form-label form-control-label">
-                CC To:
-            </label>
-                <select id="edit_cc_to" name="cc_to[]">
-                    
-                </select>
-        </div>
-        <div class="form-group mt-2">
-            <label class="col-form-label form-control-label">
-                BCC To:
-            </label>
-                <select id="edit_bcc_to" name="bcc_to[]">
-                    
-                </select>
-        </div> -->
-
         <div class="form-group">
             <label for="edit-fileupload_logo" class="form-control-label">Attachment Logo</label>
             <span class="btn btn-success fileinput-button btn-sm pull-right btnUpload">
-            <i class="glyphicon glyphicon-plus"></i>
-            <span>Select file</span>
-            <input type="file" id="edit-fileupload_logo" name="files">
-            <input type="hidden" id="logo_attachment" name="logo_attachment"
-                   value="<?php echo ($data->logo) ? $data->logo : ""; ?>"/>
-        </span>
+                <i class="glyphicon glyphicon-plus"></i>
+                <span>Select file</span>
+                <input type="file" id="edit-fileupload_logo" name="files">
+                <input type="hidden" id="logo_attachment" name="logo_attachment"
+                    value="<?php echo ($data->logo) ? $data->logo : ""; ?>"/>
+            </span>
             <p id="temp_fileupload" class="form-control m-input m--margin-top-10"
                disabled="disabled"><?php echo ($data->logo) ? $data->logo : "&nbsp;"; ?></p>
+        </div>
+
+        <div class="form-group mt-4">
+            <label for="" class="required">
+                Exclude Company
+            </label>
+            <div class="m-radio-inline">
+                <label class="m-radio">
+                    <input type="radio" name="exclude" value="1" <?php echo (intval($data->exclude) === 1) ? "checked" : ""; ?> data-validation="required" />
+                    YES
+                    <span></span>
+                </label>
+                <label class="m-radio">
+                    <input type="radio" name="exclude" value="0" <?php echo (intval($data->exclude) === 0) ? "checked" : ""; ?> data-validation="required" />
+                    NO
+                    <span></span>
+                </label>
+            </div>
         </div>
     </div>
     <div class="modal-footer">

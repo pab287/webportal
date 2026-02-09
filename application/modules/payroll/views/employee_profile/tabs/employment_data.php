@@ -1,6 +1,7 @@
 <form id="frmEditEmploymentData" class="m-form m-form--fit m-form--label-align-right" method="post"
       action="<?php echo site_url("payroll/employee/update_employee_employment_data"); ?>">
     <input type="hidden" name="id" v-model="vm_tab3.id"/>
+    <input type="hidden" id="auto_overtime_id" name="auto_overtime_id" v-model="vm_tab3.auto_overtime.id"/>
     <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
     <input type="hidden" name="current_status" v-model="vm_tab3._status">
     <input type="hidden" name="current_company_id" v-model="vm_tab3.current_company_id">
@@ -8,9 +9,10 @@
     <input type="hidden" name="current_supervisor" v-model="vm_tab3.current_supervisor">
     <input type="hidden" name="current_position_id" v-model="vm_tab3.current_position_id">
     <input type="hidden" name="biometricno" v-model="vm_tab3.biometricno">
+    <input type="hidden" name="date_regular" v-model="vm_tab3.date_regular">
     <div class="m-portlet__body">
         <div class="row m--margin-bottom-10">
-            <div class="col-5 col-md-5">
+            <div class="col-sm-12 col-5 col-md-5">
                 <div class="form-group m-form__group row">
                     <label for="company_id" class="col-5 col-form-label text-right">Company:</label>
                     <div class="col-7">
@@ -37,7 +39,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-5 col-md-5">
+            <div class="col-sm-12 col-5 col-md-5">
                 <div class="form-group m-form__group row">
                     <label for="department_id" class="col-5 col-form-label text-right">Department:</label>
                     <div class="col-7">
@@ -48,7 +50,7 @@
             </div>
         </div>
         <div class="row m--margin-bottom-10">
-            <div class="col-5 col-md-5">
+            <div class="col-sm-12 col-5 col-md-5">
                 <div class="form-group m-form__group row">
                     <label for="position" class="col-5 col-form-label text-right">Position:</label>
                     <div class="col-7">
@@ -57,7 +59,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-5 col-md-5" hidden>
+            <div class="col-sm-12 col-5 col-md-5" hidden>
                 <div class="form-group m-form__group row">
                     <label for="work_status" class="col-5 col-form-label text-right">CLASSIFICATION:</label>
                     <div class="col-7">
@@ -74,7 +76,7 @@
             </div>
         </div>
         <div class="row m--margin-bottom-10" hidden>
-            <div class="col-5 col-md-5 offset-5">
+            <div class="col-sm-12 col-5 col-md-5 offset-5">
                 <div class="form-group m-form__group row">
                     <label for="work_status" class="col-5 col-form-label text-right">STATUS:</label>
                     <div class="col-7">
@@ -89,7 +91,7 @@
         </div>
         <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x"></div>
         <div class="row m--margin-bottom-10">
-            <div class="col-5 col-md-5">
+            <div class="col-sm-12 col-5 col-md-5">
                 <div class="form-group m-form__group row">
                     <label for="tin_no" class="col-5 col-form-label text-right">TIN #:</label>
                     <div class="col-7">
@@ -100,7 +102,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-5 col-md-5">
+            <div class="col-sm-12 col-5 col-md-5">
                 <div class="form-group m-form__group row">
                     <label for="tax_status" class="col-5 col-form-label text-right">Tax Status:</label>
                     <div class="col-7">
@@ -125,7 +127,7 @@
             </div>
         </div>
         <div class="row m--margin-bottom-10">
-            <div class="col-5 col-md-5">
+            <div class="col-sm-12 col-5 col-md-5">
                 <div class="form-group m-form__group row">
                     <label for="phealth_no" class="col-5 col-form-label text-right">Philhealth #:</label>
                     <div class="col-7">
@@ -136,7 +138,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-5 col-md-5">
+            <div class="col-sm-12 col-5 col-md-5">
                 <div class="form-group m-form__group row">
                     <label for="pagibig_no" class="col-5 col-form-label text-right">Pag-ibig #:</label>
                     <div class="col-7">
@@ -149,7 +151,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-5 col-md-5">
+            <div class="col-sm-12 col-5 col-md-5">
                 <div class="form-group m-form__group row">
                     <label for="umid_no" class="col-5 col-form-label text-right">UMID #:</label>
                     <div class="col-7">
@@ -165,7 +167,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-5 col-md-5">
+            <div class="col-sm-12 col-5 col-md-5">
                 <div class="form-group m-form__group row">
                     <label for="sss_no" class="col-5 col-form-label text-right">SSS/UMID #:</label>
                     <div class="col-7">
@@ -179,7 +181,7 @@
         </div>
         <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-2x"></div>
         <div class="row m--margin-bottom-10">
-            <div class="col-5 col-md-5">
+            <div class="col-sm-12 col-5 col-md-5">
                 <div class="form-group m-form__group row">
                     <label for="work_mode" class="col-5 col-form-label text-right">Work Mode:</label>
                     <div class="col-7">
@@ -192,7 +194,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-5 col-md-5">
+            <div class="col-sm-12 col-5 col-md-5">
                 <div class="form-group m-form__group row">
                     <label for="payroll_type" class="col-5 col-form-label text-right">Payroll Type:</label>
                     <div class="col-7">
@@ -202,7 +204,28 @@
                     </div>
                 </div>
             </div>
-        </div>   
+        </div>
+        <div class="row m--margin-bottom-10">
+            <div class="col-sm-12 col-5 col-md-5">
+                <div class="form-group m-form__group row">
+                    <label for="allow_auto_overtime" class="col-5 col-form-label text-right">AUTO OVERTIME:</label>
+                    <div class="col-7">
+                        <span class="m-switch m-switch--sm">
+                            <label>
+                                <input type="hidden" name="allow_auto_overtime" :value="vm_tab3.auto_overtime.allow_auto_overtime == 1 ? 1 : 0" />
+                                <input type="checkbox" v-model="vm_tab3.auto_overtime.allow_auto_overtime" true-value="1" false-value="0" />
+                                <span></span>
+                            </label>
+                        </span>
+                    </div>
+                    <div class="col-12">
+                        <span class="form-text text-muted small">
+                            <i class="la la-info-circle"></i> Overtime will be automatically approved for employees when the duration is three hours or less.
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="m-portlet__foot m-portlet__foot--fit">
         <div class="m-form__actions">

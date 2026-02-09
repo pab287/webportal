@@ -57,18 +57,22 @@ const vmGenerateReport = new Vue({
 });
 
 if(typeof generateModal != "undefined" && generateModal.length == 1){
+    var _status = 'All';
     $("#payroll_group", generateModal).select2({
         placeholder: 'Select an option',
         width: '100%',
         dropdownParent: generateModal,
         ajax: {
-            url: baseUrl("payroll/select_payroll_group"),
+            url: baseUrl("payroll/select_payroll_group_by_status"),
             dataType: "json",
             type: 'get',
             delay: 250,
             global: false,
             data: function (params) {
+                _status = $("form#frm-leave_credits-report #emp-status:checked").val();
                 params.company_id = $("form#frm-leave_credits-report select#company").val();
+                params.status = _status;
+
                 return params;
             },
             processResults: function (data) {
@@ -83,10 +87,10 @@ if(typeof generateModal != "undefined" && generateModal.length == 1){
         if (typeof data.employees == "object" && typeof data.employees !== "undefined") { employees = data.employees; }
         if (tempVal.length > 1) {
             $.ajax({
-                url: baseUrl("payroll/get_payroll_group_multiple"),
+                url: baseUrl("payroll/get_payroll_group_multiple_by_status"),
                 type: "post",
                 dataType: "json",
-                data: { group_id: tempVal, [_csrf_token]: _csrf_hash },
+                data: { group_id: tempVal, [_csrf_token]: _csrf_hash, status: _status },
                 success: function (json) {
                     if (json.response) {
                         const tempData = json.data;
@@ -136,10 +140,10 @@ if(typeof generateModal != "undefined" && generateModal.length == 1){
             }
         } else {
             $.ajax({
-                url: baseUrl("payroll/get_payroll_group_multiple"),
+                url: baseUrl("payroll/get_payroll_group_multiple_by_status"),
                 type: "post",
                 dataType: "json",
-                data: { group_id: tempValUnselected, [_csrf_token]: _csrf_hash },
+                data: { group_id: tempValUnselected, [_csrf_token]: _csrf_hash, status: _status },
                 success: function (json) {
                     if (json.response) {
                         const tempData = json.data;
@@ -176,12 +180,14 @@ if(typeof generateModal != "undefined" && generateModal.length == 1){
         placeholder: "SELECT AN OPTION",
         dropdownParent: generateModal,
         ajax: {
-            url: baseUrl('payroll/select_employee'),
+            url: baseUrl('payroll/select_employee_by_status'),
             dataType: 'json',
             global: false,
             delay: 250,
             data: function (params) {
                 params.q = params.term;
+                params.status = $("form#frm-leave_credits-report #emp-status:checked").val();
+                params.company_id = $("form#frm-leave_credits-report select#company").val();
                 return params;
             },
             processResults: function (data) {
@@ -204,11 +210,29 @@ if(typeof generateModal != "undefined" && generateModal.length == 1){
             .find("select#employee")
             .val([])
             .trigger("change");
+
+        $("form#frm-leave_credits-report", generateModal)
+            .find("select#employee")
+            .prop('disabled', false);
+            
+        $("form#frm-leave_credits-report", generateModal)
+            .find("select#payroll_group")
+            .val([])
+            .trigger("change");
     }).on("select2:unselect", function (e) {
         selectedCompany = e.params.data;
         $(e.target).validate();
         $("form#frm-leave_credits-report", generateModal)
             .find("select#employee")
+            .val([])
+            .trigger("change");
+
+        $("form#frm-leave_credits-report", generateModal)
+            .find("select#employee")
+            .prop('disabled', false);
+            
+        $("form#frm-leave_credits-report", generateModal)
+            .find("select#payroll_group")
             .val([])
             .trigger("change");
     });
@@ -324,25 +348,34 @@ if(typeof leaveCreditsTable !== "undefined" && leaveCreditsTable.length == 1){
             { data: "basic_rate", width: "8%", className: "text-right", render: function(data){
                 return numberFormat(data);
             } },
-            { data: "allowance_rate", width: "8%", className: "text-right", render: function(data){
+            { data: "allowance_rate", width: "8%", className: "text-right", visible: false, render: function(data){
                 return numberFormat(data);
             } },
-            { className: "text-right", width: "8%", render: function(_data, _type, row){
+            { className: "text-right", width: "8%", visible: false, render: function(_data, _type, row){
                     const { basic_rate } = row;
                     const totalAmount = parseFloat(basic_rate) / 12;
                     return numberFormat(totalAmount.toFixed(2));
                 }
-            }, { className: "text-right", width: "8%", render: function(_data, _type, row){
+            }, { className: "text-right", width: "8%", visible: false, render: function(_data, _type, row){
                     const { basic_rate, allowance_rate } = row;
                     const halfBasicRate = parseFloat(basic_rate) / 12;
                     const totalAmount = parseFloat(basic_rate) + parseFloat(allowance_rate) + halfBasicRate;
                     return numberFormat(totalAmount.toFixed(2));
                 }
             }, { className: "text-right", width: "8%", render: function(_data, _type, row){
-                    const { sil, basic_rate, allowance_rate } = row;
-                    const halfBasicRate = parseFloat(basic_rate) / 12;
-                    const totalAmount = parseFloat(basic_rate) + parseFloat(allowance_rate) + halfBasicRate;
-                    const ntotalAmount = totalAmount.toFixed(2);
+                    /** original source code commented */
+                    // const { sil, basic_rate, allowance_rate } = row;
+                    // const halfBasicRate = parseFloat(basic_rate) / 12;
+                    // const totalAmount = parseFloat(basic_rate) + parseFloat(allowance_rate) + halfBasicRate;
+                    // const ntotalAmount = totalAmount.toFixed(2);
+                    // const totalCredit = ntotalAmount * parseFloat(sil);
+                    // const nTotalCredits = numberFormat(totalCredit.toFixed(2));
+                    // return nTotalCredits;
+
+                    /** original source code commented */
+
+                    const { sil, basic_rate } = row;
+                    const ntotalAmount = parseFloat(basic_rate).toFixed(2);
                     const totalCredit = ntotalAmount * parseFloat(sil);
                     const nTotalCredits = numberFormat(totalCredit.toFixed(2));
                     return nTotalCredits;
@@ -352,11 +385,20 @@ if(typeof leaveCreditsTable !== "undefined" && leaveCreditsTable.length == 1){
                     return nCharges; 
                 } 
             }, { className: "text-right", width: "10%", render: function(_data, _type, row){
-                    const { sil, basic_rate, allowance_rate, charges } = row;
-                    const halfBasicRate = parseFloat(basic_rate) / 12;
-                    const totalAmount = parseFloat(basic_rate) + parseFloat(allowance_rate) + halfBasicRate;
-                    const ntotalAmount = totalAmount.toFixed(2);
-                    const net_totalCredits = (ntotalAmount * parseFloat(sil)) - parseFloat(charges.toFixed(2));
+                    /** original source code commented */
+                    // const { sil, basic_rate, allowance_rate, charges } = row;
+                    // const halfBasicRate = parseFloat(basic_rate) / 12;
+                    // const totalAmount = parseFloat(basic_rate) + parseFloat(allowance_rate) + halfBasicRate;
+                    // const ntotalAmount = totalAmount.toFixed(2);
+                    // const net_totalCredits = (ntotalAmount * parseFloat(sil)) - parseFloat(charges.toFixed(2));
+
+                    // const netTotalCredits = net_totalCredits > 0 ? numberFormat(net_totalCredits.toFixed(2)): numberFormat(0.00);
+                    // return netTotalCredits;
+                    /** original source code commented */
+
+                    const { sil, basic_rate, charges } = row;
+                    const ntotalAmount = parseFloat(basic_rate).toFixed(2);
+                    const net_totalCredits = (parseFloat(basic_rate) * parseFloat(sil)) - parseFloat(charges.toFixed(2));
 
                     const netTotalCredits = net_totalCredits > 0 ? numberFormat(net_totalCredits.toFixed(2)): numberFormat(0.00);
                     return netTotalCredits;
@@ -676,6 +718,7 @@ var resetFields = function(_this){
         setTimeout(function(){
             currentForm.find("select[multiple]").val([]).trigger("change");
             currentForm[0].reset();
+            vmGenerateReport.filter_by = 1; //returned value to 1 when resetting filters
         }, 500);
     }
 }

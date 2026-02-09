@@ -152,44 +152,60 @@ class Payroll_m extends CI_Model{
         return $resultset;
     }
 
-    function selectEmployee()
+    function selectEmployee($type=null)
     {
         $get = $this->input->get();
         $resultarray = array();
         $companyIds = (isset($get["company_ids"]) && $get["company_ids"])? $get["company_ids"]: array();
-        $this->db->select("a.id, trim(a.firstname) as firstname, a.lastname, a.middlename, a.suffix");
+        //$this->db->select("a.id, trim(a.firstname) as firstname, a.lastname, a.middlename, a.suffix");
+
+        $this->db->select("a.id, UPPER(TRIM(CONCAT(a.firstname, ' ',
+                CASE WHEN UPPER(TRIM(a.middlename)) != 'N/A' AND UPPER(TRIM(a.middlename)) != 'NONE' AND
+                        TRIM(a.middlename) !='' AND a.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(a.middlename, 1, 1), '.') ELSE ''
+                END,' ', a.lastname,
+                CASE WHEN UPPER(TRIM(a.suffix)) != 'N/A' AND
+                    UPPER(TRIM(a.suffix !='NONE')) AND a.suffix !='' AND
+                        a.suffix IS NOT NULL THEN CONCAT(' ', a.suffix) ELSE ''
+                END))) as text");
         $this->db->from("gccmaster.tblemployees a");
         $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
-        $this->db->where("a.employee_status", "Active"); 
+        
+        if($type !== 'all' && $type === null){
+            $this->db->where("a.employee_status", "Active");
+        } elseif ($type !== 'all' && $type !== null) {
+            $this->db->where("a.employee_status", $type);
+        }
+
         if(is_array($companyIds) && count($companyIds) > 0){ $this->db->where_in("b.id", $companyIds); }
         if(isset($get["company_ids"]) && !is_array($get["company_ids"]) && $get["company_ids"]){
             $this->db->where("b.id", $get["company_ids"]);
         }
+
+        $tempLimit = 10;
         if (isset($get['q']) && $get['q']) {
             $this->db->group_start();
             $this->db->like("a.firstname", $get['q'], "both");
             $this->db->or_like("a.lastname", $get['q'], "both");
+            $this->db->or_like("CONCAT(a.firstname, ' ', a.lastname)", $get['q'], "both");
+            $this->db->or_like("CONCAT(a.firstname, ' ', CONCAT(SUBSTR(a.middlename, 1, 1), '.'), ' ', a.lastname)", $get['q'], "both");
             $this->db->group_end();
+            $tempLimit = 20;
         }
-        $this->db->limit(10);
+        $this->db->limit($tempLimit);
         $this->db->order_by("trim(a.firstname)", "ASC");
         $query = $this->db->get();
 
-        /*** if (isset($get['q'])) {
-            $query = $this->db->query("SELECT id, firstname, lastname, middlename, suffix FROM gccmaster.tblemployees WHERE (employee_status='Active') AND (firstname LIKE '%{$get['q']}%' OR lastname LIKE '%{$get['q']}%') ORDER BY firstname ASC LIMIT 10");
-        } else {
-            $query = $this->db->query("SELECT id, firstname, lastname, middlename, suffix FROM gccmaster.tblemployees WHERE employee_status='Active' ORDER BY firstname ASC LIMIT 10");
-        } ***/
-
         if ($query->num_rows() > 0) {
-            foreach ($query->result_array() as $_query) {
+            /*** foreach ($query->result_array() as $_query) {
                 $data = array();
                 $display_employee = $this->format_name($_query);
 
                 $data["id"] = $_query["id"];
                 $data["text"] = $display_employee;
                 $resultarray[] = $data;
-            }
+            } ***/
+           $resultarray = $query->result();
         }
         return array("results" => $resultarray);
     }
@@ -201,6 +217,8 @@ class Payroll_m extends CI_Model{
         if(isset($get['q'])){
             $this->db->like("`code`", $get['q'], "BOTH");
         }
+        $this->db->where("is_archived", 0);
+        $this->db->where("exclude", 0);
         $this->db->order_by("`code`", "ASC");
         $results = $this->db->get("gcchris.tblcompanies companies")->result();
         return array("results" => $results, "sql" => $this->db->last_query());
@@ -208,6 +226,8 @@ class Payroll_m extends CI_Model{
 
     public function select2CompanyData($companyColumn='code'){
         $this->db->select("companies.id, companies.`{$companyColumn}` `text`, companies.*");
+        $this->db->where("is_archived", 0);
+        $this->db->where("exclude", 0);
         $this->db->order_by("`{$companyColumn}`", "ASC");
         return $this->db->get("gcchris.tblcompanies companies")->result();
 
@@ -2156,7 +2176,14 @@ class Payroll_m extends CI_Model{
                     }
                 }
 
-                $loans = $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
+                // suspends employee active loans when the gross pay is 0 when the generated payrollsheet is not posted
+                if (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0 && intval($payroll_sheet_row->posted) === 0) {
+                    $this->suspendNoEarnersLoans($employee->id);
+                }
+
+                $loans = (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0)
+                    ? $this->getEmployeeActiveLoansNotPaid($employee->id, $gross_pay, 0, $_gross_pay, true) //get all active employee loans that is not still paid
+                    : $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
 
                 $postedPayrollSheetRecord = isset($payroll_sheet_row) && !empty($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1;
                 $updatedTotalLoans = $postedPayrollSheetRecord ? $payroll_sheet_row->total_loans : 0;
@@ -2164,20 +2191,25 @@ class Payroll_m extends CI_Model{
                 $updatedSSSLoans = $postedPayrollSheetRecord ? $payroll_sheet_row->sss_loan : 0;
                 $updatedHDMFLoans = $postedPayrollSheetRecord ? $payroll_sheet_row->hdmf_loan : 0;
 
+                $loanId = array();
                 if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false){
                     foreach ($loans as $loan) {
                         if($loan->active == 1 && $loan->loan_type == 0){
                             /*** loan internal ***/
-                            if(floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0){
+                            /*** if(floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0){ ***/
+                            if(floatval($loan->amount_due) > 0 && round($_gross_pay, 2) >= round($loan->amount_due, 2)){
                                 $updatedTotalLoans += $loan->amount_due;
                                 $_gross_pay = $_gross_pay - $loan->amount_due;
+                                $loanId[] = $loan->id;
                             }
                             /*** loan internal ***/
 
                             /*** loan interest ***/
-                            if(floatval($loan->interest_amount) > 0 && $_gross_pay >= $loan->interest_amount && intval($loan->zero_netpay) == 0){
+                            /*** if(floatval($loan->interest_amount) > 0 && $_gross_pay >= $loan->interest_amount && intval($loan->zero_netpay) == 0){ ***/
+                            if(floatval($loan->interest_amount) > 0 && round($_gross_pay, 2) >= round($loan->interest_amount, 2)){
                                 $updatedTotalLoansInterest += $loan->interest_amount;
                                 $_gross_pay = $_gross_pay - $loan->interest_amount;
+                                 $loanId[] = $loan->id;
                             }
                             /*** loan interest ***/
                         }
@@ -2186,19 +2218,25 @@ class Payroll_m extends CI_Model{
                     /*** loans external ***/
                     /*** loans sss ***/
                     foreach ($loans as $loan) {
+                        /*** if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 1) &&
+                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0)){ ***/
                         if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 1) &&
-                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0)){
+                        (floatval($loan->amount_due) > 0 && round($_gross_pay, 2) >= round($loan->amount_due, 2))){
                             $updatedSSSLoans += $loan->amount_due;
                             $_gross_pay = $_gross_pay - $loan->amount_due;
+                             $loanId[] = $loan->id;
                         }
                     }
                     /*** loans sss ***/
                     /*** loans hdmf ***/
                     foreach ($loans as $loan) {
+                        /*** if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 2) &&
+                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0)){ ***/
                         if($loan->active == 1 && ($loan->loan_type == 1 && intval($loan->loan_class) == 2) &&
-                        (floatval($loan->amount_due) > 0 && $_gross_pay >= $loan->amount_due && intval($loan->zero_netpay) == 0)){
+                        (floatval($loan->amount_due) > 0 && round($_gross_pay, 2) >= round($loan->amount_due, 2))){
                             $updatedHDMFLoans += $loan->amount_due;
                             $_gross_pay = $_gross_pay - $loan->amount_due;
+                             $loanId[] = $loan->id;
                         }
                     }
                     /*** loans hdmf
@@ -2234,51 +2272,68 @@ class Payroll_m extends CI_Model{
 
                     $this->db->where("id", $payroll_sheet_id)->update("payroll.payroll_sheet", $updatePayrollSheetData);
 
+                    $this->db->select("SUM(amount_due) as amount_due");
+                    $totalLoansAmount = $this->db->get_where("payroll.payroll_sheet_loan_payments", array("payroll_sheet_id"=>$payroll_sheet_id))->row();
+                    $allowResetLoans = ($updatedToDeductLoans >= 0 && $totalLoansAmount->amount_due >= 0) && $totalLoansAmount->amount_due != $updatedToDeductLoans;
+
+                    
                     if (count($loans) <= 0) {
                         $this->db->where("payroll_sheet_id", $payroll_sheet_id)->delete("payroll.payroll_sheet_loan_payments");
                     } else {
+                        if($allowResetLoans){ $this->db->where("payroll_sheet_id", $payroll_sheet_id)->delete("payroll.payroll_sheet_loan_payments"); }
+                        
                         $finalLoanInterest = 0;
                         foreach ($loans as $loan) {
-                            $isZeroNetPay = intval($loan->zero_netpay) == 1;
-                            if(floatval($loan->amount_due) > 0){
-                                $loan_data = array(
-                                    "payroll_sheet_id" => $payroll_sheet_id,
-                                    "loan_id" => $loan->id,
-                                    "amount_due" => $loan->amount_due
-                                );
-    
-                                $loan_row = $this->db
-                                    ->where("loan_id", $loan->id)
-                                    ->where("payroll_sheet_id", $payroll_sheet_id)
-                                    ->get("payroll.payroll_sheet_loan_payments")
-                                    ->row();
-                                
-                                if (intval($loan->active) !== 1 || $isZeroNetPay) {
-                                    if (!empty($loan_row)) {
-                                        $this->db->where("id", $loan_row->id)->delete("payroll.payroll_sheet_loan_payments");
-                                    }
-                                } else {
-                                    if (!empty($loan_row)) {
-                                        unset($loan_data["payroll_sheet_id"], $loan_data["loan_id"]);
-                                        $this->db->where("id", $loan_row->id)->update("payroll.payroll_sheet_loan_payments", $loan_data);
+                            if(is_array($loanId) && in_array($loan->id, $loanId)){
+
+                                $isZeroNetPay = intval($loan->zero_netpay) == 1;
+                                if(floatval($loan->amount_due) > 0){
+                                    $loan_data = array(
+                                        "payroll_sheet_id" => $payroll_sheet_id,
+                                        "loan_id" => $loan->id,
+                                        "amount_due" => $loan->amount_due
+                                    );
+        
+                                    $loan_row = $this->db
+                                        ->where("loan_id", $loan->id)
+                                        ->where("payroll_sheet_id", $payroll_sheet_id)
+                                        ->get("payroll.payroll_sheet_loan_payments")
+                                        ->row();
+                                    
+                                    if (intval($loan->active) !== 1 && $isZeroNetPay) {
+                                        if (!empty($loan_row)) {
+                                            $this->db->where("id", $loan_row->id)->delete("payroll.payroll_sheet_loan_payments");
+                                        }
                                     } else {
-                                        $this->db->insert("payroll.payroll_sheet_loan_payments", $loan_data);
-                                    }
-                                }
-                            }else{
-                                /*** for zero amount due ***/
-                                if(floatval($loan->amount_due) <= 0){
-                                    $getZeroLoan = $this->db
-                                    ->where("loan_id", $loan->id)
-                                    ->where("payroll_sheet_id", $payroll_sheet_id)
-                                    ->get("payroll.payroll_sheet_loan_payments");
-                                    if($getZeroLoan->num_rows() > 0){
-                                        foreach ($getZeroLoan->result() as $zeroLoan) {
-                                            $this->db->where("id", $zeroLoan->id)->delete("payroll.payroll_sheet_loan_payments");
+                                        if (!empty($loan_row)) {
+                                            unset($loan_data["payroll_sheet_id"], $loan_data["loan_id"]);
+                                            $this->db->where("id", $loan_row->id)->update("payroll.payroll_sheet_loan_payments", $loan_data);
+                                        } else {
+                                            $this->db->insert("payroll.payroll_sheet_loan_payments", $loan_data);
                                         }
                                     }
+    
+                                    /*** hotfix issue zero out ***/
+                                    $loanExist = $this->db->get_where("payroll.payroll_sheet_loan_payments", array("loan_id"=>$loan->id, "payroll_sheet_id"=>$payroll_sheet_id));
+                                    if(intval($loan->active) === 1 && $isZeroNetPay && $loanExist->num_rows() == 0){
+                                        $this->db->insert("payroll.payroll_sheet_loan_payments", $loan_data);
+                                    }
+                                    /*** hotfix issue zero out ***/
+                                }else{
+                                    /*** for zero amount due ***/
+                                    if(floatval($loan->amount_due) <= 0){
+                                        $getZeroLoan = $this->db
+                                        ->where("loan_id", $loan->id)
+                                        ->where("payroll_sheet_id", $payroll_sheet_id)
+                                        ->get("payroll.payroll_sheet_loan_payments");
+                                        if($getZeroLoan->num_rows() > 0){
+                                            foreach ($getZeroLoan->result() as $zeroLoan) {
+                                                $this->db->where("id", $zeroLoan->id)->delete("payroll.payroll_sheet_loan_payments");
+                                            }
+                                        }
+                                    }
+                                    /*** for zero amount due ***/
                                 }
-                                /*** for zero amount due ***/
                             }
 
                             $tempBalance = floatval($loan->amount) - floatval($loan->total_amount_paid);
@@ -3189,6 +3244,7 @@ class Payroll_m extends CI_Model{
 
     function getPayrollSheet($start, $end, $show_posted="_all")
     {
+        $result = array();
         $posted_data = $this->input->post();
         $paydate = date("Y-m-d", strtotime($posted_data["pay_date"]));
         $employee_ids = isset($posted_data["employees"]) ? $posted_data["employees"] : null;
@@ -3267,9 +3323,19 @@ class Payroll_m extends CI_Model{
         $this->db->group_by("ps.id");
         $this->db->order_by($order, $dir);
         $query = $this->db->get("payroll.payroll_sheet ps");
+        $last_query = $this->db->last_query();
+
+        if ($query->num_rows() > 0) {
+            foreach( $query->result() as $row ) {
+                $max_date = $this->getPayrollMaxDate($row->emp_id);
+                $row->has_latest_payroll = date('Y-m-d', strtotime($max_date)) > date('Y-m-d', strtotime($row->date_end)) ? 1 : 0;
+                $result[] = $row;
+            }
+        }
+
         return array(
-            "data" => $query->result(),
-            "sql" => $this->db->last_query(),
+            "data" => $result,
+            "sql" => $last_query,
         );
     }
 
@@ -5022,8 +5088,8 @@ class Payroll_m extends CI_Model{
                             $_grossPay = $_grossPay - $tempAmount;
                         }
                     }
-                    
-                    if(floatval($tempRow->amount) > $_grossPay && intval($tempStatus) == 1){ $allowAdjustmentApproval = false; }
+
+                    if(round($tempRow->amount, 2) > round($_grossPay, 2) && intval($tempStatus) == 1){ $allowAdjustmentApproval = false; }
                 }
 
                 $post->approval_by = $this->core_layout->getCurrentEmployeeId();
@@ -8099,5 +8165,456 @@ class Payroll_m extends CI_Model{
             $resultset["response"] = false;
         }
         return $resultset;
+    }
+
+    public function suspendNoEarnersLoans($id){
+        $this->db->where('emp_id', $id);
+        $this->db->where('active', 1);
+        $this->db->where('paid', 0);
+        $this->db->where("is_archived", 0);
+        $query = $this->db->update($this->tbl_hris_loans, array('active' => 0));
+
+        if ($query) {
+            $msg = "System Generated: Active loan(s) of employee `$id` is automatically suspended.";
+            $this->core_layout->setEventLog($msg, "update", "success", "payroll");
+        }
+
+        return $query;
+    }
+
+    public function getEmployeeActiveLoansNotPaid($id, $gross_pay, $status=0, $remainingGrossPay=0, $zeroNet=false) {
+        $this->db->select("a.*, pl.loan_type, pl.code, pl.loan_class");
+        $this->db->join("payroll.loans as pl", "pl.id = a.loan_id");
+        $this->db->where("a.emp_id", $id);
+        $this->db->where("a.paid", 0);
+        $this->db->where("a.is_archived", 0);
+        $this->db->order_by("pl.loan_type", "ASC");
+        $this->db->where("a.active", 1);
+        $loans = $this->db->get("gcchris.loans a")->result();
+
+        foreach ($loans as $loan) {
+            $total_amount_paid = $this->db
+                ->select_sum("psloanpayments.amount_due")
+                ->join("payroll.payroll_sheet ps", "ps.id = psloanpayments.payroll_sheet_id")
+                ->where("ps.posted", 1)
+                ->where("emp_id", $id)
+                ->where("loan_id", $loan->id)
+                ->get("payroll.payroll_sheet_loan_payments psloanpayments")
+                ->row("amount_due");
+
+            $loan->total_amount_paid = round($total_amount_paid, 2);
+            $balance = floatval(round($loan->amount,2)) - floatval(round($total_amount_paid, 2));
+            $loan->amount_due = $balance > 0 ? $balance : 0;
+            $loan->interest_amount = 0;
+            $loan->zero_netpay = 0;
+            $toDeduct = false;
+            
+            if($balance > 0 /*** && $remainingGrossPay >= $balance ***/){
+                if (intval($loan->deduction_type) === 0) {
+                    $percentage = $loan->percentage / 100;
+                    $amount_due = $gross_pay * $percentage;
+                    if(doubleval($balance) > doubleval($amount_due)){ $toDeduct = true; }
+
+                    $amount_due = doubleval($balance) > doubleval($amount_due) ? $amount_due : $balance;
+                    $loan->amount_due = $amount_due;
+
+                } else {
+                    if(doubleval($balance) > doubleval($loan->fixed_deduction_amt)){ $toDeduct = true; }
+                    $amount_due = doubleval($balance) > doubleval($loan->fixed_deduction_amt) ? $loan->fixed_deduction_amt : $balance;
+                    $loan->amount_due = floatval($amount_due);
+                }
+
+                if (floatval($loan->interest_percentage) > 0) {
+                    $intPercentage = $loan->interest_percentage / 100;
+                    $amountToDeduct = floatval($loan->amount) * $intPercentage;
+                    $loan->interest_amount = $amountToDeduct;
+                }
+
+                /*** $remainingGrossPay = $remainingGrossPay - $balance; ***/
+            }
+            /*** else if($zeroNet && $balance > 0 && $balance > $remainingGrossPay){
+                $loan->zero_netpay = 1;
+            } ***/
+
+            $nBalance = floatval($loan->amount_due);
+            if($nBalance > 0 && $remainingGrossPay >= $nBalance){
+                $remainingGrossPay = $remainingGrossPay - $nBalance;
+            }else if($zeroNet && $nBalance > 0 && $nBalance > $remainingGrossPay && $toDeduct == false){
+                $loan->zero_netpay = 1;
+            }
+        }
+
+        return $loans;
+    }
+
+    public function undo_printed_payroll_sheet(){
+        $post = $this->input->post();
+        $data = array();
+        $date_start = 'No date start';
+        $date_end = 'No date end';
+        $pay_date = 'No pay date';
+        $emp_id = $post['emp_id'] ?? null;
+        $reason = $post['reason'] ?? 'No reason provided';
+
+        if(isset($post["id"]) && $post["id"]){
+            $maxDate = $this->getPayrollMaxDate($post["emp_id"]);
+            $payrollDate = $this->db->select("b.pay_date, b.date_start, b.date_end, UPPER(TRIM(CONCAT(a.firstname, ' ',
+                CASE WHEN UPPER(TRIM(a.middlename)) != 'N/A' AND UPPER(TRIM(a.middlename)) != 'NONE' AND
+                        TRIM(a.middlename) !='' AND a.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(a.middlename, 1, 1), '.') ELSE ''
+                END,' ', a.lastname,
+                CASE WHEN UPPER(TRIM(a.suffix)) != 'N/A' AND
+                    UPPER(TRIM(a.suffix !='NONE')) AND a.suffix !='' AND
+                        a.suffix IS NOT NULL THEN CONCAT(' ', a.suffix) ELSE ''
+                END))) as employee_name")
+                ->join("gccmaster.tblemployees as a", "a.id = b.emp_id", "LEFT")
+                ->from("payroll.payroll_sheet as b")
+                ->where("b.id", $post["id"])
+                ->where('b.emp_id', $post['emp_id'])
+                ->where('b.printed_payslip', 1)
+                ->where('b.posted', 1)
+                ->get()->row();
+                
+            if ($payrollDate) {
+                $date_start = date("Y-m-d", strtotime($payrollDate->date_start));
+                $date_end = date("Y-m-d", strtotime($payrollDate->date_end));
+                $pay_date = date("Y-m-d", strtotime($payrollDate->pay_date));
+                $employee_name = $payrollDate->employee_name ?? 'No employee name';
+
+                if($maxDate && strtotime($maxDate) > strtotime($date_end)){
+                    $data["response"] = false;
+                    return $data;
+                }
+            }
+
+            $this->db->where("id", $post["id"]);
+            $this->db->where('emp_id', $post['emp_id']);
+            $this->db->where('printed_payslip', 1);
+            $this->db->where('posted', 1);
+            $updated = $this->db->update("payroll.payroll_sheet", array("printed_payslip"=>0));
+            if($updated && $this->db->affected_rows() > 0){
+                $data["response"] = true;
+
+                $this->core_layout->setEventLog("Payroll sheet of employee name `$employee_name` with coverage date of `{$date_start} - {$date_end}` and pay date `{$pay_date}` with reason of `{$reason}` has been set to undone printable status.", "update", "success", "payroll");
+            }else{
+                $data["response"] = false;
+                $this->core_layout->setEventLog("Failed to undo printable status of employee name `$employee_name` with coverage date of `{$date_start} - {$date_end}` and pay date `{$pay_date}` with reason of `{$reason}`.", "update", "success", "payroll");
+            }
+        }else{
+            $data["response"] = false;
+        }
+
+        return $data;
+    }
+
+    protected function getPayrollMaxDate($id=null){
+        if($id){
+            $this->db->select("MAX(ps.date_end) as max_date");
+            $this->db->from($this->tbl_employees." emp");
+            $this->db->join($this->tbl_payroll_sheet." ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+            $this->db->where("emp.id", $id);
+            $this->db->group_by("emp.id");
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() == 1){ return $qTemp->row()->max_date; }
+            else{ return false; }
+        }else{ return false; }
+        
+    }
+
+    public function check_printed_payslip(){
+        $_post = $this->input->post();
+        $result = array();
+
+        if (isset($_post) && !empty($_post)) {
+            $post = (object) $_post;
+            if(isset($post->date_range) && $post->date_range){
+                $date_range = explode("-", $post->date_range);
+                $start = date('Y-m-d', strtotime(trim($date_range[0])));
+                $end = date('Y-m-d', strtotime(trim($date_range[1])));
+            }
+
+            $employee_ids = isset($post->employees) ? $post->employees : null;
+            $payout_sched = $post->payout_schedule;
+            $sequence = $post->payout_sequence;
+            $company_id = $post->company;
+            $maxDate = null;
+            $pay_date = date("Y-m-d", strtotime($post->pay_date));
+            $countPrinted = 0;
+
+            $this->db->select("MAX(ps.date_end) as max_date");
+            $this->db->from($this->tbl_employees." emp");
+            $this->db->join($this->tbl_payroll_sheet." ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+            $this->db->where_in("emp.id", $employee_ids);
+            $this->db->group_by("emp.id");
+            $qTemp = $this->db->get();
+
+            $this->db->reset_query();
+
+            if ($qTemp->num_rows() > 0) {
+                $maxDate = $qTemp->row()->max_date;
+            }
+
+            if ($maxDate && date('Y-m-d', strtotime($maxDate)) > date('Y-m-d', strtotime($end))) {
+                $result['response'] = false;
+            } else {
+                $this->db->select("id");
+                $this->db->from("payroll.payroll_sheet");
+                $this->db->where_in("emp_id", $employee_ids);
+                $this->db->where("company_id", $company_id);
+                $this->db->where("payroll_sched", $payout_sched);
+                $this->db->where("payroll_seq", $sequence);
+                $this->db->where("date_start", $start);
+                $this->db->where("date_end", $end);
+                $this->db->where("pay_date", $pay_date);
+                $this->db->where("posted", 1);
+                $this->db->where("printed_payslip", 1);
+
+                $_qTemp = $this->db->get();
+
+                if ($_qTemp->num_rows() > 0) {
+                    $countPrinted = $_qTemp->num_rows();
+                }
+
+                $result['count_printed'] = $countPrinted;
+                $result['response'] = true;
+            }
+        }
+        return $result;
+    }
+
+    function selectPayrollGroupByStatus(){
+        $get = $this->input->get();
+        $arrData = array();
+        $resultset = array();
+        $companyId = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: 0;
+        $status = (isset($get['status']) && $get['status']) ? $get['status'] : false;
+        if($companyId || $companyId == 0){
+            $this->db->select("id, description as text, employee_id");
+            $this->db->from($this->tbl_payroll_group);
+            $this->db->where("company_id", $companyId);
+            $this->db->where("status", 1);
+            $this->db->where("is_archived", 0);
+            if (isset($get['term']) && $get['term']) {
+                $this->db->like("description", $get['term'], "both");
+            }
+            $this->db->limit(10);
+            $this->db->order_by("description", "ASC");
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() > 0){
+                foreach($qTemp->result() as $kk => $vv){
+                    $employees = array();
+                    $tempIds = @unserialize($vv->employee_id);
+                    unset($vv->employee_id);
+                    $this->db->from($this->tbl_employees);
+                    $this->db->where_in("id", $tempIds);
+
+                    // added to filtered out by employee status
+                    if ($status){ 
+                        if ($status != 'All') {
+                            $this->db->where('employee_status', $status);
+                        }
+
+                        if ($status == 'All' || $status == 'Active') {
+                            $this->db->where_not_in('work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME']);  //added to generate only the regular and probi work status
+                        }
+                    }
+                    // added to filtered out by employee status
+
+                    $this->db->order_by("lastname","ASC");
+                    $qTempEmp = $this->db->get();
+
+                    // var_dump($this->db->last_query());
+                    if($qTempEmp->num_rows() > 0){
+                        foreach($qTempEmp->result() as $rs){
+                            $tempRs = (array) $rs;
+                            $tempName = $this->core_layout->getDisplayName($tempRs);
+                            $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                            $employees[] = array(
+                                "id"=>$rs->id,
+                                "text"=>$tempName,
+                            );
+                        }
+                    }
+                    $vv->employees = $employees;
+                    $arrData[$kk] = $vv;
+                }
+            }
+        }
+
+        $resultset["results"] = $arrData;
+        return $resultset;
+    }
+
+    function getPayrollGroupMultipleByStatus(){
+        $post = $this->input->post();
+        $resultset = array();
+        $employees = array();
+        $status = (isset($post['status']) && $post['status']) ? $post['status'] : false;
+
+        if(isset($post["group_id"]) && $post["group_id"]){
+            $ids = $post["group_id"];
+            $tempIdx = array();
+            $this->db->select("employee_id");
+            $this->db->from($this->tbl_payroll_group);
+            $this->db->where("status", 1);
+            $this->db->where("is_archived", 0);
+            $this->db->where_in("id", $ids);
+            $q = $this->db->get();
+            if($q->num_rows() > 0){
+                foreach ($q->result() as $key => $value) {
+                    $idx = @unserialize($value->employee_id);
+                    if(is_array($idx) && count($idx) > 0){
+                        foreach ($idx as $kk => $vv) {
+                            if(!in_array($vv, $tempIdx)){ $tempIdx[] = $vv; }
+                        }
+                    }
+                }
+            }
+
+            if(is_array($tempIdx) && count($tempIdx) > 0){
+                $this->db->from($this->tbl_employees);
+                $this->db->where_in("id", $tempIdx);
+
+                // added to filtered out by employee status
+                if ($status){ 
+                    if ($status != 'All') {
+                        $this->db->where('employee_status', $status);
+                    }
+
+                    if ($status == 'All' || $status == 'Active') {
+                        $this->db->where_not_in('work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME']);  //added to generate only the regular and probi work status
+                    }
+                }
+                // added to filtered out by employee status
+                
+                $this->db->order_by("lastname", "ASC");
+                $qTempEmp = $this->db->get();
+                if($qTempEmp->num_rows() > 0){
+                    foreach($qTempEmp->result() as $rs){
+                        $tempRs = (array) $rs;
+                        $tempName = $this->core_layout->getDisplayName($tempRs);
+                        $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                        $employees[] = array(
+                            "id"=>$rs->id,
+                            "text"=>$tempName,
+                        );
+                    }
+                }
+            }
+            $resultset["response"] = true;
+            $resultset["data"] = $employees;
+        }else{
+            $resultset["response"] = false;
+        }
+        
+        return $resultset;
+    }
+
+    function selectEmployeeByStatus($type=null) {
+        $get = $this->input->get();
+        $resultarray = array();
+        $companyId = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: 0;
+        $status = (isset($get['status']) && $get['status']) ? $get['status'] : false;
+
+        $this->db->select("a.id, UPPER(TRIM(CONCAT(a.firstname, ' ',
+                CASE WHEN UPPER(TRIM(a.middlename)) != 'N/A' AND UPPER(TRIM(a.middlename)) != 'NONE' AND
+                        TRIM(a.middlename) !='' AND a.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(a.middlename, 1, 1), '.') ELSE ''
+                END,' ', a.lastname,
+                CASE WHEN UPPER(TRIM(a.suffix)) != 'N/A' AND
+                    UPPER(TRIM(a.suffix !='NONE')) AND a.suffix !='' AND
+                        a.suffix IS NOT NULL THEN CONCAT(' ', a.suffix) ELSE ''
+                END))) as text");
+        $this->db->from("gccmaster.tblemployees a");
+        $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
+
+        $this->db->where("b.id", $companyId);
+
+        // added to filtered out by employee status
+        if ($status){ 
+            if ($status != 'All') {
+                $this->db->where('a.employee_status', $status);
+            }
+
+            if ($status == 'All' || $status == 'Active') {
+                $this->db->where_not_in('a.work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME']); //added to generate only the regular and probi work status
+            }
+        }
+        // added to filtered out by employee status
+
+        $tempLimit = 10;
+        if (isset($get['q']) && $get['q']) {
+            $this->db->group_start();
+                $this->db->like("a.firstname", $get['q'], "both");
+                $this->db->or_like("a.lastname", $get['q'], "both");
+                $this->db->or_like("CONCAT(a.firstname, ' ', a.lastname)", $get['q'], "both");
+                $this->db->or_like("CONCAT(a.firstname, ' ', CONCAT(SUBSTR(a.middlename, 1, 1), '.'), ' ', a.lastname)", $get['q'], "both");
+            $this->db->group_end();
+            $tempLimit = 20;
+        }
+        
+        $this->db->limit($tempLimit);
+        $this->db->order_by("trim(a.firstname)", "ASC");
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $resultarray = $query->result();
+        }
+        return array("results" => $resultarray);
+    }
+
+    function selectEmployeeByCompany($type=null)
+    {
+        $get = $this->input->get();
+        $resultarray = array();
+        $companyIds = (isset($get["company_ids"]) && $get["company_ids"])? $get["company_ids"]: array();
+        //$this->db->select("a.id, trim(a.firstname) as firstname, a.lastname, a.middlename, a.suffix");
+
+        $this->db->select("a.id, UPPER(TRIM(CONCAT(a.firstname, ' ',
+                CASE WHEN UPPER(TRIM(a.middlename)) != 'N/A' AND UPPER(TRIM(a.middlename)) != 'NONE' AND
+                        TRIM(a.middlename) !='' AND a.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(a.middlename, 1, 1), '.') ELSE ''
+                END,' ', a.lastname,
+                CASE WHEN UPPER(TRIM(a.suffix)) != 'N/A' AND
+                    UPPER(TRIM(a.suffix !='NONE')) AND a.suffix !='' AND
+                        a.suffix IS NOT NULL THEN CONCAT(' ', a.suffix) ELSE ''
+                END))) as text");
+        $this->db->from("gccmaster.tblemployees a");
+        $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
+        
+        if($type !== 'all' && $type === null){
+            $this->db->where("a.employee_status", "Active");
+        } elseif ($type !== 'all' && $type !== null) {
+            $this->db->where("a.employee_status", $type);
+        }
+
+        $this->db->where_in("b.id", $companyIds);
+
+        $tempLimit = 10;
+        if (isset($get['q']) && $get['q']) {
+            $this->db->group_start();
+            $this->db->like("a.firstname", $get['q'], "both");
+            $this->db->or_like("a.lastname", $get['q'], "both");
+            $this->db->or_like("CONCAT(a.firstname, ' ', a.lastname)", $get['q'], "both");
+            $this->db->or_like("CONCAT(a.firstname, ' ', CONCAT(SUBSTR(a.middlename, 1, 1), '.'), ' ', a.lastname)", $get['q'], "both");
+            $this->db->group_end();
+            $tempLimit = 20;
+        }
+        $this->db->limit($tempLimit);
+        $this->db->order_by("trim(a.firstname)", "ASC");
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            /*** foreach ($query->result_array() as $_query) {
+                $data = array();
+                $display_employee = $this->format_name($_query);
+
+                $data["id"] = $_query["id"];
+                $data["text"] = $display_employee;
+                $resultarray[] = $data;
+            } ***/
+            $resultarray = $query->result();
+        }
+        return array("results" => $resultarray);
     }
 }

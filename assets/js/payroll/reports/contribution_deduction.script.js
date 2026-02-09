@@ -668,7 +668,7 @@ $.validate({
         } else {
             $("#monthly_data").removeClass('m--hide');
             $("#pay_date_data").addClass('m--hide');
-            var url = baseUrl("payroll/reports/generate_taxable_income_report_month");
+            const url = baseUrl("payroll/reports/generate_taxable_income_report_month");
             getScriptRendering(url, formData, currentForm);
 
             $(form[0])
@@ -676,7 +676,7 @@ $.validate({
                 .removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
         }
 
-        if (typeof currentSelectCompanyId !== undefined && parseInt(currentSelectCompanyId) > 0) {
+        if (typeof currentSelectCompanyId !== "undefined" && parseInt(currentSelectCompanyId) > 0) {
             $.ajax({
                 url: siteUrl("payroll/reports/get_current_signatory_by_company_and_type/" + currentSelectCompanyId + "/2"),
                 dataType: "json",
@@ -758,6 +758,8 @@ var getScriptRendering = function (formUrl, formData, currentForm) {
                                     }
                                 ],
                             });
+                        }else{
+                            $("#append--table_content").empty().html("<h6 class='text-center mt-3 m--font-danger text-uppercase'>No Loan(s) Contribution/Deduction found!</h6>");
                         }
                     }
                 });

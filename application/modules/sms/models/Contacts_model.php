@@ -469,7 +469,7 @@
           return($response);
       }
 
-      function sendSMS($phone, $msg, $debug=false){
+      public function sendSMS($phone, $msg, $debug=false){
         $sms = $this->sms_settings();
         $response[] = array();
         if($sms && $phone){
@@ -477,7 +477,7 @@
             if (substr($phone, 0, 1) === '9') {
                 $phone = '0' . $phone;
             }
-
+            $msg = $this->cleanMessageForSMS($msg);
             $user = $sms['sms_user'];
             $password = $sms['sms_pass'];
             $playsms_url = "https://" . $sms['sms_ip'] . ":" . $sms['sms_port'] . "/index.php?app=ws";
@@ -510,35 +510,41 @@
         return($response);
     }
 
-        function sms_settings(){
-            $this->db->select("modem,sms_ip, sms_port, sms_user, sms_pass, department_id, exclude");
+        private function cleanMessageForSMS($msg){
+            $replacements = array(
+                '—' => '-',
+                '–' => '-',
+            );
+            
+            $msg = str_replace(array_keys($replacements), array_values($replacements), $msg);
+            
+            if (!mb_check_encoding($msg, 'UTF-8')) {
+                $msg = mb_convert_encoding($msg, 'UTF-8', 'auto');
+            }
+            $msg = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $msg);
+            return $msg;
+        }
+
+        private function sms_settings(){
+            $this->db->select("modem, sms_ip, sms_port, sms_user, sms_pass, department_id, exclude");
             $this->db->from("gccsms.tblsms");
             $this->db->where("is_connected",'1');
-            $this->db->where("sms_user",'VOP');
             $query = $this->db->get();
-
             if($query->num_rows() > 0){
                 foreach($query->result_array() as $_query){
-                    if($this->is_serial($_query['department_id'])){
+                    if($_query['sms_user'] == 'VoP' && !isset($this->user_data) || $this->authenticate->getRoleId() == "1"){
+                        return $_query; // for cron job VOP
+                    }
+                    if($this->is_serial($_query['department_id']) && $_query['exclude'] == 0){
                         foreach(unserialize($_query['department_id']) as $id){
-                            if($this->authenticate->getRoleId() == "1" && $_query['exclude'] == "0"){ // Admin
+                            if($this->user_data['department'] == $id){
                                 return $_query;
-                            } else { 
-                                if(isset($this->user_data)){ // User
-                                    if($this->user_data['department'] == $id){
-                                        return $_query;
-                                    }
-                                } else { // Cron job
-                                    if($_query['exclude'] == "0"){
-                                        return $_query;
-                                    }
-                                }
                             }
                         }
                     }
                 }
             }
-            return array();
+            return  array();
         }
         
         public static function is_serial($string) {

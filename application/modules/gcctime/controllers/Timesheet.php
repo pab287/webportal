@@ -31,7 +31,7 @@ class Timesheet extends MY_Controller {
 
         $data = array(
             "yesterday" => $this->date->modify('-1 day')->format("M. d, Y"),
-            "companies" => $this->db->select("id, code `text`")->get("gcchris.tblcompanies")->result(),
+            "companies" => $this->db->select("id, code `text`")->where(array("is_archived"=>0, "exclude"=>0))->get("gcchris.tblcompanies")->result(),
             "for_select" => $this->payroll_employee_mod->getDropdownSelectData(),
             "excluded_employees" => $this->ts_model->getExcludedEmployees(),
             "biometric_devices" => $this->db->get("gcctimeutility.devices")->result(),
@@ -46,10 +46,14 @@ class Timesheet extends MY_Controller {
         $this->core_layout->setPrivilegeName("gcctime_timesheet_time_adjustments");
         $this->core_layout->addCss("css/time/timesheet/timesheet.styles.css", TRUE);
         $this->core_layout->addJs("demo/default/custom/components/forms/widgets/bootstrap-switch.js", TRUE);
+
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+        
         $this->core_layout->addJs("js/time/timesheet/time_adjustment.script.js", TRUE);
 
         $data = array();
-        $data["companies"] = $this->db->select("id, code `text`")->get("gcchris.tblcompanies")->result();
+        $data["companies"] = $this->db->select("id, code `text`")->where(array("is_archived"=>0, "exclude"=>0))->get("gcchris.tblcompanies")->result();
 
         $arrData = array();
         $this->load->view('core/templates/header');

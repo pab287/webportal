@@ -18,28 +18,35 @@ $("#requested_by").select2({
     width: '100%',
     minimumInputLength: 3,
     ajax: {
-      url: baseUrl("eforms/overtime/get_employee"),
-      dataType: "json",
-      delay: 250,
-      global: false,
-      processResults: function (data) {
-        return data;
-      }
+        url: baseUrl("eforms/overtime/get_employee"),
+        dataType: "json",
+        delay: 250,
+        global: false,
+        processResults: function (data) {
+            return data;
+        }
     }
 }).on("select2:select", function(e) {
     $(e.target).validate();
 });
 
+let lastStart = null;
+let updating = false;
+
 const dateTimeRangePicker = function (minDate) {
     $("#date_from, #date_to, #date").val("");
     const nMinDate = minDate ? new Date(minDate) : moment().subtract(2, 'years');
+    const nMaxDate = new Date(moment().add(1, 'days').format("YYYY-MM-DD 23:59"));
+
     $("#date_time").daterangepicker({
         timePicker: true,
+        timePicker24Hour: false,
         minDate: nMinDate,
         startDate: moment().startOf('hour'),
-        endDate: moment().startOf('hour').add(32, 'hour'),
+        endDate: moment().startOf('hour').add(24, 'hour'), //changed default tagged / selected time from 32hrs to 24hrs
+        maxDate: nMaxDate,
         locale: {
-          format: 'M/DD hh:mm A'
+            format: 'M/DD hh:mm A'
         }
     }).on('apply.daterangepicker', function (ev, picker) {
         $("#date_from").val(picker.startDate.format('YYYY-MM-DD HH:mm:ss'));
@@ -48,6 +55,7 @@ const dateTimeRangePicker = function (minDate) {
     });
 }
 dateTimeRangePicker();
+
 
 $("#employee").on("select2:select", function() {
     $.ajax({
@@ -74,31 +82,31 @@ $("#employee").on("select2:select", function() {
 });
 
 function save(){
-  $.validate({
-    form : '#frm_new',
-    lang: 'en',
-    onSuccess : function(form) {
-            var disabled = $('#frm_new').find('textarea:disabled').removeAttr('disabled');
-            $.ajax({
-                url: baseUrl("eforms/overtime/save_overtime"),
-                type: "POST",
-                dataType: "json",
-                data: $("#frm_new").find("input,select,textarea").serialize(),
-                beforeSend: function(){
-                    $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                },
-                success: function(data){
-                    if(data.state){
-                        window.location.href = baseUrl("eforms/overtime/masterfile", toastr.success(data.message, "Successfully saved!", 5000));
-                        disabled.attr('disabled','disabled');
-                    }else{
-                        toastr.error(data.message, "Error!", 5000);
-                        disabled.attr('disabled','disabled');
+    $.validate({
+        form : '#frm_new',
+        lang: 'en',
+        onSuccess : function(form) {
+                var disabled = $('#frm_new').find('textarea:disabled').removeAttr('disabled');
+                $.ajax({
+                    url: baseUrl("eforms/overtime/save_overtime"),
+                    type: "POST",
+                    dataType: "json",
+                    data: $("#frm_new").find("input,select,textarea").serialize(),
+                    beforeSend: function(){
+                        $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    },
+                    success: function(data){
+                        if(data.state){
+                            window.location.href = baseUrl("eforms/overtime/masterfile", toastr.success(data.message, "Successfully saved!", 5000));
+                            disabled.attr('disabled','disabled');
+                        }else{
+                            toastr.error(data.message, "Error!", 5000);
+                            disabled.attr('disabled','disabled');
+                        }
+                        $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
                     }
-                    $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                }
-            });
-        return false;
+                });
+            return false;
         },
     });
 }
@@ -106,7 +114,6 @@ function save(){
 $.formUtils.addValidator({
     name: 'checkbox_group_min1',
     validatorFunction: function (value, $el, config, language, $form) {
-        console.log(value);
         return parseInt(value) > 0;
     },
     errorMessage: 'Select at least 1 image option!',
@@ -119,26 +126,68 @@ $.validate({
     validateHiddenInputs: true,
     onSuccess : function(form) {
         var disabled = $('#frm_new').find('textarea:disabled').removeAttr('disabled');
-        $.ajax({
-            url: baseUrl("eforms/overtime/save_overtime"),
-            type: "POST",
-            dataType: "json",
-            data: $("#frm_new").find("input,select,textarea").serialize(),
-            beforeSend: function(){
-                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-            },
-            success: function(data){
-                if(data.state){
-                    window.location.href = baseUrl("eforms/overtime/masterfile", toastr.success(data.message, "Successfully saved!", 5000));
-                    disabled.attr('disabled','disabled');
-                }else{
-                    toastr.error(data.message, "Error!", 5000);
-                    disabled.attr('disabled','disabled');
-                }
-                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+
+        let from = moment($("#date_from").val()).format('YYYY-MM-DD');
+        let to = moment($("#date_to").val()).format('YYYY-MM-DD');
+        let allowedOTDate = moment(from).add(1, 'days').format('YYYY-MM-DD');
+
+        if (to <= allowedOTDate){
+            const result = isValidTimeRange(moment($("#date_from").val()).format('YYYY-MM-DD HH:mm'), moment($("#date_to").val()).format('YYYY-MM-DD HH:mm'));
+
+            if (result.valid) {
+                $.ajax({
+                    url: baseUrl("eforms/overtime/save_overtime"),
+                    type: "POST",
+                    dataType: "json",
+                    data: $("#frm_new").find("input,select,textarea").serialize(),
+                    beforeSend: function(){
+                        $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    },
+                    success: function(data){
+                        if(data.state){
+                            window.location.href = baseUrl("eforms/overtime/masterfile", toastr.success(data.message, "Successfully saved!", 5000));
+                            disabled.attr('disabled','disabled');
+                        }else{
+                            toastr.error(data.message, "Error!", 5000);
+
+                            if (typeof data.ot_data !== 'undefined' && data.ot_data) {
+                                let html = '';
+
+                                html += '<div class="text-left" style="text-transform: uppercase; font-size: 13px !important">';
+                                html += `<p style="margin-bottom: 0"><strong>Reference No: </strong> ${data.ot_data.reference_no} </p>`;
+                                html += `<p style="margin-bottom: 0"><strong>Datetime: </strong> ${moment(data.ot_data.date_from).format('YYYY-MM-DD hh:mm A')} - ${moment(data.ot_data.date_to).format('YYYY-MM-DD hh:mm A')}</p>`;
+                                html += `<p style="margin-bottom: 0"><strong>Purpose: </strong></p>`;
+                                html += `<p style="margin-bottom: 0; margin-left: 10px">${formatToBullets(data.ot_data.purpose)}</p>`;
+                                html += '</div>';
+
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Duplicate Overtime Entry Found!',
+                                    html: html
+                                });
+                            }
+
+                            disabled.attr('disabled','disabled');
+                        }
+                        $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                    }
+                });
+            } else {
+                Swal.fire({
+                    icon: "warning",
+                    title: 'New Overtime',
+                    text: result.message
+                });
             }
-        });
-    return false;
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'New Overtime',
+                text: 'Invalid selection. Please ensure the selected date range does not exceed 24 hours.'
+            });
+        }
+
+        return false;
     },
 });
 
@@ -260,4 +309,32 @@ var vmTempImages = new Vue({
 
 function SortByDate(a, b){
     return new Date(b.created_date) - new Date(a.created_date);
+}
+
+function isValidTimeRange(from, to) {
+    const fromDate = new Date(from.replace(' ', 'T'));
+    const toDate = new Date(to.replace(' ', 'T'));
+
+    const diffMs = toDate - fromDate;
+    const diffMinutes = diffMs / (1000 * 60);
+    const diffHours = diffMinutes / 60;
+
+    if (diffMinutes < 30) {
+        return { valid: false, message: "Time range must be more than 30 minutes." };
+    }
+
+    if (diffHours > 24) {
+        return { valid: false, message: "Time range must not exceed 24 hours." };
+    }
+
+    return { valid: true };
+}
+
+function formatToBullets(text) {
+    return text
+        .split(/\r?\n|,/)
+        .map(item => item.trim())
+        .filter(item => item.length)
+        .map(item => `- ${item}`)
+        .join('<br>');
 }

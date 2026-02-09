@@ -155,6 +155,10 @@ class Billing extends MY_Controller {
     function payment_collection(){
       $this->core_layout->setPageTitle("Hydra - Payment Collection");
         $this->core_layout->setPrivilegeName("payment_collection");
+        
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
+
         $this->core_layout->addJs("js/eforms/billing/reports_soa/payment_collection.js", true);
         $this->load->view('core/templates/header');
         $this->load->view('eforms/billing/reports_soa/payment_collection');
@@ -310,6 +314,9 @@ class Billing extends MY_Controller {
         $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
         $this->core_layout->addJs("js/eforms/billing/readings/index.js", true);
+
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
 
         $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', TRUE);
         $this->core_layout->addJs('js/querybuilder/query-builder.standalone.min.js', TRUE);
@@ -1069,6 +1076,50 @@ class Billing extends MY_Controller {
       ->set_content_type('json')
       ->set_output(json_encode($data));
     }
-    
+
+    // =================================== Remittance ===================================
+    public function remittance() {
+        $this->core_layout->setPageTitle("Hydra - Remittance");
+        $this->core_layout->setPrivilegeName("billing_remittance");
+
+        $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
+        $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
+
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+
+        $this->core_layout->addJs("plugins/export_plugins/jspdf.umd.min.js", true);
+        $this->core_layout->addJs("plugins/export_plugins/jspdf-autotable.js", true);
+
+        $this->core_layout->addJs("js/eforms/billing/reports_soa/remittance.js", true);
+        $this->load->view('core/templates/header');
+        $this->load->view('eforms/billing/reports_soa/remittance');
+        $this->load->view('core/templates/footer');
+    }
+
+    public function remittance_date_payments_selected() {
+        $data = $this->billing->remittance_date_payments_selected();
+        $this->output->set_content_type('json')->set_output(json_encode($data));  
+    }
+
+    public function save_remit(){
+        $data = $this->billing->save_remit();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function remittance_records() {
+        $data = $this->billing->remittance_records();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function get_remittance_details(){
+        $data = $this->billing->get_remittance_details();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function archive_remittance(){
+        $data = $this->billing->archive_remittance();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
 }
 

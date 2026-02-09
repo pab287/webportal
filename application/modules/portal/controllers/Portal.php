@@ -15,6 +15,14 @@ class Portal extends MY_Controller {
 		$this->load->view("core/templates/footer");
 	}
 
+	public function page_forbidden($arrMessage = array()){
+		$this->output->set_status_header('404');
+			
+		$this->load->view("core/templates/header");
+		$this->load->view("core/templates/page_forbidden", $arrMessage);
+		$this->load->view("core/templates/footer");
+	}
+
 	public function index(){
 		$data = array();
 		$this->core_layout->addJs("plugins/masonry/masonry.pkgd.min.js");

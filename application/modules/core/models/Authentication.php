@@ -5,6 +5,7 @@ class Authentication extends CI_Model
     protected $usersTable = "tblusers";
     protected $roleAclTable = "user_role_acl";
     protected $modulesTable = "modules";
+    protected $allowedModulesTable = "allowed_modules";
     private $user_data = array();
     private $moduleId = 0;
 
@@ -18,6 +19,7 @@ class Authentication extends CI_Model
 
     public function doRedirect()
     {
+        
         $loginUrl = login_url();
         if (!$this->user_data && $loginUrl) {
             $uri = $this->uri->uri_string();
@@ -50,6 +52,9 @@ class Authentication extends CI_Model
                 }
                 $modules = $this->getModuleResource();
 
+                // Allow Module redirect
+                $this->allowedModuleChecker($moduleId);
+               
                 if ($moduleId !== 0 && $isPortal == false && !in_array($moduleId, $modules)) {
                     redirect(site_url("portal/index"), "refresh");
                 }
@@ -397,5 +402,28 @@ class Authentication extends CI_Model
             $resultset["response"] = false;
         }
         return $resultset;
+    }
+
+    protected function allowedModuleChecker($moduleId=0){
+        if($moduleId){
+            $currentIP = $_SERVER["REMOTE_ADDR"];
+            $this->db->select("allowed_ip");
+            $allMods = $this->db->get_where($this->allowedModulesTable, array("module_id"=>$moduleId));
+            if($allMods->num_rows() > 0){
+                foreach ($allMods->result() as $mod) {
+                    $allowedIps = @unserialize($mod->allowed_ip);
+                    if(is_array($allowedIps) && !empty($allowedIps) && !in_array($currentIP, $allowedIps)){
+                        $this->session->set_flashdata('error_data', [
+                            'error_code'   => '403',
+                            'error_title'  => 'Access Denied',
+                            'error_subtitle' => 'Location Resticted!',
+                            'error_description' => 'You are not allowed to access this module due to location restrictions!',
+                        ]);
+                        redirect(site_url("portal/page_forbidden"), "refresh");
+                    }
+                }
+            }
+        }
+        return true;
     }
 }

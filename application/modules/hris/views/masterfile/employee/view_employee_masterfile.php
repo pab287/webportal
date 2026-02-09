@@ -91,7 +91,12 @@
                                             <span>Position:</span>
                                         </div>
                                         <div class="col-xl-8 text-xl-right text-lg-right text-sm-center">
-                                            <span class="m--font-bolder" v-text="main.position"></span>
+                                            <template v-if="main.is_multiple_position == 1">
+                                                <span class="m--font-bolder">{{ formatPosition(main.position) }}</span>
+                                            </template>
+                                            <template v-else>
+                                                <span class="m--font-bolder" v-text="main.position"></span>
+                                            </template>
                                         </div>
                                     </div>
                                     <div class="mt-1 text-sm-center text-xl-left text-lg-left row">
@@ -169,7 +174,7 @@
                             <li class="m-nav__separator m-nav__separator--fit"></li>
                             <li class="m-nav__item">
                                 <a class="m-nav__link btnEdit"
-                                :href="baseUrl() + '/hris/masterfile/edit_employee_masterfile/' + main.id">
+                                :href="baseUrl('hris/masterfile/edit_employee_masterfile/') + main.id">
                                     <i class="m-nav__link-icon flaticon-edit"></i>
                                     <span class="m-nav__link-text">Edit Employee Profile</span>
                                 </a>
@@ -400,15 +405,34 @@
                                                                                     <?php endif; ?>
                                                                                     <?php if($value->id == $payroll_sheet_max_id): ?>
                                                                                         <span class="m-badge m-badge--success m-badge--wide ml-2 m--regular-font-size-sm5">CURRENT</span>
+                                                                                        <?php if (intval($value->printed_payslip) == 1): ?>
+                                                                                            <span class="m-badge m-badge--primary m-badge--wide m--regular-font-size-sm5">PRINTED</span>
                                                                                         <?php endif; ?>
+                                                                                    <?php endif; ?>
                                                                                 </p>
                                                                             </td>
                                                                             <td><?php echo date("F d, Y", strtotime($value->date_start)) ." ~ ". date("F d, Y", strtotime($value->date_end)); ?></td>
-                                                                            <td class="text-right"><?php echo number_format($value->gross_pay, 2, ".", ","); ?></td>
-                                                                            <td class="text-right"><?php echo number_format($value->net_pay, 2, ".", ","); ?></td>
+                                                                            <td class="text-right">
+                                                                                <?php
+                                                                                    if ($value->is_bonus == 0) {
+                                                                                        echo ($value->printed_payslip == 1) ? number_format($value->gross_pay, 2, ".", ",") : str_repeat('*', strlen(number_format($value->gross_pay, 2, ".", ",")));
+                                                                                    } else {
+                                                                                        echo number_format($value->gross_pay, 2, ".", ",");
+                                                                                    }
+                                                                                ?>
+                                                                            </td>
+                                                                            <td class="text-right">
+                                                                                <?php
+                                                                                    if ($value->is_bonus == 0) {
+                                                                                        echo ($value->printed_payslip == 1) ? number_format($value->net_pay, 2, ".", ",") : str_repeat('*', strlen(number_format($value->net_pay, 2, ".", ",")));
+                                                                                    } else {
+                                                                                        echo number_format($value->net_pay, 2, ".", ",");
+                                                                                    }
+                                                                                ?>
+                                                                            </td>
                                                                             <td class="text-center">
                                                                             <?php if($value->is_bonus == 0): ?>
-                                                                                <button type="button" class="btn btn-secondary btn-sm m-btn m-btn--icon m-btn--icon-only btnView_own_request" onClick="getPayrollSheetData(<?= $value->id; ?>)"><i class="la la-file-text"></i></button>
+                                                                                <button type="button" class="btn btn-secondary btn-sm m-btn m-btn--icon m-btn--icon-only btnView_own_request" onClick="getPayrollSheetData(<?= $value->id; ?>, <?=$value->printed_payslip ?>)"><i class="la la-file-text"></i></button>
                                                                             <?php else: ?>
                                                                                 <i class="la la-file-text"></i>
                                                                             <?php endif; ?>
@@ -554,153 +578,161 @@
             $("#table-payroll_sheet-payslip_filter input[type='search']").removeClass("form-control-sm");
         });
         
-        const getPayrollSheetData = function(id){
+        const getPayrollSheetData = function(id, $is_printed = 0){
             if(id){
-                $.get(siteUrl('core/profile/get_payroll_sheet_data'), { id: id }, "json")
-                .done(function(data){
-                    const json = JSON.parse(data);
-                    let tempRow = json.response ? Object.assign({}, json.data) : {};
-                    vmPayslipContent.row = Object.assign({}, tempRow);
-
-                    var data = json.data;
-                    var totalOT = parseFloat(vmPayslipContent.row.ot_amount) + parseFloat(vmPayslipContent.row.ot_ndiff_amount);
-                    var totalOTHrs = (parseFloat(vmPayslipContent.row.ot_minutes) + parseFloat(vmPayslipContent.row.ot_ndiff_minutes)) / 60;
-                    vmPayslipContent.total_ot_hrs = numberFormat(totalOTHrs);
-                    vmPayslipContent.ot_hrs = numberFormat(parseFloat(vmPayslipContent.row.ot_minutes)/60);
-                    vmPayslipContent.ot_computation = numberFormat(totalOT);
-                    vmPayslipContent.ot_ndiff_hrs = numberFormat(parseFloat(vmPayslipContent.row.ot_ndiff_minutes) / 60);
-                    vmPayslipContent.ot_ndiff_computation = numberFormat(parseFloat(vmPayslipContent.row.ot_ndiff_amount));
-
-                    let tempLoan = [];
-                    let tempOthers = [];
-                    let totalLoan = parseFloat(vmPayslipContent.row.totalLoan.replace(/,/g, ''));
-                    let totalDeduction = 0;
-                    let totalOthersDeductions = 0;
-                    let overAllTotal = 0;
-                    const tempCreatedAdjustments = data.created_adjustments;
-
-                    if (data.sss && parseFloat(data.sss) > 0) {
-                        totalDeduction = totalDeduction + parseFloat(data.sss.replace(/,/g, ''));
-                    }
-
-                    if (data.sss_prov && parseFloat(data.sss_prov) > 0) {
-                        totalDeduction = totalDeduction + parseFloat(data.sss_prov.replace(/,/g, ''));
-                    }
-                    
-                    if (data.ph && parseFloat(data.ph) > 0) {
-                        totalDeduction = totalDeduction + parseFloat(data.ph.replace(/,/g, ''));
-                    }
-                    
-                    if (data.hdmf && parseFloat(data.hdmf) > 0) {
-                        totalDeduction = totalDeduction + parseFloat(data.hdmf.replace(/,/g, ''));
-                    }
-                    
-                    if (data.tax && parseFloat(data.tax) > 0) {
-                        totalDeduction = totalDeduction + parseFloat(data.tax.replace(/,/g, ''));
-                    }
-
-                    if (json.data.loans.length > 0) {
-                        $.each(json.data.loans, function (index, item) {
-                            if (item.loan_name.toLowerCase() != 'charges' && item.loan_name.toLowerCase() != 'under deduction' && item.loan_name.toLowerCase() != 'medical loan') {
-                                var temp_amount = parseFloat(item.amount_due.replace(/,/g, ''));
+                if ($is_printed == 1) {
+                    $.get(siteUrl('core/profile/get_payroll_sheet_data'), { id: id }, "json")
+                    .done(function(data){
+                        const json = JSON.parse(data);
+                        let tempRow = json.response ? Object.assign({}, json.data) : {};
+                        vmPayslipContent.row = Object.assign({}, tempRow);
     
-                                // for adding cash advance with loan adjustments
-                                if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
-                                    const created_adjustments = tempCreatedAdjustments.split(",");
-                                    var tempAdj = 0;
-                                    created_adjustments.forEach((row, i) => {
-                                        const temp_adjustment = row.split("||");
-                                        const adj_type = parseInt(temp_adjustment[2]);
-                                        const temp_status = parseInt(temp_adjustment[3]);
-                                        let _temp = parseFloat(item.amount_due);
-                                        if (adj_type == 1) {
-                                            _temp = parseFloat(temp_amount) + parseFloat(temp_adjustment[1]);
-                                        } else {
-                                            _temp = parseFloat(temp_amount) - parseFloat(temp_adjustment[1]);
-                                        }
-
-                                        tempAdj = _temp;
-                                        _temp = _temp;
-
-                                        if (typeof item.loan_name !== "undefined" && item.loan_name.toLowerCase() == 'cash advance') {
-                                            if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
-                                                temp_amount = _temp;
+                        var data = json.data;
+                        var totalOT = parseFloat(vmPayslipContent.row.ot_amount) + parseFloat(vmPayslipContent.row.ot_ndiff_amount);
+                        var totalOTHrs = (parseFloat(vmPayslipContent.row.ot_minutes) + parseFloat(vmPayslipContent.row.ot_ndiff_minutes)) / 60;
+                        vmPayslipContent.total_ot_hrs = numberFormat(totalOTHrs);
+                        vmPayslipContent.ot_hrs = numberFormat(parseFloat(vmPayslipContent.row.ot_minutes)/60);
+                        vmPayslipContent.ot_computation = numberFormat(totalOT);
+                        vmPayslipContent.ot_ndiff_hrs = numberFormat(parseFloat(vmPayslipContent.row.ot_ndiff_minutes) / 60);
+                        vmPayslipContent.ot_ndiff_computation = numberFormat(parseFloat(vmPayslipContent.row.ot_ndiff_amount));
+    
+                        let tempLoan = [];
+                        let tempOthers = [];
+                        let totalLoan = parseFloat(vmPayslipContent.row.totalLoan.replace(/,/g, ''));
+                        let totalDeduction = 0;
+                        let totalOthersDeductions = 0;
+                        let overAllTotal = 0;
+                        const tempCreatedAdjustments = data.created_adjustments;
+    
+                        if (data.sss && parseFloat(data.sss) > 0) {
+                            totalDeduction = totalDeduction + parseFloat(data.sss.replace(/,/g, ''));
+                        }
+    
+                        if (data.sss_prov && parseFloat(data.sss_prov) > 0) {
+                            totalDeduction = totalDeduction + parseFloat(data.sss_prov.replace(/,/g, ''));
+                        }
+                        
+                        if (data.ph && parseFloat(data.ph) > 0) {
+                            totalDeduction = totalDeduction + parseFloat(data.ph.replace(/,/g, ''));
+                        }
+                        
+                        if (data.hdmf && parseFloat(data.hdmf) > 0) {
+                            totalDeduction = totalDeduction + parseFloat(data.hdmf.replace(/,/g, ''));
+                        }
+                        
+                        if (data.tax && parseFloat(data.tax) > 0) {
+                            totalDeduction = totalDeduction + parseFloat(data.tax.replace(/,/g, ''));
+                        }
+    
+                        if (json.data.loans.length > 0) {
+                            $.each(json.data.loans, function (index, item) {
+                                if (item.loan_name.toLowerCase() != 'charges' && item.loan_name.toLowerCase() != 'under deduction' && item.loan_name.toLowerCase() != 'medical loan') {
+                                    var temp_amount = parseFloat(item.amount_due.replace(/,/g, ''));
+        
+                                    // for adding cash advance with loan adjustments
+                                    if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
+                                        const created_adjustments = tempCreatedAdjustments.split(",");
+                                        var tempAdj = 0;
+                                        created_adjustments.forEach((row, i) => {
+                                            const temp_adjustment = row.split("||");
+                                            const adj_type = parseInt(temp_adjustment[2]);
+                                            const temp_status = parseInt(temp_adjustment[3]);
+                                            let _temp = parseFloat(item.amount_due);
+                                            if (adj_type == 1) {
+                                                _temp = parseFloat(temp_amount) + parseFloat(temp_adjustment[1]);
+                                            } else {
+                                                _temp = parseFloat(temp_amount) - parseFloat(temp_adjustment[1]);
                                             }
-                                        } else {
-                                            // includes loan adjustments when employee has no cash advance
-                                            if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
-                                                if (!tempLoan.some(el => el.loan_name === 'CASH ADVANCE')) {
-                                                    tempLoan.push({
-                                                        'loan_name' : 'CASH ADVANCE',
-                                                        'amount_due' : temp_adjustment[1],
-                                                        'loan_type' : adj_type
-                                                    });
+    
+                                            tempAdj = _temp;
+                                            _temp = _temp;
+    
+                                            if (typeof item.loan_name !== "undefined" && item.loan_name.toLowerCase() == 'cash advance') {
+                                                if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
+                                                    temp_amount = _temp;
+                                                }
+                                            } else {
+                                                // includes loan adjustments when employee has no cash advance
+                                                if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
+                                                    if (!tempLoan.some(el => el.loan_name === 'CASH ADVANCE')) {
+                                                        tempLoan.push({
+                                                            'loan_name' : 'CASH ADVANCE',
+                                                            'amount_due' : temp_adjustment[1],
+                                                            'loan_type' : adj_type
+                                                        });
+                                                    }
                                                 }
                                             }
-                                        }
+                                        });
+                                    }
+        
+                                    tempLoan.push({
+                                        'loan_name' : item.loan_name,
+                                        'amount_due' : numberFormat(temp_amount),
+                                        'loan_type' : item.loan_type
                                     });
                                 }
-    
-                                tempLoan.push({
-                                    'loan_name' : item.loan_name,
-                                    'amount_due' : numberFormat(temp_amount),
-                                    'loan_type' : item.loan_type
-                                });
-                            }
-    
-                            // for adding the charges to Other Deductions
-                            if (item.loan_name.toLowerCase() == 'charges' || item.loan_name.toLowerCase() == 'under deduction' || item.loan_name.toLowerCase() == 'medical loan') {
-                                vmPayslipContent.row.adjustment_deductions.push({
-                                    'label' : item.loan_name,
-                                    'display_value' : item.amount_due,
-                                    'value' : item.amount_due,
-                                    'adj_type' : 0
-                                });
-    
-                                totalLoan = totalLoan - parseFloat(item.amount_due.replace(/,/g, ''));
-                            }
-                        });
-                    } else {
-                        if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
-                            const created_adjustments = tempCreatedAdjustments.split(",");
-                            var tempAdj = 0;
-                            created_adjustments.forEach((row, i) => {
-                                const temp_adjustment = row.split("||");
-                                const adj_type = parseInt(temp_adjustment[2]);
-                                const temp_status = parseInt(temp_adjustment[3]);
-                                let _temp = parseFloat(temp_adjustment[1]);
-    
-                                tempAdj = _temp;
-                                _temp = formatNumber(_temp);
-    
-                                if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
-                                    tempLoan.push({
-                                        'loan_name' : 'cash advance',
-                                        'amount_due' : _temp,
-                                        'loan_type' : adj_type
+        
+                                // for adding the charges to Other Deductions
+                                if (item.loan_name.toLowerCase() == 'charges' || item.loan_name.toLowerCase() == 'under deduction' || item.loan_name.toLowerCase() == 'medical loan') {
+                                    vmPayslipContent.row.adjustment_deductions.push({
+                                        'label' : item.loan_name,
+                                        'display_value' : item.amount_due,
+                                        'value' : item.amount_due,
+                                        'adj_type' : 0
                                     });
+        
+                                    totalLoan = totalLoan - parseFloat(item.amount_due.replace(/,/g, ''));
                                 }
                             });
+                        } else {
+                            if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
+                                const created_adjustments = tempCreatedAdjustments.split(",");
+                                var tempAdj = 0;
+                                created_adjustments.forEach((row, i) => {
+                                    const temp_adjustment = row.split("||");
+                                    const adj_type = parseInt(temp_adjustment[2]);
+                                    const temp_status = parseInt(temp_adjustment[3]);
+                                    let _temp = parseFloat(temp_adjustment[1]);
+        
+                                    tempAdj = _temp;
+                                    _temp = formatNumber(_temp);
+        
+                                    if (temp_adjustment[0] == "LOAN" && temp_status === 1) {
+                                        tempLoan.push({
+                                            'loan_name' : 'cash advance',
+                                            'amount_due' : _temp,
+                                            'loan_type' : adj_type
+                                        });
+                                    }
+                                });
+                            }
                         }
-                    }
-
-                    $.each(vmPayslipContent.row.adjustment_deductions, function (index, item) {
-                        totalOthersDeductions = totalOthersDeductions + parseFloat(item.display_value.replace(/,/g, ''));
+    
+                        $.each(vmPayslipContent.row.adjustment_deductions, function (index, item) {
+                            totalOthersDeductions = totalOthersDeductions + parseFloat(item.display_value.replace(/,/g, ''));
+                        });
+    
+                        console.log(totalDeduction, totalLoan, totalOthersDeductions);
+                        overAllTotal = parseFloat(totalDeduction) + parseFloat(totalLoan) + parseFloat(totalOthersDeductions) + parseFloat(vmPayslipContent.row.total_loans_interest);
+    
+                        vmPayslipContent.row.loans = tempLoan;
+                        vmPayslipContent.row.totalLoan = numberFormat(totalLoan);
+                        vmPayslipContent.row.total_allowances = numberFormat(vmPayslipContent.row.total_allowances);
+                        vmPayslipContent.row.deductions = numberFormat(totalDeduction);
+                        vmPayslipContent.row.total_others_deductions = numberFormat(totalOthersDeductions);
+                        vmPayslipContent.row.overall_total_deductions = numberFormat(overAllTotal);
+                        vmPayslipContent.row.adjustment_d_count = vmPayslipContent.row.adjustment_deductions.length;
+    
+                        if(json.response){ viewPayrollPayslipModal.modal("show"); }
                     });
-
-                    console.log(totalDeduction, totalLoan, totalOthersDeductions);
-                    overAllTotal = parseFloat(totalDeduction) + parseFloat(totalLoan) + parseFloat(totalOthersDeductions) + parseFloat(vmPayslipContent.row.total_loans_interest);
-
-                    vmPayslipContent.row.loans = tempLoan;
-                    vmPayslipContent.row.totalLoan = numberFormat(totalLoan);
-                    vmPayslipContent.row.total_allowances = numberFormat(vmPayslipContent.row.total_allowances);
-                    vmPayslipContent.row.deductions = numberFormat(totalDeduction);
-                    vmPayslipContent.row.total_others_deductions = numberFormat(totalOthersDeductions);
-                    vmPayslipContent.row.overall_total_deductions = numberFormat(overAllTotal);
-                    vmPayslipContent.row.adjustment_d_count = vmPayslipContent.row.adjustment_deductions.length;
-
-                    if(json.response){ viewPayrollPayslipModal.modal("show"); }
-                });
+                } else {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Payslip Preview',
+                        text: 'Payslip preview cannot be displayed as the payslip is not in printed status.'
+                    })
+                }
             }
         }
 

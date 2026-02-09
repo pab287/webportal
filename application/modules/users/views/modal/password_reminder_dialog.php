@@ -7,6 +7,7 @@
   }
   
   .password-change-reminder .modal-footer {
+    display: flex;   
     flex-direction: column;
     align-items: stretch;
     padding: 15px;
@@ -34,6 +35,10 @@
     text-align: center;
   }
 }
+.password-change-reminder .modal-footer button:only-child {
+    width: 100%;
+}
+
 </style>
 <div class="modal fade password-change-reminder" data-backdrop="static" data-keyboard="false" tabindex="-1">
     <div class="modal-dialog" role="dialog">

@@ -41,7 +41,17 @@ $(function() {
         },
         columns: [
             { data: "id", visible: false },
-            { data: "bot_name"},
+            {
+                data: "bot_name",
+                render: function (data, type, row) {
+                    return `
+                        <div>
+                            <strong>${data}</strong><br>
+                            ${renderStatus(row.status)}
+                        </div>
+                    `;
+                }
+            },
             { data: "bot_description", orderable: false},
             {
                 data: "owner",
@@ -60,11 +70,6 @@ $(function() {
                     `;
                 }
             },
-            { data: "status", className: "text-center", orderable: false,
-                render: function (data) {
-                    return renderStatus(data)
-                }
-            },
             { 
                 data: "modules", orderable: false,
                 render: function(data) {
@@ -77,7 +82,7 @@ $(function() {
                         </div>`;
                 }
             },
-            { data: "chat_id", orderable: false,
+            { data: "chat_id", orderable: false, width: "15%",
                 render: function(data, type, row) {
                     return data || 'N/A';
                 }
@@ -85,20 +90,9 @@ $(function() {
             { data: "telegram_bot_token",orderable: false},
             {
                 data: "created_at",
-                render: function(data) {
-                    const dateStr = data.trim();
-                    const dateParts = dateStr.split(' ');
-                    const dateComponents = dateParts[0].split('-');
-                    
-                    // Create Date object for proper month formatting
-                    const dateObj = new Date(dateComponents[0], parseInt(dateComponents[1])-1, dateComponents[2]);
-                    
-                    // Format the date parts
-                    const month = dateObj.toLocaleString('default', { month: 'long' });
-                    const day = dateComponents[2];
-                    const year = dateComponents[0];
-            
-                    return `${month} ${day}, ${year}`;
+                render: function (data) {
+                    if (!data) return "";
+                    return moment(data, "YYYY-MM-DD HH:mm:ss").format("MMMM DD, YYYY");
                 }
             },
             { data: null, className: "text-center" },
@@ -127,6 +121,7 @@ $(function() {
         dom: '<"toolbar">frtlip',
         serverSide: true,
         processing: true,
+        rowId: 'id',
         ajax: {
             url: baseUrl("configuration/telegram_protocol_datatable_request"),
             type: "post",
@@ -141,7 +136,17 @@ $(function() {
         searching: false,
         columns: [
             { data: "id", visible: false },
-            { data: "bot_name"},
+            {
+                data: "bot_name",
+                render: function (data, type, row) {
+                    return `
+                        <div>
+                            <strong>${data}</strong><br>
+                            ${renderStatus(row.status)}
+                        </div>
+                    `;
+                }
+            },
             { data: "bot_description", orderable: false},
             {
                 data: "owner",
@@ -160,11 +165,6 @@ $(function() {
                     `;
                 }
             },
-            { data: "status", className: "text-center", orderable: false,
-                render: function (data) {
-                    return renderStatus(data)
-                }
-            },
             { 
                 data: "modules", orderable: false,
                 render: function(data) {
@@ -177,7 +177,7 @@ $(function() {
                         </div>`;
                 }
             },
-            { data: "chat_id", orderable: false,
+            { data: "chat_id", orderable: false, width: "15%",
                 render: function(data, type, row) {
                     return data || 'N/A';
                 }
@@ -185,20 +185,9 @@ $(function() {
             { data: "telegram_bot_token",orderable: false},
             {
                 data: "created_at",
-                render: function(data) {
-                    const dateStr = data.trim();
-                    const dateParts = dateStr.split(' ');
-                    const dateComponents = dateParts[0].split('-');
-                    
-                    // Create Date object for proper month formatting
-                    const dateObj = new Date(dateComponents[0], parseInt(dateComponents[1])-1, dateComponents[2]);
-                    
-                    // Format the date parts
-                    const month = dateObj.toLocaleString('default', { month: 'long' });
-                    const day = dateComponents[2];
-                    const year = dateComponents[0];
-            
-                    return `${month} ${day}, ${year}`;
+                render: function (data) {
+                    if (!data) return "";
+                    return moment(data, "YYYY-MM-DD HH:mm:ss").format("MMMM DD, YYYY");
                 }
             },
             { data: null, className: "text-center" },
@@ -212,7 +201,7 @@ $(function() {
                 render: function (data, type, row, meta) {
                     var tempHtml = "---";
                     var tempActions = [];
-                    var currentActions = ["edit", "delete", "connect", "exclude"];
+                    var currentActions = ["test","edit", "delete", "connect", "exclude"];
                     $.each(currentActions, function(index, value){
                         tempActions.push(value);
                     });
@@ -224,12 +213,15 @@ $(function() {
                             <div class="dropdown-menu dropdown-menu-right">`;
                         $.each(tempActions, function(ii, vv){
                             switch(vv){
+                                case "test":
+                                    tempHtml += `<a class="dropdown-item btnEdit" href="javascript:void(0);" onclick='test_protocol(`+row.id+`)'><i class="la la-envelope"></i> Test</a>`;
+                                    break;
                                 case "edit":
-                                tempHtml += `<a class="dropdown-item btnEdit" data-toggle='modal' data-target='#edit_modal' href="javascript:void(0);" onclick='edit_protocol(`+row.id+`)'><i class="la la-edit"></i> Edit</a>`;
-                                break;
+                                    tempHtml += `<a class="dropdown-item btnEdit" data-toggle='modal' data-target='#edit_modal' href="javascript:void(0);" onclick='edit_protocol(`+row.id+`)'><i class="la la-edit"></i> Edit</a>`;
+                                    break;
                                 case "delete":
-                                tempHtml += `<a class="dropdown-item btnArchive" data-toggle='modal' data-target='#delete_modal' href="javascript:void(0);" onclick='delete_telegram_bot(`+row.id+`)'><i class="la la-trash"></i> Remove</a>`;
-                                break;
+                                    tempHtml += `<a class="dropdown-item btnArchive" data-toggle='modal' data-target='#delete_modal' href="javascript:void(0);" onclick='delete_telegram_bot(`+row.id+`)'><i class="la la-trash"></i> Remove</a>`;
+                                    break;
                                 case "connect":
                                     var tempLabel = "Deactivate";
                                     var tempIconClass = "la la-unlink";
@@ -268,10 +260,10 @@ $(function() {
 function renderStatus(data) {
     switch (data) {
         case "1":
-            return '<span class="m-badge m-badge--success m-badge--wide" style="cursor: default"><i class="fa-lg fa fa-check" style="color:white"></i></span>';
+            return '<span class="m-badge m-badge--success m-badge--wide" style="cursor: default">Active</span>';
             break;
         default:
-            return '<span class="m-badge m-badge--danger m-badge--wide" style="cursor: default"><i class="fa-lg fa fa-remove" style="color:white"></i></span>';
+            return '<span class="m-badge m-badge--danger m-badge--wide" style="cursor: default">Inactive</span>';
             break;
     }
 };
@@ -289,6 +281,32 @@ var edit_protocol = function (id) {
             success: function (json) {
                 vmEditModal.row = Object.assign({}, json.response);
                 initializeSelect2Elements(vmEditModal.row);
+            }
+        });
+    } else {
+        return false;
+    }
+};
+
+var test_protocol = function (id) {
+    let rowData = dtTableProtocol.row('#' + id).data();
+    if (id) {
+        $.ajax({
+            url: siteUrl("configuration/test_telegram_protocol"),
+            type: "POST",
+            data: {
+                csrf_token: _csrf_hash,
+                bot_token: rowData.telegram_bot_token,
+                chat_id: rowData.chat_id
+            },
+            dataType: "json",
+            success: function (json) {
+                console.log(json);
+                if (json.response) {
+                    toastr.success(json.message,"SUCCESS", 5000);
+                }else{
+                    toastr.error(json.message,"ERROR", 5000);
+                }
             }
         });
     } else {

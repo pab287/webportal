@@ -1109,6 +1109,27 @@ $.validate({
                     toastr[toast](response.message, response.title, { timeOut: 10000 });
                 }
 
+                if (typeof response.is_posted !== "undefined" && response.is_posted || typeof response.is_below_latest_posted !== "undefined" && response.is_below_latest_posted) {
+                    Swal.fire({
+                        title: response.title,
+                        text: `${response.message}`,
+                        icon: 'warning',
+                        showCancelButton: false,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Ok',
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            if (typeof response.is_posted !== "undefined" && response.is_posted ) {
+                                dtTimeAdjustments.ajax.reload();
+                            }
+
+                            $('#tbl-timesheet input[type=checkbox]').prop('checked', false);
+                        }
+                    });
+                }
+
                 if (response.data) {
                     const status = response.data.status;
                     response.data.id.forEach((_id) => {

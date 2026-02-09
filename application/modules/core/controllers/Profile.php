@@ -32,6 +32,9 @@ class Profile extends MY_Controller {
 		$this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
 		$this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
 
+		$this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+
 		$this->core_layout->addCss("css/hris/view_employee_masterfile.css", true);
 		$this->core_layout->addCss("plugins/star-rating/css/star-rating-svg.css", true);
 		$this->core_layout->addCss('css/hris/index.css', true);
@@ -42,11 +45,11 @@ class Profile extends MY_Controller {
 		$showPayrollPayslip = is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_request", $currentActions);
 
 		$data = $this->utilities->parseFormDataToObject(array("data" => $this->employee_model->getEmployeeDataDetails($employee_id),
-		"profile_payroll_sheet"=>true,
-		"payroll_sheet_data"=>$this->get_employee_payroll_data($employee_id),
-		"payroll_sheet_max_id"=>$this->get_max_employee_payroll_data($employee_id),
-		"show_payroll_payslip"=>$showPayrollPayslip,
-		"deductions" => $this->profile->get_employee_deductions($employee_id)));
+			"profile_payroll_sheet"=>true,
+			"payroll_sheet_data"=>$this->get_employee_payroll_data($employee_id),
+			"payroll_sheet_max_id"=>$this->get_max_employee_payroll_data($employee_id),
+			"show_payroll_payslip"=>$showPayrollPayslip,
+			"deductions" => $this->profile->get_employee_deductions($employee_id)));
 
 		$data->tab ='personalInfo';
 		$data->page = 'profile'; //added to display the sms notification to profile only because the 201 and profile shares the same view file
@@ -66,7 +69,7 @@ class Profile extends MY_Controller {
 	protected function get_employee_payroll_data($id=null){
 		$arrData = array();
 		if($id){
-			$this->db->select("id, pay_date, date_start, date_end, gross_pay, net_pay, bonus_code, is_bonus");
+			$this->db->select("id, pay_date, date_start, date_end, gross_pay, net_pay, bonus_code, is_bonus, printed_payslip");
 			$this->db->order_by("pay_date", "DESC");
 			$payrollData = $this->db->get_where("payroll.payroll_sheet", array("emp_id"=>$id, "posted"=>1));
 			$arrData = $payrollData->result_array();
@@ -159,8 +162,8 @@ class Profile extends MY_Controller {
 		$this->output->set_content_type('json')->set_output(json_encode($data));
 	}
 
-	public function get_job_description($id){
-		$data = $this->profile->getEmpJobDescription($id);
+	public function get_job_description(){
+		$data = $this->profile->getEmpJobDescription();
 		$this->output->set_content_type('json')->set_output(json_encode($data));
 	}
 

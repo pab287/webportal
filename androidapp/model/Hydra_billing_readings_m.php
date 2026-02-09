@@ -132,7 +132,7 @@ class Hydra_billing_readings_m extends Dbase{
 		$bill_amount = $row["total_charges"];
 		$current_bill_amount = $bill_amount + $overdue_charges;
 		$pending_amount = ((float)$pending_balance + (float)$pending_overdue) - $current_bill_amount;
-		$total_amount_due = ($pending_amount + $bill_amount + $overdue_charges + $reconnectionFee) - $over_payment;
+		$total_amount_due = ($pending_amount + $bill_amount + $overdue_charges + $reconnection_fee) - $over_payment;
 	
 		$list = array();
 		$list['reading_id'] = $row['reading_id'];

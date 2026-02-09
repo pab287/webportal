@@ -804,5 +804,47 @@ class Payroll extends MY_Controller {
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
-    }   
+    }
+
+    public function undo_printed_payroll_sheet(){
+        $data = $this->payroll->undo_printed_payroll_sheet();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+    
+    public function check_printed_payslip(){
+        $data = $this->payroll->check_printed_payslip();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function select_payroll_group_by_status() {
+        $data = $this->payroll->selectPayrollGroupByStatus();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function get_payroll_group_multiple_by_status() {
+        $data = $this->payroll->getPayrollGroupMultipleByStatus();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function select_employee_by_status() {
+        $data = $this->payroll->selectEmployeeByStatus();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function select_employee_by_company() {
+        $data = $this->payroll->selectEmployeeByCompany();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 }

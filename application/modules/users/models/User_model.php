@@ -108,7 +108,7 @@ class User_model extends CI_Model{
             "message" => $this->db->error()
         );
 
-        $data = array("is_suspended" => 1, "suspended_by" => $employee_id, "suspended_dt" => $this->timestamp->format("Y-m-d"));
+        $data = array("is_suspended" => 1, "suspended_by" => $employee_id, "suspended_dt" => $this->timestamp->format("Y-m-d"), "telegram_chat_id" => "");
         $where = array("id" => $id);
         $updateResult = $this->db->update("gccmaster.tblusers", $data, $where);
 
@@ -157,7 +157,149 @@ class User_model extends CI_Model{
         return $resultSet;
     }
 
-    public function getSuspendedUsersList()
+    public function getSuspendedUsersList(){
+        $resultset = array();
+        $post = $this->input->post();
+        $order_val = array(array("column"=>"1", "dir"=>"desc"));
+        $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
+        $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
+        $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+        $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+        $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
+        $filter = (isset($post['filter']) && $post['filter']) ? $post['filter'] : 0;
+
+        $rowCount = 0;
+        $rowData = array();
+
+        $rowData = $this->get_suspended_list($limit, $offset, $sortBy, $sortOrder, $search, $filter);
+        $rowCount = $this->get_suspended_list_count($search, $filter);
+
+        $resultset["recordsTotal"] = $rowCount;
+        $resultset["recordsFiltered"] = $rowCount;
+        $resultset["data"] = $rowData;
+
+        return $resultset;
+    }
+
+    function get_suspended_list($limit, $offset, $sortBy, $sortOrder, $search = null, $filter = 0){
+        $filterFields = array("users.email", 'users.username', 'employees.firstname', 'employees.lastname', 'employees.middlename', 'employees2.firstname', 'employees2.lastname', 'employees2.middlename', "DATE_FORMAT(users.suspended_dt, '%M %e, %Y')");
+        $resultset = array();
+
+        $sql = "users.id, users.username, users.email, UPPER(CONCAT(employees.lastname,
+                CASE WHEN UPPER(TRIM(employees.suffix)) != 'N/A' AND
+                    UPPER(TRIM(employees.suffix !='NONE')) AND employees.suffix !='' AND
+                    employees.suffix IS NOT NULL THEN CONCAT(' ', employees.suffix) ELSE ''
+                END, ', ', employees.firstname, ' ',
+                CASE WHEN UPPER(TRIM(employees.middlename)) != 'N/A' AND UPPER(TRIM(employees.middlename)) != 'NONE' AND
+                        TRIM(employees.middlename) !='' AND employees.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(employees.middlename, 1, 1), '.') ELSE ''
+                END)) as employee_name,
+                UPPER(CONCAT(employees2.lastname,
+                CASE WHEN UPPER(TRIM(employees2.suffix)) != 'N/A' AND
+                    UPPER(TRIM(employees2.suffix !='NONE')) AND employees2.suffix !='' AND
+                    employees2.suffix IS NOT NULL THEN CONCAT(' ', employees2.suffix) ELSE ''
+                END, ', ', employees2.firstname, ' ',
+                CASE WHEN UPPER(TRIM(employees2.middlename)) != 'N/A' AND UPPER(TRIM(employees2.middlename)) != 'NONE' AND
+                        TRIM(employees2.middlename) !='' AND employees2.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(employees2.middlename, 1, 1), '.') ELSE ''
+                END)) as suspended_by, users.suspended_dt";
+        
+        $this->db->select($sql);
+        $this->db->join('gccmaster.tblemployees as employees', 'users.emp_id = employees.id', 'INNER');
+        $this->db->join('gccmaster.tblemployees as employees2', 'users.suspended_by = employees2.id', 'LEFT');
+        $this->db->from('gccmaster.tblusers as users');
+
+        $this->db->where('users.is_suspended', 1);
+
+        if ($filter == 1) { $this->db->where('users.suspended_by', 0); }
+        if ($filter == 2) { $this->db->where('users.suspended_by >', 0);}
+
+        $this->db->group_start();
+            $this->db->where('employees.employee_status', 'Active');
+            $this->db->or_where('employees.employee_status', 'Inactive');
+        $this->db->group_end();
+
+        if ($search) {
+            $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+            $this->db->group_end();
+        }
+
+        if($limit != -1){
+            $this->db->limit($limit, $offset);
+        }
+
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $resultset = $query->result();
+        }
+
+        return $resultset;
+    }
+
+    function get_suspended_list_count($search = null, $filter = 0){
+        $filterFields = array("users.email", 'users.username', 'employees.firstname', 'employees.lastname', 'employees.middlename', 'employees2.firstname', 'employees2.lastname', 'employees2.middlename', "DATE_FORMAT(users.suspended_dt, '%M %e, %Y')");
+
+        $sql = "users.id, users.username, users.email, UPPER(CONCAT(employees.lastname,
+                CASE WHEN UPPER(TRIM(employees.suffix)) != 'N/A' AND
+                    UPPER(TRIM(employees.suffix !='NONE')) AND employees.suffix !='' AND
+                    employees.suffix IS NOT NULL THEN CONCAT(' ', employees.suffix) ELSE ''
+                END, ', ', employees.firstname, ' ',
+                CASE WHEN UPPER(TRIM(employees.middlename)) != 'N/A' AND UPPER(TRIM(employees.middlename)) != 'NONE' AND
+                        TRIM(employees.middlename) !='' AND employees.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(employees.middlename, 1, 1), '.') ELSE ''
+                END)) as employee_name,
+                UPPER(CONCAT(employees2.lastname,
+                CASE WHEN UPPER(TRIM(employees2.suffix)) != 'N/A' AND
+                    UPPER(TRIM(employees2.suffix !='NONE')) AND employees2.suffix !='' AND
+                    employees2.suffix IS NOT NULL THEN CONCAT(' ', employees2.suffix) ELSE ''
+                END, ', ', employees2.firstname, ' ',
+                CASE WHEN UPPER(TRIM(employees2.middlename)) != 'N/A' AND UPPER(TRIM(employees2.middlename)) != 'NONE' AND
+                        TRIM(employees2.middlename) !='' AND employees2.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(employees2.middlename, 1, 1), '.') ELSE ''
+                END)) as suspended_by, users.suspended_dt";
+        
+        $this->db->select($sql);
+        $this->db->join('gccmaster.tblemployees as employees', 'users.emp_id = employees.id', 'INNER');
+        $this->db->join('gccmaster.tblemployees as employees2', 'users.suspended_by = employees2.id', 'LEFT');
+        $this->db->from('gccmaster.tblusers as users');
+
+        if ($filter == 1) { $this->db->where('users.suspended_by', 0); }
+        if ($filter == 2) { $this->db->where('users.suspended_by >', 0);}
+
+        $this->db->where('users.is_suspended', 1);
+        $this->db->group_start();
+            $this->db->where('employees.employee_status', 'Active');
+            $this->db->or_where('employees.employee_status', 'Inactive');
+        $this->db->group_end();
+
+        if ($search) {
+            $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+            $this->db->group_end();
+        }
+
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+
+    public function getSuspendedUsersListv1()
     {
         $tableConfig = $this->input->post();
         $tableConfigStd = $this->utilities->parseFormDataToObject($tableConfig);
@@ -284,7 +426,7 @@ class User_model extends CI_Model{
         $this->db->reset_query();
 
         if ($validatePin >= 1) {
-            $field = array("password" => MD5($data->password));
+            $field = array("password" => MD5($data->password),"remember_token" => null);
             $this->db->where(array("emp_id" => $id))->update("gccmaster.tblusers", $field);
             $this->core_layout->setEventLog("User ".$emp_name." has changed his/her password.","change webportal password", "success", "gcchris", "user");
             $resultSet["success"] = true;
@@ -574,6 +716,8 @@ class User_model extends CI_Model{
             return $resultset;
         }
         $resultset['status'] = true;
+        $resultset['mobile_no'] = $sendOtp['mobile_no'] ?? null;
+        $resultset['email_to'] = $sendOtp['email_to'] ?? null;
         $resultset['message'] = "Account unlocked successfully.";
         $resultset['success'] = "success";
         $resultset['action'] = 'user';
@@ -601,6 +745,7 @@ class User_model extends CI_Model{
         $this->db->set('force_update',1);
         $this->db->set('login_attempts', 0);
         $this->db->set('reset_attempts', 0);
+        $this->db->set('remember_token', NULL);
         $this->db->set('password', md5($otp));
         $update = $this->db->update('gccmaster.tblusers');
         return $update;
@@ -633,16 +778,19 @@ class User_model extends CI_Model{
         $data = ['first_name' => $result->firstname,'key_code' => $OTP];
         $email_content = $this->load->view("recovery_password_email.php",["data" => $data],true);
         if ($result->mobile_no) {
-            $message = "[GC&C] Your Conyxph account recovery code is: $OTP. For security reasons, do not share this code with anyone. " .
-                       "If you did not request this, please ignore this message.";
+            $message = "[GC&C] Conyxph Temporary Password\n\n" .
+            "Use the temporary password to sign in: " .
+            "$OTP\n\n" .
+            "Security Notice: Do not share this password with anyone. " .
+            "If you did not request this, please ignore this message.";
             $sms_result = $this->gateway->sendPlaySMS($result->mobile_no, $message);
             $response['sent_sms'] = $sms_result['status'] ? $sms_result['status'] : false;
             $response['mobile_no'] = $result->mobile_no;
         }
         if($result->email){
-            $response['sent_email'] = @$this->core_layout->send_email('core','GC & C Conyx PH','Account Recovery',$email_content,$mailer);
+            $response['sent_email'] = $this->core_layout->send_email('core','GC & C Conyx PH','Account Recovery',$email_content,$mailer);
+            $response['email_to'] = $result->email;
         }
-        
         return $response;
     }
 
@@ -688,4 +836,320 @@ class User_model extends CI_Model{
         $this->db->where('status', 1);
         return $this->db->get()->result();
     }
+
+    public function select2Employee(){
+        $arrData = array();
+        $this->db->select("a.id, a.lastname, a.firstname, a.middlename, a.suffix, b.description as department, c.name as position, GROUP_CONCAT(DISTINCT(`e`.`location_name`) ORDER BY `e`.`created_at`, `e`.`id` ASC SEPARATOR '|') as location_name, GROUP_CONCAT(DISTINCT(`f`.`app_name`) SEPARATOR '|') as app_name, GROUP_CONCAT(DISTINCT(`g`.`telegram_chat_id`) SEPARATOR '|') as telegram_id");
+        $this->db->from('gccmaster.tblemployees as a');
+        $this->db->join("gcchris.tbldepartments as b", "a.department_id = b.id", "LEFT");
+        $this->db->join("gcchris.tblposition as c", "a.position = c.id", "LEFT");
+        $this->db->join('gcctimeutility.personnel as d', 'd.biometricno = a.biometricno', 'left');
+        $this->db->join('gcctimeutility.personnel_locations as e', 'e.personnel_id = d.id', 'left');
+        $this->db->join('gccmaster.it_mobile_application as f', 'f.emp_id = a.id', 'left');
+        $this->db->join('gccmaster.tblusers as g', 'g.emp_id = a.id', 'left');
+        $this->db->where("a.employee_status", "Active");
+        $this->db->group_by('a.id');
+        $this->db->order_by("a.id", "DESC");
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result() as $key => $rs) {
+                $tempRs = (array)$rs;
+                $fullname = $this->core_layout->getDisplayName($tempRs);
+                $tempFullname = (object)$fullname;
+                $row = array();
+                $row["id"] = $rs->id;
+                $row["text"] = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+                $row["department"] = $rs->department;
+                $row["position"] = $rs->position;
+                $row["site_locations"] = $rs->location_name;
+                $row["telegram_id"] = $rs->telegram_id;
+                $row["app_name"] = $rs->app_name;
+                $arrData[] = $row;
+            }
+        }
+
+        return $arrData;
+    }
+
+    public function select2Supervisor(){
+        $arrData = array();
+        $this->db->select("id, lastname, firstname, middlename, suffix");
+        $this->db->from('gccmaster.tblemployees');
+        $this->db->where("employee_status", "Active");
+        $this->db->group_start();
+        $this->db->where("level", "SUPERVISORY");
+        $this->db->or_where("level", "MANAGERIAL");
+        $this->db->or_where("level", "Top Management");
+        $this->db->group_end();
+        $this->db->order_by("firstname", "ASC");
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result() as $key => $rs) {
+                $tempRs = (array)$rs;
+                $fullname = $this->core_layout->getDisplayName($tempRs);
+                $tempFullname = (object)$fullname;
+                $row = array();
+                $row["id"] = $rs->id;
+                $row["text"] = ($tempFullname->display_name_1) ? $tempFullname->display_name_1 : "No Assigned Name";
+                $arrData[] = $row;
+            }
+        }
+
+        return $arrData;
+    }
+
+    public function select2Installer(){
+        $query = $this->db->query("SELECT  c.id, CONCAT(c.firstname,' ',c.lastname) as emp_name FROM gccmaster.tblusers b, gccmaster.tblemployees c WHERE b.emp_id=c.id AND b.group_id='1' AND c.employee_status = 'Active' AND b.group_id=1 ORDER BY c.firstname ASC");
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $data = array();
+                $data["id"] = $_query["id"];
+                $data["text"] = $_query["emp_name"];
+                $resultarray[] = $data;
+            }
+        }
+        return  $resultarray;
+    }
+
+
+    public function getItmarList(){
+        $resultset = array();
+        $post = $this->input->post();
+        $order_val = array(array("column"=>"9", "dir"=>"desc"));
+        $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
+        $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
+        $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
+        $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+        $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
+        $app_name =  (isset($post["app_name"]) && $post["app_name"])? $post["app_name"]: '';
+        $is_archive =  (isset($post["is_archive"]) && $post["is_archive"])? $post["is_archive"]: '';
+        $date_range = (isset($post["date_range"]) && $post["date_range"])? $post["date_range"]: false;
+        $filterFields = array(
+            "purpose","app_name",
+            "c.firstname","c.middlename","c.lastname",
+            "CONCAT(c.firstname, ' ', IF(c.middlename IS NOT NULL AND c.middlename != '', CONCAT(LEFT(c.middlename,1), '. '), ''), c.lastname)",
+            "CONCAT(c.firstname, ' ', c.lastname)",
+            "CONCAT(c.lastname, ' ', c.firstname)",
+        
+            "b.firstname","b.middlename","b.lastname",
+            "CONCAT(b.firstname, ' ', IF(b.middlename IS NOT NULL AND b.middlename != '', CONCAT(LEFT(b.middlename,1), '. '), ''), b.lastname)",
+            "CONCAT(b.firstname, ' ', b.lastname)",
+            "CONCAT(b.lastname, ' ', b.firstname)"
+        );
+
+        $rowData = $this->getItmarListData($search, $limit, $offset, $sortBy, $sortOrder, $filterFields, $app_name, $is_archive, $date_range);
+        $rowCount = $this->getItmarListDataCount($search,$filterFields, $app_name, $is_archive,$date_range);
+        $resultset["recordsTotal"] = $rowCount;
+        $resultset["recordsFiltered"] = $rowCount;
+        $resultset["data"] = $rowData;
+        return $resultset;
+    }
+
+    private function getItmarListData($search, $limit, $offset, $sortBy, $sortOrder,$filterFields, $app_name, $is_archive,$date_range){
+        $this->db->select("a.emp_id,a.id,a.app_name,a.purpose,a.created_at, d.description as department_name, e.name as position_name, CONCAT(
+                b.firstname, ' ',
+                IF(b.middlename IS NOT NULL AND b.middlename != '',
+                    CONCAT(LEFT(b.middlename, 1), '. '),
+                    ''
+                ),
+                b.lastname
+            ) as created_name,
+
+            CONCAT(
+                c.firstname, ' ',
+                IF(c.middlename IS NOT NULL AND c.middlename != '',
+                    CONCAT(LEFT(c.middlename, 1), '. '),
+                    ''
+                ),
+                c.lastname
+            ) as emp_name,
+            GROUP_CONCAT(DISTINCT(`g`.`location_name`) ORDER BY `g`.`created_at`, `g`.`id` ASC SEPARATOR '|') as location_name,
+            h.telegram_chat_id as telegram_id,
+        ");
+        if($is_archive){
+            $this->db->from("gccmaster.it_mobile_application_archive as a");
+        }else{
+            $this->db->from("gccmaster.it_mobile_application as a");
+        }
+        $this->db->join("gccmaster.tblemployees as b", "b.id = a.created_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees as c", "c.id = a.emp_id", "LEFT");
+        $this->db->join("gcchris.tbldepartments as d", "d.id = c.department_id", "LEFT");
+        $this->db->join("gcchris.tblposition as e", "e.id = c.position", "LEFT");
+        $this->db->join('gcctimeutility.personnel as f', 'f.biometricno = c.biometricno', 'LEFT');
+        $this->db->join('gcctimeutility.personnel_locations as g', 'g.personnel_id = f.id', 'LEFT');
+        $this->db->join('gccmaster.tblusers as h', 'h.emp_id = c.id', 'LEFT');
+        $this->db->where("a.app_name",  $app_name);
+
+        // $this->db->where("a.is_archive",  $is_archive);
+
+        if (!empty($date_range['start']) && !empty($date_range['end'])) {
+            $start = $date_range['start'] . ' 00:00:00';
+            $end   = $date_range['end'] . ' 23:59:59';
+        
+            $this->db->where('a.created_at >=', $start);
+            $this->db->where('a.created_at <=', $end);
+        }
+        
+        if ($search) {
+            $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+            $this->db->group_end();
+        }
+
+        if($limit != -1){
+            $this->db->limit($limit, $offset);
+        }
+
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        $this->db->group_by("a.id");
+        $query = $this->db->get();
+        return $query->result_array();
+
+    }
+
+    private function getItmarListDataCount($search,$filterFields, $app_name, $is_archive, $date_range){
+        $this->db->select("a.emp_id,a.id,a.app_name,a.purpose,a.created_at,    CONCAT(
+                b.firstname, ' ',
+                IF(b.middlename IS NOT NULL AND b.middlename != '',
+                    CONCAT(LEFT(b.middlename, 1), '. '),
+                    ''
+                ),
+                b.lastname
+            ) as created_name,
+    
+            CONCAT(
+                c.firstname, ' ',
+                IF(c.middlename IS NOT NULL AND c.middlename != '',
+                    CONCAT(LEFT(c.middlename, 1), '. '),
+                    ''
+                ),
+                c.lastname
+            ) as emp_name
+        ");
+        if($is_archive){
+            $this->db->from("gccmaster.it_mobile_application_archive as a");
+        }else{
+            $this->db->from("gccmaster.it_mobile_application as a");
+        }
+    
+        $this->db->join("gccmaster.tblemployees as b", "b.id = a.created_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees as c", "c.id = a.emp_id", "LEFT");
+        $this->db->where("a.app_name",  $app_name);
+        // $this->db->where("a.is_archive",  $is_archive);
+
+        if (!empty($date_range['start']) && !empty($date_range['end'])) {
+            $start = $date_range['start'] . ' 00:00:00';
+            $end   = $date_range['end'] . ' 23:59:59';
+        
+            $this->db->where('a.created_at >=', $start);
+            $this->db->where('a.created_at <=', $end);
+        }
+
+        if ($search) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+    
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+
+    public function saveItmar(){
+        $resultArray = array();
+        $post = $this->input->post();
+        $data = array(
+            "emp_id" => $post['emp_id'],
+            "app_name" => $post['app_name'],
+            "purpose" => $post['purpose'],
+            "created_by" => $this->session->userdata('logged_in')["emp_id"],
+        );
+
+        $save = $this->db->insert("gccmaster.it_mobile_application", $data);
+        if($save){
+            $resultArray['success'] = true;
+            $resultArray['message'] = "Successfully saved itmar request.";
+            $resultArray['employees'] = $this->select2Employee();
+        }else{
+            $resultArray['success'] = false;
+            $resultArray['message'] = "Failed to save itmar request.";
+        }
+
+        return $resultArray;
+    }
+
+    public function updateItmar(){
+        $resultArray = array();
+        $post = $this->input->post();
+        $data = array(
+            "purpose" => $post['purpose'],
+        );
+
+        $this->db->where("id", $post['id']);
+        $update = $this->db->update("gccmaster.it_mobile_application", $data);
+        if($update){
+            $resultArray['success'] = true;
+            $resultArray['message'] = "Successfully updated itmar request.";
+        }else{
+            $resultArray['success'] = false;
+            $resultArray['message'] = "Failed to update itmar request.";
+        }
+        return $resultArray;
+    }
+
+    public function archiveItmar(){
+        $resultArray = array();
+        $post = $this->input->post();
+        $post['created_by'] = $this->session->userdata('logged_in')["emp_id"];
+        $id = $post['id'];
+        unset($post['id']);
+        $this->db->trans_begin();
+        $insert = $this->db->insert('gccmaster.it_mobile_application_archive', $post);
+    
+        if (!$insert) {
+            $this->db->trans_rollback();
+            $resultArray['success'] = false;
+            $resultArray['message'] = "Failed to insert into archive table.";
+            return $resultArray;
+        }
+    
+        $this->db->where('id', $id);
+        $delete = $this->db->delete('gccmaster.it_mobile_application');
+    
+        if (!$delete) {
+            $this->db->trans_rollback();
+            $resultArray['success'] = false;
+            $resultArray['message'] = "Failed to delete from main table.";
+            return $resultArray;
+        }
+    
+        if ($this->db->trans_status() === FALSE) {
+            $this->db->trans_rollback();
+            $resultArray['success'] = false;
+            $resultArray['message'] = "Transaction failed.";
+        } else {
+            $this->db->trans_commit();
+            $resultArray['success'] = true;
+            $resultArray['message'] = "Successfully archived application request.";
+            $resultArray['employees'] = $this->select2Employee();
+        }
+    
+        return $resultArray;
+    }
+
 }

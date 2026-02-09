@@ -143,12 +143,18 @@ $.ajax({
         
         vmTab1.vm_tab1 = Object.assign({}, data);
 
-        if(vmTab1.vm_tab1.category == "payroll"){
-           performed_by = _tempContentData.performed_by_payroll;
-        }else{
-           performed_by = _tempContentData.performed_by;
+        const categories = (vmTab1.vm_tab1.category || '').toLowerCase();
+
+        if (categories === "payroll") {
+            performed_by = _tempContentData.performed_by_payroll;
         }
-        
+        else if (categories === "qms") {
+            performed_by = _tempContentData.performed_by_qms;
+        }
+        else {
+            performed_by = _tempContentData.performed_by;
+        }
+
         $("#performed_by").select2({
             width: "100%",
             placeholder: "Select an option",
@@ -182,7 +188,7 @@ $.ajax({
              reqq = null
         }
         $("#category").on("change", function (e) {
-            let type = $("#category option:selected").text();
+            let type = ($("#category option:selected").text() || "").toLowerCase();
             if(type == 'webportal'){
                 $("#webportal").show();
             }else{
@@ -196,14 +202,22 @@ $.ajax({
             $("#performed_by").select2("destroy");
             $("#performed_by").empty();
             if(type == 'payroll'){
-                console.log(data.performed_by_id,"Reqq",reqq);
                 $("#performed_by").select2({
                     width: "100%",
                     placeholder: "Select an option",
                     data:  _tempContentData.performed_by_payroll,
                     allowClear: true,
                 }).val(reqq).trigger('change');
-            }else{
+            }
+            else if(type == 'qms'){
+                $("#performed_by").select2({
+                    width: "100%",
+                    placeholder: "Select an option",
+                    data:  _tempContentData.performed_by_qms,
+                    allowClear: true,
+                }).val(reqq).trigger('change');
+            }
+            else{
                 $("#performed_by").select2({
                     width: "100%",
                     placeholder: "Select an option",
@@ -572,7 +586,6 @@ function removeDocument(el, filename) {
                         images = images.filter((n) => {return n != _name});
                         $(parent).remove();
                         $("#pic").val(images);
-                        console.log(images)
                         $("#remove-file-confirmation-modal").modal("hide");
                         toastr.success(_name,"Removed File", 5000);
                     } else {

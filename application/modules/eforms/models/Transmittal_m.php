@@ -1160,25 +1160,17 @@
         function getCompanyCollection() {
             $get = $this->input->get();
             $resultarray = array();
-            // if (isset($get['q'])) {
-            //     $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tblcompanies WHERE `description` LIKE '%{$get['q']}%' ORDER BY `description` ASC");
-            // } else {
-            //     $query = $this->db->query("SELECT `id`,`description` FROM gcchris.tblcompanies ORDER BY `description` ASC");
-            // }
-
             $this->db->select('id, description');
             $this->db->from('gcchris.tblcompanies');
-            
             $view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
-
             if ($view_by_company) {
                 $this->db->where('id', $this->user_data['company']);
             }
-
             if (isset($get['q']) && $get['q']) {
                 $this->db->like('description', $get['q'], 'both');
             }
-
+            $this->db->where('is_archived', 0);
+            $this->db->where('exclude', 0);
             $this->db->order_by('description', 'ASC');
             $query = $this->db->get();
 

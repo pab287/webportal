@@ -1551,8 +1551,349 @@
 
         }
 
-        function generate_attendance_record(){
+        public function generate_attendance_record(){
+            $this->core_layout->setPrivilegeName("gcctime_generate_attendance_record");
+
+            $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
+            $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
+            $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
+            $this->core_layout->addCss("plugins/fileupload/css/jquery.fileupload.css");
+
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
             
+            $this->core_layout->addJs("js/dataTables.buttons.min.js", true);
+            $this->core_layout->addJs("js/buttons.flash.min.js", true);
+            $this->core_layout->addJs("js/jszip.min.js", true);
+            $this->core_layout->addJs("js/pdfmake.min.js", true);
+            $this->core_layout->addJs("js/vfs_fonts.js", true);
+            $this->core_layout->addJs("js/buttons.html5.min.js", true);
+            $this->core_layout->addJs("js/buttons.print.min.js", true);
+            $this->core_layout->addCss("css/buttons.dataTables.min.css", true);
+
+            $arrData = array();
+            $this->load->view('core/templates/header');
+            $this->load->view('attendance/generate_attendance_record', $arrData);
+            $this->load->view('core/templates/footer');
+        }
+
+        public function generate_attendance_logs($alteredDate = null){
+            $this->load->model("timesheet_model", "ts_model");
+
+            $resultset = [];
+            $alteredDate = $alteredDate ?? date("Y-m-d");
+            $searchDate = $alteredDate;
+
+            if (!isset($_FILES['files']['name']) || empty($_FILES['files']['name'][0])) {
+                echo json_encode([
+                    "response" => false,
+                    "message"  => "No file uploaded."
+                ]);
+                return;
+            }
+
+            $dateIndex = [];
+            $dates = [];
+
+            $totalFiles = count($_FILES['files']['name']);
+
+            for ($i = 0; $i < $totalFiles; $i++) {
+                $fileExt = strtolower(pathinfo($_FILES['files']['name'][$i], PATHINFO_EXTENSION));
+                if ($fileExt !== 'dat') {
+                    echo json_encode([
+                        "response" => false,
+                        "message"  => "Invalid file format. Only .dat allowed."
+                    ]);
+                    return;
+                }
+
+                $filename = $_FILES['files']['tmp_name'][$i];
+                if (($handle = fopen($filename, "r")) !== false) {
+                    while (($line = fgets($handle)) !== false) {
+                        $line = trim($line, "\" \n\r\t");
+                        if (empty($line)){ continue; }
+
+                        $parts = explode(',', $line);
+
+                        if (!empty($parts) && count($parts) > 1) {
+                            $empId = $parts[0];
+                            $timestamp = $parts[2];
+                        } else {
+                            $nextParts = explode("\t", $line);
+                            if (count($nextParts) < 2){ continue; }
+                            $empId = $nextParts[0];
+                            $timestamp = $nextParts[1];
+                        }
+
+                        $datePart = date('Y-m-d', strtotime($timestamp));
+                        if (!isset($dateIndex[$datePart])) {
+                            $dateIndex[$datePart] = [];
+                            $dates[] = $datePart;
+                        }
+
+                        $dateIndex[$datePart][] = [$empId, $timestamp];
+                    }
+                    fclose($handle);
+                }
+            }
+
+            $dailyLogs = $dateIndex[$searchDate] ?? [];
+            $structured = [];
+
+            foreach ($dailyLogs as $row) {
+                [$empId, $ts] = $row;
+                if (!isset($structured[$empId])) {
+                    $structured[$empId] = [];
+                }
+                $lastIndex = count($structured[$empId]) - 1;
+                if ($lastIndex >= 0 && count($structured[$empId][$lastIndex]) === 1) {
+                    $structured[$empId][$lastIndex][] = $ts;
+                } else {
+                    $structured[$empId][] = [$ts];
+                }
+            }
+
+            $rawData = [];
+            $isLateCtr = 0;
+            if(!empty($structured)){
+                $searchDate = date("Y-m-d", strtotime($searchDate));
+                foreach ($structured as $bionum => $logs) {
+                    if(isset($logs[0]) && !empty($logs[0])){
+                        $firstShiftLogs = $logs[0];
+                        $this->db->select("UCASE(
+                            TRIM(
+                                CONCAT(
+                                    emp.firstname,
+                                    IF(emp.middlename IS NOT NULL AND emp.middlename != '', CONCAT(' ', LEFT(emp.middlename,1), '.'), ''),
+                                    ' ',
+                                    emp.lastname,
+                                    IF(emp.suffix IS NOT NULL AND emp.suffix != '' AND emp.suffix NOT IN ('N/A','NONE'),
+                                    CONCAT(' ', emp.suffix),
+                                    ''
+                                    )
+                                )
+                            )
+                        ) AS employee_name, UPPER(comp.code) as company, UPPER(dept.code) as department, pn.shift_id, pn.is_flexi, emp.id");
+                        $this->db->from("gccmaster.tblemployees as emp");
+                        $this->db->join("gcchris.tblcompanies as comp", "comp.id = emp.company_id", "LEFT");
+                        $this->db->join("gcchris.tbldepartments as dept", "dept.id = emp.department_id", "LEFT");
+                        $this->db->join("gcctimeutility.personnel as pn", "pn.biometric_id = emp.biometricno OR pn.biometricno = emp.biometricno", "left");
+                        $this->db->where("emp.employee_status", "Active");
+                        $this->db->where("emp.biometricno", $bionum);
+                        $qData = $this->db->get();
+                        if($qData->num_rows() == 1){
+                            $rowData = $qData->row();
+                            $schedule = $this->ts_model->getCurrentShiftSchedule($searchDate, $rowData);
+                            if (!empty($schedule->schedule)) {
+                                $shiftScheduleTime = date("Y-m-d H:i:s", strtotime($searchDate . " ". $schedule->schedule->am_start));
+                                $logtime = date("Y-m-d H:i:s", strtotime($firstShiftLogs[0]));
+                                $base1HourTime = date("Y-m-d H:i:s", strtotime("+1 hour +1 minute", strtotime($shiftScheduleTime)));
+    
+                                $attRecord = new stdClass();
+                                $attRecord->biometricno = $bionum;
+                                $attRecord->employee_name = $rowData->employee_name;
+                                $attRecord->company = $rowData->company;
+                                $attRecord->department = $rowData->department;
+                                $attRecord->log_time = $logtime;
+                                $attRecord->shift_start = $shiftScheduleTime;
+                                $attRecord->is_late = false;
+    
+                                if($rowData->is_flexi == 0 || $rowData->is_flexi == 2){
+                                    $attRecord->is_late = strtotime($logtime) >= strtotime($base1HourTime);
+                                    /*** $attRecord->is_late = strtotime($logtime) > strtotime($shiftScheduleTime); ***/
+                                    if($attRecord->is_late){ $isLateCtr++; }
+                                } elseif ($rowData->is_flexi == 1 || $rowData->is_flexi == 3){
+                                    $attRecord->is_late = strtotime($logtime) >= strtotime($base1HourTime);
+                                    /*** $plus30 = date("Y-m-d H:i:s", strtotime("+30 minutes", strtotime($shiftScheduleTime)));
+                                    $attRecord->is_late = strtotime($logtime) > strtotime($plus30); ***/
+                                    if($attRecord->is_late){ $isLateCtr++; }
+                                }
+                                $rawData[] = $attRecord;
+                            }
+                        }
+                        
+                    }
+                }
+            }
+
+            usort($rawData, function($a, $b) {
+                return strcasecmp($a->employee_name, $b->employee_name);
+            });
+
+            $resultset["dates"] = $dates;
+            $resultset["logs"] = $rawData;
+            $resultset["count"] = count($rawData);
+            $resultset["late_ctr"] = $isLateCtr;
+            if(!empty($rawData)){
+                $resultset["response"] = true;
+                $resultset["message"] = "Success";
+            }else{
+                $resultset["response"] = false;
+                $resultset["message"] = "No logs found";
+            }
+
+            echo json_encode($resultset);
+        }
+
+        public function generate_app_attendance_logs(){
+            $this->load->model("timesheet_model", "ts_model");
+            $resultset = [];
+            $post = $this->input->post();
+            $searchDate = $post["search_date"] ?? date("Y-m-d");
+            $structured = $this->get_app_attendances($searchDate);
+
+            $rawData = [];
+            $isLateCtr = 0;
+            if(!empty($structured)){
+                $searchDate = date("Y-m-d", strtotime($searchDate));
+                foreach ($structured as $bionum => $logs) {
+                    if(isset($logs[0]) && !empty($logs[0])){
+                        $firstShiftLogs = $logs[0];
+                        $this->db->select("UCASE(
+                            TRIM(
+                                CONCAT(
+                                    emp.firstname,
+                                    IF(emp.middlename IS NOT NULL AND emp.middlename != '', CONCAT(' ', LEFT(emp.middlename,1), '.'), ''),
+                                    ' ',
+                                    emp.lastname,
+                                    IF(emp.suffix IS NOT NULL AND emp.suffix != '' AND emp.suffix NOT IN ('N/A','NONE'),
+                                    CONCAT(' ', emp.suffix),
+                                    ''
+                                    )
+                                )
+                            )
+                        ) AS employee_name, UPPER(comp.code) as company, UPPER(dept.code) as department, pn.shift_id, pn.is_flexi, emp.id");
+                        $this->db->from("gccmaster.tblemployees as emp");
+                        $this->db->join("gcchris.tblcompanies as comp", "comp.id = emp.company_id", "LEFT");
+                        $this->db->join("gcchris.tbldepartments as dept", "dept.id = emp.department_id", "LEFT");
+                        $this->db->join("gcctimeutility.personnel as pn", "pn.biometric_id = emp.biometricno OR pn.biometricno = emp.biometricno", "left");
+                        $this->db->where("emp.employee_status", "Active");
+                        $this->db->where("emp.biometricno", $bionum);
+                        $qData = $this->db->get();
+                        if($qData->num_rows() == 1){
+                            $rowData = $qData->row();
+                            $schedule = $this->ts_model->getCurrentShiftSchedule($searchDate, $rowData);
+                            if (!empty($schedule->schedule)) {
+                                $shiftScheduleTime = date("Y-m-d H:i:s", strtotime($searchDate . " ". $schedule->schedule->am_start));
+                                $logtime = date("Y-m-d H:i:s", strtotime($firstShiftLogs[0]));
+                                $base1HourTime = date("Y-m-d H:i:s", strtotime("+1 hour +1 minute", strtotime($shiftScheduleTime)));
+
+                                $shiftDateTime = new DateTime($shiftScheduleTime);
+                                $logDateTime   = new DateTime($logtime);
+
+                                $diff = $shiftDateTime->diff($logDateTime);
+                                if($diff->h > 1 && count($firstShiftLogs) > 1){ $logtime = date("Y-m-d H:i:s", strtotime($firstShiftLogs[1])); }
+                                elseif($diff->h > 1 && count($firstShiftLogs) == 1 && count($logs) > 1){ $logtime = date("Y-m-d H:i:s", strtotime($logs[1][0])); }
+
+                                $attRecord = new stdClass();
+                                $attRecord->biometricno = $bionum;
+                                $attRecord->employee_name = $rowData->employee_name;
+                                $attRecord->company = $rowData->company;
+                                $attRecord->department = $rowData->department;
+                                $attRecord->log_time = $logtime;
+                                $attRecord->shift_start = $shiftScheduleTime;
+                                $attRecord->is_late = false;
+                                if($rowData->is_flexi == 0 || $rowData->is_flexi == 2){
+                                    $attRecord->is_late = strtotime($logtime) >= strtotime($base1HourTime);
+                                    /*** $attRecord->is_late = strtotime($logtime) > strtotime($shiftScheduleTime); ***/
+                                    if($attRecord->is_late){ $isLateCtr++; }
+                                } elseif ($rowData->is_flexi == 1 || $rowData->is_flexi == 3){
+                                    $attRecord->is_late = strtotime($logtime) >= strtotime($base1HourTime);
+                                    /*** $plus30 = date("Y-m-d H:i:s", strtotime("+30 minutes", strtotime($shiftScheduleTime)));
+                                    $attRecord->is_late = strtotime($logtime) > strtotime($plus30); ***/
+                                    if($attRecord->is_late){ $isLateCtr++; }
+                                }
+                                $rawData[] = $attRecord;
+                            }
+                        }
+                        
+                    }
+                }
+            }
+
+            usort($rawData, function($a, $b) {
+                return strcasecmp($a->employee_name, $b->employee_name);
+            });
+
+            $resultset["dates"] = [ $searchDate ];
+            $resultset["logs"] = $rawData;
+            $resultset["count"] = count($rawData);
+            $resultset["late_ctr"] = $isLateCtr;
+
+            if(!empty($rawData)){
+                $resultset["response"] = true;
+                $resultset["message"] = "Success";
+            }else{
+                $resultset["response"] = false;
+                $resultset["message"] = "No logs found";
+            }
+
+            echo json_encode($resultset);
+        }
+
+        protected function get_app_attendances($searchDate = null){
+            $searchDate = $searchDate ?? date("Y-m-d");
+            $structured = [];
+
+            $this->db->select("
+                att.biometric_id,
+                CONCAT(att.date, ' ', att.time) AS datetime
+            ");
+
+            $this->db->from("gcctimeutility.app_attendance AS att");
+
+            // FIX: Match attendance to personnel first (more accurate)
+            $this->db->join(
+                "gcctimeutility.personnel AS pn",
+                "(pn.biometric_id = att.biometric_id OR pn.biometricno = att.biometric_id)",
+                "LEFT",
+                false
+            );
+
+            // FIX: Match personnel → employee
+            $this->db->join(
+                "gccmaster.tblemployees AS emp",
+                "emp.biometricno = pn.biometric_id OR emp.biometricno = pn.biometricno",
+                "LEFT",
+                false
+            );
+
+            $this->db->join("gcctimeutility.personnel_locations AS pnl", "pnl.personnel_id = pn.id", "LEFT");
+            $this->db->join("gcctimeutility.app_location_sites AS als", "als.id = pnl.site_location_id", "INNER");
+            $this->db->join("gcctimeutility.app_users AS au", "au.emp_id = emp.id", "INNER");
+
+            // Filters
+            $this->db->where("au.allow_app_user", 1);
+            $this->db->where("als.include", 1);
+            $this->db->where("emp.employee_status", "Active");
+
+            // FIX: Your date filter is correct
+            $this->db->where("att.date", $searchDate);
+            $this->db->group_by("att.biometric_id, att.date, att.time");
+            $qData = $this->db->get();
+
+            if ($qData->num_rows() > 0) {
+                foreach ($qData->result_array() as $row) {
+                    $empId = $row["biometric_id"];
+                    $ts = $row["datetime"];
+
+                    if (!isset($structured[$empId])) {
+                        $structured[$empId] = [];
+                    }
+
+                    $lastIndex = count($structured[$empId]) - 1;
+
+                    // If last row has only IN, append this as OUT
+                    if ($lastIndex >= 0 && count($structured[$empId][$lastIndex]) === 1) {
+                        $structured[$empId][$lastIndex][] = $ts;
+                    } else {
+                        // New IN
+                        $structured[$empId][] = [$ts];
+                    }
+                }
+            }
+
+            return $structured;
         }
 
         function geneate_attendance_log_file(){

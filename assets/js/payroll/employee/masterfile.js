@@ -136,7 +136,6 @@ function loadEmployees(employee_status) {
 if (typeof _tempContentData !== "undefined") {
     var tempData = _tempContentData.data;
     var tempDropdownData = _tempContentData.dropdown_data;
-
     var displayEmail = tempData.display_email ? tempData.display_email : "";
     var displayName = tempData.display_name
         ? tempData.display_name
@@ -200,7 +199,6 @@ if (typeof _tempContentData !== "undefined") {
         data: {vm_tab3: tempData},
         mounted: function () {
             var vmData = this.vm_tab3;
-
             //additional info
             var sssNo = vmData.sss_no;
 

@@ -165,9 +165,9 @@ class Tripping_m extends CI_Model {
         $get = $this->input->get();
         $resultarray = array();
         if (isset($get['q'])) {
-            $query = $this->db->query("SELECT * FROM gcchris.tblcompanies WHERE `description` LIKE '%{$get['q']}%' ORDER BY `description` ASC LIMIT 10");
+            $query = $this->db->query("SELECT * FROM gcchris.tblcompanies WHERE `description` LIKE '%{$get['q']}%' AND `is_archived` = 0 AND `exclude` = 0 ORDER BY `description` ASC LIMIT 10");
         }else{
-            $query = $this->db->query("SELECT * FROM gcchris.tblcompanies ORDER BY `description` ASC LIMIT 10");
+            $query = $this->db->query("SELECT * FROM gcchris.tblcompanies WHERE `is_archived` = 0 AND `exclude` = 0 ORDER BY `description` ASC LIMIT 10");
         }
 
         if ($query->num_rows() > 0) {

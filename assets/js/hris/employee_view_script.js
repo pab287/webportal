@@ -35,23 +35,45 @@ $(document).ready(function(){
 let employeeDataSheet = new Vue({
     el:"#m-content",
     data:{ 
-            activeTab: 'offenses',
-            filteredOffenses: false,
-            activeSection:"",
-            main:[],
-            supervisor:"",
-            manager: "",
-            path:"",
-            dependents:[],
+        activeTab: 'offenses',
+        filteredOffenses: false,
+        activeSection:"",
+        main:[],
+        supervisor:"",
+        manager: "",
+        path:"",
+        dependents:[],
+        job_desc:"",
+        questions:[],
+        educations:"",
+        licensesAndCerts:{
+            licenses:"",
+            driverlicenses:"",
+            if_driver:"",
+        },
+        works:[],
+        awards:[],
+        skillset:[],
+        organizations: [],
+        trainings:[],
+        references:[],
+        medicals:[],
+        legals:[],
+        accountability:[],
+        offenses:[],
+        salaries:[],
+        stations:[],
+        default_station:[],
+        printData:{
+            main : {},
             job_desc:"",
-            questions:[],
-            educations:"",
+            dependents:{},
             licensesAndCerts:{
                 licenses:"",
                 driverlicenses:"",
                 if_driver:"",
             },
-            works:[],
+            experiences:[],
             awards:[],
             skillset:[],
             organizations: [],
@@ -64,30 +86,12 @@ let employeeDataSheet = new Vue({
             salaries:[],
             stations:[],
             default_station:[],
-            printData:{
-                main : {},
-                job_desc:"",
-                dependents:{},
-                licensesAndCerts:{
-                    licenses:"",
-                    driverlicenses:"",
-                    if_driver:"",
-                },
-                experiences:[],
-                awards:[],
-                skillset:[],
-                organizations: [],
-                trainings:[],
-                references:[],
-                medicals:[],
-                legals:[],
-                accountability:[],
-                offenses:[],
-                salaries:[],
-                stations:[],
-                default_station:[],
-                return_to_work:[],
-            }
+            return_to_work:[],
+            is_multiple_position: 0,
+            multiple_position: []
+        },
+        is_multiple_position: 0,
+        multiple_position: []
     },
     created() {
 
@@ -373,15 +377,24 @@ let employeeDataSheet = new Vue({
             const grandTotal = parseFloat(this.data.grandTotal);
             return salary.sal_rate == grandTotal && index == 0;
           },
-          formattedJobDesc() {
-            if (!this.job_desc) return '';
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = this.job_desc;
-            const hasListItems = tempDiv.getElementsByTagName('li').length > 0;
+          formattedJobDesc(jd = "") {
+            if (this.is_multiple_position) {
+                if (!jd) return "";
 
-            return hasListItems 
-              ? this.job_desc 
-              : this.job_desc.replace(/\n/g, '<br>');
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = job_desc;
+
+                const hasListItems = tempDiv.getElementsByTagName('li').length > 0;
+
+                return hasListItems ? jd : jd.replace(/\n/g, '<br>');
+            } else {
+                if (!this.job_desc) return '';
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = this.job_desc;
+                
+                const hasListItems = tempDiv.getElementsByTagName('li').length > 0;
+                return hasListItems ? this.job_desc : this.job_desc.replace(/\n/g, '<br>');
+            }
           },
           formattedJobDescPrint(data) {
             if (!data) return '';
@@ -456,6 +469,10 @@ let employeeDataSheet = new Vue({
                     window.open(fileUrl, '_blank');
                 }
             });
+        },
+        formatPosition (position) {
+            let result = position.map(item => item.position).join(' / ');
+            return result;
         }
     }
 })
@@ -552,7 +569,7 @@ $('#empEmploymentInfo-body, #collapseEmployment').on('show.bs.collapse', functio
     } 
 });
 
-$('#jobDescription-body, #collapseEmployment').on('show.bs.collapse', function () {
+$('#jobDescription-body, #collapseEmployment, #collapseJob').on('show.bs.collapse', function () {
     if (!hasValue(employeeDataSheet.job_desc)) {
         getJobDescription();
     }
@@ -809,8 +826,7 @@ function getAccountability(){
                                 const returnStatus = parseInt(row.is_returned) === 1 
                                     ? '<span class="m-badge m-badge--success px-2 m--font-bolder">Yes</span>'
                                     : '<span class="m-badge m-badge--danger px-2 m--font-bolder">No</span>';
-                
-     
+
                                 const formattedDate = row.date_returned && row.date_returned !== "0000-00-00" 
                                     ? new Date(row.date_returned).toLocaleDateString('en-US', {
                                         month: 'short',
@@ -890,17 +906,30 @@ function getEmploymentInformation(){
 
 function getJobDescription(){
     $.ajax({
-        url: baseUrl("hris/masterfile/get_job_description/")+employeeDataSheet.$data.main.position_id,
-        type: "post",
-        data:{csrf_token: _csrf_hash},
+        url: baseUrl("hris/masterfile/get_job_description"),
+        type: "get",
+        data:{
+            position_id: employeeDataSheet.$data.main.position_id,
+            is_multiple: employeeDataSheet.$data.main.is_multiple_position,
+            emp_id: employeeDataSheet.$data.main.id
+        },
         dataType: "JSON",
         global: false,
-        success: function(response) {            
-            if (!response || response.job_desc == null) {
+        success: function(response) {
+            if (!response || response.data.length == 0) {
                 employeeDataSheet.$data.job_desc = false;
             } else {
-                employeeDataSheet.$data.job_desc =  response.job_desc;
+                if (response.is_multiple) {
+                    employeeDataSheet.$data.multiple_position =  [...response.data];
+                    employeeDataSheet.$data.printData.multiple_position = [...response.data];
+                } else {
+                    employeeDataSheet.$data.job_desc =  response.data.job_desc;
+                    employeeDataSheet.$data.printData.job_desc = response.data.job_desc;
+                }
             }
+
+            employeeDataSheet.$data.is_multiple_position = response.is_multiple;
+            employeeDataSheet.$data.printData.is_multiple_position = response.is_multiple;
         }
     });
 }

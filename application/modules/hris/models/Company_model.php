@@ -16,7 +16,7 @@ class Company_model extends CI_Model{
         $post = $this->input->post();
 		if($post){
 			$orderx = (isset($post["order"]) && $post["order"])? $post["order"]: false;
-			$columns = array("logo", "code", "description", "id", "is_archived", "work_days_in_year", "sss_class", "email_to", "cc_to", "bcc_to");
+			$columns = array("logo", "code", "description", "id", "is_archived", "work_days_in_year", "sss_class", "exclude", "email_to", "cc_to", "bcc_to");
 			$dir = "DESC";
 			$order = "id";
 			if($orderx){
@@ -68,6 +68,7 @@ class Company_model extends CI_Model{
 					$nestedData['description'] = $pst->description;
 					$nestedData['work_days_in_year'] = $pst->work_days_in_year;
 					$nestedData['sss_class'] = $pst->sss_class;
+					$nestedData['exclude'] = $pst->exclude;
 					$nestedData['email_to'] = $email_to;
 					$nestedData['cc_to'] =  $cc_to;
 					$nestedData['bcc_to'] =  $bcc_to;
@@ -252,6 +253,8 @@ class Company_model extends CI_Model{
 			$post['email_to'] = isset($post['email_to']) ? serialize($post['email_to']) : "";
 			$post['cc_to'] = isset($post['cc_to']) ? serialize($post['cc_to']) : "";
 			$post['bcc_to'] = isset($post['bcc_to']) ? serialize($post['bcc_to']) : "";
+			$post["exclude"] = isset($post["exclude"]) && intval($post["exclude"]) === 1 ? 1 : 0;
+
 			$currentCompanyData = $this->getCompanyData($id);
 			$update = $this->db->update($this->companyTable, $post, array("id"=>$id));
 			if($update){
@@ -327,7 +330,7 @@ class Company_model extends CI_Model{
 
 	public function getCompanyCodeList(){
 		$arrData = array();
-		$query = $this->db->get_where($this->companyTable, array("is_archived"=>0));
+		$query = $this->db->get_where($this->companyTable, array("is_archived"=>0, "exclude"=>0));
 		if($query->num_rows() > 0){
 			foreach($query->result() as $rs){
 				$arrData[] = $rs->code;
@@ -344,6 +347,7 @@ class Company_model extends CI_Model{
 		$this->db->select("id, description as text");
 		$this->db->from($this->companyTable);
 		$this->db->where("is_archived", 0);
+		$this->db->where("exclude", 0);
 		if(isset($get["term"]) && $get["term"]){ $this->db->like("description", trim($get["term"]), "both"); }
 		$query = $this->db->get();
 
@@ -400,6 +404,7 @@ class Company_model extends CI_Model{
 		$this->db->from("gcchris.tblcompanies");
 
 		if($get && isset($get['term'])){
+			$this->db->group_start();
 			foreach($filterFields as $key => $field){
                 if($key == 0){
 					$this->db->like($field, $get['term'], "both");
@@ -407,9 +412,11 @@ class Company_model extends CI_Model{
 					$this->db->or_like($field, $get['term'], "both");
 				}
             }
+			$this->db->group_end();
 		}
 
 		$this->db->where('is_archived', 0);
+		$this->db->where('exclude', 0);
 		$this->db->order_by('code', 'asc');
 		$query = $this->db->get();
 		return  array(
@@ -419,7 +426,8 @@ class Company_model extends CI_Model{
 
 	public function select2CompanyData(){
         $this->db->select("companies.id, companies.`code` `text`, companies.*");
-		$this->db->where('companies.is_archived', 0);
+		$this->db->where('is_archived', 0);
+		$this->db->where('exclude', 0);
         $this->db->order_by("`code`", "ASC");
         $results = $this->db->get("gcchris.tblcompanies companies")->result();
         return $results;

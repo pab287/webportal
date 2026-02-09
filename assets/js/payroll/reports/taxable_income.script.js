@@ -120,7 +120,7 @@ const vmGenerateRemittance = new Vue({
                         placeholder: "SELECT AN OPTION",
                         dropdownParent: tempModal,
                         ajax: {
-                            url: baseUrl('payroll/select_employee'),
+                            url: baseUrl('payroll/reports/select_employee/all'),
                             dataType: 'json',
                             global: false,
                             delay: 250,

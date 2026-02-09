@@ -530,4 +530,11 @@ class Cash_advance extends MY_Controller {
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
+
+    function remove_attachment(){
+        $data =  $this->cash_advance->remove_attachment();
+		$this->output
+        ->set_content_type('json')
+        ->set_output(json_encode($data));
+    }
 }

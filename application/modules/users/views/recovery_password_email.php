@@ -50,7 +50,7 @@
 <body>
     <h2>Hello <?php echo ucfirst($data['first_name'] ?? 'User'); ?>,</h2>
     <p>We received a request to unlock your Conyx account.</p>
-    <p>To unlock your account, please use the following password:</p>
+    <p>To unlock your account, please use the following as your temporary password:</p>
     <div class="verification-code"><?php echo $data['key_code']; ?></div>
     <p>If you are not the intended recipient, please ignore this email.</p>
     <p><em>(This is a system-generated email. Please do not reply.)</em></p>

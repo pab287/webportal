@@ -11,6 +11,7 @@ let _globalNetPay = 0;
 let _globalGrossPay = 0;
 let filteredCompany = '';
 let filteredGroup = '';
+let payroll_option = "";
 let filtered = [];
 
 const months = [
@@ -149,8 +150,8 @@ const generateDateTimePicker = function (min = null, max = null) {
     $("#date-range").val("");
     $("#date-picker")
         .daterangepicker({
-            /*** minDate: min,
-            maxDate: max, ***/
+            minDate: min,
+            maxDate: max,
             buttonClasses: 'm-btn btn',
             applyClass: 'btn-primary',
             cancelClass: 'btn-secondary',
@@ -210,6 +211,7 @@ $.validate({
                     'company': json.filter.company_description ? removeSpecials(json.filter.company_description) : 'All Company', 
                     'gross': json.gross_total_decimal,
                     'total': json.grand_total_decimal,
+                    'option': json.payroll_option,
                     'generated': filteredDate
                 });
 
@@ -235,7 +237,9 @@ const dtNetPayReport = tableNetpay.DataTable({
         extend: 'print',
         footer: false,
         title: function(){
-            return `<div class="text-center m--regular-font-size-lg2">PAYROLL NET PAY SUMMARY REPORT</div>`;
+            const option = filtered.option != 'all' ? filtered.option.toUpperCase() : '';
+
+            return `<div class="text-center m--regular-font-size-lg2">${option} PAYROLL NET PAY SUMMARY REPORT</div>`;
         },
         exportOptions: { stripHtml: false, columns: ':visible:not(:eq(0)):not(.actions)' },
         customize: function (win) {
@@ -259,7 +263,8 @@ const dtNetPayReport = tableNetpay.DataTable({
             }
 
             head.appendChild(style);
-            win.document.title = "Netpay Report Printable Page";
+            const option = filtered.option != 'all' ? filtered.option.toUpperCase() : '';
+            win.document.title = option + " Netpay Report Printable Page";
 
             const tempTable = win.document.getElementsByClassName('dataTable')[0];
             $(tempTable).removeClass("table-bordered");
@@ -277,7 +282,8 @@ const dtNetPayReport = tableNetpay.DataTable({
         extend: 'excelHtml5',
         footer: false,
         filename: function(){
-            return 'CUSTOM PAYROLL SHEET REPORT ' + filtered.generated;
+            const option = filtered.option != 'all' ? filtered.option.toUpperCase()+' ' : '';
+            return `${option}CUSTOM PAYROLL SHEET REPORT ${filtered.generated}`;
         },
         title: function(){
             return ``;
@@ -287,6 +293,7 @@ const dtNetPayReport = tableNetpay.DataTable({
             columns: ':visible:not(:eq(0)):not(.actions)'
         },
         customize: function (xlsx) {
+            const option = filtered.option != 'all' ? filtered.option.toUpperCase()+' ' : '';
             const sheet = xlsx.xl.worksheets['sheet1.xml'];
             const sheetData = sheet.getElementsByTagName('sheetData')[0];
             const downrows = filtered.payroll_group != '' ? 3 : 2;
@@ -349,7 +356,7 @@ const dtNetPayReport = tableNetpay.DataTable({
                 }));
             }
 
-            const r1 = addRowTitle(1, [{ k: 'A', v: ' CUSTOM PAYROLL SHEET REPORT ' + filtered.generated }, { k: 'B', v: '' }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
+            const r1 = addRowTitle(1, [{ k: 'A', v: `${option}CUSTOM PAYROLL SHEET REPORT ${filtered.generated}` }, { k: 'B', v: '' }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
             const r2 = addRowMessage(2, [{ k: 'A', v: 'COMPANY: ' }, { k: 'B', v: filtered.company }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
             const r3 = addRowMessage(3, [{ k: 'A', v: 'PAYROLL GROUP: ' }, { k: 'B', v: filtered.payroll_group }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
 

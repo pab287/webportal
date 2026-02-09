@@ -628,6 +628,7 @@
             $this->db->select($sql);
             $this->db->from($this->tblCompany);
             $this->db->where('is_archived', 0);
+            $this->db->where("exclude", 0);
             $query = $this->db->get();
 
             if($query->num_rows() > 0){

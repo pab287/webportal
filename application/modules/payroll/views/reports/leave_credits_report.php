@@ -131,12 +131,12 @@
                     <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
                     <div class="modal-body" id="leave_credits_content">
                         <div class="row">
-                            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                                 <div class="form-group">
                                     <label class="m--font-bolder">FILTER BY</label>
                                     <div class="m-checkbox-inline">
                                         <label class="m-checkbox">
-                                            <input type="radio" id="all_filter" name="filter_by" data-validation="required" value="1" class="valid" v-model="filter_by" />
+                                            <input type="radio" id="all_filter" name="filter_by" data-validation="required" value="1" class="valid" v-model="filter_by" checked />
                                             ALL<span></span>
                                         </label>
                                         <label class="m-checkbox">
@@ -144,6 +144,26 @@
                                             MONTH<span></span>
                                         </label>
                                     </div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                                <label class="m--font-bolder">Employee Status</label>
+                                <div class="m-radio-inline">
+                                    <label class="m-radio">
+                                        <input type="radio" id="emp-status" name="emp_status" value="All" checked>
+                                        All
+                                        <span></span>
+                                    </label>
+                                    <label class="m-radio">
+                                        <input type="radio" id="emp-status" name="emp_status" value="Active">
+                                        Active
+                                        <span></span>
+                                    </label>
+                                    <label class="m-radio">
+                                        <input type="radio" id="emp-status" name="emp_status" value="Inactive">
+                                        Inactive
+                                        <span></span>
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -161,7 +181,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row mt-3">
+                        <div class="row">
                             <div class="col-12 col-xl-12 col-lg-12 col-md-12 col-sm-12 mt-2">
                                 <div class="form-group m-form__group">
                                     <label for="payroll_group" class="mb-1 m--font-bolder">

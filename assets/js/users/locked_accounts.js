@@ -84,10 +84,23 @@ function unlockAccount(id) {
                 },
                 success: function (json) {
                     if (json.status) {
-                        toastr.success(json.message, "Locked Accounts", 5000);
+                        let extraMsg = '';
+                        if (json.email_to) {
+                            extraMsg += ` <br/>Sent to email: ${json.email_to}.`;
+                        }
+                        if (json.mobile_no) {
+                            extraMsg += ` <br/>Sent to mobile: ${json.mobile_no}.`;
+                        }
+                    
+                        toastr.success(
+                            `${json.message}${extraMsg}`,
+                            "Locked Accounts",
+                            { timeOut: 10000 }
+                        );
+                    
                         tblLockedUsers.ajax.reload();
                     } else {
-                        toastr.error(json.message, "Locked Accounts", 5000);
+                        toastr.error(json.message, "Locked Accounts", { timeOut: 10000 });
                     }
                 },
                 error: function (xhr, status, error) {

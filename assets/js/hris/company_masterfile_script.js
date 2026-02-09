@@ -44,27 +44,18 @@ if (typeof tableCompanyList !== "undefined") {
                     }
                 }
             },
-            // {
-            //     data: "email_to"
-            // },
-            // {   
-            //     data: "cc_to"
-            // },
-            // {   
-            //     data: "bcc_to"
-            // },
+            { data: "exclude", width: "8%", className: "text-center",
+                render: function (data) { return parseInt(data) === 1 ? "<span class='m--font-danger m--font-bolder'>YES</span>" : "<span class='m--font-info m--font-bolder'>NO</span>"; }
+            },
             {data: null, width: "8%", className: "text-center"}
         ],
-        columnDefs: [
-            {
+        columnDefs: [{
                 data: "logo",
                 targets: 0,
                 render: function (data, type, row, meta) {
-                    var _html =
-                        "<div clas='m-card-profile__pic-wrapper'><img class='m--img-rounded m--marginless m--img-centered user__pic' src='" +
-                        data +
-                        "' /></div>";
-                    return _html;
+                    return `<div clas='m-card-profile__pic-wrapper'>
+                        <img class='m--img-rounded m--marginless m--img-centered user__pic' src='${data}' />
+                    </div>`;
                 }
             },
             {

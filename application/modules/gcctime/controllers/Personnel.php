@@ -20,9 +20,12 @@ class Personnel extends MY_Controller {
 	}
 
 	function payroll_group(){
+		$this->load->model("payroll/payroll_m", "payroll");
+		$tempData = array();
+		$tempData["company"] = $this->payroll->select2CompanyData();
 		$this->core_layout->setPageTitle("Gcctime - Employee Group");
 		$this->core_layout->setPrivilegeName("gcctime_employee_group");
-		$this->core_layout->addJs("js/payroll/employee/payroll.group.js", true);
+		$this->core_layout->addJs("js/payroll/employee/payroll.group.js", true, $tempData);
 
 		$this->load->view('core/templates/header');
 		$this->load->view('payroll/payroll/employee_group');

@@ -190,6 +190,7 @@
                                     <input type="checkbox" name="is_important" /> Has sensitive data
                                     <span></span>
                                 </label>
+                                <i class="fa fa-info-circle" style="margin-left: 5px; color: #6c757d; cursor: help;" title="Enabling this will require users to complete 2FA (Two-Factor Authentication) when accessing this data"></i>
                             </div>
                         </div>
                     </div>
@@ -203,4 +204,7 @@
         </div><!-- /.modal-content -->
     </div>
 </div>
+<script>$(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+});</script>
 <!--end::Modal-->

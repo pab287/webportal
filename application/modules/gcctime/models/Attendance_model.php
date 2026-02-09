@@ -1508,6 +1508,8 @@ class Attendance_model extends CI_Model {
         if(isset($get['q'])){
             $this->db->like("`code`", $get['q'], "BOTH");
         }
+        $this->db->where("is_archived", 0);
+        $this->db->where("exclude", 0);
         $this->db->order_by("`code`", "ASC");
         $results = $this->db->get("gcchris.tblcompanies companies")->result();
         return array("results" => $results, "sql" => $this->db->last_query());
@@ -1524,6 +1526,8 @@ class Attendance_model extends CI_Model {
 
     public function select2CompanyData(){
         $this->db->select("companies.id, companies.`code` `text`, companies.*");
+        $this->db->where("is_archived", 0);
+        $this->db->where("exclude", 0);
         $this->db->order_by("`code`", "ASC");
         $results = $this->db->get("gcchris.tblcompanies companies")->result();
         return $results;
