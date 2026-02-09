@@ -3,6 +3,9 @@ let dtPayrollGroup, search_val;
 const btnNewEmployeeGroup = $("#btnNewEmployeeGroup");
 const documentModal = $("#documentModal");
 let propAllFilter = false;
+const modalTransferGroup = $("#modalTransferGroup");
+const formTransferGroup = $("#formTransferGroup");
+
 
 let _companies = [];
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
@@ -508,3 +511,53 @@ var vmModalEntries = new Vue({
     el: "#modal-duplicate-entries",
     data: { count: 0, data: {} }
 });
+
+let _propAllFilter = false;
+const _companySelect2 = formTransferGroup.find("#company_id");
+const _employeeSelect2 = formTransferGroup.find("#employee_id");
+const _companyAllFilter = formTransferGroup.find("input#all_company_filter");
+
+if (_companyAllFilter !== undefined && _companyAllFilter.length == 1) {
+    _companyAllFilter.on("change", function (e) {
+        let isChecked = e.target.checked;
+        _propAllFilter = isChecked;
+        _companySelect2.prop("disabled", isChecked);
+        if (isChecked) { _companySelect2.val("").trigger("change"); }
+        if (isChecked === false) { _employeeSelect2.val([]).trigger("change"); }
+    });
+}
+
+if (_companySelect2.length === 1) {
+    _companySelect2.select2({
+        width: "100%",
+        placeholder: "Select Company",
+        data: _companies,
+        dropdownParent: modalTransferGroup,
+        allowClear: true,
+    }).on("select2:select", function () {
+        _employeeSelect2.val([]).trigger("change");
+    }).on("select2:unselect", function () {
+        _employeeSelect2.val([]).trigger("change");
+    });
+}
+
+if(_employeeSelect2.length === 1){
+    _employeeSelect2.select2({
+        width: "100%",
+        placeholder: "Select Employee",
+        data: [],
+        dropdownParent: modalTransferGroup,
+        ajax: {
+            delay: 750,
+            global: false,
+            url: baseUrl('payroll/employee/get_transferable_employee_groups'),
+            dataType: 'json',
+            type: 'get',
+            data: function (params) {
+                params.company_id = _companySelect2.val();
+                params.all_filter = propAllFilter;
+                return params;
+            }
+        }
+    });
+}

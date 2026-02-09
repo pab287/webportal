@@ -31,13 +31,20 @@
 						<div class="row align-items-center">
 							<div class="col-xl-8 order-2 order-xl-1">
 								<div class="form-group m-form__group row align-items-center">
-									<div class="col-md-4">
+									<div class="col-md-12">
                                         <button id="btnNewEmployeeGroup" type="button"
                                         class="btn btn-success m-btn m-btn--icon btnNew"
                                         data-modal="<?php echo site_url("payroll/employee/get_employee_group_modal/new"); ?>">
                                         <span>
                                             <i class="fa fa-plus"></i>
                                             <span>NEW EMPLOYEE GROUP</span>
+                                        </span>
+                                        </button>
+										<button type="button"
+                                        class="btn btn-primary m-btn m-btn--icon btnNew" data-toggle="modal" data-target="#modalTransferGroup">
+                                        <span>
+                                            <i class="fa fa-exchange"></i>
+                                            <span>TRANSFER EMPLOYEE GROUP</span>
                                         </span>
                                         </button>
                                     </div>
@@ -68,6 +75,66 @@
     modal-exempt-custom tabindex="-1"
     role="dialog"></div>
 </div>
+
+<div id="modalTransferGroup" class="modal fade" data-keyboard="false" data-backdrop="static" modal-exempt-custom tabindex="-1">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exampleModalLabel">Transfer Employee Payroll Group</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">×</span>
+				</button>
+			</div>
+			<form id="formTransferGroup" method="post" action="<?php echo site_url("payroll/employee/transfer_employee_group"); ?>">
+				<input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+				<div class="modal-body">
+					<div class="form-group m-form__group">
+						<label for="company_id">Company *</label>
+						<div class="row">
+							<div class="col-md-6">
+								<select id="company_id" class="form-control " name="company_id" data-validation="required">
+									<option value="">&nbsp;</option>
+								</select>
+							</div>
+							<div class="col-md-6">
+							<div class="m-form__group form-group row">
+								<div class="col-9 text-right">
+									<label for="all_company_filter" class="col-form-label">
+										All Company Filter
+									</label>
+								</div>
+								<div class="col-3">
+								<span class="m-switch m-switch--sm">
+									<label>
+										<input type="checkbox" value="1" id="all_company_filter">
+										<span></span>
+									</label>
+								</span>
+								</div>
+							</div>
+							</div>
+						</div>
+					</div>
+					<div class="form-group m-form__group">
+						<label for="employee_id">Employee(s) *</label>
+						<select id="employee_id" class="form-control" name="employee_id[]" multiple="" data-validation="required">
+							<option value="">&nbsp;</option>
+						</select>
+					</div>
+					<div class="form-group m-form__group">
+						<label for="reason">Reason *</label>
+						<textarea id="reason" class="form-control" name="reason" data-validation="required" style="min-height: 120px; resize: vertical;" rows="6"></textarea>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+					<button type="submit" form="formTransferGroup" class="btn btn-primary">Transfer</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
 <div id="modalGroupNotification" class="modal fade document-modal-container"
     data-keyboard="false" data-backdrop="static"
     modal-exempt-custom tabindex="-1"

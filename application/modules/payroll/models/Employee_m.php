@@ -2527,5 +2527,51 @@ public function getEmployeeNightDiffList(){
 
     }
     
+    public function getTransferableEmployeeGroups() {
+        $resultset = array("results" => array());
+        $get = $this->input->get();
+        $all_filter = isset($get["all_filter"]) && $get["all_filter"] == "true" ?? false;
+        $this->db->select("employee_id");
+        $group = $this->db->get_where($this->payrollGroupTable, array("status" => 1, "is_archived" => 0));
+        if($group->num_rows() > 0){
+            $employeeIds = array();
+            foreach ($group->result() as $value) {
+                $tempIds = @unserialize($value->employee_id);
+                if(is_array($tempIds) && count($tempIds) > 0){
+                    $employeeIds = array_unique(array_merge($employeeIds, $tempIds));
+                }
+            }
+
+            if(is_array($employeeIds) && !empty($employeeIds)){
+                $this->db->select("emp.id, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
+                CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                        TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+                END,' ', UPPER(TRIM(emp.lastname)),
+                CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                    UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                    emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
+                END) as text");
+                    $this->db->from($this->employeeTable." emp");
+                    $this->db->where_in("emp.id", $employeeIds);
+                    if(isset($get["company_id"]) && $get["company_id"] && $all_filter === false){
+                        $this->db->where("company_id", $get["company_id"]);
+                    }
+                    if(isset($get["term"]) && $get["term"]){
+                    $this->db->group_start();
+                    $this->db->like("emp.lastname", $get["term"], "both");
+                    $this->db->or_like("emp.firstname", $get["term"], "both");
+                    $this->db->or_like("emp.middlename", $get["term"], "both");
+                    $this->db->or_like("CONCAT(emp.firstname, ' ', emp.lastname, ' ', emp.suffix)", $get["term"], "both");
+                    $this->db->group_end();
+                    $qEmployee = $this->db->get();
+                    if($qEmployee->num_rows() > 0){
+                        $resultset["results"] = $qEmployee->result();
+                    }
+                }
+            }
+        }
+        return $resultset;
+    }
 
 }
