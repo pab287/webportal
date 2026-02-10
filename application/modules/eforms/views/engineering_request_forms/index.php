@@ -1,3 +1,8 @@
+<style>
+    .select2-selection__rendered {
+        padding-bottom: 0px !important;
+    }
+</style>
 <div class="m-content">
     <div class="m-portlet m-portlet--mobile">
         <div class="m-portlet__head">
@@ -126,7 +131,7 @@
                                 <label for="project_name" class="form-control-label required">
                                     Project Location
                                 </label>
-                                <input type="text" id="project_location" name="project_location" class="form-control m-input" autocomplete="off" readonly>
+                                <input type="text" id="project_location" name="project_location" class="form-control m-input" data-validation="required"  autocomplete="off" readonly>
                             </div>
                         </div>
                         <div class="col-6">
@@ -134,7 +139,7 @@
                                 <label for="prepared_dt" class="form-control-label required">
                                     Date Prepared
                                 </label>
-                                <input type="text" id="prepared_dt" name="prepared_dt" class="form-control m-input" autocomplete="off" readonly>
+                                <input type="text" id="prepared_dt" name="prepared_dt" class="form-control m-input" data-validation="required" autocomplete="off">
                             </div>
                         </div>
                         <div class="col-6">
@@ -142,10 +147,11 @@
                                 <label for="reply_needed" class="form-control-label required">
                                     Reply Needed
                                 </label>
-                                <input type="text" id="reply_needed" name="reply_needed" class="form-control m-input" autocomplete="off" readonly>
+                                <input type="text" id="reply_needed" name="reply_needed" class="form-control m-input" data-validation="required" autocomplete="off">
                             </div>
                         </div>
                     </div>
+                    <div class="m-separator m-separator m-separator--lg"></div>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="card h-100 ">
@@ -154,12 +160,7 @@
                                         <label for="requested_by" class="form-control-label required">
                                             Requested By
                                         </label>
-                                        <input type="text"
-                                            id="requested_by"
-                                            name="requested_by"
-                                            class="form-control bg-light color-white"
-                                            autocomplete="off"
-                                            readonly>
+                                        <input type="text" id="requested_by" name="requested_by" class="form-control bg-light color-white" autocomplete="off" data-validation="required">
                                         <small class="text-muted">Project-In-Charge</small>
                                     </div>
                                 </div>
@@ -172,7 +173,7 @@
                                         <label for="checked_by" class="form-control-label required">
                                             Checked By
                                         </label>
-                                        <input type="text" id="checked_by" name="checked_by" class="form-control" autocomplete="off" readonly>
+                                        <input type="text" id="checked_by" name="checked_by" class="form-control" autocomplete="off" data-validation="required">
                                         <small class="text-muted">Planning Head</small>
                                     </div>
                                 </div>
@@ -190,20 +191,22 @@
                                             name="noted_by"
                                             class="form-control"
                                             autocomplete="off"
-                                            readonly>
+                                            data-validation="required"
+                                        >
                                         <small class="text-muted">Operations Manager</small>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    <div class="m-separator m-separator m-separator--lg"></div>
                     <div class="row">
                         <div class="col-6">
                             <div class="form-group">
                                 <label for="send_to" class="form-control-label required">
                                     TO:
                                 </label>
-                                <input type="text" id="send_to" name="send_to" class="form-control m-input" autocomplete="off" readonly>
+                                <input type="text" id="send_to" name="send_to" class="form-control m-input" autocomplete="off" data-validation="required email">
                             </div>
                         </div>
                         <div class="col-6">
@@ -211,7 +214,9 @@
                                 <label for="cc_to" class="form-control-label required">
                                     CC:
                                 </label>
-                                <input type="text" id="cc_to" name="cc_to" class="form-control m-input" autocomplete="off" readonly>
+                                <select id="cc_to" class="form-control m-input" name="cc_to[]" multiple data-validation="required">
+                                    <option></option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -221,7 +226,156 @@
                                 <label for="consultant" class="form-control-label required">
                                     ATTENTION: (Name of Consultant)
                                 </label>
-                                <input type="text" id="consultant" name="consultant" class="form-control m-input" autocomplete="off" readonly>
+                                <input type="text" id="consultant" name="consultant" class="form-control m-input" autocomplete="off" data-validation="required">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-control-label required">TYPE:</label>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label for="type_arch" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="type[]" value="Architectural" id="type_arch">
+                                                Architectural
+                                            <span></span>
+                                        </label>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label for="type_mech" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="type[]" value="Mechanical" id="type_mech">
+                                                Mechanical
+                                            <span></span>
+                                        </label>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label for="type_fire" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="type[]" value="Mechanical" id="type_fire">
+                                            Fire Protection
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label for="type_civil" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="type[]" value="Civil" id="type_civil">
+                                            Civil / Structural
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="type_elec" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="type[]" value="Mechanical" id="type_elec">
+                                            Electrical
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="type_others" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="type[]" value="Mechanical" id="type_others">
+                                            Others:
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label for="type_interior" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input  type="checkbox" name="type[]" value="Interior_design" id="type_interior">
+                                            Interior Design
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="type_interior" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="type[]" value="Plumbling" id="type_plumbing">
+                                            Plumbling
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input class="form-control" type="text" id="type_plumbing">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-control-label required">INFORMATION NEEDED:</label>
+                                <textarea name="information_needed" class="form-control" id=""></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-control-label required">ATTACHMENTS:</label>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label for="att_plans" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="attachments[]" value="Plumbling" id="att_plans">
+                                            Plans/Drawings
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="att_mats" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="attachments[]" value="Plumbling" id="att_mats">
+                                            Material Sample/s
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label for="att_spec" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="attachments[]" value="Plumbling" id="att_spec">
+                                            Specifications
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="att_others" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="attachments[]" value="Plumbling" id="att_others">
+                                            Others:
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label for="att_test" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="attachments[]" value="Plumbling" id="att_test">
+                                            Test Results
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                     <div class="col-6">
+                                        <input class="form-control" type="text" id="att_others_text">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-control-label required">REMARKS:</label>
+                                <textarea name="remarks" class="form-control" id=""></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-control-label required">REPLY FROM:</label>
+                                <textarea name="reply" class="form-control" id=""></textarea>
                             </div>
                         </div>
                     </div>

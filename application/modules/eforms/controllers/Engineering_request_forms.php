@@ -15,6 +15,8 @@
             $data = array();
             $data['employee'] = $this->eng_req->select2Employee();
             $data['projects'] = $this->eng_req->select2Projects();
+            $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
+            $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
             $this->core_layout->addJs("js/eforms/eng_request/eng_req_form.js", true, $data);
             $this->load->view('core/templates/header');
             $this->load->view('eforms/engineering_request_forms/index');

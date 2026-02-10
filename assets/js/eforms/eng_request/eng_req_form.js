@@ -15,7 +15,6 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
 let rfiTable = null;
 let rfaTable = null;
 let is_archive = 0;
-let selectedId = null;
 
 $('#project_name').select2({
     dropdownParent: $('#newRFIModal'),
@@ -23,6 +22,37 @@ $('#project_name').select2({
     placeholder: 'Select project',
     allowClear: true,
     data: _projects
+});
+
+$("#project_name").on("select2:select", function (e) {
+    const data = e.params.data;
+    $('#project_location').val(data.project_location);
+}).on("select2:unselect", function () {
+    $('#project_location').val('');
+});
+
+$('#cc_to').select2({
+    placeholder: 'Select. .',
+    dropdownParent: $('#newRFIModal'),
+    tags: true,
+    multiple: true,
+    allowClear: false,
+    tokenSeparators: [',', ' '],
+    width: '100%',
+    createTag: function (params) {
+        const term = $.trim(params.term);
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (term === '' || !emailRegex.test(term)) {
+            return null;
+        }
+
+        return {
+            id: term,
+            text: term,
+            newTag: true
+        };
+    }
 });
 
 rfiTable = $('#rfi_table').DataTable({
@@ -41,10 +71,50 @@ rfiTable = $('#rfi_table').DataTable({
     }
 }); 
 
-$("#project_name").on("select2:select", function (e) {
-    const data = e.params.data;
-    selectedEmpId = data.id || null;
-    console.log("SELECTED EMP ID", selectedEmpId);
-}).on("change", function () {
+$.validate({
+    form: "#project_form",
+    lang: "en",
+    onSuccess: function (form) {
+        return false;
+    }
+});
 
+$('#prepared_dt').daterangepicker({
+    singleDatePicker: true,
+    showDropdowns: true,
+    autoUpdateInput: false,
+    minDate: moment('2023-01-01'),
+    maxDate: moment().add(365, 'days'),
+    locale: {
+        format: 'MMM DD, YYYY',
+        cancelLabel: 'Clear'
+    }
+});
+
+$('#prepared_dt').on('apply.daterangepicker', function (ev, picker) {
+    $(this).val(picker.startDate.format('MMM DD, YYYY'));
+});
+
+$('#prepared_dt').on('cancel.daterangepicker', function () {
+    $(this).val('');
+});
+
+$('#reply_needed').daterangepicker({
+    singleDatePicker: true,
+    showDropdowns: true,
+    autoUpdateInput: false,
+    minDate: moment('2023-01-01'),
+    maxDate: moment().add(365, 'days'),
+    locale: {
+        format: 'MMM DD, YYYY',
+        cancelLabel: 'Clear'
+    }
+});
+
+$('#reply_needed').on('apply.daterangepicker', function (ev, picker) {
+    $(this).val(picker.startDate.format('MMM DD, YYYY'));
+});
+
+$('#reply_needed').on('cancel.daterangepicker', function () {
+    $(this).val('');
 });
