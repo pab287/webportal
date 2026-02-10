@@ -3958,10 +3958,10 @@
                 $post = $this->update_travel_order(array('id' => $id), $data);
                 if ($post) {
 
-                    $destinationFrom = $this->db->select('date_from')->get_where('gcceforms.travel_destination', array('travel_order_id' => $id))->row('date_from');
+                    $createdTO = $this->db->select('created_dt')->get_where('gcceforms.travel_destination', array('travel_order_id' => $id))->row('created_dt');
 
                     // prevents sending notification when approving a backlogs
-                    if (date('Y-m-d', strtotime($date)) <= date('Y-m-d', strtotime($destinationFrom))) {
+                    if (date('Y-m-d', strtotime($date)) < date('Y-m-d', strtotime($createdTO))) {
                         $this->sendTelegram($id);
                     }
 
