@@ -1,7 +1,7 @@
 <style>
-    .select2-selection__rendered {
-        padding-bottom: 0px !important;
-    }
+#cc_to + .select2-container .select2-selection__rendered {
+    padding-bottom: 0 !important;
+}
 </style>
 <div class="m-content">
     <div class="m-portlet m-portlet--mobile">
@@ -78,7 +78,7 @@
                     </div>
                 </div>
                 <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll m-datatable--scroll">
-                    <table class="table table-striped table-bordered table-sm" id="itmarTable" width="100%">
+                    <table class="table table-striped table-bordered table-sm" id="rfi_table" width="100%">
                         <thead>
                         <tr>
                             <th></th>
@@ -151,8 +151,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="m-separator m-separator m-separator--lg"></div>
-                    <div class="row">
+                    <div class="m-separator m-separator--dashed m-separator--md"></div>
+                    <!-- <div class="row">
                         <div class="col-md-4">
                             <div class="card h-100 ">
                                 <div class="card-body bg-secondary">
@@ -199,7 +199,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="m-separator m-separator m-separator--lg"></div>
+                    <div class="m-separator m-separator--dashed m-separator--md"></div> -->
                     <div class="row">
                         <div class="col-6">
                             <div class="form-group">
@@ -211,12 +211,8 @@
                         </div>
                         <div class="col-6">
                             <div class="form-group">
-                                <label for="cc_to" class="form-control-label required">
-                                    CC:
-                                </label>
-                                <select id="cc_to" class="form-control m-input" name="cc_to[]" multiple data-validation="required">
-                                    <option></option>
-                                </select>
+                                <label for="cc_to" class="form-control-label required">CC:</label>
+                                <input type="text" id="cc_to" name="cc_to" class="form-control m-input" multiple autocomplete="off" data-validation="required" placeholder="email1@example.com, email2@example.com">
                             </div>
                         </div>
                     </div>
@@ -230,30 +226,29 @@
                             </div>
                         </div>
                     </div>
+                    <div class="m-separator m-separator--dashed m-separator--md"></div>
                     <div class="row">
                         <div class="col-12">
                             <div class="form-group">
                                 <label class="form-control-label required">TYPE:</label>
                                 <div class="row">
                                     <div class="col-md-4">
-                                        <label for="type_arch" class="m-checkbox m-checkbox--solid form-control-label">
-                                            <input type="checkbox" name="type[]" value="Architectural" id="type_arch">
-                                                Architectural
+                                        <label for="type_arch" class="m-radio m-radio--solid form-control-label">
+                                            <input type="radio" name="type" value="Architectural" id="type_arch" data-validation="required">
+                                            Architectural
                                             <span></span>
                                         </label>
                                     </div>
-
                                     <div class="col-md-4">
-                                        <label for="type_mech" class="m-checkbox m-checkbox--solid form-control-label">
-                                            <input type="checkbox" name="type[]" value="Mechanical" id="type_mech">
-                                                Mechanical
+                                        <label for="type_mech" class="m-radio m-radio--solid form-control-label">
+                                            <input type="radio" name="type" value="Mechanical" id="type_mech">
+                                            Mechanical
                                             <span></span>
                                         </label>
                                     </div>
-
                                     <div class="col-md-4">
-                                        <label for="type_fire" class="m-checkbox m-checkbox--solid form-control-label">
-                                            <input type="checkbox" name="type[]" value="Mechanical" id="type_fire">
+                                        <label for="type_fire" class="m-radio m-radio--solid form-control-label">
+                                            <input type="radio" name="type" value="Fire Protection" id="type_fire">
                                             Fire Protection
                                             <span></span>
                                         </label>
@@ -261,49 +256,50 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-4">
-                                        <label for="type_civil" class="m-checkbox m-checkbox--solid form-control-label">
-                                            <input type="checkbox" name="type[]" value="Civil" id="type_civil">
+                                        <label for="type_civil" class="m-radio m-radio--solid form-control-label">
+                                            <input type="radio" name="type" value="Civil / Structural" id="type_civil">
                                             Civil / Structural
                                             <span></span>
                                         </label>
                                     </div>
                                     <div class="col-md-4">
-                                        <label for="type_elec" class="m-checkbox m-checkbox--solid form-control-label">
-                                            <input type="checkbox" name="type[]" value="Mechanical" id="type_elec">
+                                        <label for="type_elec" class="m-radio m-radio--solid form-control-label">
+                                            <input type="radio" name="type" value="Electrical" id="type_elec">
                                             Electrical
                                             <span></span>
                                         </label>
                                     </div>
                                     <div class="col-md-4">
-                                        <label for="type_others" class="m-checkbox m-checkbox--solid form-control-label">
-                                            <input type="checkbox" name="type[]" value="Mechanical" id="type_others">
-                                            Others:
+                                        <label for="type_others" class="m-radio m-radio--solid form-control-label">
+                                            <input type="radio" name="type" value="Others" id="type_others">
+                                            Others
                                             <span></span>
                                         </label>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-4">
-                                        <label for="type_interior" class="m-checkbox m-checkbox--solid form-control-label">
-                                            <input  type="checkbox" name="type[]" value="Interior_design" id="type_interior">
+                                        <label for="type_interior" class="m-radio m-radio--solid form-control-label">
+                                            <input type="radio" name="type" value="Interior Design" id="type_interior">
                                             Interior Design
                                             <span></span>
                                         </label>
                                     </div>
                                     <div class="col-md-4">
-                                        <label for="type_interior" class="m-checkbox m-checkbox--solid form-control-label">
-                                            <input type="checkbox" name="type[]" value="Plumbling" id="type_plumbing">
-                                            Plumbling
+                                        <label for="type_plumbing" class="m-radio m-radio--solid form-control-label">
+                                            <input type="radio" name="type" value="Plumbing" id="type_plumbing_radio">
+                                            Plumbing
                                             <span></span>
                                         </label>
                                     </div>
                                     <div class="col-md-4">
-                                        <input class="form-control" type="text" id="type_plumbing">
+                                        <input class="form-control" type="text" id="type_other_text" placeholder="Specify if Others">
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    <div class="m-separator m-separator--dashed m-separator--md"></div>
                     <div class="row">
                         <div class="col-12">
                             <div class="form-group">
@@ -312,6 +308,7 @@
                             </div>
                         </div>
                     </div>
+                    <div class="m-separator m-separator--dashed m-separator--md"></div>
                     <div class="row">
                         <div class="col-12">
                             <div class="form-group">
@@ -319,14 +316,14 @@
                                 <div class="row">
                                     <div class="col-6">
                                         <label for="att_plans" class="m-checkbox m-checkbox--solid form-control-label">
-                                            <input type="checkbox" name="attachments[]" value="Plumbling" id="att_plans">
+                                            <input type="checkbox" name="attachments[]" value="Plumbling" id="att_plans" data-validation="validate_checkbox_group" data-validation-qty="min1">
                                             Plans/Drawings
                                             <span></span>
                                         </label>
                                     </div>
                                     <div class="col-6">
                                         <label for="att_mats" class="m-checkbox m-checkbox--solid form-control-label">
-                                            <input type="checkbox" name="attachments[]" value="Plumbling" id="att_mats">
+                                            <input type="checkbox" name="attachments[]" value="Plumbling" id="att_mats" data-validation="validate_checkbox_group" data-validation-qty="min1">
                                             Material Sample/s
                                             <span></span>
                                         </label>
@@ -335,14 +332,14 @@
                                 <div class="row">
                                     <div class="col-6">
                                         <label for="att_spec" class="m-checkbox m-checkbox--solid form-control-label">
-                                            <input type="checkbox" name="attachments[]" value="Plumbling" id="att_spec">
+                                            <input type="checkbox" name="attachments[]" value="Plumbling" id="att_spec" data-validation="validate_checkbox_group" data-validation-qty="min1">
                                             Specifications
                                             <span></span>
                                         </label>
                                     </div>
                                     <div class="col-6">
                                         <label for="att_others" class="m-checkbox m-checkbox--solid form-control-label">
-                                            <input type="checkbox" name="attachments[]" value="Plumbling" id="att_others">
+                                            <input type="checkbox" name="attachments[]" value="Plumbling" id="att_others" data-validation="validate_checkbox_group" data-validation-qty="min1">
                                             Others:
                                             <span></span>
                                         </label>
@@ -351,7 +348,7 @@
                                 <div class="row">
                                     <div class="col-6">
                                         <label for="att_test" class="m-checkbox m-checkbox--solid form-control-label">
-                                            <input type="checkbox" name="attachments[]" value="Plumbling" id="att_test">
+                                            <input type="checkbox" name="attachments[]" value="Plumbling" id="att_test" data-validation="validate_checkbox_group" data-validation-qty="min1">
                                             Test Results
                                             <span></span>
                                         </label>
@@ -363,6 +360,7 @@
                             </div>
                         </div>
                     </div>
+                    <div class="m-separator m-separator--dashed m-separator--md"></div>
                     <div class="row">
                         <div class="col-12">
                             <div class="form-group">
@@ -371,6 +369,7 @@
                             </div>
                         </div>
                     </div>
+                    <div class="m-separator m-separator--dashed m-separator--md"></div>
                     <div class="row">
                         <div class="col-12">
                             <div class="form-group">

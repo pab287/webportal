@@ -2,6 +2,7 @@
 class Eng_req_m extends CI_Model {
 
     protected $projectTable = "gcceforms.eng_projects";
+    protected $rfiTable = "gcceforms.eng_rfi_form";
     protected $user_data;
     public function __construct() {
         parent::__construct();
@@ -36,13 +37,52 @@ class Eng_req_m extends CI_Model {
     }
 
     private function getRFIsData($search, $limit, $offset, $sortBy, $sortOrder, $filterFields, $is_archive){
-        // Implementation for fetching RFIs data goes here
-        return array(); // Placeholder
+        $this->db->select("a.*");
+        $this->db->from($this->rfiTable.' as a');
+        $this->db->join("gccmaster.tblemployees as b", "b.id = a.created_by", "LEFT");
+        $this->db->where("a.is_archive", $is_archive);
+        if ($search) {
+            $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+            $this->db->group_end();
+        }
+
+        if($limit != -1){
+            $this->db->limit($limit, $offset);
+        }
+
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        $this->db->group_by("a.id");
+        $query = $this->db->get();
+        return $query->result_array();
     }
 
     private function getRFIsDataCount($search,$filterFields, $is_archive){
-        // Implementation for counting RFIs data goes here
-        return 0; // Placeholder
+        $this->db->select("a.*");
+        $this->db->from($this->rfiTable.' as a');
+        $this->db->join("gccmaster.tblemployees as b", "b.id = a.created_by", "LEFT");
+        $this->db->where("a.is_archive", $is_archive);
+        if ($search) {
+            $this->db->group_start();
+                foreach ($filterFields as $key => $field) {
+                    if ($key == 0) {
+                        $this->db->like($field, $search, "both");
+                    } else {
+                        $this->db->or_like($field, $search, "both");
+                    }
+                }
+            $this->db->group_end();
+
+        }
+        $query = $this->db->get();
+        return $query->num_rows();
     }   
 
     public function getProjects(){
@@ -207,6 +247,34 @@ class Eng_req_m extends CI_Model {
         }
 
         return $arrData;
+    }
+
+    public function createRFI(){
+        $post = $this->input->post();
+        $cc_to = isset($post['cc_to'])? implode(",", $post['cc_to']): '';
+        $request_type = isset($post['type'])? implode(",", $post['type']): '';
+        $attachments = isset($post['attachments'])? implode(",", $post['attachments']): '';
+        $data = array(
+            "project_name" => $post['project_name'],
+            "project_location" => $post['project_location'],
+            "prepared_dt" => date("Y-m-d", strtotime($post['prepared_dt'])),
+            "reply_needed" => date("Y-m-d", strtotime($post['reply_needed'])),
+            "request_to" => $post['send_to'],
+            "consultant" => $post['consultant'],
+            "request_cc" => $cc_to,
+            "project_status" => "pending",
+            "request_type" => $request_type,
+            "attachments" => $attachments,
+            "remarks" => $post['remarks'],
+            "reply" => $post['reply'],
+            "created_by" => $this->user_data['emp_id'],
+        );
+        $this->db->insert($this->rfiTable, $data);
+        if($this->db->affected_rows() > 0){
+            return array("success" => true, "message" => "Request saved successfully.");
+        } else {
+            return array("success" => false, "message" => "Failed to save request.");
+        }
     }
 
 

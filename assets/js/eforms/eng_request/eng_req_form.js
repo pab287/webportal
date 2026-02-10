@@ -1,8 +1,9 @@
-$(document).ready(function () {
-});
-
 let _employee = null;
 let _projects = null;
+let rfiTable = null;
+let rfaTable = null;
+let is_archive = 0;
+
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.employee !== "undefined" && _tempContentData.employee.length > 0){
         _employee = _tempContentData.employee;
@@ -12,9 +13,27 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     }
 }
 
-let rfiTable = null;
-let rfaTable = null;
-let is_archive = 0;
+
+$(document).ready(function () {
+
+    rfiTable = $('#rfi_table').DataTable({
+        serverSide: true,
+        processing: true,
+        searching: false,
+        rowId: 'id',
+        ajax: {
+            url: baseUrl("eforms/engineering_request_forms/get_rfis"),
+            type: "POST",
+            dataType: "json",
+            global: false,
+            data: function (d) {
+                d.csrf_token = _csrf_hash;
+                d.is_archive = is_archive;
+            }
+        }
+    }); 
+
+});
 
 $('#project_name').select2({
     dropdownParent: $('#newRFIModal'),
@@ -31,50 +50,54 @@ $("#project_name").on("select2:select", function (e) {
     $('#project_location').val('');
 });
 
-$('#cc_to').select2({
-    placeholder: 'Select. .',
-    dropdownParent: $('#newRFIModal'),
-    tags: true,
-    multiple: true,
-    allowClear: false,
-    tokenSeparators: [',', ' '],
-    width: '100%',
-    createTag: function (params) {
-        const term = $.trim(params.term);
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// $('#cc_to').select2({
+//     placeholder: 'Select. .',
+//     dropdownParent: $('#newRFIModal'),
+//     tags: true,
+//     multiple: true,
+//     allowClear: false,
+//     tokenSeparators: [',', ' '],
+//     width: '100%',
+//     createTag: function (params) {
+//         const term = $.trim(params.term);
+//         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        if (term === '' || !emailRegex.test(term)) {
-            return null;
-        }
+//         if (term === '' || !emailRegex.test(term)) {
+//             return null;
+//         }
 
-        return {
-            id: term,
-            text: term,
-            newTag: true
-        };
-    }
-});
-
-rfiTable = $('#rfi_table').DataTable({
-    serverSide: true,
-    processing: true,
-    searching: false,
-    rowId: 'id',
-    ajax: {
-        url: baseUrl("eforms/engineering_request_forms/get_rfis"),
-        type: "POST",
-        dataType: "json",
-        global: false,
-        data: function (d) {
-            d.is_archive = is_archive;
-        }
-    }
-}); 
+//         return {
+//             id: term,
+//             text: term,
+//             newTag: true
+//         };
+//     }
+// });
 
 $.validate({
     form: "#project_form",
     lang: "en",
     onSuccess: function (form) {
+        let formData = $(form).serializeArray();
+        let ccValue = $('#cc_to').val();
+        formData = formData.filter(item => item.name !== 'cc_to');
+        if (ccValue) {
+            ccValue.split(',').map(e => e.trim()).filter(e => e.length)
+                .forEach(email => {
+                    formData.push({ name: 'cc_to[]', value: email });
+                });
+        }
+
+        formData.push({ name: 'csrf_token', value: _csrf_hash });
+        $.ajax({
+            url: siteUrl("eforms/engineering_request_forms/create_rfi"),
+            type: "POST",
+            dataType: "json",
+            data: formData,
+            success: function (response) {
+                
+            }
+        });
         return false;
     }
 });
