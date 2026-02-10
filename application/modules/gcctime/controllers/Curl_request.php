@@ -785,39 +785,39 @@ class Curl_request extends MY_Controller {
 
 	public function test_late_email(){
 		// To check late date
-		$ampm = date("A");
-		$currentLate = $this->shift_manangement->getCurrentLate();
-		$state = (isset($currentLate["current_state"]) && $currentLate["current_state"]) ? $currentLate["current_state"] : $ampm;
+		// $ampm = date("A");
+		// $currentLate = $this->shift_manangement->getCurrentLate();
+		// $state = (isset($currentLate["current_state"]) && $currentLate["current_state"]) ? $currentLate["current_state"] : $ampm;
 
-		// $currentState = ($state) ? strtolower($state) : strtolower($ampm);
-		$currentState = "am";
-		$data = (isset($currentLate["checklate_{$currentState}"]) && $currentLate["checklate_{$currentState}"]) ? $currentLate["checklate_{$currentState}"] : array();
+		// // $currentState = ($state) ? strtolower($state) : strtolower($ampm);
+		// $currentState = "am";
+		// $data = (isset($currentLate["checklate_{$currentState}"]) && $currentLate["checklate_{$currentState}"]) ? $currentLate["checklate_{$currentState}"] : array();
 
-		// echo "<pre>";
-		// var_dump($data);
-		// echo "</pre>";
+		// // echo "<pre>";
+		// // var_dump($data);
+		// // echo "</pre>";
 
-		// =============================================================
-		// View late email template
+		// // =============================================================
+		// // View late email template
 
-		/**
-		 * station_title is came from the looped data key per station
-		 * data is the array data per station
-		 * static data here is for testing purposes only
-		 */
+		// /**
+		//  * station_title is came from the looped data key per station
+		//  * data is the array data per station
+		//  * static data here is for testing purposes only
+		//  */
 
-		$arrData = array(
-			"station_title" => "GC&C BATA", 
-			"data" => ["GC&C BATA" => $data["GC&C BATA"]], 
-			"state" => $currentState
-		);
+		// $arrData = array(
+		// 	"station_title" => "GC&C BATA", 
+		// 	"data" => ["GC&C BATA" => $data["GC&C BATA"]], 
+		// 	"state" => $currentState
+		// );
 
-		return $this->load->view("templates/email/email-late_template", $arrData);
-		die();
+		// return $this->load->view("templates/email/email-late_template", $arrData);
+		// die();
 		// =============================================================
 
 		// To trigge late email
-		// $this->shift_manangement->emailLateNotification();
+		return $this->shift_manangement->emailLateNotification();
 		// die();
 	}
 
@@ -850,8 +850,8 @@ class Curl_request extends MY_Controller {
 		// die();
 
 		// To trigge absent email
-		$this->shift_manangement->emailAbsentNotification();
-		die();
+		return $this->shift_manangement->emailAbsentNotification();
+		// die();
 	}
 	
 	public function email_lateNotification(){
