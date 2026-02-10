@@ -54,7 +54,7 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
-        public function create_rfi(){
+        public function save_rfi(): void{
             $data = $this->eng_req->createRFI();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }

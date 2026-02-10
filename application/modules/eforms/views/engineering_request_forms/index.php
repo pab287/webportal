@@ -234,21 +234,21 @@
                                 <div class="row">
                                     <div class="col-md-4">
                                         <label for="type_arch" class="m-radio m-radio--solid form-control-label">
-                                            <input type="radio" name="type" value="Architectural" id="type_arch" data-validation="required">
+                                            <input type="radio" name="request_type" value="Architectural" id="type_arch" data-validation="required">
                                             Architectural
                                             <span></span>
                                         </label>
                                     </div>
                                     <div class="col-md-4">
                                         <label for="type_mech" class="m-radio m-radio--solid form-control-label">
-                                            <input type="radio" name="type" value="Mechanical" id="type_mech">
+                                            <input type="radio" name="request_type" value="Mechanical" id="type_mech">
                                             Mechanical
                                             <span></span>
                                         </label>
                                     </div>
                                     <div class="col-md-4">
                                         <label for="type_fire" class="m-radio m-radio--solid form-control-label">
-                                            <input type="radio" name="type" value="Fire Protection" id="type_fire">
+                                            <input type="radio" name="request_type" value="Fire Protection" id="type_fire">
                                             Fire Protection
                                             <span></span>
                                         </label>
@@ -257,21 +257,21 @@
                                 <div class="row">
                                     <div class="col-md-4">
                                         <label for="type_civil" class="m-radio m-radio--solid form-control-label">
-                                            <input type="radio" name="type" value="Civil / Structural" id="type_civil">
+                                            <input type="radio" name="request_type" value="Civil / Structural" id="type_civil">
                                             Civil / Structural
                                             <span></span>
                                         </label>
                                     </div>
                                     <div class="col-md-4">
                                         <label for="type_elec" class="m-radio m-radio--solid form-control-label">
-                                            <input type="radio" name="type" value="Electrical" id="type_elec">
+                                            <input type="radio" name="request_type" value="Electrical" id="type_elec">
                                             Electrical
                                             <span></span>
                                         </label>
                                     </div>
                                     <div class="col-md-4">
                                         <label for="type_others" class="m-radio m-radio--solid form-control-label">
-                                            <input type="radio" name="type" value="Others" id="type_others">
+                                            <input type="radio" name="request_type" value="Others" id="type_others">
                                             Others
                                             <span></span>
                                         </label>
@@ -280,14 +280,14 @@
                                 <div class="row">
                                     <div class="col-md-4">
                                         <label for="type_interior" class="m-radio m-radio--solid form-control-label">
-                                            <input type="radio" name="type" value="Interior Design" id="type_interior">
+                                            <input type="radio" name="request_type" value="Interior Design" id="type_interior">
                                             Interior Design
                                             <span></span>
                                         </label>
                                     </div>
                                     <div class="col-md-4">
                                         <label for="type_plumbing" class="m-radio m-radio--solid form-control-label">
-                                            <input type="radio" name="type" value="Plumbing" id="type_plumbing_radio">
+                                            <input type="radio" name="request_type" value="Plumbing" id="type_plumbing_radio">
                                             Plumbing
                                             <span></span>
                                         </label>

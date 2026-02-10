@@ -30,7 +30,27 @@ $(document).ready(function () {
                 d.csrf_token = _csrf_hash;
                 d.is_archive = is_archive;
             }
-        }
+        },
+        columns: [
+            { data: "id",visible : false, searchable: false },
+            { data: "id",
+                render: function (data, type, row) {
+                    return 'HWCC - ' + String(data).padStart(4, '0');
+                }
+            },
+            { data: "project_name" },
+            { data: "project_location" },
+            { data: "reply_needed" },
+            { data: "created_at", orderable: false, searchable: false,
+
+             },
+            { data: "created_by", orderable: false, searchable: false, },
+            { data: null, orderable: false, searchable: false,
+                render: function (data, type, row) {
+                    return `<button class="btn btn-sm btn-primary view-btn" data-id="${row.id}">View</button>`;
+                }
+            }
+        ],
     }); 
 
 });
@@ -90,7 +110,7 @@ $.validate({
 
         formData.push({ name: 'csrf_token', value: _csrf_hash });
         $.ajax({
-            url: siteUrl("eforms/engineering_request_forms/create_rfi"),
+            url: siteUrl("eforms/engineering_request_forms/save_rfi"),
             type: "POST",
             dataType: "json",
             data: formData,

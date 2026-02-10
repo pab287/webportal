@@ -252,7 +252,6 @@ class Eng_req_m extends CI_Model {
     public function createRFI(){
         $post = $this->input->post();
         $cc_to = isset($post['cc_to'])? implode(",", $post['cc_to']): '';
-        $request_type = isset($post['type'])? implode(",", $post['type']): '';
         $attachments = isset($post['attachments'])? implode(",", $post['attachments']): '';
         $data = array(
             "project_name" => $post['project_name'],
@@ -263,7 +262,7 @@ class Eng_req_m extends CI_Model {
             "consultant" => $post['consultant'],
             "request_cc" => $cc_to,
             "project_status" => "pending",
-            "request_type" => $request_type,
+            "request_type" => $post['request_type'],
             "attachments" => $attachments,
             "remarks" => $post['remarks'],
             "reply" => $post['reply'],
