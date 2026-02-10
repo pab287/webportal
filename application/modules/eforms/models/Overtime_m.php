@@ -6,6 +6,8 @@ class Overtime_m extends CI_Model {
     protected $tbl_employees = "gccmaster.tblemployees";
     protected $employeeTable = "gccmaster.tblemployees";
     protected $otSignatory = 'gcceforms.ot_signatory';
+    protected $tbl_attendance = "gcctimeutility.attendance";
+    protected $tbl_personnel = "gcctimeutility.personnel";
 
     private $current_action =  array();
     private $user_data = array();
@@ -2558,14 +2560,28 @@ class Overtime_m extends CI_Model {
                                 $this->db->group_by("a.id");
                                 $qTemp = $this->db->get_where("gccmaster.tblemployees a", array("a.id"=>$rs->emp_id, "a.employee_status"=>"Active"));
 
+                                //here
                                 if($qTemp->num_rows() == 1){
                                     $currentRow = $qTemp->row();
+                                    $currShift = $this->getPersonnelShift($rs->date_from, $currentRow->employee, $currentRow->biometricno);
+                                    $get_actual_punch = (object) $this->get_actual_punch($rs->date_from, $rs->date_to, $currentRow->biometricno, $currShift);
+
                                     $currentRow->date_from = date("Y-m-d H:i:s", strtotime($rs->date_from));
                                     $currentRow->date_to = date("Y-m-d H:i:s", strtotime($rs->date_to));
                                     $currentRow->purpose = $rs->purpose;
-                                    $currShift = $this->getPersonnelShift($rs->date_from, $rs->date_from, $currentRow->biometricno);
-                                    $currentRow->regular_shift = date('h:i A', strtotime($currShift->am_start)).' - '.date('h:i A', strtotime($currShift->pm_end));
+                                    
+                                    // $currentRow->regular_shift = date('h:i A', strtotime($currShift->am_start)).' - '.date('h:i A', strtotime($currShift->pm_end));
                                     $currentRow->employee_name = $this->format_name($currentRow->employee);
+                                    
+                                    $time1 = date_create($get_actual_punch->actual_time_in);
+                                    $time2 = date_create($get_actual_punch->actual_time_out);
+                                    $time_diff = date_diff($time1, $time2);
+                                    $totalMinutes = ($time_diff->days * 24 * 60) + ($time_diff->h * 60) + $time_diff->i;
+
+                                    $tempHr = intdiv($totalMinutes, 60);
+                                    $currentRow->actual_in = $get_actual_punch->actual_time_in;
+                                    $currentRow->actual_out = $get_actual_punch->actual_time_out;
+                                    $currentRow->total_hrs = $tempHr;
 
                                     $isValidDate = strtotime(trim($rs->date_from)) > strtotime(trim($currentRow->max_date));
                                     unset($currentRow->max_date);
@@ -2665,6 +2681,74 @@ class Overtime_m extends CI_Model {
             }
         }
 
+        return $result;
+    }
+
+    function get_actual_punch($date_from, $date_to, $biometricno = 0, $currShift) {
+        $result = array();
+        $endShift = $currShift->pm_end;
+        $date_from = date('Y-m-d H:i', strtotime($date_from));
+        $date_to = date('Y-m-d H:i', strtotime($date_to));
+        $attendanceCount = 0;
+        $logs = 0;
+        $actualTimeIn = null;
+        $actualTimeOut = null;
+
+        $this->db->select('datetime');
+        $this->db->where('DATE(datetime)', date('Y-m-d', strtotime($date_from)));
+        $this->db->where('biometric_id', $biometricno);
+        $this->db->order_by('datetime', 'ASC');
+        $this->db->from($this->tbl_attendance);
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $attendanceCount = $query->num_rows();
+            $logs = $query->result();
+        } else {
+            $this->db->select('date');
+            $this->db->where('DATE(date)', $date_from);
+            $this->db->where('biometric_id', $biometricno);
+            $this->db->from('gcctimeutility.app_attendance');
+            $_q = $this->db->get();
+
+            $attendanceCount = $_q->num_rows();
+            $logs = $_q->result();
+        }
+
+        if ($attendanceCount) {
+            $lastLog    = $logs[$attendanceCount - 1]->datetime;
+            $secondLast = $logs[$attendanceCount - 2]->datetime;
+    
+            if ($attendanceCount > 4) {
+                $logIn  = $logs[$attendanceCount - 2]->datetime;
+                $logOut = $lastLog;
+            } else {
+                $logDate = date('Y-m-d', strtotime($lastLog));
+                $logIn   = $logDate . ' ' . $endShift;
+                $logOut  = $lastLog;
+            }
+    
+            if ($attendanceCount > 4) {
+                $result['actual_time_in'] = $secondLast;
+                $result['actual_time_out'] = $lastLog;
+            }
+    
+            $actualTimeIn = (strtotime($logIn) > strtotime($date_from))
+                ? $logIn
+                : $date_from;
+    
+            $actualTimeOut = (strtotime($logOut) < strtotime($date_to))
+                ? $logOut
+                : $date_to;
+    
+            if (strtotime($actualTimeOut) <= strtotime($actualTimeIn)) {
+                return null;
+            }
+    
+        }
+        
+        $result['actual_time_in'] = $actualTimeIn;
+        $result['actual_time_out'] = $actualTimeOut;
         return $result;
     }
 }
