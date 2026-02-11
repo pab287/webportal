@@ -12,15 +12,21 @@
 					</div>
 					<div class="m-portlet__head-tools">
 						<ul id="group_notification" class="m-portlet__nav">
-							<li v-if="count > 0 && notification_clicked === false" class="m-portlet__nav-item"><small>Duplicate Payroll Group</small></li>
+							<li v-if="no_payroll_group === true" class="m-portlet__nav-item">
+								<a href="javascript:void(0);"
+									class="m-portlet__nav-link m-portlet__nav-link--icon" @click="addPayrollGroup()">
+									<small class="m--font-danger m--font-bolder">Without Payroll Group</small>
+									<i class="flaticon-users m--font-danger"></i>
+								</a>
+							</li>
 							<li v-if="count > 0" class="m-portlet__nav-item">
-								<a href="javascript:void(0);" 
-									class="m-portlet__nav-link m-portlet__nav-link--icon" 
-									:class="notification_clicked === false ? 'm-animate-shake':''" 
+								<a href="javascript:void(0);"
+									class="m-portlet__nav-link m-portlet__nav-link--icon"
 									data-toggle="modal" 
 									data-target="#modalGroupNotification"
 									@click="toggleClicked()">
-									<i class="flaticon-music-1 m--font-danger"></i>
+									<small class="m--font-danger m--font-bolder">Duplicate Payroll Group</small>
+									<i class="flaticon-music-1 m--font-danger" :class="notification_clicked === false ? 'm-animate-shake':''"></i>
 								</a>
 							</li>
 						</ul>
@@ -55,7 +61,19 @@
 							</div>
 						</div>
 						<div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll ">
-							<table class="table table-striped table-bordered row-border" id="table-payroll_group" width="100%"></table>
+							<table class="table table-striped table-bordered row-border" id="table-payroll_group" style="width: 100%">
+								<thead>
+									<tr>
+										<th class="text-center">Company</th>
+										<th class="text-center">Employee(s)</th>
+										<th class="text-center">Description</th>
+										<th class="text-center">User Restriction</th>
+										<th class="text-center">Status</th>
+										<th class="text-center">Action</th>
+									</tr>
+								</thead>
+								<tbody></tbody>
+							</table>
 						</div>
 					</div>
 				</div>
@@ -65,14 +83,12 @@
 </div>
 <div id="documentModal" class="modal fade document-modal-container"
     data-keyboard="false" data-backdrop="static"
-    modal-exempt-custom tabindex="-1"
-    role="dialog"></div>
+    modal-exempt-custom tabindex="-1"></div>
 </div>
 <div id="modalGroupNotification" class="modal fade document-modal-container"
     data-keyboard="false" data-backdrop="static"
-    modal-exempt-custom tabindex="-1"
-    role="dialog">
-	<div class="modal-dialog modal-lg" role="document">
+    modal-exempt-custom tabindex="-1">
+	<div class="modal-dialog modal-lg">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="exampleModalLabel">Duplicate Employee Payroll Group</h5>
