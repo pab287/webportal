@@ -311,7 +311,8 @@ $.ajax({
         const now = moment().format('YYYY-MM-DD');
         const dateFromArray = data.destination.map(item => moment(item.date_from).format('YYYY-MM-DD'));
 
-        if (jQuery.inArray(now, dateFromArray) !== -1 && data.data.is_emergency == 0 && now <= moment(data.data.created_dt).format('YYYY-MM-DD')) {
+        // if (jQuery.inArray(now, dateFromArray) !== -1 && data.data.is_emergency == 0 && now <= moment(data.data.created_dt).format('YYYY-MM-DD')) {
+        if (jQuery.inArray(now, dateFromArray) !== -1 && data.data.is_emergency == 0) {
           $("#btnapprove").attr('onclick', 'unable_approve()');
         }
 
