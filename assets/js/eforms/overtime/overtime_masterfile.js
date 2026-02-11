@@ -617,12 +617,18 @@ $.validate({
                     beforeSend: function () {
                         $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
                     },
-                    success: function (json) {}
+                    success: function (response) {
+                        var w = window.open("about:blank");
+                        w.document.open();
+                        w.document.write(response.html);
+                        w.document.close();
+                        w.print();
+                        w.close();
+                    }
                 });
-            } else {
-
             }
-            if (typeof currentModal !== "undefined") { currentModal.modal("hide"); }
+
+            // if (typeof currentModal !== "undefined") { currentModal.modal("hide"); }
         });
         // if(vmTempUploadedContent.count > 0){
         //     $.ajax({

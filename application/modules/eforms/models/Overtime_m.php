@@ -2511,7 +2511,7 @@ class Overtime_m extends CI_Model {
                 $metaField = @unserialize($tempRow->meta);
                 if(is_array($metaField) &&  count($metaField) > 0){ $metaField = $metaField; }
                 else{ $metaField = array(); }
-                $tempRow->meta = $metaField;
+                $tempRow->meta = $metaField;    
                 $resultset["response"] = true;
                 $resultset["data"] = $tempRow;
                 $resultset["count"] = count($metaField);
@@ -2547,6 +2547,7 @@ class Overtime_m extends CI_Model {
                         $_arrData = array();
                         foreach ($arrData["data"] as $value) {
                             $rs = (object) $value;
+                            $ot_date = date('Y-m-d', strtotime($rs->date_from));
                             if(intval($rs->is_existing) == 1 && $rs->is_valid === true){
                                 $sqlSelect = "a.id as employee, UPPER(IFNULL(b.description, a.company_id)) as company,
                                 UPPER(IFNULL(c.description, a.department_id)) as department,
@@ -2570,7 +2571,7 @@ class Overtime_m extends CI_Model {
                                     $currentRow->date_to = date("Y-m-d H:i:s", strtotime($rs->date_to));
                                     $currentRow->purpose = $rs->purpose;
                                     
-                                    // $currentRow->regular_shift = date('h:i A', strtotime($currShift->am_start)).' - '.date('h:i A', strtotime($currShift->pm_end));
+                                    $currentRow->regular_shift = date('h:i A', strtotime($currShift->am_start)).' - '.date('h:i A', strtotime($currShift->pm_end));
                                     $currentRow->employee_name = $this->format_name($currentRow->employee);
                                     
                                     $time1 = date_create($get_actual_punch->actual_time_in);
@@ -2594,19 +2595,32 @@ class Overtime_m extends CI_Model {
                                     $checkExisting = $this->db->get_where("gcceforms.overtime", $tempWhere);
 
                                     if($isValidDate && $checkExisting->num_rows() == 0){
-                                        $_arrData[] = $currentRow;
+                                        if (isset($_arrData[$ot_date]) && $_arrData[$ot_date]) {
+                                            $_arrData[$ot_date][] = $currentRow;
+                                        } else {
+                                            $_arrData[$ot_date] = $currentRow;
+                                        }
                                     }
                                 }
                             }
                         }
 
-                        var_dump($_arrData);
+                        $html = '';
+                        $html .= $this->load->view("eforms/overtime/printable/overtime_summary", array('data' => $_arrData), true);
+                        $result['state'] = $_arrData ? true : false;
+                        $result['data'] = $_arrData;
+                        $result['html'] = $html;
+                    } else {
+                        $result['state'] = false;
+                        $result['msg'] = 'No Data Found.';
                     }
                 } else {
-                    // no data here
+                    $result['state'] = false;
+                    $result['msg'] = 'No File Found.';
                 }
             } else {
-                //error here
+                $result['state'] = false;
+                $result['msg'] = 'POST not found.';
             }
         }
 
