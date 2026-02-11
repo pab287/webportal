@@ -304,55 +304,61 @@
 
 <div class="modal fade" id="modal_recommend_approve" role="dialog">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title"></h3>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-            <div class="modal-body form">
-                <input type="hidden" value="" name="id"/>
-                <div class="form-group">
-                    <label class="control-label col-md-2 col-sm-2 col-xs-12">Remarks</label>
-                    <div class="col-md-12">
-                        <textarea name="approved_recommend_remarks"  class="form-control" rows="5" data-validation="required"></textarea> 
+        <form id="recommend-approve">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title"></h3>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                <div class="modal-body form">
+                    <input type="hidden" value="" name="id"/>
+                    <div class="row">
+                        <div class="col-md-12 col-lg-12 col-sm-12">
+                            <label for="approved_recommend_remarks" class="required">Remarks</label>
+                            <textarea name="approved_recommend_remarks" id="approved_recommend_remarks" class="form-control" rows="5" data-validation="required"></textarea> 
+                        </div>
                     </div>
                 </div>
+                <div class="modal-footer">    
+                    <button type="submit" id="btnSave" class="btn btn-primary m-btn m-btn--custom m-btn--icon btnSave">Save</button>
+                    <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon btnCancel" data-dismiss="modal">Cancel</button>
+                </div>
             </div>
-            <div class="modal-footer">    
-                <button type="submit" id="btnSave" onclick="approve_recommend()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
-                <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon btnCancel" data-dismiss="modal">Cancel</button>
-            </div>
-        </div>
+        </form>
     </div>
 </div>
 
 <div class="modal fade" id="modal_form_approve" role="dialog">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title"></h3>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-            <div class="modal-body form">
-                <input type="hidden" value="" name="id"/> 
-                <div class="form-group">
-                    <label class="control-label col-md-2 col-sm-2 col-xs-12">Remarks</label>
-                    <div class="col-md-12">
-                        <textarea name="approved_remarks"  class="form-control" rows="5" data-validation="required"></textarea> 
+        <form id="approve-form">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title"></h3>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                <div class="modal-body form">
+                    <input type="hidden" value="" name="id"/>
+                    <div class="row">
+                        <div class="col-md-12 col-lg-12 col-sm-12">
+                            <div class="form-group">
+                                <label class="control-label required">Remarks</label>
+                                <textarea name="approved_remarks" class="form-control" rows="5" data-validation="required"></textarea> 
+                            </div>
+                        </div>
                     </div>
                 </div>
+                <div class="modal-footer">    
+                    <button type="submit" id="btnSave" class="btn btn-primary m-btn m-btn--custom m-btn--icon btnSave">Save</button>
+                    <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon btnCancel" data-dismiss="modal">Cancel</button>
+                </div>
             </div>
-            <div class="modal-footer">    
-                <button type="submit" id="btnSave" onclick="approve()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
-                <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon btnCancel" data-dismiss="modal">Cancel</button>
-            </div>
-        </div>
+        </form>
     </div>
 </div>
 

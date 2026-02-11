@@ -3959,9 +3959,10 @@
                 if ($post) {
 
                     $destinationFrom = $this->db->select('date_from')->get_where('gcceforms.travel_destination', array('travel_order_id' => $id))->row('date_from');
+                    // $createdTO = $this->db->select('created_dt')->get_where('gcceforms.travel_destination', array('travel_order_id' => $id))->row('created_dt');
 
                     // prevents sending notification when approving a backlogs
-                    if (date('Y-m-d', strtotime($date)) <= date('Y-m-d', strtotime($destinationFrom))) {
+                    if (date('Y-m-d', strtotime($date)) < date('Y-m-d', strtotime($destinationFrom))) {
                         $this->sendTelegram($id);
                     }
 
@@ -4140,13 +4141,19 @@
                 $pers = implode(" ", (array)$personnel);
                 $telegram_msg = '';
                 $tempEmergency = ($row->is_emergency && $row->is_emergency == 1) ? ' - [ EMERGENCY ]' : '';
+                $approved_remarks = isset($row->approved_remarks) && $row->approved_remarks ? $row->approved_remarks : 'NO REMARKS.';
+                $recomemnd_remarks = isset($row->approved_recommend_remarks) && $row->approved_recommend_remarks ? $row->approved_recommend_remarks : 'NO REMARKS';
 
                 $telegram_msg = "<b>".strtoupper($row->station).$tempEmergency."</b>".chr(10).chr(10);
                 
                 $telegram_msg .= '<b>TO #</b>: '.$row->reference_no.chr(10);
                 $telegram_msg .= '<b>FILE UNDER: </b>'.strtoupper($row->company).chr(10);
                 $telegram_msg .= '<b>PREP BY: </b>'.strtoupper($row->created_by).chr(10);
+                $telegram_msg .= '<b>RECOMMENDED BY: </b>'.strtoupper($row->approved_recommend_by).chr(10);
+                $telegram_msg .= '<b>RECOMMENDED REMARKS: </b>'.strtoupper($recomemnd_remarks).chr(10);
+                $telegram_msg .= '<b>RECOMMENDED DATE: </b>'.strtoupper($row->approved_recommend_date).chr(10);
                 $telegram_msg .= '<b>APPROVED BY: </b>'.strtoupper($row->approved_by).chr(10);
+                $telegram_msg .= '<b>APPROVED REMARKS: </b>'.strtoupper($approved_remarks).chr(10);
                 $telegram_msg .= '<b>APPROVED DATE: </b>'.date('F d, Y h:i A', strtotime($row->approved_dt)).chr(10);
                 $telegram_msg .= '<b>PERSONNEL: </b>'.$pers.chr(10);
                 $telegram_msg .= $vehicle_details;
