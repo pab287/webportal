@@ -785,17 +785,18 @@ class Curl_request extends MY_Controller {
 
 	public function test_late_email(){
 		// To check late date
-		// $ampm = date("A");
-		// $currentLate = $this->shift_manangement->getCurrentLate();
-		// $state = (isset($currentLate["current_state"]) && $currentLate["current_state"]) ? $currentLate["current_state"] : $ampm;
+		$ampm = date("A");
+		$currentLate = $this->shift_manangement->getCurrentLate();
+		$state = (isset($currentLate["current_state"]) && $currentLate["current_state"]) ? $currentLate["current_state"] : $ampm;
 
-		// // $currentState = ($state) ? strtolower($state) : strtolower($ampm);
-		// $currentState = "am";
-		// $data = (isset($currentLate["checklate_{$currentState}"]) && $currentLate["checklate_{$currentState}"]) ? $currentLate["checklate_{$currentState}"] : array();
+		// $currentState = ($state) ? strtolower($state) : strtolower($ampm);
+		$currentState = "pm";
+		$data = (isset($currentLate["checklate_{$currentState}"]) && $currentLate["checklate_{$currentState}"]) ? $currentLate["checklate_{$currentState}"] : array();
 
-		// // echo "<pre>";
-		// // var_dump($data);
-		// // echo "</pre>";
+		echo "<pre>";
+		print_r($data);
+		echo "</pre>";
+		die();
 
 		// // =============================================================
 		// // View late email template
@@ -817,20 +818,45 @@ class Curl_request extends MY_Controller {
 		// =============================================================
 
 		// To trigge late email
-		return $this->shift_manangement->emailLateNotification();
+		// return $this->shift_manangement->emailLateNotification();
 		// die();
+	}
+
+	public function test_email($attendance, $date, $ampm) {
+		if ($attendance == 'late') {
+			$currentLate = $this->shift_manangement->test_getCurrentLate($date);
+
+			$currentState = $ampm;
+			$data = (isset($currentLate["checklate_{$currentState}"]) && $currentLate["checklate_{$currentState}"]) ? $currentLate["checklate_{$currentState}"] : array();
+
+			echo "<pre>";
+			print_r($data);
+			echo "</pre>";
+
+			return $this->shift_manangement->test_emailLateNotification($date, $ampm);
+		}
+
+		if ($attendance == 'absent') {
+			$currentAbsent = $this->shift_manangement->test_getCurrentAbsent($date, $ampm);
+
+			echo "<pre>";
+			print_r($currentAbsent);
+			echo "</pre>";
+
+			return $this->shift_manangement->test_emailAbsentNotification($date, $ampm);
+		}
 	}
 
 	public function test_absent_email(){
 		// To check absent date
 		// $meridiem = "am"; // AM or PM, get the meridiem from currentAbsent
-		// $currentAbsent = $this->shift_manangement->getCurrentAbsent();
+		$currentAbsent = $this->shift_manangement->getCurrentAbsent();
 
-		// echo "<pre>";
-		// print_r($currentAbsent);
-		// echo "</pre>";
+		echo "<pre>";
+		print_r($currentAbsent);
+		echo "</pre>";
 
-		// die();
+		die();
 
 		// $data = (isset($currentAbsent["check_absent"]) && $currentAbsent["check_absent"]) ? $currentAbsent["check_absent"] : array();
 
