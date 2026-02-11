@@ -6599,8 +6599,10 @@ class Reports_m extends CI_Model{
 
                 $NightDiffRate = floatval($tempPayrateSetting->night_diff_rate) > 0 ? floatval($tempPayrateSetting->night_diff_rate): 0.1;
                 $dailyRate = $item->daily ? $item->daily : ($item->basic_rate * 12) / $item->work_days;
-                $totalHrs = $item->total_ndiff_rendered && $item->total_ndiff_rendered > 0 ? intdiv($item->total_ndiff_rendered, 60) : 0;
-
+                //$totalHrs = $item->total_ndiff_rendered && $item->total_ndiff_rendered > 0 ? intdiv($item->total_ndiff_rendered, 60) : 0;
+                $totalHrs = $item->total_ndiff_rendered && $item->total_ndiff_rendered > 0 ? floatval($item->total_ndiff_rendered) / 60 : 0;
+                $totalHrs = round($totalHrs, 2);
+                
                 if ($item->daily) {
                     $nightDiffPay = ($item->basic_rate / 8) * $NightDiffRate;
                     $amount = $nightDiffPay * $totalHrs;
