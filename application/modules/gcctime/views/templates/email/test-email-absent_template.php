@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <?php
-$dateToday = date("h:i:s A, F d, Y");
+$dateToday = date("h:i:s A, F d, Y", strtotime($date_absent));
 $ampm = $meridiem;
 $station_title = (isset($station_title) && $station_title) ? $station_title : "";
 ?>

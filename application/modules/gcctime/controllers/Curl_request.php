@@ -796,7 +796,7 @@ class Curl_request extends MY_Controller {
 		echo "<pre>";
 		print_r($data);
 		echo "</pre>";
-		die();
+		// die();
 
 		// // =============================================================
 		// // View late email template
@@ -818,33 +818,8 @@ class Curl_request extends MY_Controller {
 		// =============================================================
 
 		// To trigge late email
-		// return $this->shift_manangement->emailLateNotification();
-		// die();
-	}
-
-	public function test_email($attendance, $date, $ampm) {
-		if ($attendance == 'late') {
-			$currentLate = $this->shift_manangement->test_getCurrentLate($date);
-
-			$currentState = $ampm;
-			$data = (isset($currentLate["checklate_{$currentState}"]) && $currentLate["checklate_{$currentState}"]) ? $currentLate["checklate_{$currentState}"] : array();
-
-			echo "<pre>";
-			print_r($data);
-			echo "</pre>";
-
-			return $this->shift_manangement->test_emailLateNotification($date, $ampm);
-		}
-
-		if ($attendance == 'absent') {
-			$currentAbsent = $this->shift_manangement->test_getCurrentAbsent($date, $ampm);
-
-			echo "<pre>";
-			print_r($currentAbsent);
-			echo "</pre>";
-
-			return $this->shift_manangement->test_emailAbsentNotification($date, $ampm);
-		}
+		return $this->shift_manangement->emailLateNotification();
+		die();
 	}
 
 	public function test_absent_email(){
@@ -856,8 +831,7 @@ class Curl_request extends MY_Controller {
 		print_r($currentAbsent);
 		echo "</pre>";
 
-		die();
-
+		
 		// $data = (isset($currentAbsent["check_absent"]) && $currentAbsent["check_absent"]) ? $currentAbsent["check_absent"] : array();
 
 		// echo "<pre>";
@@ -1865,31 +1839,29 @@ class Curl_request extends MY_Controller {
 		}
 	}
 
-	public function test_forceAllAbsentToday(){
-		$getPersonnel = $this->getActivePersonnels();
-		$absenteeCount = 0;
+	public function test_email($attendance, $date, $ampm) {
+		if ($attendance == 'late') {
+			$currentLate = $this->shift_manangement->test_getCurrentLate($date);
 
-		foreach ($getPersonnel as $person) {
-			if($person["department_id"] !== "0" && $person["shift_id"] !== "0"){
+			$currentState = $ampm;
+			$data = (isset($currentLate["checklate_{$currentState}"]) && $currentLate["checklate_{$currentState}"]) ? $currentLate["checklate_{$currentState}"] : array();
 
-				$arrData = [
-					"biometric_id" => $person["biometric_id"],
-					"meredien"     => "PM"
-				];
+			echo "<pre>";
+			print_r($data);
+			echo "</pre>";
 
-				if ($this->getTodayAbsentRecord($arrData)) {
-					if ($this->db->insert("gcctimeutility.absent", $arrData)) {
-						$absenteeCount++;
-					}
-				}
-			}
+			return $this->shift_manangement->test_emailLateNotification($date, $ampm);
 		}
 
-		$this->core_layout->logNotification(
-			"TEST MODE: Forced {$absenteeCount} absentees",
-			"warning",
-			"gcctimeV2"
-		);
+		if ($attendance == 'absent') {
+			$currentAbsent = $this->shift_manangement->test_getCurrentAbsent($date, $ampm);
+
+			echo "<pre>";
+			print_r($currentAbsent);
+			echo "</pre>";
+
+			return $this->shift_manangement->test_emailAbsentNotification($date, $ampm);
+		}
 	}
 
 }

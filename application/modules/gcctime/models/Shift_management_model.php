@@ -4469,8 +4469,9 @@
             return $flag;
         }
 
-        // Test subject of late & absent
-        public function test_getCurrentLate($date) {
+        // ==================================================
+        // Test subject of late & absentee email report start
+        function test_getCurrentLate($date) {
             $resultset = array();
             $lastSyncDate = $date;
             /*** $lastSyncDate = "2020-10-23"; ***/
@@ -4697,7 +4698,7 @@
             }
 
             // Save first before grouping
-            $this->saveCurrentLate($resultset);
+            // $this->saveCurrentLate($resultset);
 
             // Group by station
             $resultset = $this->groupLateByStation($resultset);
@@ -4705,14 +4706,14 @@
         }
 
         function test_emailLateNotification($date, $ampm_med) {
-            $dateToday = date("F d, Y");
+            $dateToday = date("F d, Y", strtotime($date));
             $ampm = strtoupper($ampm_med);
 
-            $currentLate = $this->getCurrentLate($date);
+            $currentLate = $this->test_getCurrentLate($date);
             $state = (isset($currentLate["current_state"]) && $currentLate["current_state"]) ? $currentLate["current_state"] : $ampm;
 
             $currentState = ($state) ? strtolower($state) : strtolower($ampm);
-            $data = (isset($currentLate["checklate_{$currentState}"]) && $currentLate["checklate_{$currentState}"]) ? $currentLate["checklate_{$currentState}"] : array();
+            $data = (isset($currentLate["checklate_{$ampm_med}"]) && $currentLate["checklate_{$ampm_med}"]) ? $currentLate["checklate_{$ampm_med}"] : array();
 
             $sentCount = 0;
             $totalStations = count($data);
@@ -4721,10 +4722,11 @@
                 $arrData = array();
                 $arrData["station_title"] = strtoupper($station);
                 $arrData["data"] = [$station => $emp_per_station];
-                $arrData["state"] = $state;
+                $arrData["state"] = $ampm;
+                $arrData["date_late"] = $dateToday;
 
                 $message = "";
-                $message .= $this->load->view("gcctime/templates/email/email-late_template", $arrData, true);
+                $message .= $this->load->view("gcctime/templates/email/test-email-late_template", $arrData, true);
 
                 $module = "gcctime_late_reports";
                 $email_title = "Gcctime - Webportal | " . strtoupper($station);
@@ -4945,7 +4947,7 @@
         }
 
         function test_emailAbsentNotification($date, $ampm_med) {
-            $dateToday = date("F d, Y");
+            $dateToday = date("F d, Y", strtotime($date));
             $ampm = strtolower($ampm_med);
 
             $currentAbsent = $this->test_getCurrentAbsent($date, $ampm_med);
@@ -4958,6 +4960,8 @@
 
             $data = (isset($currentAbsent["check_absent"]) && $currentAbsent["check_absent"]) ? $currentAbsent["check_absent"] : array();
             $firstkey = array_key_first($data); // am or pm
+
+            var_dump($firstkey);
             $_data = $data[$firstkey];
             
             $sentCount = 0;
@@ -4969,6 +4973,7 @@
                     $arrData["station_title"] = strtoupper($station);
                     $arrData["data"] = [$station => $emp_per_station];
                     $arrData["meridiem"] = strtoupper($ampm_med);
+                    $arrData["date_absent"] = $dateToday;
 
                     $message = "";
                     $message .= $this->load->view("gcctime/templates/email/test-email-absent_template", $arrData, true);
@@ -4990,4 +4995,6 @@
 
             return false;
         }
+        // Test subject of late & absentee email report end
+        // ==================================================
     }
