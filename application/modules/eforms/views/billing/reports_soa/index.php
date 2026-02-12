@@ -358,7 +358,7 @@
 					</div>
 
 					<div class="report-wrapper m--hide" data-type="billing">
-						<h4 class="text-center mb-3" style="font-weight: 600;">BILLING</h4>
+						<h4 class="text-center mb-3" style="font-weight: 600;">Billing</h4>
 
 						<table class="table table-striped table-bordered table-responsive" id="table-reports_billing" width="100%" style="display: table; width: 100%;">
 							<thead>
@@ -386,7 +386,7 @@
 					</div>
 
 					<div class="report-wrapper m--hide" data-type="reading">
-						<h4 class="text-center mb-3" style="font-weight: 600;">READING</h4>
+						<h4 class="text-center mb-3" style="font-weight: 600;">Reading</h4>
 
 						<table class="table table-striped table-bordered table-responsive" id="table-reports_reading" width="100%" style="display: table; width: 100%;">
 							<thead>
