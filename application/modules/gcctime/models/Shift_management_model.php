@@ -4961,7 +4961,6 @@
             $data = (isset($currentAbsent["check_absent"]) && $currentAbsent["check_absent"]) ? $currentAbsent["check_absent"] : array();
             $firstkey = array_key_first($data); // am or pm
 
-            var_dump($firstkey);
             $_data = $data[$firstkey];
             
             $sentCount = 0;
