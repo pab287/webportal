@@ -41,7 +41,7 @@
             <span class="m--font-bolder">{{parseInt(row.is_bonus) === 1 && row.bonus_code ? "BONUS / " + row.bonus_code:"BASIC PAY"}} </span>
         </div>
         <div class="col-md-4 text-right">
-            <span class="m--font-boldest">{{row.target_payrate}}</span>
+            <span class="m--font-boldest">{{row.basic_pay}}</span>
         </div>
     </div>
     <div class="row">
@@ -55,14 +55,17 @@
     <template v-if="parseFloat(row.holiday_hours) > 0">
         <div class="row">
             <div class="col-md-8">
-                <span class="m--font-bolder">HOLIDAY PAY <small class="m--font-boldest">(BASIC PAY INC)</small></span>
+                <span class="m--font-bolder">HOLIDAY PAY <!-- small class="m--font-boldest">(BASIC PAY INC)</small --></span>
             </div>
-            <div class="col-md-4 text-right">
+            <div class="col-md-4 text-right mr-3">
                 <span class="m--font-boldest">{{row.total_holiday_amount}}</span>
             </div>
         </div>
         <div class="row">
             <div class="col-md-6 text-right">
+                <small class="m--font-bold">HOL DAYS:</small>&nbsp;<span class="m--font-bolder">{{ row.holiday_hours / 8 }}</span>
+            </div>
+            <div class="col-md-6 text-left">
                 <small class="m--font-bold">HOL HRS:</small>&nbsp;<span class="m--font-bolder">{{row.holiday_hours}}</span>
             </div>
         </div>
@@ -75,7 +78,7 @@
                     <span class="m--font-bolder">LATES/ABSENCES</span>
                 </div>
                 <div class="col-md-4 text-right">
-                    <span class="m--font-boldest">( {{row.total_unrendered_amount}} )</span>
+                    <span class="m--font-boldest mr-3">( {{row.total_unrendered_amount}} )</span>
                 </div>
             </div>
             <div class="row" v-if="parseFloat(row.absent_hours) > 0 || parseFloat(row.undertime_hours) > 0">
@@ -132,45 +135,51 @@
                 <small class="m--font-bold">OT NDIFF HRS:</small>&nbsp;<span class="m--font-bolder">{{ ot_ndiff_hrs }}</span>
             </div>
         </div>
-        <div class="row m--margin-top-5" v-if="parseFloat(row.ot_allowance_amount) > 0">
-            <div class="col-md-5">
-                <span class="m--font-bolder">OT ALLOWANCE </span>
+
+        <template v-if="parseFloat(row.ot_allowance_amount) > 0">
+            <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+            <div class="row m--margin-top-5">
+                <div class="col-md-5">
+                    <span class="m--font-bolder">OT ALLOWANCE </span>
+                </div>
+                <div class="col-md-7 text-right">
+                    <span class="m--font-boldest">{{ row.ot_allowance_amount }}</span>
+                </div>
             </div>
-            <div class="col-md-7 text-right">
-                <span class="m--font-boldest">{{ row.ot_allowance_amount }}</span>
-            </div>
-        </div>
-        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+        </template>
+
         </template>
         <template v-if="parseFloat(row.total_ndiff_amount) > 0">
-        <div class="row m--margin-top-5">
-            <div class="col-md-5">
-                <span class="m--font-bolder">REGULAR NDIFF. </span>
+            <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+            <div class="row m--margin-top-5">
+                <div class="col-md-5">
+                    <span class="m--font-bolder">REGULAR NDIFF. </span>
+                </div>
+                <div class="col-md-7 text-right">
+                    <span class="m--font-boldest">{{ total_ndiff_computation }}</span>
+                </div>
             </div>
-            <div class="col-md-7 text-right">
-                <span class="m--font-boldest">{{ total_ndiff_computation }}</span>
+            <div class="row">
+                <div class="col-md-6 text-right" v-if="parseFloat(row.total_ndiff_minutes) > 0">
+                    <small class="m--font-bold">NDIFF HRS:</small>&nbsp;<span class="m--font-bolder">{{ total_ndiff_hrs }}</span>
+                </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6 text-right" v-if="parseFloat(row.total_ndiff_minutes) > 0">
-                <small class="m--font-bold">NDIFF HRS:</small>&nbsp;<span class="m--font-bolder">{{ total_ndiff_hrs }}</span>
-            </div>
-        </div>
-        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
         </template>
     </template>
     <template v-if="row.adjustment_e_count > 0">
-    <h6>ADJUSTMENTS</h6>
-    <div class="row text-right" v-for="(item, index) in row.adjustment_earnings">
-        <div class="col-md-5">
-            <small class="m--font-bold">{{item.label}} </small>
+        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+        <h6>ADJUSTMENTS</h6>
+        <div class="row text-right" v-for="(item, index) in row.adjustment_earnings">
+            <div class="col-md-5">
+                <small class="m--font-bold">{{item.label}} </small>
+            </div>
+            <div class="col-md-7 text-right">
+                <span class="m--font-boldest">{{item.display_value}}</span>
+            </div>
         </div>
-        <div class="col-md-7 text-right">
-            <span class="m--font-boldest">{{item.display_value}}</span>
-        </div>
-    </div>
-    <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-top-5 m--margin-bottom-5"></div>
     </template>
+
+    <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-top-5 m--margin-bottom-5"></div>
     <div class="row m--margin-bottom-5">
         <div class="col-md-8">
             <span class="m--font-bolder">GROSS PAY </span>
@@ -246,8 +255,7 @@
         </template>
         <template v-if="parseFloat(row.total_loans) > 0 || row.loans.length > 0">
             <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
-
-            <div class="row mt-3">
+            <div class="row mt-1">
                 <div class="col-md-8">
                     <span class="m--font-bolder">LOANS </span>
                 </div>

@@ -139,7 +139,7 @@
                             <h5 class="m--font-bolder m--marginless"><?php echo intval($item->is_bonus) == 1 && $item->bonus_code ? "BONUS / {$item->bonus_code}":"BASIC PAY"; ?> </h5>
                         </div>
                         <div class="col-md-4 printable-width-4 text-right">
-                            <h5 class="m--font-boldest m--marginless"><?php echo $item->target_payrate; ?></h5>
+                            <h5 class="m--font-boldest m--marginless"><?php echo $item->basic_pay; ?></h5>
                         </div>
                     </div>
                     <div class="row">
@@ -156,29 +156,48 @@
                         <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                         <div class="row m--margin-top-5">
                             <div class="col-md-8 printable-width-8">
-                                <h5 class="m--font-bolder m--marginless">HOLIDAY PAY <small class="m--font-boldest">(BASIC PAY INC)</small></h5>
+                                <h5 class="m--font-bolder m--marginless">HOLIDAY PAY <!-- small class="m--font-boldest">(BASIC PAY INC)</small --></h5>
                             </div>
                             <div class="col-md-4 printable-width-4 text-right">
                                 <h5 class="m--font-boldest mr-3"><?php echo $item->total_holiday_amount; ?></h5>
                             </div>
                         </div>
+
+                        <?php if(floatval($item->holiday_hours) > 0): ?>
+                        <div class="row">
+                            <div class="col-md-6 printable-width-6 text-right">
+                                <h5 class="m--marginless"><span class="m--font-bolder">HOL DAYS:</span>&nbsp;<span class="m--font-bolder"><?php echo floatval($item->holiday_hours) > 0 ? $item->holiday_hours / 8 : "0"; ?></span></h5>
+                            </div>
+                            <div class="col-md-6 printable-width-6 text-left">
+                                <h5 class="m--marginless"><span class="m--font-bolder">HOL HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo floatval($item->holiday_hours) > 0 ? $item->holiday_hours : "0.00"; ?></span></h5>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
                         <div class="row m--margin-top-5">
                             <div class="col-md-8 printable-width-8">
                                 <h5 class="m--font-bolder m--marginless">LATES/ABSENCES</h5>
                             </div>
                             <div class="col-md-4 printable-width-4 text-right">
-                                <h5 class="m--font-boldest m--marginless">( <?php echo $item->total_unrendered_amount; ?> )</h5>
-                                <h5 class="m--font-boldest m--marginless">&nbsp;</h5>
+                                <h5 class="m--font-boldest m--marginless mr-3">( <?php echo $item->total_unrendered_amount; ?> )</h5>
                             </div>
                         </div>
+                        
+                        <?php if($item->absent_hours > 0 || $item->undertime_hours > 0): ?>
                         <div class="row">
-                            <div class="col-md-6 printable-width-6 text-right">
-                                <h5 class="m--marginless"><span class="m--font-bolder">ABSENT HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo $item->absent_hours; ?></span></h5>
-                            </div>
-                            <div class="col-md-6 printable-width-6 text-left">
-                                <h5 class="m--marginless"><span class="m--font-bolder">UT HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo $item->undertime_hours; ?></span></h5>
-                            </div>
+                            <?php if($item->absent_hours > 0): ?>
+                                <div class="col-md-6 printable-width-6 text-right">
+                                    <h5 class="m--marginless"><span class="m--font-bolder">ABSENT HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo $item->absent_hours; ?></span></h5>
+                                </div>
+                            <?php endif; ?>
+                            <?php if($item->undertime_hours > 0): ?>
+                                    <div class="col-md-6 printable-width-6 text-left">
+                                        <h5 class="m--marginless"><span class="m--font-bolder">UT HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo $item->undertime_hours; ?></span></h5>
+                                    </div>
+                            <?php endif; ?>
                         </div>
+                        <?php endif; ?>
+
                         <?php endif; ?>
                         
                         <?php if(floatval($item->unpaid_holiday_amount) > 0): ?>
@@ -188,7 +207,7 @@
                                 <h5 class="m--font-bolder m--marginless">UNPAID HOLIDAY</h5>
                             </div>
                             <div class="col-md-4 printable-width-4 text-right">
-                                <h5 class="m--font-boldest m--marginless">( <?php echo $item->unpaid_holiday_amount; ?> )</h5>
+                                <h5 class="m--font-boldest m--marginless mr-3">( <?php echo $item->unpaid_holiday_amount; ?> )</h5>
                             </div>
                         </div>
                         <?php if(floatval($item->unpaid_holiday_hours) > 0): ?>
@@ -196,11 +215,14 @@
                             <div class="col-md-6 printable-width-6 text-right">
                                 <h5 class="m--marginless"><span class="m--font-bolder">HOL HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo floatval($item->unpaid_holiday_hours) > 0 ? $item->unpaid_holiday_hours : "0.00"; ?></span></h5>
                             </div>
+                            <div class="col-md-6 printable-width-6 text-left">
+                                <h5 class="m--marginless"><span class="m--font-bolder">HOL HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo floatval($item->unpaid_holiday_hours) > 0 ? $item->unpaid_holiday_hours : "0.00"; ?></span></h5>
+                            </div>
                         </div>
                         <?php endif; ?>
-                        <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                         <?php endif; ?>
                         <?php if(floatval($item->total_allowances) > 0): ?>
+                        <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                         <div class="row m--margin-top-5 m--margin-bottom-5">
                             <div class="col-md-8 printable-width-8">
                                 <h5 class="m--font-bolder m--marginless">ALLOWANCES </h5>
@@ -209,10 +231,10 @@
                                 <h5 class="m--font-boldest m--marginless"><?php echo number_format($item->total_allowances, 2); ?></h5>
                             </div>
                         </div>
-                        <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                         <?php endif; ?>
 
                         <?php if($item->ot_amount > 0): ?>
+                            <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                             <div class="row m--margin-top-5">
                                 <div class="col-md-6 printable-width-6">
                                     <h5 class="m--font-bolder m--marginless">OVERTIME </h5>
@@ -237,6 +259,7 @@
                             </div>
 
                             <?php if($item->ot_allowance_amount > 0): ?>
+                            <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                             <div class="row m--margin-top-5">
                                 <div class="col-md-6 printable-width-6">
                                     <h5 class="m--font-bolder m--marginless">OT ALLOWANCE</h5>
@@ -246,11 +269,10 @@
                                 </div>
                             </div>
                             <?php endif; ?>
-
-                            <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                         <?php endif; ?>
 
                         <?php if($item->total_ndiff_amount > 0): ?>
+                            <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                             <div class="row m--margin-top-5">
                                 <div class="col-md-6 printable-width-6">
                                     <h5 class="m--font-bolder m--marginless">REGULAR NDIFF. </h5>
@@ -264,7 +286,6 @@
                                     <h5 class="m--marginless"><span class="m--font-bolder">NDIFF HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo number_format($item->total_ndiff_minutes / 60, 2); ?></span></h5>
                                 </div>
                             </div>
-                            <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--marginless"></div>
                         <?php endif; ?>
                     <?php endif; ?>
 
@@ -389,7 +410,7 @@
                                 <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--margin-bottom-5"></div>
                             <?php endif; ?>
 
-                            <h5 class="m--marginless mt-3"><span class="">LOANS</span></h5>
+                            <h5 class="m--marginless mt-1"><span class="">LOANS</span></h5>
                             <?php $created_adjustment = $item->created_adjustments; ?>
 
                             <!-- for seperating charges, under deductions to loans -->

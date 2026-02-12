@@ -962,7 +962,7 @@ class Payroll_m extends CI_Model{
                     $daily = $employee->basic_rate;
                     $daily = round(floatval($daily), 2);
                     $employee->rate = $daily;
-                } else if ($employee->payroll_type === 'monthly') {
+                } elseif ($employee->payroll_type === 'monthly') {
                     /**** rate * 12 months / 314 working days in a year ****/
                     /*** $daily = $employee->basic_rate / $working_days_in_a_month; ***/
                     
@@ -1320,6 +1320,9 @@ class Payroll_m extends CI_Model{
                                     $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($ts->am_time_rendered) > 0 || intval($ts->pm_time_rendered) > 0);
 
                                     if($hasRenderedShift && $ts->holiday_amount > 0){
+                                        if(floatval($ts->total_time_rendered) > 0 && $excludePaidHolidayMinutes >= floatval($ts->total_time_rendered)){
+                                            $excludePaidHolidayMinutes -= floatval($ts->total_time_rendered);
+                                        }
                                         $basic_rate += $ts->holiday_amount;
                                         $basic_rate_total += $ts->holiday_amount;
                                     }
@@ -1379,6 +1382,9 @@ class Payroll_m extends CI_Model{
                                     $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($ts->am_time_rendered) > 0 || intval($ts->pm_time_rendered) > 0);
 
                                     if($hasRenderedShift && $ts->holiday_amount > 0){
+                                        /*** if(floatval($ts->total_time_rendered) > 0 && $excludePaidHolidayMinutes >= floatval($ts->total_time_rendered)){
+                                            $excludePaidHolidayMinutes -= floatval($ts->total_time_rendered);
+                                        } ***/
                                         $basic_rate += $ts->holiday_amount;
                                         $basic_rate_total += $ts->holiday_amount;
                                     }
@@ -1565,6 +1571,7 @@ class Payroll_m extends CI_Model{
                 /*** $days_worked = ceil($total_minutes / $minutes_per_day); ***/
                 $employee->paid_holiday_minutes = $excludePaidHolidayMinutes;
                 $excude_holiday_days_worked = 0;
+
                 if($total_minutes > 0 && $excludePaidHolidayMinutes > 0){
                     $total_holiday_minutes = $total_minutes - $excludePaidHolidayMinutes;
                     $excude_holiday_days_worked = $total_holiday_minutes / $minutes_per_day;
@@ -5452,6 +5459,11 @@ class Payroll_m extends CI_Model{
                 if($unpaidHolidayHrs > 0){
                     $tempRow->target_hours -= $unpaidHolidayHrs;
                 }
+                
+                if($tempRow->total_holiday_minutes > 0){
+                    $tempHolidayHrs = $tempRow->total_holiday_minutes / 60;
+                    $tempRow->target_hours -= $tempHolidayHrs;
+                }
 
                 $tempRow->target_hours = round($tempRow->target_hours, 2);
                 $tempRow->hours_worked = $tempRow->total_minutes_worked / 60;
@@ -5463,6 +5475,7 @@ class Payroll_m extends CI_Model{
                 $tempRow->ewd_decimal = $tempEwd;
 
                 $tempRow->target_payrate = $tempRow->daily * $tempRow->ewd;
+
                 if(strtolower($tempRow->payroll_type) == "monthly"){
                     $tempRow->target_payrate = (intval($tempRow->payroll_sched) == 2)? $tempRow->basic_rate / 2: $tempRow->basic_rate;
                 }
@@ -5492,7 +5505,7 @@ class Payroll_m extends CI_Model{
                     $tempRow->ewd = $tempRow->no_of_days;
                     $tempRow->ewd_decimal = $tempRow->no_of_days;
                 }
-
+                
                 $tempRow->ewd = round($tempRow->ewd, 2);
                 $tempRow->ewd_decimal = round($tempRow->ewd_decimal, 2);
 
@@ -5506,6 +5519,7 @@ class Payroll_m extends CI_Model{
                 $unpaidHolidayHours = $tempRow->unpaid_holiday_minutes / 60;
                 $tempRow->unpaid_holiday_hours = number_format($unpaidHolidayHours, 2, ".", ",");
                 $tempRow->unpaid_holiday_minutes = number_format($tempRow->unpaid_holiday_minutes, 2, ".", ",");
+
                 /*** added holiday pay */
                 $tempRow->total_holiday_amount = number_format($tempRow->total_holiday_amount, 2, '.', ',');
                 $holiday_hours = $tempRow->total_holiday_minutes / 60;
@@ -8505,7 +8519,6 @@ class Payroll_m extends CI_Model{
                     $this->db->order_by("lastname","ASC");
                     $qTempEmp = $this->db->get();
 
-                    // var_dump($this->db->last_query());
                     if($qTempEmp->num_rows() > 0){
                         foreach($qTempEmp->result() as $rs){
                             $tempRs = (array) $rs;
