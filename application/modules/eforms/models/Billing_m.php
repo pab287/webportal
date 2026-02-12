@@ -5458,7 +5458,7 @@ class Billing_m extends CI_Model {
         $this->db->select("a.id, CONCAT(a.firstname,' ',a.lastname) as customer_name, a.accountno, a.meterno, b.name as subdivision_name, a.is_disconnected");
         $this->db->from("hydra_billing.accounts a");
         $this->db->join("hydra_billing.subdivision b", "b.id = a.subdivision_id", "LEFT");
-        $this->db->where("a.is_archive","0");
+        $this->db->where("a.is_archive", 0);
         $query = $this->db->get();
         return $query->num_rows();
     }
