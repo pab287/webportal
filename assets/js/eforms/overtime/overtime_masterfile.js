@@ -4,6 +4,7 @@ let filteredIds = [];
 let enabledFilter = false;
 let param_status = "";
 let isMass = false;
+let _signatory = [];
 
 const getUrlParameter = function getUrlParameter(sParam) {
     const sPageURL = decodeURIComponent(window.location.search.substring(1));
@@ -20,6 +21,12 @@ const getUrlParameter = function getUrlParameter(sParam) {
 
 if(typeof getUrlParameter('status') !== 'undefined'){
     param_status = getUrlParameter('status');
+}
+
+if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
+    if(typeof _tempContentData.signatory !== "undefined" && _tempContentData.signatory.length > 0){
+        _signatory = _tempContentData.signatory;
+    }
 }
 
 const hasPrev = (jQuery.inArray("mass_update", _currentActions) !== -1 || jQuery.inArray("mass_approve", _currentActions) !== -1);
@@ -445,7 +452,11 @@ $(document).on('shown.bs.modal', '#modal-import-overtime', function (e) {
     vmTempUploadedContent.current_table = null;
     vmTempUploadedContent.has_uploaded_file = false;
     vmTempUploadedContent.employee_records = [];
-
+    vmPrint.isPrint = false;
+    $("#submit-import-overtime").prop('disabled', false);
+    $("#signatory-content").removeClass('show');
+    vmPrint.signatory = [];
+    vmPrint.approvedIds = null;
 });
 
 $(document).on('hidden.bs.modal', '#modal-import-overtime', function (e) {
@@ -459,7 +470,12 @@ $(document).on('hidden.bs.modal', '#modal-import-overtime', function (e) {
     vmTempUploadedContent.current_table = null;
     vmTempUploadedContent.has_uploaded_file = false;
     vmTempUploadedContent.employee_records = [];
-
+    vmPrint.isPrint = false;
+    vmPrint.signatory = [];
+    vmPrint.approvedIds = null;
+    $("#submit-import-overtime").prop('disabled', false);
+    $("#signatory-content").removeClass('show');
+    $("#to-hide").removeClass('d-none');
 });
 
 const uploadOvertimeCsvFile = function () {
@@ -478,6 +494,10 @@ const uploadOvertimeCsvFile = function () {
                     vmTempUploadedContent.json_file = result.json_file;
                     vmTempUploadedContent.invalid_ctr = result.invalid_ctr;
                     vmTempUploadedContent.valid_ctr = result.valid_ctr;
+                    vmPrint.isPrint = false;
+                    vmPrint.signatory = [];
+                    vmPrint.approvedIds = null;
+                    $("#signatory-content").removeClass('show');
                     
                     toastr.success(result.toastr_msg, "Upload File", 5000);
                     setTimeout(function () {
@@ -503,6 +523,7 @@ const uploadOvertimeCsvFile = function () {
                 }
             },
             progressall: function (e, data) {
+                $("#to-hide").addClass('d-none');
                 $("#progress_uploaded_csv")
                     .addClass("m--margin-top-10")
                     .show();
@@ -598,75 +619,52 @@ $.validate({
         const formData = $(currentForm).serialize();
         const currentModal = $(currentForm).closest(".modal");
 
-        Swal.fire({
-            icon: 'question',
-            title: 'Overtime Summary',
-            text: 'Would you like to print the overtime summary?',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, Print it',
-            cancelButtonText: 'No, Approve only'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: baseUrl('eforms/overtime/print_summary'),
-                    type: 'post',
-                    data: formData,
-                    dataType: 'json',
-                    beforeSend: function () {
-                        $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                    },
-                    success: function (response) {
-                        var w = window.open("about:blank");
-                        w.document.open();
-                        w.document.write(response.html);
-                        w.document.close();
-                        w.print();
-                        w.close();
+        if(vmTempUploadedContent.count > 0){
+            $.ajax({
+                url: formUrl,
+                type: "post",
+                data: formData,
+                dataType: "json",
+                beforeSend: function () {
+                    $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                },
+                success: function (json) {
+                    if (json.response) {
+                        toastr.success(json.toastr_msg, "Import Overtime");
+                        tblOvertime.ajax.reload();
+
+                        Swal.fire({
+                            icon: 'question',
+                            title: 'Overtime Summary',
+                            text: 'Would you like to print the overtime summary?',
+                            showCancelButton: true,
+                            confirmButtonText: 'Yes',
+                            cancelButtonText: 'No, Approve only',
+                            allowOutsideClick: false
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                vmPrint.isPrint = true;
+                                vmPrint.approvedIds = JSON.stringify(json.ids);
+                                $("#submit-import-overtime").prop('disabled', true);
+
+                                setTimeout( function(){
+                                    $("#signatory-content").addClass('show');
+                                    signatorySelect2('#signatory', true, _signatory);
+                                }, 250);
+                            } else {
+                                if (typeof currentModal !== "undefined") { currentModal.modal("hide"); }
+                                vmPrint.isPrint = false;
+                                $("#submit-import-overtime").prop('disabled', false);
+                            }
+                        });
+                    } else {
+                        toastr.error(json.toastr_msg, "Import Overtime");
                     }
-                });
-            }
-
-            // if (typeof currentModal !== "undefined") { currentModal.modal("hide"); }
-        });
-        // if(vmTempUploadedContent.count > 0){
-        //     $.ajax({
-        //         url: formUrl,
-        //         type: "post",
-        //         data: formData,
-        //         dataType: "json",
-        //         beforeSend: function () {
-        //             $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-        //         },
-        //         success: function (json) {
-        //             if (json.response) {
-        //                 toastr.success(json.toastr_msg, "Import Overtime");
-        //                 tblOvertime.ajax.reload();
-
-        //                 Swal.fire({
-        //                     icon: 'question',
-        //                     title: 'Overtime Summary',
-        //                     text: 'Would you like to print the overtime summary?',
-        //                     showCancelButton: true,
-        //                     confirmButtonColor: '#3085d6',
-        //                     cancelButtonColor: '#d33',
-        //                     confirmButtonText: 'Yes'
-        //                 }).then((result) => {
-        //                     if (result.isConfirmed) {
-
-        //                     } else {
-        //                     }
-        //                     if (typeof currentModal !== "undefined") { currentModal.modal("hide"); }
-        //                 });
-        //             } else {
-        //                 toastr.error(json.toastr_msg, "Import Overtime");
-        //             }
-        //         }
-        //     });
-        // }else{
-        //     toastr.error('Please Upload Attachment Image First.', "Import Overtime");
-        // }
+                }
+            });
+        }else{
+            toastr.error('Please Upload Attachment Image First.', "Import Overtime");
+        }
 
         return false;
     }
@@ -684,6 +682,7 @@ const vmTempUploadedContent = new Vue({
         employee_records: [],
         invalid_ctr: 0,
         valid_ctr: 0,
+        isPrint: false
     },
     methods: {
         generateDataTable: function () {
@@ -1058,3 +1057,381 @@ function formatToBullets(text) {
         .map(item => `- ${item}`)
         .join('<br>');
 }
+
+function signatorySelect2(targetElement, destroy = false, data = [], id = 0) {
+    var currentElement = $(targetElement);
+    var tempModal = $(currentElement).closest(".modal");    
+
+    if (destroy) {
+        if (currentElement.data("select2")) {
+            currentElement.select2("destroy");
+        }
+        
+        currentElement.off('select2:select');
+        currentElement.empty();
+    }
+
+    const selected = id && id == 0 ? data.find(item => parseInt(item.company_id) == company_id) : data.find(item => parseInt(item.signatory_id) == id);
+
+    if (selected) {
+        var option = new Option(selected.text, selected.id, true, true);
+        $('#signatory').append(option).trigger('change');
+        vmPrint.signatory = selected.meta;
+    }
+
+    $("#signatory").select2({
+        placeholder: { id: -1, text: 'Select an Option'},
+        data: data,
+        width: '100%',
+        dropdownParent: $("#signatory-section"),
+        allowClear: true
+    }).on('select2:select', function(e) {
+        const _data = e.params.data;
+
+        vmPrint.signatory = Object.assign({}, {
+            company_id: _data.company_id, 
+            tempId: _data.tempId,
+            signatory_id: _data.signatory_id, 
+            text: _data.text, 
+            meta : _data.meta,
+            count: countTheObjects(_data.meta)
+        });
+
+        $("#editSignatory").removeClass('d-none');
+
+        if (_data.allow_reset === true) {
+            $("#resetSignatory").removeClass('d-none');
+
+            vmResetSignatories.row = Object.assign({}, {
+                company_id: _data.company_id, 
+                tempId: _data.tempId,
+                signatory_id: _data.signatory_id, 
+                text: _data.text, 
+                meta : _data.meta,
+                count: countTheObjects(_data.meta)
+            });
+            vmResetSignatories.count = countTheObjects(_data.meta);
+        }
+
+        var self = $(e.target);
+        self.validate();
+    }).on('select2:unselect', function () {
+        vmTempUploadedContent.signatory = [];
+        $("#editSignatory").addClass('d-none');
+        $("#resetSignatory").addClass('d-none');
+    });
+
+    if (!selected) {
+        $("#signatory").val(null).trigger("change");
+    }
+
+    $("#modal-ot--signatory").on('shown.bs.modal', function(){
+        $("#modal-import-overtime .modal-content").addClass('dimmed');
+    });
+
+    $("#modal-ot--signatory").on('hidden.bs.modal', function(){
+        $("#modal-import-overtime .modal-content").removeClass('dimmed');
+        
+        if ($('.modal.show').length) {
+            $('body').addClass('modal-open');
+            var $lastModal = $('.modal.show').last();
+            $lastModal.focus();
+        }
+    });
+    
+    $("#modal-ot--reset-signatory").on('shown.bs.modal', function(){
+        $("#modal-import-overtime .modal-content").addClass('dimmed');
+    });
+
+    $("#modal-ot--reset-signatory").on('hidden.bs.modal', function(){
+        $("#modal-import-overtime .modal-content").removeClass('dimmed');
+
+        if ($('.modal.show').length) {
+            $('body').addClass('modal-open');
+            var $lastModal = $('.modal.show').last();
+            $lastModal.focus();
+        }
+    });
+}
+
+function countTheObjects(arr) {
+    return arr.filter((item) => item && typeof item === "object" && !Array.isArray(item)).length;
+}
+
+const vmEditSignatory = new Vue({
+    el: "#updatePrintableSignatories",
+    data: {
+        row: [],
+        count: 0
+    },
+    mounted: function () {
+        const instance = this;
+    },
+    methods: {
+        activeSignatory: function (e) {
+            const currentTarget = e.target;
+            const formGroup = $(currentTarget).closest(".form-group.m-form__group.row");
+            if (typeof formGroup !== "undefined" && formGroup.length == 1) {
+                let isChecked = $(currentTarget).is(":checked");
+                const select2Container = formGroup.find(".select2--value");
+                if (typeof select2Container !== "undefined" && select2Container.length == 1) {
+                    if (isChecked) {
+                        if (select2Container.is(":disabled") == true) {
+                            select2Container.prop("disabled", false);
+                        }
+                    } else {
+                        if (select2Container.is(":disabled") == false) {
+                            select2Container.prop("disabled", true);
+                        }
+                    }
+                }
+            }
+        },
+        setModalSelect2: function () {
+            const _this = this;
+            const _currentElement = _this.$el;
+            const psModalSignatory = $(_currentElement)
+                .closest("#modal-ot--signatory");
+            if (typeof psModalSignatory !== "undefined" && psModalSignatory.length == 1) {
+                initSelect2Employee(psModalSignatory);
+            }
+        }
+    }
+});
+
+var initSelect2Employee = function (tempModal, portlet) {
+    if (typeof tempModal !== "undefined" && tempModal.length == 1) {
+        let tempSelector = tempModal.find("select.select2--value");
+        if (typeof portlet !== "undefined") { tempSelector = portlet.find("select.select2--value"); }
+        if (typeof tempSelector !== "undefined") {
+            tempSelector.select2({
+                tags: true,
+                allowClear: true,
+                placeholder: 'Select an option',
+                width: '100%',
+                dropdownParent: tempModal,
+                ajax: {
+                    url: baseUrl("eforms/overtime/select_signatory_employee"),
+                    dataType: "json",
+                    delay: 250,
+                    global: false,
+                    processResults: function (data) {
+                        let tempData = [];
+                        $.each(data.results, function (i, v) {
+                            const dd = { id: v.text, text: v.text };
+                            tempData.push(dd);
+                        });
+                        return { results: tempData };
+                    }
+                }
+            });
+        }
+    }
+}
+
+$.validate({
+    form: '#updatePrintableSignatories',
+    lang: 'en',
+    onSuccess: function (form) {
+        const tempUrl = form[0].action;
+        const tempType = form[0].method;
+        const formData = $(form[0]).serialize();
+
+        $.ajax({
+            url: tempUrl,
+            type: tempType,
+            dataType: "json",
+            data: formData,
+            beforeSend: function () {
+                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+            },
+            success: function (json) {
+                const currentModal = $('#modal-ot--signatory');
+                if (json.response) {
+                    const currentData = json.data;
+                    if (Object.keys(currentData).length > 0) {
+                        const metaFields = currentData.meta;
+                        const ctr = metaFields.length;
+
+                        var index = _signatory.findIndex(function(item){ return parseInt(item.signatory_id) == currentData.signatory_id});
+                        _signatory[index] = currentData;
+                        signatorySelect2('#signatory', true, _signatory, currentData.signatory_id);
+
+                        vmEditSignatory.row = Object.assign({}, currentData);
+                        vmEditSignatory.count = ctr;
+
+                        vmPrint.signatory = Object.assign({}, {
+                            company_id: currentData.company_id, 
+                            tempId: currentData.id,
+                            signatory_id: currentData.signatory_id, 
+                            text: currentData.text, 
+                            meta : currentData.meta,
+                            count: countTheObjects(currentData.meta)
+                        });
+
+                        if (currentData.allow_reset === true) {
+                            vmResetSignatories.row = Object.assign({}, currentData);
+                            vmResetSignatories.count = ctr;
+
+                            $("#resetSignatory").removeClass('d-none');
+                        } else {
+                            $("#resetSignatory").addCkass('d-none');
+                        }
+
+                        if (typeof currentModal !== "undefined" && currentModal.length == 1) {
+                            currentModal.modal("hide");
+                        }
+                    }
+                } else {
+                    toastr.error("Overtime Signatory", json.toastr_msg);
+                }
+                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+            }
+        });
+        return false;
+    },
+
+});
+
+var vmResetSignatories = new Vue({
+    el: "#reset-signatory--content",
+    data: { row: {}, count: 0 },
+});
+
+$.validate({
+    form: '#resetPrintableSignatories',
+    lang: 'en',
+    onSuccess: function (form) {
+        const tempUrl = form[0].action;
+        const tempType = form[0].method;
+        const formData = $(form[0]).serialize();
+
+        $.ajax({
+            url: tempUrl,
+            type: tempType,
+            dataType: "json",
+            data: formData,
+            beforeSend: function () {
+                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+            },
+            success: function (json) {
+                let tempRow = Object.assign({});
+                let ctr = 0;
+
+                if (json.response) {
+                    tempRow = Object.assign({}, json.data);
+                    ctr = json.count;
+
+                    var index = _signatory.findIndex(function(item){ return parseInt(item.signatory_id) == tempRow.signatory_id});
+                    _signatory[index] = tempRow;
+                    signatorySelect2('#signatory', true, _signatory, tempRow.signatory_id);
+                }
+
+                vmEditSignatory.row = Object.assign({}, tempRow);
+                vmEditSignatory.count = ctr;
+
+                vmPrint.signatory = Object.assign({}, {
+                    company_id: tempRow.company_id, 
+                    tempId: tempRow.id,
+                    signatory_id: tempRow.signatory_id, 
+                    text: tempRow.text, 
+                    meta : tempRow.meta,
+                    count: countTheObjects(tempRow.meta)
+                });
+
+                if (tempRow.allow_reset === true) {
+                    vmResetSignatories.row = Object.assign({}, tempRow);
+                    vmResetSignatories.count = ctr;
+
+                    $("#resetSignatory").removeClass('d-none');
+                } else {
+                    $("#resetSignatory").addClass('d-none');
+                }
+
+                const currentModal = $('#modal-ot--reset-signatory').closest(".modal");
+                currentModal.modal("hide");
+                $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+            }
+        });
+        return false;
+    },
+
+});
+
+const vmPrint = new Vue({
+    el: '#signatory-content',
+    data: {
+        isPrint: false,
+        signatory: [],
+        approvedIds: null
+    },
+    methods: {
+        editSignatory () {
+            const instance = this;
+
+            vmEditSignatory.row = instance.signatory;
+            vmEditSignatory.count = instance.signatory.count;
+
+            setTimeout(function () {
+                vmEditSignatory.setModalSelect2();
+            }, 500);
+            $("#modal-ot--signatory").modal();
+        },
+        resetModalSignatory () {
+            const instance = this;
+
+            vmEditSignatory.row = instance.signatory;
+            vmEditSignatory.count = instance.signatory.count;
+            $("#modal-ot--reset-signatory").modal();
+        }
+    }
+})
+
+$.validate({
+    form: '#print-import_overtime',
+    lang: 'en',
+    onSuccess: function (form) {
+        const currentForm = form[0];
+        const formData = $(currentForm).serialize();
+        const currentModal = $(currentForm).closest(".modal");
+
+        $.ajax({
+            url: baseUrl('eforms/overtime/print_summary'),
+            type: 'post',
+            data: formData,
+            dataType: 'json',
+            beforeSend: function () {
+                $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+            },
+            success: function (response) {
+                var printWindow = window.open('', '_blank');
+                printWindow.document.open();
+                printWindow.document.write(response.html);
+                printWindow.document.close();
+
+                printWindow.addEventListener('load', function() {
+                    // Give browser time to render
+                    setTimeout(function() {
+                        printWindow.focus();
+                        printWindow.print();
+                        
+                        // Handle cleanup after print
+                        printWindow.addEventListener('afterprint', function() {
+                            printWindow.close();
+                        });
+                        
+                        // Fallback close if user cancels print
+                        setTimeout(function() {
+                            if (!printWindow.closed) {
+                                printWindow.close();
+                            }
+                        }, 1000);
+                    }, 100);
+                });
+                // if (typeof currentModal !== "undefined") { currentModal.modal("hide"); }
+            }
+        });
+
+        return false;
+    }
+})

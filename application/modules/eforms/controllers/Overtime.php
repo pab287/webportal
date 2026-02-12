@@ -40,7 +40,11 @@ class Overtime extends MY_Controller {
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
 
-        $this->core_layout->addJs("js/eforms/overtime/overtime_masterfile.js", true);
+        $tempData = array();
+        $tempData['signatory'] = $this->overtime->get_all_signatory();
+
+        $version = filemtime(FCPATH.'assets/js/eforms/overtime/overtime_masterfile.js');
+        $this->core_layout->addJs("js/eforms/overtime/overtime_masterfile.js", true, $tempData,"?v={$version}");
         $this->core_layout->setPrivilegeName("overtime_masterfile");
 
         $this->load->view('core/templates/header');
@@ -480,6 +484,20 @@ class Overtime extends MY_Controller {
 
     public function print_summary(){
         $data = $this->overtime->print_summary();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function update_printable_signatories() {
+        $data = $this->overtime->update_printable_signatories();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+    
+    public function reset_printable_signatories() {
+        $data = $this->overtime->reset_printable_signatories();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));

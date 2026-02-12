@@ -1,3 +1,13 @@
+<style>
+    #modal-import-overtime .modal-content.dimmed > * {
+        position: relative;
+        z-index: 11;
+    }
+    #modal-import-overtime .modal-content.dimmed {
+        filter: blur(2px) brightness(0.7);
+    }
+</style>
+
 <div class="m-content">
 	<div class="row">
 		<div class="col-lg-12">
@@ -255,183 +265,256 @@
 
 <div class="modal fade" tabindex="-1" role="dialog" id="modal-import-overtime">
     <div class="modal-dialog modal-xl" role="document">
-        <form id="frm-import_overtime" method="post" action="<?php echo site_url("eforms/overtime/import_approved_overtime"); ?>">
-        <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-        <div class="modal-content" id="temp-uploaded_content">
+        <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Import Overtime</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
                 </button>
             </div>
+
             <div class="modal-body">
-                <span class="m-portlet__nav-link btn btn-success m-btn m-btn--pill m-btn--air fileinput-button btnUpload">
-                    <i class="fa fa-plus"></i>
-                    <span>Upload File</span>
-                    <input id="import_csv" type="file" name="import_csv" />
-                </span>
-                <div id="progress_uploaded_csv"
-                    class="progress progress-striped active"
-                    role="progressbar"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                    style="display:none;"
-                    >
-                    <div
-                        class="progress-bar progress-bar-success"
-                        style="width: 0%;"
-                    ></div>
-                </div>
-                <template v-if="has_uploaded_file === true">
-                    <input type="hidden" name="json_file" v-model="json_file" />
-                    <template v-if="invalid_ctr > 0">
-                        <div class="mt-3 m-alert m-alert--icon m-alert--outline alert alert-warning fade show" role="alert">
-							<div class="m-alert__icon">
-								<i class="la la-warning"></i>
-							</div>
-							<div class="m-alert__text">
-                                <strong>Invalid Overtime Entries!</strong> There are <strong>`{{ invalid_ctr }}`</strong> invalid entries that are not allowed to be imported. Please read <strong>remarks</strong>.
-							</div>
-						</div>
-                    </template>
-                    <div class="mb-5">
-                        <table id="uploaded_csv_table" class="table"></table>
-                    </div>
-                    <template v-if="valid_ctr > 0">
-                        <div class="row m--margin-top-10">
-                            <div class="col-md-6">
-                                <div class="form-group m-form__group">
-                                    <label for="approved_by" class="required">
-                                        Approved By
-                                    </label>
-                                    <select class="form-control m-input m-input--air" id="approved_by" name="approved_by" data-validation="required"></select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="m-portlet m-portlet--bordered m-portlet--unair">
-                                    <div class="m-portlet__head">
-                                        <div class="m-portlet__head-caption">
-                                            <div class="m-portlet__head-title">
-                                                <h3 class="m-portlet__head-text">
-                                                    Attachment Image <small style="color: red;">( Required )</small>
-                                                </h3>
-                                            </div>
+                <div id="accordionMain">
+                    <div class="card">
+                        <form id="frm-import_overtime" method="post" action="<?php echo site_url("eforms/overtime/import_approved_overtime"); ?>">
+                            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                            <!-- data-toggle="collapse" -->
+                            <div class="card-header" id="import-head">
+                                <h5 class="mb-0">
+                                    <div class="row justify-content-between align-items-center">
+                                        <div class="col-md-6">
+                                            <a class="collapsed" data-target="#temp-uploaded_content" aria-expanded="false" aria-controls="temp-uploaded_content"  style="font-size: 1.15rem !important">
+                                                Import
+                                            </a>
                                         </div>
-                                        <div class="m-portlet__head-tools">
-                                            <ul class="m-portlet__nav">
-                                                <li class="m-portlet__nav-item">
-                                                    <span class="m-portlet__nav-link btn btn-success m-btn m-btn--pill m-btn--air fileinput-button btnUpload">
-                                                        <i class="fa fa-plus"></i>
-                                                        <span>Upload File</span>
-                                                        <input id="temp_fileupload" type="file" name="files" multiple />
-                                                    </span>
-                                                </li>
-                                            </ul>
+                                        <div class="col-md-6">
+                                            <span class="m-portlet__nav-link btn btn-success m-btn m-btn--pill m-btn--air fileinput-button btnUpload pull-right">
+                                                <i class="fa fa-plus"></i>
+                                                <span>Upload File</span>
+                                                <input id="import_csv" type="file" name="import_csv" />
+                                            </span>
                                         </div>
                                     </div>
-                                    <div class="m-portlet__body">
-                                        <div id="progress_approve"
-                                            class="progress progress-striped active"
-                                            role="progressbar"
-                                            aria-valuemin="0"
-                                            aria-valuemax="100"
-                                            style="display:none;"
-                                            >
-                                            <div
-                                                class="progress-bar progress-bar-success"
-                                                style="width: 0%;"
-                                            ></div>
+                                </h5>
+                            </div>
+
+                            <div id="temp-uploaded_content" class="collapse show" aria-labelledby="import-head" data-parent="#accordionMain">
+                                <div class="card-body">
+                                    <div class="content">
+                                        <div id="progress_uploaded_csv" class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" style="display:none;">
+                                            <div class="progress-bar progress-bar-success" style="width: 0%;"></div>
                                         </div>
-                                        <template v-if="count > 0">
-                                            <div class="row">
-                                                <div class="col-2 col-md-2" v-for="(item, index) in rows">
-                                                    <div class="m-temp__pic text-center">
-                                                        <a :href="item.image" data-lightbox="tempimage" :data-title="item.filename">
-                                                            <img class="m-temp__img" :src="item.thumbnail" width="75" height="75" style="margin-bottom: 0.5rem;" />
-                                                        </a>
-                                                        <div class="m-checkbox-inline">
-                                                            <label class="m-checkbox">
-                                                                <input type="checkbox" name="attachment_image[]" :value="item.current_image" class="temp-attachment_image" @click="getCheckedCount" />{{renderImageLabel(index)}}<span></span>
+
+                                        <h6 id="to-hide" class="text-center">No Data Found.</h6>
+
+                                        <template v-if="has_uploaded_file === true">
+                                            <input type="hidden" name="json_file" v-model="json_file" />
+                                            <template v-if="invalid_ctr > 0">
+                                                <div class="mt-3 m-alert m-alert--icon m-alert--outline alert alert-warning fade show" role="alert">
+                                                    <div class="m-alert__icon">
+                                                        <i class="la la-warning"></i>
+                                                    </div>
+                                                    <div class="m-alert__text">
+                                                        <strong>Invalid Overtime Entries!</strong> There are <strong>`{{ invalid_ctr }}`</strong> invalid entries that are not allowed to be imported. Please read <strong>remarks</strong>.
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <div class="mb-5">
+                                                <table id="uploaded_csv_table" class="table"></table>
+                                            </div>
+                                            <template v-if="valid_ctr > 0">
+                                                <div class="row m--margin-top-10">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group m-form__group">
+                                                            <label for="approved_by" class="required">
+                                                                Approved By
                                                             </label>
+                                                            <select class="form-control m-input m-input--air" id="approved_by" name="approved_by" data-validation="required"></select>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-12 m--margin-top-10 text-left">
-                                                <input id="checked_count" type="hidden" data-validation="checkbox_group_min1" value="0" />
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                        <div class="m-portlet m-portlet--bordered m-portlet--unair">
+                                                            <div class="m-portlet__head" style="height: 4.5rem !important;">
+                                                                <div class="m-portlet__head-caption">
+                                                                    <div class="m-portlet__head-title">
+                                                                        <h3 class="m-portlet__head-text">
+                                                                            Attachment Image <small style="color: red;">( Required )</small>
+                                                                        </h3>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="m-portlet__head-tools">
+                                                                    <ul class="m-portlet__nav">
+                                                                        <li class="m-portlet__nav-item">
+                                                                            <span class="m-portlet__nav-link btn btn-success m-btn m-btn--pill m-btn--air fileinput-button btnUpload">
+                                                                                <i class="fa fa-plus"></i>
+                                                                                <span>Upload File</span>
+                                                                                <input id="temp_fileupload" type="file" name="files" multiple />
+                                                                            </span>
+                                                                        </li>
+                                                                    </ul>
+                                                                </div>
+                                                            </div>
+                                                            <div class="m-portlet__body">
+                                                                <div id="progress_approve" class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" style="display:none;" >
+                                                                    <div class="progress-bar progress-bar-success" style="width: 0%;"></div>
+                                                                </div>
+                                                                <template v-if="count > 0">
+                                                                    <div class="row">
+                                                                        <div class="col-2 col-md-2" v-for="(item, index) in rows">
+                                                                            <div class="m-temp__pic text-center">
+                                                                                <a :href="item.image" data-lightbox="tempimage" :data-title="item.filename">
+                                                                                    <img class="m-temp__img" :src="item.thumbnail" width="75" height="75" style="margin-bottom: 0.5rem;" />
+                                                                                </a>
+                                                                                <div class="m-checkbox-inline">
+                                                                                    <label class="m-checkbox">
+                                                                                        <input type="checkbox" name="attachment_image[]" :value="item.current_image" class="temp-attachment_image" @click="getCheckedCount" />{{renderImageLabel(index)}}<span></span>
+                                                                                    </label>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="row">
+                                                                        <div class="col-12 m--margin-top-10 text-left">
+                                                                            <input id="checked_count" type="hidden" data-validation="checkbox_group_min1" value="0" />
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                                <template v-else>
+                                                                    <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
+                                                                        <div class="m-alert__icon">
+                                                                            <i class="flaticon-exclamation-1"></i>
+                                                                            <span></span>
+                                                                        </div>
+                                                                        <div class="m-alert__text">
+                                                                            <strong>
+                                                                                Image(s) not found!
+                                                                            </strong>
+                                                                            Upload image first
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            </template>
                                         </template>
                                         <template v-else>
-                                            <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
-                                                <div class="m-alert__icon">
-                                                    <i class="flaticon-exclamation-1"></i>
-                                                    <span></span>
+                                            <template v-if="employee_records.length > 0">
+                                                <div class="mt-3">
+                                                    <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
+                                                        <div class="m-alert__icon">
+                                                            <i class="flaticon-exclamation-1"></i>
+                                                            <span></span>
+                                                        </div>
+                                                        <div class="m-alert__text">
+                                                            <strong>
+                                                                Existing Overtime!
+                                                            </strong>
+                                                            Employee overtime already exist.
+                                                        </div>
+                                                    </div>
+                                                    <table class="table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Reference #</th>
+                                                                <th>Employee Name</th>
+                                                                <th>Date From</th>
+                                                                <th>Date To</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr v-for="(item, index) in employee_records">
+                                                                <td>
+                                                                    <template v-for="(vv, ii) in item.reference_no">
+                                                                        <span class="m-badge m-badge--metal m-badge--wide m-badge--rounded mr-1 m--font-boldest">{{vv}}</span>
+                                                                    </template>
+                                                                </td>
+                                                                <td>{{item.display_name}}</td>
+                                                                <td>{{item.date_from}}</td>
+                                                                <td>{{item.date_to}}</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
                                                 </div>
-                                                <div class="m-alert__text">
-                                                    <strong>
-                                                        Image(s) not found!
-                                                    </strong>
-                                                    Upload image first
-                                                </div>
-                                            </div>
+                                            </template>
                                         </template>
+
+                                    </div> 
+                                    
+                                    <div class="content-footer text-right" v-if="has_uploaded_file === true && valid_ctr > 0">
+                                        <button type="submit" id="submit-import-overtime" class="btn btn-primary btnSave">Save</button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </template>
-                </template>
-                <template v-else>
-                    <template v-if="employee_records.length > 0">
-                        <div class="mt-3">
-                            <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
-                                <div class="m-alert__icon">
-                                    <i class="flaticon-exclamation-1"></i>
-                                    <span></span>
-                                </div>
-                                <div class="m-alert__text">
-                                    <strong>
-                                        Existing Overtime!
-                                    </strong>
-                                    Employee overtime already exist.
+                        </form>
+                    </div>
+                    <div class="card mt-3">
+                        <!-- data-toggle="collapse" -->
+                        <form id="print-import_overtime" method="post">
+                            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                            <div class="card-header" id="signatory-head">
+                                <h5 class="mb-0">
+                                    <a class="collapsed" data-target="#signatory-content" aria-expanded="false" aria-controls="signatory-content"  style="font-size: 1.15rem !important">
+                                        Overtime Signatory
+                                    </a>
+                                </h5>
+                            </div>
+
+                            <div id="signatory-content" class="collapse" aria-labelledby="signatory-head" data-parent="#accordionMain">
+                                <input type="hidden" name="approvedIds" v-model="approvedIds">
+                                <div class="card-body">
+                                    <template v-if="isPrint">
+                                        <div class="row">
+                                            <div class="form-group col-md-12">
+                                                <div id="signatory-section" class="row mt-3 align-items-end align-items-center">
+                                                    <div class="col-md-3 pr-0">
+                                                        <label for="signatory" class="required m-0">Signatory Filter</label>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="mb-0">
+                                                            <select id="signatory" name="signatory" class="form-control" data-validation="required">
+                                                                <option></option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-5 p-0">
+                                                        <button type="button" class="btn btn-warning btn-sm btnEdit m-btn m-btn--pill m-btn--air d-none mr-2" id="editSignatory" @click="editSignatory" title="Edit Signatory" data-toggle="m-tooltip" data-original-title="Edit Signatory" data-skin="dark">
+                                                            <i class="la la-pencil"></i> Edit Signatory
+                                                        </button>
+                                                        <button type="button" class="btn btn-accent btn-sm btnEdit m-btn m-btn--pill m-btn--air d-none" id="resetSignatory" @click="resetModalSignatory" title="Reset Signatory" data-toggle="m-tooltip" data-original-title="Edit Signatory" data-skin="dark">
+                                                            <i class="la la-rotate-left"></i> Reset Signatory
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-4 justify-content-start align-items-center">
+                                            <template v-if="signatory.count > 0"> 
+                                                <template v-for="(item, index) in signatory.meta">
+                                                    <div class="col-md-4 mb-2" v-if="item.is_active === true">
+                                                        <p style="font-weight: bold; margin-left: 10px;">{{ item.label }}</p>
+                                                        <p class="signatory-value" style="font-weight: 600; margin-left: 10px; margin-right: 50px; margin-top: 50px; padding-top: 10px; border-top: 1px solid rgb(0, 0, 0);">
+                                                            {{ item.value }}
+                                                        </p>
+                                                    </div>
+                                                </template>
+                                            </template>
+                                        </div>
+                                        
+                                        <div class="content-footer text-right">
+                                            <button type="submit" id="print-import-overtime" class="btn btn-primary btnSave">Print Summary</button>
+                                        </div>
+                                    </template>
                                 </div>
                             </div>
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Reference #</th>
-                                        <th>Employee Name</th>
-                                        <th>Date From</th>
-                                        <th>Date To</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="(item, index) in employee_records">
-                                        <td>
-                                            <template v-for="(vv, ii) in item.reference_no">
-                                                <span class="m-badge m-badge--metal m-badge--wide m-badge--rounded mr-1 m--font-boldest">{{vv}}</span>
-                                            </template>
-                                        </td>
-                                        <td>{{item.display_name}}</td>
-                                        <td>{{item.date_from}}</td>
-                                        <td>{{item.date_to}}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </template>
-                </template>
-            </div>
-            <div class="modal-footer" v-if="has_uploaded_file === true && valid_ctr > 0">
-                <button type="submit" id="submit-import-overtime" class="btn btn-primary btnSave">Save</button>
-                <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Cancel</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
-        </form>
     </div>
 </div>
 
@@ -525,5 +608,116 @@
                 </div>
             </div>
         </form>
+    </div>
+</div>
+
+<div class="modal fade" tabindex="-1" role="dialog" id="modal-ot--signatory">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content" id="signatory--content">
+            <div class="modal-header">
+                <h5 class="modal-title">Overtime Signatories</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="updatePrintableSignatories" method="post" action="<?php echo site_url("eforms/overtime/update_printable_signatories"); ?>">
+                <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
+                <input type="hidden" name="id" v-model="row.tempId" />
+                <input type="hidden" name="signatory_id" v-model="row.signatory_id" />
+                <div class="modal-body">
+                    <template v-if="count > 0">
+                        <template v-for="(item, index) in row.meta">
+                        <div class="form-group m-form__group row">
+                            <label class="col-3 col-form-label">{{item.label}}</label>
+                            <div class="col-8">
+                                <select class="form-control m-input select2--value" 
+                                    data-validation="required" 
+                                    :name="'value['+index+']'" 
+                                    :disabled="item.is_active === false">
+                                    <option :value="item.value" selected>{{item.value}}</option>
+                                </select>
+                            </div>
+                            <div class="col-1 text-right">
+                                <span class="m-switch m-switch--sm">
+                                    <label>
+                                        <input type="checkbox" :checked="item.is_active === true" @click="activeSignatory(event)" />
+                                        <span></span>
+                                    </label>
+                                </span>
+                            </div>
+                        </div>
+                        </template>
+                    </template>
+                    <template v-else>
+                        <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
+                            <div class="m-alert__icon">
+                                <i class="flaticon-exclamation-1"></i>
+                                <span></span>
+                            </div>
+                            <div class="m-alert__text">
+                                <strong>
+                                    NO ASSIGNED SIGNATORIES!
+                                </strong>
+                                Please add/update the signatory.
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <template v-if="count > 0">
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary btnSave">Update</button>
+                        <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Cancel</button>
+                    </div>
+                </template>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" tabindex="-1" role="dialog" id="modal-ot--reset-signatory">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" id="reset-signatory--content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reset - Overtime Signatories</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="resetPrintableSignatories" method="post" action="<?php echo site_url("eforms/overtime/reset_printable_signatories"); ?>">
+                <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
+                <input type="hidden" name="id" v-model="row.tempId" />
+                <div class="modal-body">
+                    <h4>Are you sure you want to reset the current signatories?</h4>
+                    <template v-if="count > 0">
+                        <template v-for="(item, index) in row.meta">
+                        <div class="form-group m-form__group row m--marginless" v-if="item.is_active === true">
+                            <label class="col-4 col-form-label">{{item.label}}</label>
+                            <label class="col-8 col-form-label m--font-bolder">{{item.value}}</label>
+                        </div>
+                        </template>
+                    </template>
+                    <template v-else>
+                        <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
+                            <div class="m-alert__icon">
+                                <i class="flaticon-exclamation-1"></i>
+                                <span></span>
+                            </div>
+                            <div class="m-alert__text">
+                                <strong>
+                                    NO ASSIGNED SIGNATORIES!
+                                </strong>
+                                Please add/update the signatory.
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <template v-if="count > 0">
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary btnSave">Reset</button>
+                        <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Cancel</button>
+                    </div>
+                </template>
+            </form>
+        </div>
     </div>
 </div>

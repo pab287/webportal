@@ -1979,6 +1979,7 @@ class Overtime_m extends CI_Model {
     public function importApprovedOvertime(){
         $resultset = array();
         $post = $this->input->post();
+        $ids = array();
         if(isset($post) && $post){
             $date = date('Y-m-d H:i:s');
             $year = substr($date, 2, 2);
@@ -2047,7 +2048,10 @@ class Overtime_m extends CI_Model {
                                     $checkExisting = $this->db->get_where("gcceforms.overtime", $tempWhere);
                                     if($isValidDate && $checkExisting->num_rows() == 0){
                                         $added = $this->db->insert("gcceforms.overtime", $currentRow);
-                                        if($added){ $ctrUploaded++; }
+                                        if($added){ 
+                                            $ctrUploaded++; 
+                                            $ids[] = $this->db->insert_id();
+                                        }
                                     }
                                 }
                             }
@@ -2055,6 +2059,7 @@ class Overtime_m extends CI_Model {
 
                         if($ctrUploaded > 0){
                             $resultset["response"] = true;
+                            $resultset['ids'] = $ids;
                             $resultset["toastr_msg"] = "Overtime record(s) has been imported and was added.";
 
                             $uploadedAttachment = implode(', ', $post['attachment_image']);
@@ -2533,95 +2538,89 @@ class Overtime_m extends CI_Model {
             $year = substr($date, 2, 2);
             $month = substr($date, 5, 2);
             $session = $this->core_layout->getCurrentSession();
+            $signatoryId = $post['signatory'];
+            $approvedIds = $post['approvedIds'] ? json_decode($post['approvedIds']) : null;
 
-            if (isset($session["emp_id"], $post["json_file"]) && $session["emp_id"] && $post["json_file"]) {
-                $filePath = "./uploads/files/csv/overtime/temp_{$session["emp_id"]}";
-                $tempFile = "{$filePath}/{$post["json_file"]}";
-
-                if(file_exists($tempFile)){
-                    $fileContent = file_get_contents($tempFile);
-                    $arrData = json_decode($fileContent, true);
-
-                    if(isset($arrData["data"]) && $arrData["data"] && is_array($arrData["data"]) && count($arrData["data"]) > 0){
-                        $ctrUploaded = 0;
-                        $_arrData = array();
-                        foreach ($arrData["data"] as $value) {
-                            $rs = (object) $value;
-                            $ot_date = date('Y-m-d', strtotime($rs->date_from));
-                            if(intval($rs->is_existing) == 1 && $rs->is_valid === true){
-                                $sqlSelect = "a.id as employee, UPPER(IFNULL(b.description, a.company_id)) as company,
-                                UPPER(IFNULL(c.description, a.department_id)) as department,
-                                UPPER(IFNULL(d.name, a.position)) as position, MAX(ps.date_end) as max_date, a.biometricno, e.name as payroll_sched, a.firstname, a.lastname, a.middlename, a.suffix";
-                                $this->db->select($sqlSelect);
-                                $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id OR b.description = a.company_id OR b.code = a.company_id", "LEFT");
-                                $this->db->join("gcchris.tbldepartments c", "c.id = a.department_id OR c.description = a.department_id OR c.code = a.department_id", "LEFT");
-                                $this->db->join("gcchris.tblposition d", "d.id = a.position OR d.name = a.position", "LEFT");
-                                $this->db->join("payroll.payroll_sheet ps", "ps.emp_id = a.id AND ps.posted = 1", "LEFT");
-                                $this->db->join("payroll.payout_schedule e", "e.id = ps.payroll_sched", "LEFT");
-                                $this->db->group_by("a.id");
-                                $qTemp = $this->db->get_where("gccmaster.tblemployees a", array("a.id"=>$rs->emp_id, "a.employee_status"=>"Active"));
-
-                                //here
-                                if($qTemp->num_rows() == 1){
-                                    $currentRow = $qTemp->row();
-                                    $currShift = $this->getPersonnelShift($rs->date_from, $currentRow->employee, $currentRow->biometricno);
-                                    $get_actual_punch = (object) $this->get_actual_punch($rs->date_from, $rs->date_to, $currentRow->biometricno, $currShift);
-
-                                    $currentRow->date_from = date("Y-m-d H:i:s", strtotime($rs->date_from));
-                                    $currentRow->date_to = date("Y-m-d H:i:s", strtotime($rs->date_to));
-                                    $currentRow->purpose = $rs->purpose;
-                                    
-                                    $currentRow->regular_shift = date('h:i A', strtotime($currShift->am_start)).' - '.date('h:i A', strtotime($currShift->pm_end));
-                                    $currentRow->employee_name = $this->format_name($currentRow->employee);
-                                    
-                                    $time1 = date_create($get_actual_punch->actual_time_in);
-                                    $time2 = date_create($get_actual_punch->actual_time_out);
-                                    $time_diff = date_diff($time1, $time2);
-                                    $totalMinutes = ($time_diff->days * 24 * 60) + ($time_diff->h * 60) + $time_diff->i;
-
-                                    $tempHr = intdiv($totalMinutes, 60);
-                                    $currentRow->actual_in = $get_actual_punch->actual_time_in;
-                                    $currentRow->actual_out = $get_actual_punch->actual_time_out;
-                                    $currentRow->total_hrs = $tempHr;
-
-                                    $isValidDate = strtotime(trim($rs->date_from)) > strtotime(trim($currentRow->max_date));
-                                    unset($currentRow->max_date);
-
-                                    $tempWhere = array();
-                                    $tempWhere["employee"] = $rs->emp_id;
-                                    $tempWhere["date_from"] = date("Y-m-d H:i:s", strtotime($rs->date_from));
-                                    $tempWhere["date_to"] = date("Y-m-d H:i:s", strtotime($rs->date_to));
-                                    $tempWhere["status"] = "Approved";
-                                    $checkExisting = $this->db->get_where("gcceforms.overtime", $tempWhere);
-
-                                    if($isValidDate && $checkExisting->num_rows() == 0){
-                                        if (isset($_arrData[$ot_date]) && $_arrData[$ot_date]) {
-                                            $_arrData[$ot_date][] = $currentRow;
-                                        } else {
-                                            $_arrData[$ot_date] = $currentRow;
-                                        }
-                                    }
-                                }
+            if ($approvedIds && !empty($approvedIds)) {
+                $this->db->select("date_from, date_to, purpose, employee");
+                $this->db->from($this->eformsOvertimeTable);
+                $this->db->where_in('id', $approvedIds);
+                $query = $this->db->get();
+    
+                if ($query->num_rows() > 0) {
+                    $_arrData = array();
+                    foreach($query->result() as $key => $rs) {
+                        $ot_date = date('Y-m-d', strtotime($rs->date_from));
+    
+                        $sqlSelect = "a.id as employee, UPPER(IFNULL(b.description, a.company_id)) as company,
+                        UPPER(IFNULL(c.description, a.department_id)) as department,
+                        UPPER(IFNULL(d.name, a.position)) as position, MAX(ps.date_end) as max_date, a.biometricno, e.name as payroll_sched, a.firstname, a.lastname, a.middlename, a.suffix";
+                        $this->db->select($sqlSelect);
+                        $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id OR b.description = a.company_id OR b.code = a.company_id", "LEFT");
+                        $this->db->join("gcchris.tbldepartments c", "c.id = a.department_id OR c.description = a.department_id OR c.code = a.department_id", "LEFT");
+                        $this->db->join("gcchris.tblposition d", "d.id = a.position OR d.name = a.position", "LEFT");
+                        $this->db->join("payroll.payroll_sheet ps", "ps.emp_id = a.id AND ps.posted = 1", "LEFT");
+                        $this->db->join("payroll.payout_schedule e", "e.id = ps.payroll_sched", "LEFT");
+                        $this->db->group_by("a.id");
+                        $qTemp = $this->db->get_where("gccmaster.tblemployees a", array("a.id"=>$rs->employee, "a.employee_status"=>"Active"));
+    
+                        if($qTemp->num_rows() == 1){
+                            $currentRow = $qTemp->row();
+                            $currShift = $this->getPersonnelShift($rs->date_from, $currentRow->employee, $currentRow->biometricno);
+                            $get_actual_punch = (object) $this->get_actual_punch($rs->date_from, $rs->date_to, $currentRow->biometricno, $currShift);
+    
+                            $currentRow->date_from = date("Y-m-d H:i:s", strtotime($rs->date_from));
+                            $currentRow->date_to = date("Y-m-d H:i:s", strtotime($rs->date_to));
+                            $currentRow->purpose = $rs->purpose;
+                            
+                            $currentRow->regular_shift = date('h:i A', strtotime($currShift->am_start)).' - '.date('h:i A', strtotime($currShift->pm_end));
+                            $currentRow->employee_name = $this->format_name($currentRow->employee);
+                            
+                            $time1 = date_create($get_actual_punch->actual_time_in);
+                            $time2 = date_create($get_actual_punch->actual_time_out);
+                            $time_diff = date_diff($time1, $time2);
+                            $totalMinutes = ($time_diff->days * 24 * 60) + ($time_diff->h * 60) + $time_diff->i;
+    
+                            $tempHr = intdiv($totalMinutes, 60);
+                            $currentRow->actual_in = $get_actual_punch->actual_time_in;
+                            $currentRow->actual_out = $get_actual_punch->actual_time_out;
+                            $currentRow->total_hrs = $tempHr;
+    
+                            $isValidDate = strtotime(trim($rs->date_from)) > strtotime(trim($currentRow->max_date));
+                            unset($currentRow->max_date);
+    
+                            if($isValidDate){
+                                $_arrData[$ot_date][] = $currentRow;
                             }
                         }
-
-                        $html = '';
-                        $html .= $this->load->view("eforms/overtime/printable/overtime_summary", array('data' => $_arrData), true);
-                        $result['state'] = $_arrData ? true : false;
-                        $result['data'] = $_arrData;
-                        $result['html'] = $html;
-                    } else {
-                        $result['state'] = false;
-                        $result['msg'] = 'No Data Found.';
                     }
+    
+                    $_temp = $this->db->select('station_description')->get_where('gcchris.default_station_location', array('employee_id' => $session['emp_id']))->row();
+                    $empStation = $_temp && $_temp != null ? $_temp->station_description : 'No Current Station';
+                    $signatory = $this->getCurrentUpdatedSignatory($signatoryId, true);
+    
+                    if ($signatory) {
+                        $signatory = $signatory->meta;
+                    }
+    
+                    $html = '';
+                    $html .= $this->load->view("eforms/overtime/printable/overtime_summary", array('data' => $_arrData, 'signatory' => $signatory, 'location' => $empStation), true);
+                    $result['state'] = $_arrData ? true : false;
+                    $result['data'] = $_arrData;
+                    $result['signatory'] = $signatory;
+                    $result['empStation'] = $empStation;
+                    $result['html'] = $html;
                 } else {
                     $result['state'] = false;
-                    $result['msg'] = 'No File Found.';
+                    $result['msg'] = 'No Data Found.';
                 }
             } else {
                 $result['state'] = false;
-                $result['msg'] = 'POST not found.';
+                $result['msg'] = 'No Approved Ids found.';
             }
+        } else {
+            $result['state'] = false;
+            $result['msg'] = 'POST not found.';
         }
 
         return $result;
@@ -2747,13 +2746,8 @@ class Overtime_m extends CI_Model {
                 $result['actual_time_out'] = $lastLog;
             }
     
-            $actualTimeIn = (strtotime($logIn) > strtotime($date_from))
-                ? $logIn
-                : $date_from;
-    
-            $actualTimeOut = (strtotime($logOut) < strtotime($date_to))
-                ? $logOut
-                : $date_to;
+            $actualTimeIn = (strtotime($logIn) > strtotime($date_from)) ? $logIn : $date_from;
+            $actualTimeOut = (strtotime($logOut) < strtotime($date_to)) ? $logOut : $date_to;
     
             if (strtotime($actualTimeOut) <= strtotime($actualTimeIn)) {
                 return null;
@@ -2764,5 +2758,241 @@ class Overtime_m extends CI_Model {
         $result['actual_time_in'] = $actualTimeIn;
         $result['actual_time_out'] = $actualTimeOut;
         return $result;
+    }
+
+    public function get_all_signatory() {
+        $result = array();
+        $empId = $this->core_layout->getCurrentEmployeeId();
+
+        $this->db->select('a.id, a.id as signatory_id, c.code as text, a.company_id, a.meta, b.meta as altered_field, IFNULL(b.id, 0) as tempId, IFNULL(b.emp_id, 0) as emp_id');
+        $this->db->join('gcchris.tblcompanies as c', 'c.id = a.company_id', 'LEFT');
+        $this->db->join('gcceforms.ot_temp_signatory as b', "b.signatory_id = a.id AND b.emp_id = {$empId}", 'LEFT');
+        $this->db->from('gcceforms.ot_signatory as a');
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            foreach ($query->result() as $key => $rs) {
+                $metaField = @unserialize($rs->meta);
+                $alteredField = @unserialize($rs->altered_field);
+
+                if(is_array($metaField) &&  count($metaField) > 0){
+                    foreach ($metaField as $key => $value) {
+                        $metaField[$key]["is_active"] = isset($metaField[$key]["value"]) && $metaField[$key]["value"] ? true: false;
+                    }
+                    $metaField = $metaField;
+                }else{ $metaField = array(); }
+
+                $md5metaFields = md5(serialize($metaField));
+                $md5alteredFields = md5(serialize($alteredField));
+
+                $rs->_meta_field = $md5metaFields;
+                $rs->_altered_field = $md5alteredFields;
+
+                $rs->allow_reset = true;
+                if($md5metaFields == $md5alteredFields){
+                    $rs->allow_reset = false;
+                }else if(is_array($alteredField) && count($alteredField) == 0){
+                    $rs->allow_reset = false;
+                } else if(intval($rs->tempId) == 0){
+                    $rs->allow_reset = false;
+                } else if ($md5metaFields != $md5alteredFields) {
+                    $rs->allow_reset = true;
+                }
+
+                if(is_array($alteredField) && count($alteredField) > 0){
+                    $metaField = $alteredField;
+                }
+
+                $rs->meta = $metaField;
+
+                $result[] = $rs;
+            }
+        }
+
+        return $result;
+    }
+
+    public function update_printable_signatories() {
+        $result = array();
+        $post = $this->input->post();
+        $userId = $this->core_layout->getCurrentEmployeeId();
+
+        if(isset($post) && $post){
+            if(isset($post) && $post){
+                $tempId = (isset($post["id"]) && intval($post["id"]) > 0) ? intval($post["id"]): 0;
+                if(isset($post["value"]) && $post["value"]){
+                    $tempValues = $post["value"];
+                    unset($post["id"], $post["value"]);
+
+                    $temp = $this->db->get_where('gcceforms.ot_signatory', array("id"=>$post["signatory_id"]));
+                    if($temp->num_rows() == 1){
+                        $row = $temp->row();
+                        $metaField = @unserialize($row->meta);
+                        if(is_array($metaField) && count($metaField) > 0){
+                            foreach ($metaField as $key => $value) {
+                                $tempValuex = (object) $value;
+                                $tempMetaField = array();
+                                $tempMetaField["label"] = $tempValuex->label;
+                                $tempMetaField["value"] = $tempValuex->value;
+                                $tempMetaField["is_active"] = true;
+                                if(isset($tempValues[$key]) && $tempValues[$key]){ $tempMetaField["value"] = $tempValues[$key]; }
+                                else{ $tempMetaField["is_active"] = false; }
+                                $metaField[$key] = $tempMetaField;
+                            }
+                        }
+
+                        $newMetaField = serialize($metaField);
+                        $post["meta"] = $newMetaField;
+
+                        if($tempId){
+                            $tempWhere = array();
+                            $tempWhere["id"] = $tempId;
+                            $tempWhere['emp_id'] = $userId;
+                            $post["updated_by"] = $userId;
+                            $post["updated_at"] = date("Y-m-d H:i:s");
+                            $updated = $this->db->update('gcceforms.ot_temp_signatory', $post, $tempWhere);
+                            if($updated){
+                                $updatedSignatory = $this->getCurrentUpdatedSignatory($tempId);
+                                $result["response"] = true;
+                                $result["data"] = $updatedSignatory;
+                            }
+                        }else{
+                            $post['emp_id'] = $userId;
+                            $post["created_by"] = $userId;
+                            $post["created_at"] = date("Y-m-d H:i:s");
+                            $added = $this->db->insert('gcceforms.ot_temp_signatory', $post);
+                            if($added){
+                                $tempId = $this->db->insert_id();
+                                $updatedSignatory = $this->getCurrentUpdatedSignatory($tempId);
+                                $result["response"] = true;
+                                $result['toastr_msg'] = 'Overtime Signatory Successfully updated!';
+                                $result["data"] = $updatedSignatory;
+                            }
+                        }
+                    }else{
+                        $result["response"] = false;
+                        $result["toastr_msg"] = "No signatories found!";
+                    }
+                }else{
+                    $result["response"] = false;
+                    $result["toastr_msg"] = "No signatories left, please leave atleast 1 signatory!";
+                }
+            }else{
+                $result["response"] = false;
+                $result["toastr_msg"] = "No post data found!";
+            }
+        } else {
+            $result["response"] = false;
+            $result["toastr_msg"] = "No post data found!";
+        }
+
+        return $result;
+    }
+
+    function getCurrentUpdatedSignatory($id=null, $is_print = false){
+        $data = array();
+        $empId = $this->core_layout->getCurrentEmployeeId();
+
+        if($id){
+            $this->db->select('a.id, a.id as signatory_id, c.code as text, a.company_id, a.meta, b.meta as altered_field, IFNULL(b.id, 0) as tempId, IFNULL(b.emp_id, 0) as emp_id');
+            $this->db->join('gcchris.tblcompanies as c', 'c.id = a.company_id', 'LEFT');
+            $this->db->join('gcceforms.ot_temp_signatory as b', "b.signatory_id = a.id AND b.emp_id = {$empId}", 'LEFT');
+            $this->db->where($is_print ? 'a.id' : 'b.id', $id);
+            $qtemp = $this->db->get('gcceforms.ot_signatory as a');
+
+            if($qtemp->num_rows() == 1){
+                $tempRow = $qtemp->row();
+                $metaField = @unserialize($tempRow->meta);
+                $alteredField = @unserialize($tempRow->altered_field);
+                if(is_array($metaField) &&  count($metaField) > 0){
+                    foreach ($metaField as $key => $value) {
+                        $metaField[$key]["is_active"] = isset($metaField[$key]["value"]) && $metaField[$key]["value"] ? true: false;
+                    }
+                    $metaField = $metaField;
+                }
+                else{ $metaField = array(); }
+
+                $md5metaFields = md5(serialize($metaField));
+                $md5alteredFields = md5(serialize($alteredField));
+
+                $tempRow->_meta = $md5metaFields;
+                $tempRow->_altered_field = $md5alteredFields;
+
+                $tempRow->allow_reset = true;
+                if($md5metaFields == $md5alteredFields){
+                    $tempRow->allow_reset = false;
+                }else if(is_array($alteredField) && count($alteredField) == 0){
+                    $tempRow->allow_reset = false;
+                }
+
+                if(is_array($alteredField) && count($alteredField) > 0){
+                    $metaField = $alteredField;
+                }
+                $tempRow->meta = $metaField;
+                $data = $tempRow;
+            }
+        }
+        return $data;
+    }
+
+    public function reset_printable_signatories() {
+        $resultset = array();
+        $post = $this->input->post();
+        $userId = $this->core_layout->getCurrentEmployeeId();
+        if(isset($post) && $post){
+            $data = array();
+            $data["meta"] = serialize(array());
+            $data["updated_by"] = $userId;
+            $data["updated_at"] = date("Y-m-d H:i:s");
+            $updated = $this->db->update('gcceforms.ot_temp_signatory', $data, $post);
+            if($updated){
+                $where = array("b.id"=>$post["id"]);
+                $this->db->select('a.id, a.id as signatory_id, c.code as text, a.company_id, a.meta, b.meta as altered_field, IFNULL(b.id, 0) as tempId, IFNULL(b.emp_id, 0) as emp_id');
+                $this->db->join('gcchris.tblcompanies as c', 'c.id = a.company_id', 'LEFT');
+                $this->db->join('gcceforms.ot_temp_signatory as b', "b.signatory_id = a.id AND b.emp_id = {$userId}", 'LEFT');
+                $qTemp = $this->db->get_where("gcceforms.ot_signatory as a", $where);
+                if($qTemp->num_rows() == 1){
+                    $tempRow = $qTemp->row();
+                    $metaField = @unserialize($tempRow->meta);
+                    $alteredField = @unserialize($tempRow->altered_field);
+                    if(is_array($metaField) &&  count($metaField) > 0){
+                        foreach ($metaField as $key => $value) {
+                            $metaField[$key]["is_active"] = isset($metaField[$key]["value"]) && $metaField[$key]["value"] ? true: false;
+                        }
+                        $metaField = $metaField;
+                    }
+                    else{ $metaField = array(); }
+
+                    $md5metaFields = md5(serialize($metaField));
+                    $md5alteredFields = md5(serialize($alteredField));
+
+                    $tempRow->_meta = $md5metaFields;
+                    $tempRow->_altered_field = $md5alteredFields;
+
+                    $tempRow->allow_reset = true;
+                    if($md5metaFields == $md5alteredFields){
+                        $tempRow->allow_reset = false;
+                    }else if(is_array($alteredField) && count($alteredField) == 0){
+                        $tempRow->allow_reset = false;
+                    }
+
+                    if(is_array($alteredField) && count($alteredField) > 0){
+                        $metaField = $alteredField;
+                    }
+                    $tempRow->meta = $metaField;
+
+                    $resultset["response"] = true;
+                    $resultset["data"] = $tempRow;
+                    $resultset["count"] = count($metaField);
+                }else{
+                    $resultset["response"] = false;
+                }
+            }else{
+                $resultset["response"] = false;
+            }
+        }else{
+            $resultset["response"] = false;
+        }
+        return $resultset;
     }
 }

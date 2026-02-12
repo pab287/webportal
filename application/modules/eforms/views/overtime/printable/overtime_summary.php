@@ -71,6 +71,23 @@
                 justify-content: space-around;
             }
 
+            .row {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: start;
+                align-items: center;
+                margin-top: 120px;
+            }
+
+            .col-md-3 {
+                flex: 0 0 25%;
+                max-width: 25%;
+            }
+
+            .mb-2 {
+                margin-bottom: 0.5rem !important;
+            }
+
             @media print {
                 @page {
                     size: 'landscape';
@@ -124,9 +141,15 @@
     <div class="container">
         <?php foreach($data as $k => $row): ?>
             <div class="content">
-                <h2>DAILY OVERTIME SUMMARY</h2>
-                <div class="header-info">
-                    GCCI-FM-HRM-032 &nbsp;&nbsp; Rev 4 &nbsp;&nbsp; 08/07/2023
+                <div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center">
+                    <div class="location-row" style="flex: 0 0 10%; max-width: 10%;">
+                        <strong><?=$location; ?></strong> 
+                    </div>
+                    <div class="header-info" style="flex: 0 0 81%; max-width: 81%;">
+                        <h2>DAILY OVERTIME SUMMARY</h2>
+                        GCCI-FM-HRM-032 &nbsp;&nbsp; Rev 4 &nbsp;&nbsp; 08/07/2023
+                    </div>
+                    <div class="location-row" style="flex: 0 0 9%; max-width: 9%;"></div>
                 </div>
         
                 <div class="date-row">
@@ -188,6 +211,20 @@
             <?php endif; ?>
         <?php endforeach; ?>
 
+        <?php if (count($signatory) > 0): ?>
+            <div class="row">
+                <?php foreach($signatory as $key => $rs): ?>
+                    <?php if ($rs['is_active']): ?>
+                        <div class="col-md-3 mb-2">
+                            <p style="font-weight: bold; margin-left: 10px;"><?=$rs['label'] ?></p>
+                            <p class="signatory-value" style="font-weight: 600; margin-left: 10px; margin-right: 50px; margin-top: 50px; padding-top: 10px; border-top: 1px solid rgb(0, 0, 0);">
+                                <?=$rs['value'] ?>
+                            </p>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach ;?>
+            </div>
+        <?php endif; ?>
     </div>
 
     </body>
