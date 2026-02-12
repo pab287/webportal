@@ -1382,9 +1382,9 @@ class Payroll_m extends CI_Model{
                                     $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($ts->am_time_rendered) > 0 || intval($ts->pm_time_rendered) > 0);
 
                                     if($hasRenderedShift && $ts->holiday_amount > 0){
-                                        /*** if(floatval($ts->total_time_rendered) > 0 && $excludePaidHolidayMinutes >= floatval($ts->total_time_rendered)){
+                                        if(floatval($ts->total_time_rendered) > 0 && $excludePaidHolidayMinutes >= floatval($ts->total_time_rendered)){
                                             $excludePaidHolidayMinutes -= floatval($ts->total_time_rendered);
-                                        } ***/
+                                        }
                                         $basic_rate += $ts->holiday_amount;
                                         $basic_rate_total += $ts->holiday_amount;
                                     }
