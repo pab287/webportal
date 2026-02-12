@@ -532,8 +532,8 @@
                             </div>
                         </div>
                     <?php endif; ?>
-                    <?php $overall_total_loans = floatval($_tempDeductions) + floatval($item->total_loans_interest) + floatval($temp_totalLoan) + floatval($_temp_total_others); ?>
-                    <?php if(floatval($overall_total_loans) > 0): ?>
+                    <?php $overall_temp_loans = floatval($item->total_loans_interest) + floatval($temp_totalLoan) + floatval($_temp_total_others); ?>
+                    <?php if(floatval($_tempDeductions) > 0 && floatval($overall_temp_loans) > 0): ?>
                         <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--margin-bottom-5"></div>
                         <div class="row m--margin-top-5 m--margin-bottom-5">
                             <div class="col-md-8 printable-width-8">

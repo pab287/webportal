@@ -251,6 +251,9 @@
                         <span class="m--font-boldest" style="margin-right: 8px">( {{row.deductions}} )</span>
                     </div>
                 </div>
+                <template v-if="parseFloat(row.total_loans) == 0 || row.loans.length == 0">
+                    <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+                </template>
             </template>
         </template>
         <template v-if="parseFloat(row.total_loans) > 0 || row.loans.length > 0">
