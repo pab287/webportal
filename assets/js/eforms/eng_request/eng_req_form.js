@@ -41,13 +41,17 @@ $(document).ready(function () {
             { data: "project_name" },
             { data: "project_location" },
             { data: "reply_needed" },
-            { data: "created_at", orderable: false, searchable: false,
-
-             },
+            { data: "created_at", orderable: false, searchable: false, },
             { data: "created_by", orderable: false, searchable: false, },
             { data: null, orderable: false, searchable: false,
                 render: function (data, type, row) {
-                    return `<button class="btn btn-sm btn-primary view-btn" data-id="${row.id}">View</button>`;
+                    return `
+                        <a href="${baseUrl('eforms/engineering_request_forms/edit_rfi_request/')}${row.id}" 
+                           target="_blank" 
+                           class="btn btn-sm btn-primary">
+                           View
+                        </a>
+                    `;
                 }
             }
         ],

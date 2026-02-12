@@ -152,54 +152,6 @@
                         </div>
                     </div>
                     <div class="m-separator m-separator--dashed m-separator--md"></div>
-                    <!-- <div class="row">
-                        <div class="col-md-4">
-                            <div class="card h-100 ">
-                                <div class="card-body bg-secondary">
-                                    <div class="form-group mb-0">
-                                        <label for="requested_by" class="form-control-label required">
-                                            Requested By
-                                        </label>
-                                        <input type="text" id="requested_by" name="requested_by" class="form-control bg-light color-white" autocomplete="off" data-validation="required">
-                                        <small class="text-muted">Project-In-Charge</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <div class="form-group mb-0">
-                                        <label for="checked_by" class="form-control-label required">
-                                            Checked By
-                                        </label>
-                                        <input type="text" id="checked_by" name="checked_by" class="form-control" autocomplete="off" data-validation="required">
-                                        <small class="text-muted">Planning Head</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <div class="form-group mb-0">
-                                        <label for="noted_by" class="form-control-label required">
-                                            Noted By
-                                        </label>
-                                        <input type="text"
-                                            id="noted_by"
-                                            name="noted_by"
-                                            class="form-control"
-                                            autocomplete="off"
-                                            data-validation="required"
-                                        >
-                                        <small class="text-muted">Operations Manager</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="m-separator m-separator--dashed m-separator--md"></div> -->
                     <div class="row">
                         <div class="col-6">
                             <div class="form-group">

@@ -23,6 +23,16 @@
             $this->load->view('core/templates/footer');
         }
 
+        public function edit_rfi_request($id){
+            $data = array();
+            $this->core_layout->setPageTitle("Request For Information");
+            // $this->core_layout->setPrivilegeName("eforms_edit_rfi_request");
+            $this->core_layout->addJs("js/eforms/eng_request/edit_rfi_request.js", true, $data);
+            $this->load->view('core/templates/header');
+            $this->load->view('eforms/engineering_request_forms/edit_rfi_request');
+            $this->load->view('core/templates/footer');
+        }
+
         public function projects(){
             $data = array();
             $data['employee'] = $this->eng_req->select2Employee();
