@@ -38,6 +38,7 @@ class Events extends MX_Controller {
         }
         $this->core_layout->setPageTitle("EVENTS - Event Calendar");
         $data = array();
+        $data["company"] = $this->em->select2CompanyData();
         $data['event_details'] = $this->em->getEventDetails($id);
         $data['participants'] = $this->em->getEventParticipants($id);
         $data['employees'] = $this->em->getEmployeeSelection($id);
@@ -229,6 +230,11 @@ class Events extends MX_Controller {
 
     public function archive_event_settings(){
         $data = $this->em->archiveEventSettings();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function update_budget(){
+        $data = $this->em->updateBudget();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 

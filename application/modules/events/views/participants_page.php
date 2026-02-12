@@ -83,7 +83,7 @@
                                         <i class="la la-calendar"></i>
                                     </span>
                                     <h3 class="m-portlet__head-text">
-                                        Event Details
+                                        TRAINING DETAILS
                                     </h3>
                                 </div>
                             </div>
@@ -180,7 +180,7 @@
                                 <ul class="nav nav-tabs m-tabs m-tabs-line m-tabs-line--left m-tabs-line--primary" role="tablist">
                                     <li class="nav-item m-tabs__item">
                                         <a class="nav-link m-tabs__link active" data-toggle="tab" href="#participantTab" role="tab">
-                                            Participants
+                                            Trainees
                                         </a>
                                     </li>
                                     <li class="nav-item m-tabs__item">
@@ -193,11 +193,11 @@
                                             Attachments
                                         </a>
                                     </li>
-                                    <!-- <li class="nav-item m-tabs__item">
+                                    <li class="nav-item m-tabs__item">
                                         <a class="nav-link m-tabs__link" data-toggle="tab" href="#expenseTab" role="tab">
-                                            Expenses
+                                            BUDGET
                                         </a>
-                                    </li> -->
+                                    </li>
                                 </ul>
                             </div>
                         </div>
@@ -207,7 +207,7 @@
                                     <div class="row">
                                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                                             <button type="button" v-if="!eventAlreadyHappened" class="btn m-btn m-btn--sm btn-success mb-2 btnNew" data-toggle="modal" data-target="#addNewParticipant">
-                                                ADD PARTICIPANT
+                                                ADD TRAINEES
                                             </button>
                                         </div>
                                         <div class="col-12">
@@ -443,9 +443,59 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- <div  class="tab-pane" id="expenseTab">
-                                    EXPENSES AND BUDGET HERE
-                                </div> -->
+                                <div  class="tab-pane" id="expenseTab">
+                                    <!-- <div class="row">
+                                        <div class="col-12">
+                                            <div class="d-flex flex-column text-center text-uppercase">
+                                                <h3 class="m-widget1__title m--font-boldest">Budget</h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="m-separator m-separator--dashed"></div> -->
+                                    <div class="row">
+                                        <div class="col-8">
+                                            <form id="budget_form" @keydown.enter.prevent>
+                                                <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <div class="form-group">
+                                                            <label for="company_source" class="form-control-label">Source of Funds: </label>
+                                                            <select name="company_source" id="company_source" data-validation="required">
+                                                                <option></option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="m-separator m-separator--solid"></div>
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <label for="budget" class="form-control-label">Allocated budget: </label>
+                                                            <input type="number" name="budget" id="budget" class="form-control m-input" step="any" data-validation="required" placeholder="Enter allocated budget" v-model="eventsData.budget">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <label for="expense" class="form-control-label">Liquidated budget: </label>
+                                                            <input type="number" name="expense" id="expense" class="form-control m-input" step="any" data-validation="required" placeholder="Enter liquidated budget" v-model="eventsData.expense">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="m-separator m-separator--solid"></div>
+                                                <div class="form-group">
+                                                    <label for="variance" class="form-control-label">Variance: </label>
+                                                    <input type="text" name="variance" id="variance" class="form-control m-input" :class="varianceClass" :value="varianceDisplay"  readonly>
+                                                </div>
+                                                <template v-if="!isUpdateBudget">
+                                                    <div class="m-separator m-separator--solid"></div>
+                                                    <div class="form-group" type="submit" id="submit_budget">
+                                                        <button class="btn btn-success text center w-100">Update Budget</button>
+                                                    </div>
+                                                </template>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -924,7 +974,7 @@
                                             <tr>
                                                 <th hidden>ID</th>
                                                 <th>#</th>
-                                                <th>Participant</th>
+                                                <th>Trainee</th>
                                                 <th>Company</th>
                                                 <th>Contact</th>
                                                 <th>Attendance</th>

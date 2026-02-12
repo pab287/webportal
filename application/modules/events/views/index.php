@@ -47,7 +47,7 @@
                         <i class="flaticon-calendar-2"></i>
                     </span>
                     <h3 class="m-portlet__head-text">
-                        Company Events
+                        Training Schedule
                     </h3>
                 </div>
             </div>
@@ -55,13 +55,13 @@
                 <ul class="nav nav-pills nav-pills--brand m-nav-pills--align-right m-nav-pills--btn-pill m-nav-pills--btn-sm" id="calendar_of_holidays_tab"
                     role="tablist">
                     <li class="nav-item m-tabs__item">
-                        <a class="nav-link m-tabs__link active" data-toggle="tab"
+                        <a class="nav-link m-tabs__link" data-toggle="tab"
                            href="#list-view-tab" role="tab">
                             TABULAR VIEW
                         </a>
                     </li>
                     <li class="nav-item m-tabs__item">
-                        <a class="nav-link m-tabs__link" data-toggle="tab"
+                        <a class="nav-link m-tabs__link active" data-toggle="tab"
                            href="#calender-view-tab" role="tab">
                             CALENDAR VIEW
                         </a>
@@ -82,12 +82,12 @@
         </div>
         <div class="m-portlet__body">
             <div class="tab-content">
-                <div class="tab-pane active" id="list-view-tab" role="tabpanel">
+                <div class="tab-pane" id="list-view-tab" role="tabpanel">
                     <div class="row m--margin-top-20 m--margin-bottom-30">
                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                             <button type="button" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#addNewEvent">
                                 <i class="la la-plus"></i>
-                                ADD EVENT
+                                Add training
                             </button>
                         </div>
                         <div class="col-xl-2 col-lg-2 col-md-2 col-sm-12 mb-2">
@@ -127,7 +127,7 @@
                         </table>
                     </div>
                 </div>
-                <div class="tab-pane" id="calender-view-tab" role="tabpanel">
+                <div class="tab-pane active" id="calender-view-tab" role="tabpanel">
                     <div id="m_calendar" class="fc fc-unthemed fc-ltr"></div>
                 </div>
             </div>
@@ -241,7 +241,7 @@
                                     </div>
                                 </template>
                                 <button type="button" class="btn btn-success mt-2 w-100 btnSave" @click="addNewSpeaker()">
-                                    <i class="la la-plus"></i> Add Speaker
+                                    <i class="la la-plus"></i> Add Resource Person
                                 </button>
                             </div>
                         </div>
@@ -260,7 +260,7 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">View Company Event</h5>
+                <h5 class="modal-title">View Training Schedule</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -364,7 +364,7 @@
                                     </div>
                                 </template>
                                 <button type="button" class="btn btn-success mt-2 w-100 btnSave" v-if="!disabled" @click="addNewSpeaker()">
-                                    <i class="la la-plus"></i> Add Speaker
+                                    <i class="la la-plus"></i> Add Resource Person
                                 </button>
                             </div>
                         </div>

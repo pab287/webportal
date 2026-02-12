@@ -6,6 +6,9 @@ let attachments = null;
 let schedule = null;
 let selectedSchedule = null;
 let modalTraining = null;
+
+console.log(_tempContentData.company);
+
 const maxFileSize = 50 * 1024 * 1024; // 50MB
 const allowedTypes = [
     'application/pdf',
@@ -89,8 +92,10 @@ let eventVue = new Vue({
         attendance:{},
         employee_attendance:{},
         emp_attendance_selected:{},
+        originalBudgetData: {}
     },
     mounted: function () {
+        const vm = this;
         this.eventsData = JSON.parse(JSON.stringify(eventsDetails));
         $('#employee-select').prop('disabled', false);
         $('#new_event_form input[type="text"], #new_event_form input[type="email"]')
@@ -103,6 +108,21 @@ let eventVue = new Vue({
             startDate: new Date(eventsDetails.event_from),
             endDate: new Date(eventsDetails.event_to),
         });
+
+        $('#company_source').select2({
+            placeholder: "Select Source of Fund",
+            allowClear: false,
+            width: '100%',
+            data: _tempContentData.company
+        })
+        .on('change', function () {
+            vm.eventsData.company_source = $(this).val();
+        });
+
+        $('#company_source').val(this.eventsData.company_source).trigger('change');
+
+        this.originalBudgetData = JSON.parse(JSON.stringify(this.eventsData));
+
     },
     computed: {
         eventStatus() {
@@ -121,7 +141,35 @@ let eventVue = new Vue({
             let declined = list.filter(p => p.status === "declined").length;
             let pending = list.filter(p => p.status === "pending").length;
             return { invited, confirmed, declined, pending };
+        },
+        variance() {
+            const budget = parseFloat(this.eventsData.budget) || 0;
+            const expense = parseFloat(this.eventsData.expense) || 0;
+            return budget - expense;
+        },
+        varianceRemark() {
+            if (this.variance > 0) return "Excess";
+            if (this.variance < 0) return "Deficit";
+            return "Balanced";
+        },
+    
+        varianceClass() {
+            if (this.variance > 0) return "border-success";
+            if (this.variance < 0) return "border-danger";
+            return "";
+        },
+    
+        varianceDisplay() {
+            return `${this.variance.toLocaleString()} (${this.varianceRemark})`;
+        },
+        isUpdateBudget() {
+            return (
+                this.eventsData.company_source == this.originalBudgetData.company_source &&
+                parseFloat(this.eventsData.budget || 0) == parseFloat(this.originalBudgetData.budget || 0) &&
+                parseFloat(this.eventsData.expense || 0) == parseFloat(this.originalBudgetData.expense || 0)
+            );
         }
+
     },
     methods:{
         eventsStatus(date_from, date_to) {
@@ -316,8 +364,8 @@ let eventVue = new Vue({
         assignParticipant(schedule_id, participant_id) {
             self = this;
             Swal.fire({
-                title: "Assign this participant?",
-                text: "This will assign the participant to the schedule.",
+                title: "Assign this trainee?",
+                text: "This will assign the trainee to the schedule.",
                 icon: "question",
                 showCancelButton: true,
                 confirmButtonText: "Yes, assign",
@@ -358,8 +406,8 @@ let eventVue = new Vue({
         unassignParticipant(schedule_id, participant_id) {
             self = this;
             Swal.fire({
-                title: "Unassign this participant?",
-                text: "This will remove the participant from the schedule.",
+                title: "Unassign this trainee?",
+                text: "This will remove the trainee from the schedule.",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonText: "Yes, unassign",
@@ -651,7 +699,7 @@ let eventVue = new Vue({
             }
             Swal.fire({
                 title: "Are you sure?",
-                text: "This will remove the certificate record for this participant.",
+                text: "This will remove the certificate record for this trainee.",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonText: "Yes, remove",
@@ -1044,7 +1092,7 @@ function archiveParticipant(id) {
     let fullname = rowData.firstname + ' ' + rowData.middlename + ' ' + rowData.lastname;
     Swal.fire({
         title: 'Are you sure?',
-        text: "This participant will be archived.",
+        text: "This trainee will be archived.",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
@@ -1513,4 +1561,29 @@ $('#edit_schedule_start').on('change', function () {
 
 $('#edit_schedule_end').on('change', function () {
     syncScheduleTimeEdit('end');
+});
+
+$.validate({
+    form: "#budget_form",
+    lang: "en",
+    onSuccess: function (form) {
+            let formData = $(form[0]).serialize();
+            formData += "&event_id=" + encodeURIComponent(eventsDetails.id);
+            $.ajax({
+                url: baseUrl("events/update_budget"),
+                type: "POST",
+                dataType: "JSON",
+                data: formData,
+                global: false,
+                success: function (response) {
+                    if (response.success) {
+                        toastr.success(response.message, 'Success', 5000);
+                        eventVue.originalBudgetData = JSON.parse(JSON.stringify(eventVue.eventsData));
+                    } else {
+                        toastr.error(response.message, 'Error', 5000);
+                    }
+                }
+            });
+        return false;
+    }
 });

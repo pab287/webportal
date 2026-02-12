@@ -290,7 +290,7 @@ function itemDatatableActions(id, status, from, to) {
         <a 
             href="${baseUrl('events/add_participants/') + id}" 
             class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnNew" 
-            data-toggle="m-tooltip" data-placement="bottom" title="Manage Event" 
+            data-toggle="m-tooltip" data-placement="bottom" title="Manage Training" 
             data-skin="dark">
             <i class="la la-user"></i>
         </a>
@@ -585,37 +585,36 @@ const CalendarBasic = function () {
                     eventRender: function(event, element) {
                         element.find('.fc-time').remove();
                         const speakers = event.speakers || [];
-                        const speakerNames = speakers.map(speaker => speaker.speaker_name).join(', ');
+                        let title = event.title.length > 20 ? event.title.slice(0, 20) + '...' : event.title;
                         const customContent = `
                             <div class="m-widget4__item-wrapper">
                                 <div class="m-widget4__item-title m--font-boldest mb-1" style="color: black; font-size: 1.2em;">
-                                    ${event.title}
+                                    ${title}
                                 </div>
-                                <div class="m-widget4__item-desc mb-1" style="color: black; font-size: 1em;">
-                                    <span class=" m--margin-right-5">
-                                        <i class="la la-map-marker"></i> ${event.venue}
-                                    </span>
-                                   
-                                </div>
-                                ${speakers.length > 0 ? `
-                                <div class="m-widget4__item-desc mb-1" style="color: black; font-size: 1em;">
-                                    <span class="m--margin-right-5">
-                                        <i class="la la-user"></i> ${speakerNames}
-                                    </span>
-                                   
-                                </div>` : ''}
                             </div>
                         `;
                         
                         element.find('.fc-content').html(customContent);
-                        let tooltipText = `${event.description}\nVenue: ${event.venue}`;
+                        const totalParticipants = event.total_participants || 0;
+
+                        let tooltipText = '';
+
                         if (speakers.length > 0) {
-                            tooltipText += '\nSpeakers:\n';
+                            tooltipText += '\nResource Person(s):\n';
                             speakers.forEach(speaker => {
-                                tooltipText += `• ${speaker.speaker_name} - ${speaker.position}, ${speaker.company}\n`;
+                                tooltipText += `• ${speaker.speaker_name}`;
+                                // if (speaker.position) tooltipText += ` - ${speaker.position}`;
+                                // if (speaker.company) tooltipText += `, ${speaker.company}`;
+                                tooltipText += '\n';
                             });
                         }
-                        element.attr('title', tooltipText);
+
+                        tooltipText += `Venue: ${event.venue}\n`;
+                        tooltipText += `Number of Trainees: ${totalParticipants}\n`;
+                        
+
+                        
+                        element.attr('title', tooltipText.trim());
                         element.addClass('m-portlet__body m--padding-5');
                         element.css({
                             'border-radius': '4px',
@@ -786,3 +785,5 @@ $('#training_category').select2({
     width: '100%',
     data: _tempContentData.options.training_category
 });
+
+CalendarBasic.init();

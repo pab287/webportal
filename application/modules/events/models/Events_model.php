@@ -172,18 +172,20 @@ class Events_model extends MX_Controller {
             e.training_type,
             e.init_type,
             e.training_category,
+            COUNT(DISTINCT p.id) as total_participants,
             GROUP_CONCAT(
-                JSON_OBJECT(
+                DISTINCT JSON_OBJECT(
                     'id', s.id,
                     'speaker_name', s.speaker_name,
                     'position', s.position,
                     'company', s.company
                 )
-            ) as speakers_json
+            ) as speakers_json,
         ");
         $this->db->from($this->eventsCalendarTable . ' e');
         $this->db->join($this->eventsSpeakersTable . ' s', 'e.id = s.event_id', 'left');
         $this->db->join($this->eventsSettingsTable . ' a', 'e.training_category = a.id', 'left');
+        $this->db->join($this->eventsParticipantsTable . ' p', 'e.id = p.event_id AND p.status = "confirmed"', 'left');
         $this->db->where("e.is_archive", 0);
         $this->db->group_by('e.id');
         $events = $this->db->get()->result();
@@ -202,7 +204,7 @@ class Events_model extends MX_Controller {
 
     public function getEventDetails($id) {
         $this->db->select("
-            a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array, a.events_by, c.name as training_type, d.name as init_type, e.name as training_category,
+            a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array, a.events_by, c.name as training_type, d.name as init_type, e.name as training_category, a.budget, a.expense, a.company_source, 
             GROUP_CONCAT(b.id SEPARATOR '||') as speaker_ids,
             GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
             GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
@@ -1373,6 +1375,22 @@ class Events_model extends MX_Controller {
     
         $message = ($action == 1) ? 'Failed to archive event settings.' : 'Failed to restore event settings.';
         return ['success' => false, 'message' => $message];
+    }
+
+    public function updateBudget(){
+        $post = $this->input->post();
+        $id = $post['event_id'];
+        unset($post['csrf_token'], $post['event_id'], $post['variance']);
+        $this->db->where('id', $id);
+        $update = $this->db->update($this->eventsCalendarTable, $post);
+        if($update){
+            $response['success'] = true;
+            $response['message'] = "Budget has been updated.";
+        }else{
+            $response['success'] = false;
+            $response['message'] = "Failed to update budget.";
+        }
+        return $response;
     }
 
 }
