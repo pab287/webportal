@@ -179,18 +179,13 @@
                             <div class="m-portlet__head-tools">
                                 <ul class="nav nav-tabs m-tabs m-tabs-line m-tabs-line--left m-tabs-line--primary" role="tablist">
                                     <li class="nav-item m-tabs__item">
-                                        <a class="nav-link m-tabs__link active" data-toggle="tab" href="#participantTab" role="tab">
-                                            Trainees
-                                        </a>
-                                    </li>
-                                    <li class="nav-item m-tabs__item">
-                                        <a class="nav-link m-tabs__link" data-toggle="tab" href="#scheduleTab" role="tab">
+                                        <a class="nav-link m-tabs__link active" data-toggle="tab" href="#scheduleTab" role="tab">
                                             Schedule
                                         </a>
                                     </li>
                                     <li class="nav-item m-tabs__item">
-                                        <a class="nav-link m-tabs__link" data-toggle="tab" href="#attachmentTab" role="tab">
-                                            Attachments
+                                        <a class="nav-link m-tabs__link" data-toggle="tab" href="#participantTab" role="tab">
+                                            Trainees
                                         </a>
                                     </li>
                                     <li class="nav-item m-tabs__item">
@@ -198,12 +193,17 @@
                                             BUDGET
                                         </a>
                                     </li>
+                                    <li class="nav-item m-tabs__item">
+                                        <a class="nav-link m-tabs__link" data-toggle="tab" href="#attachmentTab" role="tab">
+                                            Attachments
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
                         <div class="m-portlet__body">
                             <div class="tab-content">
-                                <div class="tab-pane active" id="participantTab">
+                                <div class="tab-pane" id="participantTab">
                                     <div class="row">
                                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                                             <button type="button" v-if="!eventAlreadyHappened" class="btn m-btn m-btn--sm btn-success mb-2 btnNew" data-toggle="modal" data-target="#addNewParticipant">
@@ -231,7 +231,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="tab-pane" id="scheduleTab">
+                                <div class="tab-pane active" id="scheduleTab">
                                     <div class="m-portlet m-portlet--collapsed" data-portlet="true" id="m_portlet_schedule">
                                         <div class="m-portlet__head" style="height: 3rem;">
                                             <div class="m-portlet__head-caption">
@@ -429,7 +429,7 @@
                                                                         <span class="m-widget4__text" @click="openFile(item.filename,item.type)">{{item.filename}}</span>
                                                                     </div>
                                                                     <div class="m-widget2__actions">
-                                                                        <button type="button" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView" v-on:click="removeAttachment(item.id,item.type,item.filename)">
+                                                                        <button type="button" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView" v-on:click="removeAttachment(item.id,item.name,item.filename)">
                                                                             <i class="m-nav__link-icon flaticon-circle"></i>
                                                                         </button>
                                                                     </div>
@@ -508,7 +508,7 @@
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">ADD NEW PARTICIPANT</h5>
+                    <h5 class="modal-title">ADD NEW TRAINEE</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -536,7 +536,7 @@
                                 </div>
                             </div>
                             <div class="col-md-12 mb-3">
-                                <label class="form-control-label required">Participant Name</label>
+                                <label class="form-control-label required">Trainee Details</label>
                                 <div class="row">
                                     <div class="col-sm-12 col-md-3 mb-3">
                                         <input name="first_name" type="text" class="form-control m-input" placeholder="First Name" v-model="participantData.firstname" data-validation="required" maxlength="50">
@@ -597,7 +597,7 @@
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">EDIT PARTICIPANT</h5>
+                    <h5 class="modal-title">EDIT TRAINEE DETAILS</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -617,7 +617,7 @@
                         </div>
                         <div class="row">
                             <div class="col-md-12 mb-3">
-                                <label class="form-control-label required">Participant Name</label>
+                                <label class="form-control-label required">Trainee Details</label>
                                 <div class="row">
                                     <div class="col-sm-12 col-md-3 mb-3">
                                         <input name="first_name" type="text" class="form-control m-input" placeholder="First Name" data-validation="required" v-model="participantDataSelected.firstname" maxlength="50" :disabled="participantDataSelected.is_employee == 1">

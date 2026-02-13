@@ -38,7 +38,7 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
                 render: function(data, type, row) {
                     return `
                         <div>
-                            <div class="fw-bold">${row.event_title}</div>
+                            <div class="fw-bold"><strong>${row.event_title}</strong></div>
                             <div class="small text-muted">BY: ${row.events_by}</div>
                         </div>
                     `;
@@ -78,8 +78,8 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
             
                     return `
                         <div>
-                            <strong>${venue}</strong><br> 
-                            <small>${schedule}</small><br>
+                            ${venue}<br/> 
+                            <small>${schedule}</small><br/>
                             ${statusTag}
                         </div>`;
                 }
@@ -93,7 +93,7 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
         
                     return row.speakers.map(function(s) {
                         return `<div>
-                            <strong>${s.speaker_name}</strong> - ${s.position}<br>
+                            ${s.speaker_name} - ${s.position}<br>
                             <small>${s.company}</small>
                         </div>`;
                     }).join(""); // separator between speakers
@@ -204,6 +204,12 @@ let eventVue = new Vue({
                 selectedDepartments = data.map(item => item.text); 
             });
 
+            $('#company_source').select2({
+                placeholder: "Select an option",
+                allowClear: false,
+                width: '100%',
+                data: _tempContentData.company
+            });
         }
     },
 });
@@ -276,14 +282,14 @@ function itemDatatableActions(id, status, from, to) {
             onclick="onEditEvent(${id})" 
             data-toggle="m-tooltip" data-placement="bottom" 
             data-skin="dark" 
-            title="View Event">
+            title="View Training">
             <i class="la la-eye"></i>
         </a>
         <button 
             type="button" 
             class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
             onclick="deleteArchive(${id})" 
-            data-toggle="m-tooltip" data-placement="bottom" title="Archive Event" 
+            data-toggle="m-tooltip" data-placement="bottom" title="Archive Training" 
             data-skin="dark">
             <i class="la la-file-archive-o"></i>
         </button>
@@ -408,6 +414,17 @@ let editEventVue = new Vue({
                 select2Category = selectedId;
             })
 
+            $('#edit_company_source').select2({
+                placeholder: "Select an option",
+                dropdownParent: $('#edit_event_form'),
+                allowClear: false,
+                width: '100%',
+                data: _tempContentData.company
+            }).on('change', function () {
+                let selectedId = $(this).val();
+                editEventVue.eventsData.company_source = selectedId;
+            });
+
         }
     },
 });
@@ -424,6 +441,7 @@ function onEditEvent(id) {
     $("#edit_training_type").val(rowData.training_type).trigger('change');
     // $("#edit_init_type").val(rowData.init_type).trigger('change');
     $("#edit_training_category").val(rowData.training_category).trigger('change');
+    $("#edit_company_source").val(rowData.company_source).trigger('change');
     $("#edit-events-modal").modal("show");
 }
 
@@ -456,6 +474,7 @@ $.validate({
                     $("#edit_training_type").val(null).trigger('change');
                     // $("#edit_init_type").val(null).trigger('change');
                     $("#edit_training_category").val(null).trigger('change');
+                    $("#edit_company_source").val(null).trigger('change');
                     selectedCompaniesEdit = null;
                     selectedDepartmentsEdit = null;
                     $("#edit-events-modal").modal('hide');
@@ -488,6 +507,7 @@ function normalize(obj) {
 function checkChanges(newData, oldData) {
     const normNew = normalize(newData);
     const normOld = normalize(oldData);
+    console.log(normNew, normOld);
     return JSON.stringify(normNew) !== JSON.stringify(normOld);
 }
 
@@ -602,14 +622,14 @@ const CalendarBasic = function () {
                         if (speakers.length > 0) {
                             tooltipText += '\nResource Person(s):\n';
                             speakers.forEach(speaker => {
-                                tooltipText += `• ${speaker.speaker_name}`;
+                                tooltipText += `• ${speaker.speaker_name.toUpperCase()}`;
                                 // if (speaker.position) tooltipText += ` - ${speaker.position}`;
                                 // if (speaker.company) tooltipText += `, ${speaker.company}`;
                                 tooltipText += '\n';
                             });
                         }
 
-                        tooltipText += `Venue: ${event.venue}\n`;
+                        tooltipText += `Venue: ${event.venue.toUpperCase()}\n`;
                         tooltipText += `Number of Trainees: ${totalParticipants}\n`;
                         
                         let budget = parseFloat(event.budget) || 0;
@@ -658,6 +678,8 @@ function openEditHolidayModal(event) {
     const data = {
         id: event.id,
         events_by: event.events_by,
+        company_array: event.company_array ? event.company_array : [],
+        department_array: event.department_array ? event.department_array : [],
         company_ids: event.company_ids,
         department_ids: event.department_ids,
         event_title: event.title,
@@ -668,17 +690,22 @@ function openEditHolidayModal(event) {
         speakers: event.speakers || [],
         training_type: event.training_type || null,
         init_type: event.init_type || null,
-        training_category: event.training_category || null
+        training_category: event.training_category || null,
+        budget: event.budget || null,
+        company_source: event.company_source || null
     };
 
     editEventVue.eventsData = JSON.parse(JSON.stringify(data));
+    selectedEventData = JSON.parse(JSON.stringify(data));
+
     $("#company_edit").val(data.company_ids).trigger('change');
     $("#department_edit").val(data.department_ids).trigger('change');
     $("#edit_training_type").val(data.training_type).trigger('change');
     // $("#edit_init_type").val(data.init_type).trigger('change');
     $("#edit_training_category").val(data.training_category).trigger('change');
+    $("#edit_company_source").val(data.company_source).trigger('change');
     $("#edit-events-modal").modal("show");
-    $("#btnEdit").hide();
+    // $("#btnEdit").hide();
 }
  
 function confirmParticipant(id) {

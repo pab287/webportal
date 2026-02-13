@@ -11,8 +11,10 @@ class Events extends MX_Controller {
 
     public function index() {
         $data = array();
-        $this->core_layout->setPageTitle("EVENTS - Event Calendar");
+        $this->core_layout->setPageTitle("Training - Training Calendar");
         $this->core_layout->setPrivilegeName("company_events");
+        $this->core_layout->setHeaderTitle("schedule");
+        $this->core_layout->setCrumbTitle("training");
         $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
         $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
         $this->core_layout->addJs("vendors/custom/fullcalendar/fullcalendar.bundle.js", true);
@@ -44,6 +46,7 @@ class Events extends MX_Controller {
         $data['employees'] = $this->em->getEmployeeSelection($id);
         $data['attachments'] = $this->em->getEventAttachments($id);
         $data['schedule'] = $this->em->getEventSchedule($id);
+        $data['options'] = $this->em->getEventsOptions();
         $this->core_layout->addCss("css/buttons.dataTables.min.css", true);
         $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");

@@ -45,7 +45,7 @@ class Events_model extends MX_Controller {
 
     private function getEventsData($limit, $offset, $sortBy, $sortOrder, $search , $year,$is_archived){
         $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to","b.speaker_name","b.position","b.company","a.company_array","a.department_array","a.events_by");
-        $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array, a.events_by, a.training_type, a.init_type, a.training_category, 
+        $this->db->select("a.budget, a.company_source, a.expense, a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array, a.events_by, a.training_type, a.init_type, a.training_category, 
             GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
             GROUP_CONCAT(b.id SEPARATOR '||') as speaker_id,
             GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
@@ -173,6 +173,7 @@ class Events_model extends MX_Controller {
             e.init_type,
             e.training_category,
             e.budget,
+            e.company_source,
             COUNT(DISTINCT p.id) as total_participants,
             GROUP_CONCAT(
                 DISTINCT JSON_OBJECT(
@@ -375,6 +376,8 @@ class Events_model extends MX_Controller {
             "events_by"         => $post['events_by'] ?? null,
             "training_type"     => $post['training_type'] ?? null,
             "training_category" => $post['training_category'] ?? null,
+            "budget"            => $post['budget'] ?? null,
+            "company_source"    => $post['company_source'] ?? null,
             // "init_type"         => $post['init_type'] ?? null,
             "event_from"        => $start_date,
             "event_to"          => $end_date,
@@ -477,6 +480,8 @@ class Events_model extends MX_Controller {
             "event_from"  => $event_from,
             "event_to"    => $event_to,
             "events_by"  => $events_by,
+            "budget"     => $post['budget'],
+            "company_source" => $post['company_source'],
             "company_ids" => serialize($companyIds),
             "department_ids" => serialize($departmentIds),
             "company_array" => !empty($companyArray) ? implode(", ", $companyArray) : null,
@@ -863,22 +868,22 @@ class Events_model extends MX_Controller {
     }
 
     public function getEventAttachments($id){
-        $this->db->select("id, filename, type");
-        $this->db->where('event_id', $id);
-        $attachments = $this->db->get($this->eventsAttachmentsTable)->result();
+        $attachments = $this->db
+            ->select("a.id, a.filename, a.type, b.name")
+            ->from($this->eventsAttachmentsTable . " as a")
+            ->join($this->eventsSettingsTable . " as b", "b.id = a.type", "left")
+            ->where("a.event_id", $id)
+            ->get()
+            ->result();
     
         $grouped = [];
     
         foreach ($attachments as $attachment) {
-            $type = $attachment->type;
-            if (!isset($grouped[$type])) {
-                $grouped[$type] = [];
-            }
-    
-            $grouped[$type][] = [
-                'id' => $attachment->id,
+            $grouped[$attachment->name][] = [
+                'id'       => $attachment->id,
                 'filename' => $attachment->filename,
-                'type' => $attachment->type
+                'type'     => $attachment->type,
+                'name'     => $attachment->name
             ];
         }
     
@@ -1227,6 +1232,11 @@ class Events_model extends MX_Controller {
         $post = $this->input->post();
         $post['created_by'] = $this->user_data['emp_id'];
         unset($post['csrf_token']);
+        foreach ($post as $key => $value) {
+            if (is_string($value)) {
+                $post[$key] = strtolower(trim($value));
+            }
+        }
         $data = $this->db->insert($this->eventsSettingsTable, $post);
         if($data){
             $response['success'] = true;

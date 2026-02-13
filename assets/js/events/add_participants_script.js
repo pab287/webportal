@@ -6,8 +6,7 @@ let attachments = null;
 let schedule = null;
 let selectedSchedule = null;
 let modalTraining = null;
-
-console.log(_tempContentData.company);
+let attachment_type = null;
 
 const maxFileSize = 50 * 1024 * 1024; // 50MB
 const allowedTypes = [
@@ -54,8 +53,10 @@ if (_tempContentData !== undefined && _tempContentData !== null && _tempContentD
     employees =_tempContentData.employees;
     attachments = _tempContentData.attachments;
     schedule = _tempContentData.schedule;
+    attachment_type = _tempContentData.options.attachment_type;
 }
 
+console.log(attachment_type);
 
 let eventVue = new Vue({
     el: "#events-content",
@@ -129,12 +130,19 @@ let eventVue = new Vue({
             return this.eventsStatus(this.eventsData.event_from, this.eventsData.event_to);
         },
         eventAlreadyHappened() {
-            if (!this.eventsData?.event_to) return false; 
+            const { event_from, event_to } = this.eventsData || {};
+            if (!event_from) return false;
             const now = new Date();
-            const eventEnd = new Date(this.eventsData.event_to);
-            return eventEnd < now; 
-          },
-          participantsCount() {
+            const start = new Date(event_from);
+            const end = new Date(event_to || event_from);
+            const endPlus3Days = new Date(end);
+            endPlus3Days.setDate(endPlus3Days.getDate() + 3);
+            return (
+                (now >= start && now <= end) ||  // ongoing
+                now >= endPlus3Days              // 3 days after end
+            );
+        },
+        participantsCount() {
             let list = Object.values(this.participants);
             let invited = list.length;
             let confirmed = list.filter(p => p.status === "confirmed").length;
@@ -180,12 +188,12 @@ let eventVue = new Vue({
             const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
             const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
             if (today < startDate) {
-                return { label: "Upcoming Event", class: "bg-info text-dark" };
+                return { label: "Upcoming Training", class: "bg-info text-dark" };
             }
             if (today >= startDate && today <= endDate) {
-                return { label: "Ongoing Event", class: "bg-warning text-dark" };
+                return { label: "Ongoing Training", class: "bg-warning text-dark" };
             }
-            return { label: "Event Done", class: "bg-success" };
+            return { label: "Training Done", class: "bg-success" };
         },
         formatDate(date_from, date_to) {
             const start = new Date(date_from), end = new Date(date_to);
@@ -306,9 +314,10 @@ let eventVue = new Vue({
                                 if (self.attachments[type]) {
                                     self.attachments[type] = self.attachments[type].filter(item => item.id !== id);
                                 }
-                                if (self.attachments[type] && self.attachments[type].length === 0) {
+                                if (self.attachments[type] && self.attachments[type].length === 0 || self.attachments[type] === undefined) {
                                     delete self.attachments[type];
                                 }
+                                console.log(self.attachments[type], self.attachments);
                             } else {
                                 toastr.error(response.message || "Failed to remove attachment.");
                             }
@@ -756,7 +765,7 @@ const participantsTable = $('#participantsTable').DataTable({
         { data: 'position', title:'Position', visible: false, defaultContent: '' },
         { data: 'department_head_fullname', title:'Department Head', visible: false, defaultContent: '' },
         { data: 'department', title:'Department', visible: false, defaultContent: '' },
-        { data: 'lastname', title: 'Participant', defaultContent: '',
+        { data: 'lastname', title: 'Trainee', defaultContent: '',
             render: function (data, type, row, meta) {
                 return `
                     <div class="font-weight-bold text-uppercase">${row.fullname}</div>
@@ -835,7 +844,6 @@ function itemDatatableActions(id, status, awarded) {
     let today    = moment();
     let isUpcoming = today.isBefore(fromDate, 'day');
     let isDone     = today.isAfter(toDate, 'day');
-    console.log(status);
     if (!isDone) {
 
         if(status != 'confirmed' && status != 'declined'){
@@ -1337,7 +1345,7 @@ function addFile(file) {
 $('#attachment_type').select2({
     placeholder: "Select Attachment Type",
     width: '100%',
-    data: attachmentTypes,
+    data: attachment_type,
 });
 
 $('#New_Add_File').on('submit', function(e) {
