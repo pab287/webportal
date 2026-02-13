@@ -133,7 +133,7 @@
                         <div class="row mt-3">
                             <div class="col-12 col-md-12 col-lg-12 col-sm-12">
                                 <div class="ui-sortable" id="m_sortable_portlets">
-                                    <?php $this->load->view("payroll/payroll/modals/content/signatory_portlet"); ?>
+                                    <?php $this->load->view("eforms/overtime/modals/signatory_portlet"); ?>
                                 </div>
                             </div>
                         </div>

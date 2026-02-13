@@ -430,8 +430,9 @@ class Overtime extends MY_Controller {
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
 
+        $version = filemtime(FCPATH.'assets/js/eforms/overtime/signatory.script.js');
         $this->core_layout->addJs("vendors/custom/jquery-ui/jquery-ui.bundle.js");
-        $this->core_layout->addJs("js/eforms/overtime/signatory.script.js", true, $tempData);
+        $this->core_layout->addJs("js/eforms/overtime/signatory.script.js", true, $tempData, "?v={$version}");
         $this->core_layout->setPrivilegeName("overtime_masterfile");
 
         $this->load->view('core/templates/header');

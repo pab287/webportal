@@ -11,7 +11,7 @@
         <div class="m-portlet__head-tools">
             <ul class="m-portlet__nav">
                 <li class="m-portlet__nav-item">
-                    <a href="javascript:void(0);" data-portlet-tool="remove" class="m-portlet__nav-link m-portlet__nav-link--icon m--removePortlet">
+                    <a href="javascript:void(0);" onclick="removePortlet(event)" class="m-portlet__nav-link m-portlet__nav-link--icon m--removePortlet">
                         <i class="la la-close"></i>
                     </a>
                 </li>
