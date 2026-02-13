@@ -19,7 +19,7 @@
         </div>
     </div>
     <div class="m-portlet__body">
-        <div class="row">
+        <div id="parent" class="row">
             <div class="col-5">
                 <div class="form-group m-form__group">
                     <label>Label / Description *</label>

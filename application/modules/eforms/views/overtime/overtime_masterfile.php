@@ -627,7 +627,7 @@
                 <div class="modal-body">
                     <template v-if="count > 0">
                         <template v-for="(item, index) in row.meta">
-                        <div class="form-group m-form__group row">
+                        <div id="parent" class="form-group m-form__group row">
                             <label class="col-3 col-form-label">{{item.label}}</label>
                             <div class="col-8">
                                 <select class="form-control m-input select2--value" 

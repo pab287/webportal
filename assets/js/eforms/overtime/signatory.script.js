@@ -118,7 +118,7 @@ var initSelect2Employee = function (tempModal, portlet) {
                     allowClear: true,
                     placeholder: 'Select an option',
                     width: '100%',
-                    dropdownParent: tempModal,
+                    dropdownParent: $("#parent"),
                     ajax: {
                         url: baseUrl("eforms/overtime/select_signatory_employee"),
                         type: 'POST',
@@ -128,7 +128,7 @@ var initSelect2Employee = function (tempModal, portlet) {
                                 q: term,
                                 ids: selectedEmployee,
                                 company_id: tempModal.find("#company").val()
-                            }  
+                            }
                         },
                         dataType: "json",
                         delay: 250,
@@ -359,11 +359,12 @@ var vmEditSignatory = new Vue({
                                 ctr += 1;
                                 tempId += ctr;
                             }
-                            let lastChild = $(tempPortlet).find("div.m-portlet:first-child");
+                            let lastChild = $(tempPortlet).find("div.m-portlet:last-child");
                             lastChild.prop("id", tempId);
                             $(tempPortlet).find("#" + tempId).mPortlet();
                         }
-                        initEditSelect2Employee(editSignatoryModal);
+                        let meta = vmEditSignatory.row.meta;
+                        initEditSelect2Employee(editSignatoryModal, meta);
                     }
                 });
             }
@@ -411,7 +412,7 @@ var vmEditSignatory = new Vue({
     }, mounted: function () {
         const _this = this;
         _this.appendCurrentCompany();
-        _this.appendCurrentSignatory();
+        // _this.appendCurrentSignatory();
         setTimeout(_this.validateFields(), 500);
     }
 });
@@ -436,13 +437,25 @@ var initEditSelect2Employee = function (tempModal, ids) {
 
             tempSelector.each((_i, select2) => {
                 const $select = $(select2);
-                
+
                 if ($select.data("select2-initialized")) return;
+                
+                // Remove Select2 container
+                $select.next('.select2-container').remove();
+                
+                // Clear value
+                $select.val('');
                 
                 $select.off(".select2Events");
                 
                 if ($select.hasClass("select2-hidden-accessible")) {
                     $select.select2("destroy");
+                }
+
+                const value = ids?.[_i]?.value;
+                if (value !== undefined && value !== null) {
+                    let tempOption = new Option(value, value, true, true);
+                    $select.append(tempOption).trigger('change');
                 }
 
                 let prevValue = null;
@@ -452,7 +465,7 @@ var initEditSelect2Employee = function (tempModal, ids) {
                     allowClear: true,
                     placeholder: 'Select an option',
                     width: '100%',
-                    dropdownParent: tempModal,
+                    dropdownParent: $("#edit-parent"),
                     ajax: {
                         url: baseUrl("eforms/overtime/select_signatory_employee"),
                         type: 'POST',
@@ -491,7 +504,7 @@ var initEditSelect2Employee = function (tempModal, ids) {
                             }
                         } else {
                             Swal.fire({
-                                title: 'Employee already selected!1',
+                                title: 'Employee already selected!',
                                 text: 'Overtime Summary Signatory',
                                 icon: 'warning',
                                 allowOutsideClick: false,
@@ -508,7 +521,7 @@ var initEditSelect2Employee = function (tempModal, ids) {
                     } else {
                         if (prevValue) {
                             Swal.fire({
-                                title: 'Employee already selected!2',
+                                title: 'Employee already selected!',
                                 text: 'Overtime Summary Signatory',
                                 icon: 'warning',
                                 allowOutsideClick: false,
@@ -522,6 +535,14 @@ var initEditSelect2Employee = function (tempModal, ids) {
                         }
                     }
                 });
+
+                if (value !== undefined && value !== null) {
+                    setTimeout( function() {
+                        $select.val(value).trigger("change");
+                    }, 250);
+                }
+
+                $select.data("select2-initialized", true);
             });
         }
     }
