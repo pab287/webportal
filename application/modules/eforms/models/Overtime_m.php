@@ -2581,7 +2581,8 @@ class Overtime_m extends CI_Model {
                             $time_diff = date_diff($time1, $time2);
                             $totalMinutes = ($time_diff->days * 24 * 60) + ($time_diff->h * 60) + $time_diff->i;
     
-                            $tempHr = intdiv($totalMinutes, 60);
+                            $tempHr = floatval($totalMinutes / 60);
+                            $tempHr = round($tempHr);
                             $currentRow->actual_in = $get_actual_punch->actual_time_in;
                             $currentRow->actual_out = $get_actual_punch->actual_time_out;
                             $currentRow->total_hrs = $tempHr;
