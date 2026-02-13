@@ -172,6 +172,7 @@ class Events_model extends MX_Controller {
             e.training_type,
             e.init_type,
             e.training_category,
+            e.budget,
             COUNT(DISTINCT p.id) as total_participants,
             GROUP_CONCAT(
                 DISTINCT JSON_OBJECT(

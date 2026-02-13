@@ -612,6 +612,14 @@ const CalendarBasic = function () {
                         tooltipText += `Venue: ${event.venue}\n`;
                         tooltipText += `Number of Trainees: ${totalParticipants}\n`;
                         
+                        let budget = parseFloat(event.budget) || 0;
+
+                        if (budget > 0) {
+                            tooltipText += `Budget: ₱${budget.toLocaleString('en-PH', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            })}`;
+                        }
 
                         
                         element.attr('title', tooltipText.trim());
