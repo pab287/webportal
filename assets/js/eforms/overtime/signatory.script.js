@@ -157,7 +157,7 @@ var initSelect2Employee = function (tempModal, portlet) {
                             }
                         } else {
                             Swal.fire({
-                                title: 'Employee already selected!1',
+                                title: 'Employee already selected!',
                                 text: 'Overtime Summary Signatory',
                                 icon: 'warning',
                                 allowOutsideClick: false,
@@ -174,7 +174,7 @@ var initSelect2Employee = function (tempModal, portlet) {
                     } else {
                         if (prevValue) {
                             Swal.fire({
-                                title: 'Employee already selected!2',
+                                title: 'Employee already selected!',
                                 text: 'Overtime Summary Signatory',
                                 icon: 'warning',
                                 allowOutsideClick: false,
