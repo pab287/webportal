@@ -144,48 +144,70 @@ var initSelect2Employee = function (tempModal, portlet) {
                     }
                 }).on('select2:opening.select2Events', function (e) {
                     prevValue = $(this).val();
+
                 }).on('select2:select.select2Events', function(e) {
                     const self = $(e.target);
                     self.validate();
                     const data = e.params.data;
 
-                    if (prevValue !== data.id) {
-                        if (!selectedEmployee.includes(data.id)) {
-                            const index = selectedEmployee.indexOf(prevValue);
-                            if (index > -1) {
-                                selectedEmployee.splice(index, 1);
-                            }
-                        } else {
-                            Swal.fire({
-                                title: 'Employee already selected!',
-                                text: 'Overtime Summary Signatory',
-                                icon: 'warning',
-                                allowOutsideClick: false,
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    $(this).val(prevValue ?? null).trigger('change');
-                                }
-                            });
-                        }
-                    }
+                    // if (prevValue !== data.id) {
+                    //     if (!selectedEmployee.includes(data.id)) {
+                    //         const index = selectedEmployee.indexOf(prevValue);
+                    //         if (index > -1) {
+                    //             selectedEmployee.splice(index, 1);
+                    //         }
+                    //     } else {
+                    //         Swal.fire({
+                    //             title: 'Employee already selected!',
+                    //             text: 'Overtime Summary Signatory',
+                    //             icon: 'warning',
+                    //             allowOutsideClick: false,
+                    //         }).then((result) => {
+                    //             if (result.isConfirmed) {
+                    //                 if (prevValue) {
+                    //                     self.val(prevValue).trigger('change.select2');
+                    //                     prevValue = self.val();
+                    //                 } else {
+                    //                     const options = new Option('Select an Option', '', true, true);
+                    //                     $select.append(options).trigger('change');
+                    //                     prevValue = null;
+                    //                 }
+                    //             }
+                    //         });
+                    //     }
+                    // }
 
-                    if (!selectedEmployee.includes(data.id)) {
-                        selectedEmployee.push(data.id);
-                    } else {
-                        if (prevValue) {
-                            Swal.fire({
-                                title: 'Employee already selected!',
-                                text: 'Overtime Summary Signatory',
-                                icon: 'warning',
-                                allowOutsideClick: false,
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    $(this).val(prevValue ?? null).trigger('change');
-                                }
-                            });
-                        } else {
-                            selectedEmployee.push(data.id);
-                        }
+                    // if (!selectedEmployee.includes(data.id)) {
+                    //     selectedEmployee.push(data.id);
+                    // } else {
+                    //     if (prevValue) {
+                    //         Swal.fire({
+                    //             title: 'Employee already selected!',
+                    //             text: 'Overtime Summary Signatory',
+                    //             icon: 'warning',
+                    //             allowOutsideClick: false,
+                    //         }).then((result) => {
+                    //             if (result.isConfirmed) {
+                    //                 if (prevValue) {
+                    //                     self.val(prevValue).trigger('change.select2');
+                    //                     prevValue = self.val();
+                    //                 } else {
+                    //                     const options = new Option('Select an Option', '', true, true);
+                    //                     $select.append(options).trigger('change');
+                    //                     prevValue = null;
+                    //                 }
+                    //             }
+                    //         });
+                    //     } else {
+                    //         selectedEmployee.push(data.id);
+                    //     }
+                    // }
+                }).on('select2:unselect.select2Events', function(e) {
+                    const data = e.params.data;
+                    const index = selectedEmployee.indexOf(data.id);
+
+                    if (index > -1) {
+                        selectedEmployee.splice(index, 1);
                     }
                 });
             });
@@ -495,52 +517,70 @@ var initEditSelect2Employee = function (tempModal, ids) {
                     const self = $(e.target);
                     self.validate();
                     const data = e.params.data;
+                    // if (prevValue !== data.id) {
+                    //     if (!selectedEmployee.includes(data.id)) {
+                    //         const index = selectedEmployee.indexOf(prevValue);
+                    //         if (index > -1) {
+                    //             selectedEmployee.splice(index, 1);
+                    //         }
+                    //     } else {
+                    //         e.preventDefault();
 
-                    if (prevValue !== data.id) {
-                        if (!selectedEmployee.includes(data.id)) {
-                            const index = selectedEmployee.indexOf(prevValue);
-                            if (index > -1) {
-                                selectedEmployee.splice(index, 1);
-                            }
-                        } else {
-                            Swal.fire({
-                                title: 'Employee already selected!',
-                                text: 'Overtime Summary Signatory',
-                                icon: 'warning',
-                                allowOutsideClick: false,
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    $(this).val(prevValue ?? null).trigger('change');
-                                }
-                            });
-                        }
-                    }
+                    //         Swal.fire({
+                    //             title: 'Employee already selected!',
+                    //             text: 'Overtime Summary Signatory',
+                    //             icon: 'warning',
+                    //             allowOutsideClick: false,
+                    //         }).then((result) => {
+                    //             if (result.isConfirmed) {
+                    //                 if (prevValue) {
+                    //                     self.val(prevValue).trigger('change.select2');
+                    //                     prevValue = self.val();
+                    //                 } else {
+                    //                     const options = new Option('Select an Option', '', true, false);
+                    //                     $select.append(options).trigger('change.select2');
+                    //                     prevValue = null;
+                    //                 }
+                    //             }
+                    //         });
+                    //         return false;
+                    //     }
+                    // }
 
-                    if (!selectedEmployee.includes(data.id)) {
-                        selectedEmployee.push(data.id);
-                    } else {
-                        if (prevValue) {
-                            Swal.fire({
-                                title: 'Employee already selected!',
-                                text: 'Overtime Summary Signatory',
-                                icon: 'warning',
-                                allowOutsideClick: false,
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    $(this).val(prevValue ?? null).trigger('change');
-                                }
-                            });
-                        } else {
-                            selectedEmployee.push(data.id);
-                        }
+                    // if (!selectedEmployee.includes(data.id)) {
+                    //     selectedEmployee.push(data.id);
+                    // } else {
+                    //     e.preventDefault();
+
+                    //     Swal.fire({
+                    //         title: 'Employee already selected!',
+                    //         text: 'Overtime Summary Signatory',
+                    //         icon: 'warning',
+                    //         allowOutsideClick: false,
+                    //     }).then((result) => {
+                    //         if (result.isConfirmed) {
+                    //             console.log(prevValue)
+                    //             if (prevValue) {
+                    //                 self.val(prevValue).trigger('change.select2');
+                    //                 prevValue = self.val();
+                    //             } else {
+                    //                 const options = new Option('Select an Option', '', true, true);
+                    //                 $select.append(options).trigger('change');
+                    //                 prevValue = null;
+                    //             }
+                    //         }
+                    //     });
+                    //     return false;
+                    // }
+                }).on('select2:unselect.select2Events', function(e) {
+                    const data = e.params.data;
+
+                    const index = selectedEmployee.indexOf(data.id);
+
+                    if (index > -1) {
+                        selectedEmployee.splice(index, 1);
                     }
                 });
-
-                if (value !== undefined && value !== null) {
-                    setTimeout( function() {
-                        $select.val(value).trigger("change");
-                    }, 250);
-                }
 
                 $select.data("select2-initialized", true);
             });

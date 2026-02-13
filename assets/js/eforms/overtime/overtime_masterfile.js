@@ -1272,51 +1272,45 @@ var initSelect2Employee = function (tempModal, ids) {
                     self.validate();
                     const data = e.params.data;
 
-                    if (prevValue !== data.id) {
-                        if (!selectedEmployee.includes(data.id)) {
-                            const index = selectedEmployee.indexOf(prevValue);
-                            if (index > -1) {
-                                selectedEmployee.splice(index, 1);
-                            }
-                        } else {
-                            Swal.fire({
-                                title: 'Employee already selected!',
-                                text: 'Overtime Summary Signatory',
-                                icon: 'warning',
-                                allowOutsideClick: false,
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    $(this).val(prevValue ?? null).trigger('change');
-                                }
-                            });
-                        }
-                    }
+                    // if (prevValue !== data.id) {
+                    //     if (!selectedEmployee.includes(data.id)) {
+                    //         const index = selectedEmployee.indexOf(prevValue);
+                    //         if (index > -1) {
+                    //             selectedEmployee.splice(index, 1);
+                    //         }
+                    //     } else {
+                    //         Swal.fire({
+                    //             title: 'Employee already selected!',
+                    //             text: 'Overtime Summary Signatory',
+                    //             icon: 'warning',
+                    //             allowOutsideClick: false,
+                    //         }).then((result) => {
+                    //             if (result.isConfirmed) {
+                    //                 $(this).val(prevValue ?? null).trigger('change');
+                    //             }
+                    //         });
+                    //     }
+                    // }
 
-                    if (!selectedEmployee.includes(data.id)) {
-                        selectedEmployee.push(data.id);
-                    } else {
-                        if (prevValue) {
-                            Swal.fire({
-                                title: 'Employee already selected!',
-                                text: 'Overtime Summary Signatory',
-                                icon: 'warning',
-                                allowOutsideClick: false,
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    $(this).val(prevValue ?? null).trigger('change');
-                                }
-                            });
-                        } else {
-                            selectedEmployee.push(data.id);
-                        }
-                    }
+                    // if (!selectedEmployee.includes(data.id)) {
+                    //     selectedEmployee.push(data.id);
+                    // } else {
+                    //     if (prevValue) {
+                    //         Swal.fire({
+                    //             title: 'Employee already selected!',
+                    //             text: 'Overtime Summary Signatory',
+                    //             icon: 'warning',
+                    //             allowOutsideClick: false,
+                    //         }).then((result) => {
+                    //             if (result.isConfirmed) {
+                    //                 $(this).val(prevValue ?? null).trigger('change');
+                    //             }
+                    //         });
+                    //     } else {
+                    //         selectedEmployee.push(data.id);
+                    //     }
+                    // }
                 });
-
-                if (value !== undefined && value !== null) {
-                    setTimeout( function() {
-                        $select.val(value).trigger("change");
-                    }, 250);
-                }
 
                 $select.data("select2-initialized", true);
             });
