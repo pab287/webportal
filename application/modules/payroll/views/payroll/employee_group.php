@@ -47,6 +47,14 @@
                                             <span>TRANSFER EMPLOYEE GROUP</span>
                                         </span>
                                         </button>
+
+										<button type="button"
+                                        class="btn btn-warning m-btn m-btn--icon btnNew text-white" data-toggle="modal" data-target="#modalTransferApproval">
+                                        <span>
+                                            <i class="fa fa-bell m-animate-shake"></i>
+                                            <span>FOR APPROVAL</span>
+                                        </span>
+                                        </button>
                                     </div>
 								</div>
 							</div>
@@ -70,6 +78,7 @@
 		</div>
 	</div>
 </div>
+
 <div id="documentModal" class="modal fade document-modal-container"
     data-keyboard="false" data-backdrop="static"
     modal-exempt-custom tabindex="-1"
@@ -125,12 +134,53 @@
 						<label for="reason">Reason *</label>
 						<textarea id="reason" class="form-control" name="reason" data-validation="required" style="min-height: 120px; resize: vertical;" rows="6"></textarea>
 					</div>
+					<div class="form-group m-form__group">
+						<label for="payroll_group_id">Transfer To Payroll Group *</label>
+						<select id="payroll_group_id" class="form-control" name="group_id" data-validation="required">
+							<option value="">&nbsp;</option>
+						</select>
+					</div>
 				</div>
 				<div class="modal-footer">
+					<button type="submit" id="btnSaveTransfer" class="btn btn-primary btnSave">Transfer</button>
+					<button type="submit" id="btnSaveTransferAndApprove" class="btn btn-success btnSave">Transfer and Approve</button>
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-					<button type="submit" id="btnSaveTransfer" class="btn btn-primary">Transfer</button>
 				</div>
 			</form>
+		</div>
+	</div>
+</div>
+
+<div id="modalTransferApproval" class="modal fade" data-keyboard="false" data-backdrop="static" modal-exempt-custom tabindex="-1">
+	<div class="modal-dialog modal-xl">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Employee Payroll Group <small>( Transfer Approval )</small></h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">×</span>
+				</button>
+			</div>
+
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
+							<table class="table table-striped table-bordered row-border" id="tableTransferApproval" style="width: 100%">
+								<thead>
+									<tr>
+										<th class="text-center">Company</th>
+										<th class="text-center">Employee Name</th>
+										<th class="text-center">Payroll Group</th>
+										<th class="text-center">Reason</th>
+										<th class="text-center">Status</th>
+									</tr>
+								</thead>
+								<tbody></tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

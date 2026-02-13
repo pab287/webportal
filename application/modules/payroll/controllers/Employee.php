@@ -544,4 +544,14 @@
             $data = $this->employee->getTransferableEmployeeGroups();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
+
+        public function get_payroll_groups(){
+            $data = $this->employee->getPayrollGroups();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function transfer_employee_group(){
+            $data = $this->employee->transferEmployeeGroup();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
     }

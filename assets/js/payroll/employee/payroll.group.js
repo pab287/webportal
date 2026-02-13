@@ -515,6 +515,7 @@ var vmModalEntries = new Vue({
 let _propAllFilter = false;
 const _companySelect2 = formTransferGroup.find("#company_id");
 const _employeeSelect2 = formTransferGroup.find("#employee_id");
+const _payrollGroupSelect2 = formTransferGroup.find("#payroll_group_id");
 const _companyAllFilter = formTransferGroup.find("input#all_company_filter");
 
 if (_companyAllFilter !== undefined && _companyAllFilter.length == 1) {
@@ -561,3 +562,60 @@ if(_employeeSelect2.length === 1){
         }
     });
 }
+
+if(_payrollGroupSelect2.length === 1){
+    _payrollGroupSelect2.select2({
+        width: "100%",
+        placeholder: "Select Payroll Group",
+        data: [],
+        dropdownParent: modalTransferGroup,
+        ajax: {
+            delay: 750,
+            global: false,
+            url: baseUrl('payroll/employee/get_payroll_groups'),
+            dataType: 'json',
+            type: 'get',
+            data: function (params) {
+                params.company_id = _companySelect2.val();
+                params.all_filter = _companyAllFilter.prop("checked");
+                return params;
+            }
+        }
+    });
+}
+
+$.validate({
+    form: formTransferGroup,
+    lang: "en",
+    scrollToTopOnError: false,
+    onSuccess: function (form) {
+        const currentForm = form[0];
+        const formUrl = currentForm.action;
+        const formData = $(currentForm).serialize();
+
+        $.ajax({
+            url: formUrl,
+            type: "POST",
+            dataType: "json",
+            data: formData,
+            beforeSend: function () {
+                $(form[0])
+                    .find(".btn-submit")
+                    .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+            },
+            success: function (data) {
+                if (data.response) {
+                    modalTransferGroup.modal("hide");
+                    currentForm.reset();
+                    dtPayrollGroup.ajax.reload(null, false);
+                }
+                $(form[0])
+                    .find(".btn-submit")
+                    .removeClass(
+                        "m-btn--custom m-loader m-loader--light m-loader--right"
+                    );
+            },
+        });
+        return false;
+    }
+});

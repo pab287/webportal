@@ -14,7 +14,9 @@
         protected $tbl_payroll_fixed_taxable = "payroll.fixed_taxable_deduction";
         protected $tbl_ps_regular_ndiff = "payroll.employee_regular_ndiff";
         protected $tbl_ps_auto_overtime = "payroll.employee_auto_overtime";
+        protected $payrollGroupTransferTable = "payroll.payroll_group_transfer";
 
+        private $user_data;
         private $db_debug;
 
         function __construct() {
@@ -2573,5 +2575,71 @@ public function getEmployeeNightDiffList(){
         }
         return $resultset;
     }
+    
+    public function getPayrollGroups(){
+        $resultset = array("results" => array());
+        $tempLimit = 10;
+        $get = $this->input->get();
+        $this->db->select("id, UPPER(description) as text");
+        $allFilter = isset($get["all_filter"]) && $get["all_filter"] == "true" ?? false;
+        if(isset($get["company_id"]) && $get["company_id"] && $allFilter === false){
+            $this->db->where("company_id", $get["company_id"]);
+        }
+        if(isset($get["term"]) && $get["term"]){
+            $this->db->group_start();
+            $this->db->like("description", $get["term"], "both");
+            $this->db->group_end();
+            $tempLimit = 20;
+        }
+        $this->db->limit($tempLimit);
+        $this->db->order_by("description", "ASC");
+        $qGroup = $this->db->get_where($this->payrollGroupTable, array("status" => 1, "is_archived" => 0));
+        if($qGroup->num_rows() > 0){
+            $resultset["results"] = $qGroup->result();
+        }
+        return $resultset;
+    }
 
+    public function transferEmployeeGroup() {
+        $post = $this->input->post();
+        $resultset = array();
+        if (isset($post) && $post) {
+            $payrollGroupId = $this->searchPayrollGroupIdByEmployeeIds($post["employee_id"]);
+            $allFilter = isset($post["company_id"]) && $post["company_id"] ? false : true;
+            $post["company_id"] = $allFilter ? "0" : $post["company_id"];
+            $post["employee_id"] = isset($post["employee_id"]) && $post["employee_id"] ? serialize($post["employee_id"]) : serialize(array());
+            $post["created_by"] = $this->core_layout->getCurrentEmployeeId();
+            $post["created_at"] = date("Y-m-d H:i:s");
+            $post["status"] = 0;
+
+            $added = $this->db->insert($this->payrollGroupTransferTable, $post);
+            if($added && $this->db->affected_rows() > 0){
+                $resultset["response"] = true;
+                $resultset["message"] = "Transfer Employee Group Successfully.";
+            }else{
+                $resultset["response"] = false;
+                $resultset["message"] = "Transfer Employee Group Failed.";
+            }
+        }
+
+        return $resultset;
+    }
+
+    protected function searchPayrollGroupIdByEmployeeIds($employeeIds=array()){
+        $arrIds = array();
+        if(is_array($employeeIds) && !empty($employeeIds)){
+            $this->db->select("GROUP_CONCAT(DISTINCT id) as id");
+            $this->db->group_start();
+            foreach ($employeeIds as $empId) {
+                $serializedId = serialize((string)$empId);
+                $this->db->or_like("employee_id", $serializedId, "both");
+            }
+            $this->db->group_end();
+            $q = $this->db->get_where($this->payrollGroupTable, array("status" => 1, "is_archived" => 0));
+            if($q->num_rows() > 0){
+                $arrIds = explode(",", $q->row()->id);
+            }
+        }
+        return $arrIds;
+    }
 }
