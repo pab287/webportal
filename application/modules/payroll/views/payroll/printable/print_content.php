@@ -406,9 +406,9 @@
                         <?php } ?>
 
                         <?php if($item->total_loans && (floatval($item->total_loans) > 0 || (is_array($item->loans) && count($item->loans) > 0))): ?>
-                            <?php if($item->deductions && floatval($item->deductions) > 0): ?>
+                            <?php /*** if($item->deductions && floatval($item->deductions) > 0): ?>
                                 <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--margin-bottom-5"></div>
-                            <?php endif; ?>
+                            <?php endif; ***/ ?>
 
                             <h5 class="m--marginless mt-1"><span class="">LOANS</span></h5>
                             <?php $created_adjustment = $item->created_adjustments; ?>
