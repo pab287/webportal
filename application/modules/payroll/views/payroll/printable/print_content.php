@@ -252,7 +252,7 @@
                                     <h5 class="m--marginless"><span class="m--font-bolder">OT HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo number_format($item->ot_hours, 2); ?></span></h5>
                                 </div>
                                 <?php if(floatval($item->ot_ndiff_hours) > 0): ?>
-                                <div class="col-md-6 printable-width-6 text-left">
+                                <div class="col-md-6 printable-width-6 <?php echo floatval($item->ot_hours) == 0 ? " text-right" : ""; ?>">
                                     <h5 class="m--marginless"><span class="m--font-bolder">NDIFF HRS:</span>&nbsp;<span class="m--font-bolder"><?php echo number_format($item->ot_ndiff_hours,2); ?></span></h5>
                                 </div>
                                 <?php endif; ?>
@@ -406,9 +406,9 @@
                         <?php } ?>
 
                         <?php if($item->total_loans && (floatval($item->total_loans) > 0 || (is_array($item->loans) && count($item->loans) > 0))): ?>
-                            <?php /*** if($item->deductions && floatval($item->deductions) > 0): ?>
+                            <?php if($item->deductions && floatval($item->deductions) > 0): ?>
                                 <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--margin-bottom-5"></div>
-                            <?php endif; ***/ ?>
+                            <?php endif; ?>
 
                             <h5 class="m--marginless mt-1"><span class="">LOANS</span></h5>
                             <?php $created_adjustment = $item->created_adjustments; ?>

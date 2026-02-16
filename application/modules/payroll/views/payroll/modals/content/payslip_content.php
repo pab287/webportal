@@ -57,8 +57,8 @@
             <div class="col-md-8">
                 <span class="m--font-bolder">HOLIDAY PAY <!-- small class="m--font-boldest">(BASIC PAY INC)</small --></span>
             </div>
-            <div class="col-md-4 text-right mr-3">
-                <span class="m--font-boldest">{{row.total_holiday_amount}}</span>
+            <div class="col-md-4 text-right">
+                <span class="m--font-boldest mr-3">{{row.total_holiday_amount}}</span>
             </div>
         </div>
         <div class="row">
@@ -131,7 +131,7 @@
             <div class="col-md-6 text-right" v-if="parseFloat(row.ot_minutes) > 0">
                 <small class="m--font-bold">OT HRS:</small>&nbsp;<span class="m--font-bolder">{{ ot_hrs }}</span>
             </div>
-            <div class="col-md-6 text-left" v-if="parseFloat(row.ot_ndiff_minutes) > 0">
+            <div class="col-md-6 text-left" v-if="parseFloat(row.ot_ndiff_minutes) > 0" :class="parseFloat(row.ot_minutes) == 0 ? 'text-right' : 'text-left'">
                 <small class="m--font-bold">OT NDIFF HRS:</small>&nbsp;<span class="m--font-bolder">{{ ot_ndiff_hrs }}</span>
             </div>
         </div>
@@ -251,9 +251,6 @@
                         <span class="m--font-boldest" style="margin-right: 8px">( {{row.deductions}} )</span>
                     </div>
                 </div>
-                <template v-if="parseFloat(row.total_loans) == 0 || row.loans.length == 0">
-                    <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
-                </template>
             </template>
         </template>
         <template v-if="parseFloat(row.total_loans) > 0 || row.loans.length > 0">
