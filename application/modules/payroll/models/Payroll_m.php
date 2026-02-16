@@ -5499,6 +5499,19 @@ class Payroll_m extends CI_Model{
                 if(floatval($tempRow->unpaid_holiday_amount) > 0 && $tempRow->total_unrendered_amount >= $tempRow->unpaid_holiday_amount){
                     $tempRow->total_unrendered_amount -= $tempRow->unpaid_holiday_amount;
                 }
+                
+                if($tempRow->ewd != floatval($tempRow->no_of_days)){
+                    $_days = $tempRow->no_of_days;
+                    $dailyMinutes = 480;
+
+                    $minutes = $_days * $dailyMinutes;
+                    $roundedMinutes = ceil($minutes / 5) * 5;
+                    if(floatval($tempRow->total_minutes_worked) > $roundedMinutes){
+                        $tempRow->ewd = $tempRow->no_of_days;
+                        $tempRow->ewd_decimal = $tempRow->no_of_days;
+                        $tempRow->target_hours = round($roundedMinutes / 60, 2);
+                    }
+                }
 
                 if(intval($tempRow->is_bonus) == 1){
                     $tempRow->target_payrate = $tempRow->basic_pay;
