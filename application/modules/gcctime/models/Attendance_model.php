@@ -54,7 +54,6 @@ class Attendance_model extends CI_Model {
     public function getCurrentAttendance() {
         $currentDate = $this->getLastSyncDate();
 
-        var_dump($currentDate);
         $this->db->select("a.biometric_id, a.device_id, a.datetime, a.state, a.is_custom, b.device_name, b.status, c.name");
         $this->db->from("gcctimeutility.attendance a");
         $this->db->join("gcctimeutility.devices b", "b.id = a.device_id", "left");

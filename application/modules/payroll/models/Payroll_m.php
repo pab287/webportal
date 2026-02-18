@@ -8381,4 +8381,240 @@ class Payroll_m extends CI_Model{
         }
         return $result;
     }
+
+    function selectPayrollGroupByStatus(){
+        $get = $this->input->get();
+        $arrData = array();
+        $resultset = array();
+        $companyId = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: 0;
+        $status = (isset($get['status']) && $get['status']) ? $get['status'] : false;
+        if($companyId || $companyId == 0){
+            $this->db->select("id, description as text, employee_id");
+            $this->db->from($this->tbl_payroll_group);
+            $this->db->where("company_id", $companyId);
+            $this->db->where("status", 1);
+            $this->db->where("is_archived", 0);
+            if (isset($get['term']) && $get['term']) {
+                $this->db->like("description", $get['term'], "both");
+            }
+            $this->db->limit(10);
+            $this->db->order_by("description", "ASC");
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() > 0){
+                foreach($qTemp->result() as $kk => $vv){
+                    $employees = array();
+                    $tempIds = @unserialize($vv->employee_id);
+                    unset($vv->employee_id);
+                    $this->db->from($this->tbl_employees);
+                    $this->db->where_in("id", $tempIds);
+
+                    // added to filtered out by employee status
+                    if ($status){ 
+                        if ($status != 'All') {
+                            $this->db->where('employee_status', $status);
+                        }
+
+                        if ($status == 'All' || $status == 'Active') {
+                            $this->db->where_not_in('work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME']);  //added to generate only the regular and probi work status
+                        }
+                    }
+                    // added to filtered out by employee status
+
+                    $this->db->order_by("lastname","ASC");
+                    $qTempEmp = $this->db->get();
+
+                    // var_dump($this->db->last_query());
+                    if($qTempEmp->num_rows() > 0){
+                        foreach($qTempEmp->result() as $rs){
+                            $tempRs = (array) $rs;
+                            $tempName = $this->core_layout->getDisplayName($tempRs);
+                            $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                            $employees[] = array(
+                                "id"=>$rs->id,
+                                "text"=>$tempName,
+                            );
+                        }
+                    }
+                    $vv->employees = $employees;
+                    $arrData[$kk] = $vv;
+                }
+            }
+        }
+
+        $resultset["results"] = $arrData;
+        return $resultset;
+    }
+
+    function getPayrollGroupMultipleByStatus(){
+        $post = $this->input->post();
+        $resultset = array();
+        $employees = array();
+        $status = (isset($post['status']) && $post['status']) ? $post['status'] : false;
+
+        if(isset($post["group_id"]) && $post["group_id"]){
+            $ids = $post["group_id"];
+            $tempIdx = array();
+            $this->db->select("employee_id");
+            $this->db->from($this->tbl_payroll_group);
+            $this->db->where("status", 1);
+            $this->db->where("is_archived", 0);
+            $this->db->where_in("id", $ids);
+            $q = $this->db->get();
+            if($q->num_rows() > 0){
+                foreach ($q->result() as $key => $value) {
+                    $idx = @unserialize($value->employee_id);
+                    if(is_array($idx) && count($idx) > 0){
+                        foreach ($idx as $kk => $vv) {
+                            if(!in_array($vv, $tempIdx)){ $tempIdx[] = $vv; }
+                        }
+                    }
+                }
+            }
+
+            if(is_array($tempIdx) && count($tempIdx) > 0){
+                $this->db->from($this->tbl_employees);
+                $this->db->where_in("id", $tempIdx);
+
+                // added to filtered out by employee status
+                if ($status){ 
+                    if ($status != 'All') {
+                        $this->db->where('employee_status', $status);
+                    }
+
+                    if ($status == 'All' || $status == 'Active') {
+                        $this->db->where_not_in('work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME']);  //added to generate only the regular and probi work status
+                    }
+                }
+                // added to filtered out by employee status
+                
+                $this->db->order_by("lastname", "ASC");
+                $qTempEmp = $this->db->get();
+                if($qTempEmp->num_rows() > 0){
+                    foreach($qTempEmp->result() as $rs){
+                        $tempRs = (array) $rs;
+                        $tempName = $this->core_layout->getDisplayName($tempRs);
+                        $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                        $employees[] = array(
+                            "id"=>$rs->id,
+                            "text"=>$tempName,
+                        );
+                    }
+                }
+            }
+            $resultset["response"] = true;
+            $resultset["data"] = $employees;
+        }else{
+            $resultset["response"] = false;
+        }
+        
+        return $resultset;
+    }
+
+    function selectEmployeeByStatus($type=null) {
+        $get = $this->input->get();
+        $resultarray = array();
+        $companyId = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: 0;
+        $status = (isset($get['status']) && $get['status']) ? $get['status'] : false;
+
+        $this->db->select("a.id, UPPER(TRIM(CONCAT(a.firstname, ' ',
+                CASE WHEN UPPER(TRIM(a.middlename)) != 'N/A' AND UPPER(TRIM(a.middlename)) != 'NONE' AND
+                        TRIM(a.middlename) !='' AND a.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(a.middlename, 1, 1), '.') ELSE ''
+                END,' ', a.lastname,
+                CASE WHEN UPPER(TRIM(a.suffix)) != 'N/A' AND
+                    UPPER(TRIM(a.suffix !='NONE')) AND a.suffix !='' AND
+                        a.suffix IS NOT NULL THEN CONCAT(' ', a.suffix) ELSE ''
+                END))) as text");
+        $this->db->from("gccmaster.tblemployees a");
+        $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
+
+        $this->db->where("b.id", $companyId);
+
+        // added to filtered out by employee status
+        if ($status){ 
+            if ($status != 'All') {
+                $this->db->where('a.employee_status', $status);
+            }
+
+            if ($status == 'All' || $status == 'Active') {
+                $this->db->where_not_in('a.work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME']); //added to generate only the regular and probi work status
+            }
+        }
+        // added to filtered out by employee status
+
+        $tempLimit = 10;
+        if (isset($get['q']) && $get['q']) {
+            $this->db->group_start();
+                $this->db->like("a.firstname", $get['q'], "both");
+                $this->db->or_like("a.lastname", $get['q'], "both");
+                $this->db->or_like("CONCAT(a.firstname, ' ', a.lastname)", $get['q'], "both");
+                $this->db->or_like("CONCAT(a.firstname, ' ', CONCAT(SUBSTR(a.middlename, 1, 1), '.'), ' ', a.lastname)", $get['q'], "both");
+            $this->db->group_end();
+            $tempLimit = 20;
+        }
+        
+        $this->db->limit($tempLimit);
+        $this->db->order_by("trim(a.firstname)", "ASC");
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $resultarray = $query->result();
+        }
+        return array("results" => $resultarray);
+    }
+
+    function selectEmployeeByCompany($type=null)
+    {
+        $get = $this->input->get();
+        $resultarray = array();
+        $companyIds = (isset($get["company_ids"]) && $get["company_ids"])? $get["company_ids"]: array();
+        //$this->db->select("a.id, trim(a.firstname) as firstname, a.lastname, a.middlename, a.suffix");
+
+        $this->db->select("a.id, UPPER(TRIM(CONCAT(a.firstname, ' ',
+                CASE WHEN UPPER(TRIM(a.middlename)) != 'N/A' AND UPPER(TRIM(a.middlename)) != 'NONE' AND
+                        TRIM(a.middlename) !='' AND a.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(a.middlename, 1, 1), '.') ELSE ''
+                END,' ', a.lastname,
+                CASE WHEN UPPER(TRIM(a.suffix)) != 'N/A' AND
+                    UPPER(TRIM(a.suffix !='NONE')) AND a.suffix !='' AND
+                        a.suffix IS NOT NULL THEN CONCAT(' ', a.suffix) ELSE ''
+                END))) as text");
+        $this->db->from("gccmaster.tblemployees a");
+        $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
+        
+        if($type !== 'all' && $type === null){
+            $this->db->where("a.employee_status", "Active");
+        } elseif ($type !== 'all' && $type !== null) {
+            $this->db->where("a.employee_status", $type);
+        }
+
+        $this->db->where_in("b.id", $companyIds);
+
+        $tempLimit = 10;
+        if (isset($get['q']) && $get['q']) {
+            $this->db->group_start();
+            $this->db->like("a.firstname", $get['q'], "both");
+            $this->db->or_like("a.lastname", $get['q'], "both");
+            $this->db->or_like("CONCAT(a.firstname, ' ', a.lastname)", $get['q'], "both");
+            $this->db->or_like("CONCAT(a.firstname, ' ', CONCAT(SUBSTR(a.middlename, 1, 1), '.'), ' ', a.lastname)", $get['q'], "both");
+            $this->db->group_end();
+            $tempLimit = 20;
+        }
+        $this->db->limit($tempLimit);
+        $this->db->order_by("trim(a.firstname)", "ASC");
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            /*** foreach ($query->result_array() as $_query) {
+                $data = array();
+                $display_employee = $this->format_name($_query);
+
+                $data["id"] = $_query["id"];
+                $data["text"] = $display_employee;
+                $resultarray[] = $data;
+            } ***/
+            $resultarray = $query->result();
+        }
+        return array("results" => $resultarray);
+    }
 }

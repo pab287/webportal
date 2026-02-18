@@ -348,11 +348,16 @@
 
         function payroll_group(){
             $this->load->model("payroll/payroll_m", "payroll");
-            $tempData = array(); 
+            $tempData = array();
             $tempData["company"] = $this->payroll->select2CompanyData();
-            
+
             $this->core_layout->setPageTitle("Payroll - Employee Group");
             $this->core_layout->setPrivilegeName("payroll_employee_group");
+
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+            $this->core_layout->addJs('plugins/export_plugins/xlsx.full.min.js', true);
+
             $this->core_layout->addJs("js/payroll/employee/payroll.group.js", true, $tempData);
 
             $this->load->view('core/templates/header');
@@ -546,6 +551,13 @@
         public function approve_auto_overtime(){
             $data = $this->employee->approveAutoOvertime();
             $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        function get_employees_without_payroll_group() {
+            $data = $this->employee->getEmployeesWithoutPayrollGroup();
+            $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
         }
 
     }

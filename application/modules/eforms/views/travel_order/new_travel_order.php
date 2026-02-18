@@ -30,6 +30,28 @@
                     <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
                     <div class="row">
                         <div class="col-md-6 col-sm-12">  
+                            <div class="form-group m-form__group row align-items-center">
+                                <label for="is_emergency" class="col-md-4 col-sm-4 col-xs-12 col-lg-4 col-sm-2 col-xs-12 col-form-label m--font-bolder">
+                                    Emergency Travel Order? 
+                                    <i data-toggle="m-tooltip" data-skin="dark" data-original-title="Toggle switch if Travel order is Emergency." class="flaticon-questions-circular-button"></i>
+                                </label>
+                                <div class="col-md-1 col-lg-1 col-sm-1 col-xs-12">
+                                    <span class="m-switch m-switch--sm m-switch--icon">
+                                        <label class="m-0">
+                                            <input type="checkbox" id="is_emergency" name="is_emergency" value="1">
+                                            <span></span>
+                                        </label>
+                                    </span>
+                                </div>
+                                <div class="col-md-7 col-lg-7 col-sm-12 col-xs-12">
+                                    <div class="m-alert m-alert--outline alert alert-warning show" role="alert">
+                                        <strong>
+                                            Warning!
+                                        </strong>
+                                        On the day Travel Order is not allowed if it is not an emergency!
+                                    </div>
+                                </div>
+                            </div>
                             <div class="form-group m-form__group row">
                                 <label class="col-md-2 col-sm-2 col-xs-12 col-lg-2 col-sm-2 col-xs-12 col-form-label m--font-bolder required">
                                     File Under
@@ -81,15 +103,7 @@
                                 <div class="col-md-9 col-lg-9 col-sm-9 col-sm-12">
                                     <textarea name="station" rows="3" cols="50"  class="form-control" data-validation="required"></textarea> 
                                 </div>
-                            </div>        
-                            <!-- <div class="form-group m-form__group row">
-                                <label class="col-md-3 col-sm-3 col-xs-12 col-lg-3 col-sm-3 col-xs-12 col-form-label">
-                                    Origin
-                                </label>
-                                <div class="col-md-9 col-lg-9 col-sm-9 col-sm-12">
-                                    <textarea name="origin" rows="3" cols="50" class="form-control" data-validation="required"> </textarea> 
-                                </div>
-                            </div> -->
+                            </div>
                             <div class="form-group m-form__group row">
                                 <label class="col-md-3 col-sm-3 col-xs-12 col-lg-3 col-sm-3 col-xs-12 col-form-label m--font-bolder">
                                     Travel Type
@@ -408,7 +422,7 @@
                             <div class="form-group">
                                 <label class="control-label col-md-2 col-sm-2 col-xs-12 m--font-bolder required">Remarks</label>
                                 <div class="col-md-12">
-                                    <textarea name="remarks"  class="form-control" data-validation="required"> </textarea> 
+                                    <textarea name="remarks"  class="form-control" data-validation="required custom_remarks" data-validation-error-msg="Remarks must be at least 30 characters"> </textarea> 
                                 </div>
                             </div>
                         </div>

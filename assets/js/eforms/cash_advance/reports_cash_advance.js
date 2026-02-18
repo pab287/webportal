@@ -11,11 +11,18 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                 {
                     extend: 'excelHtml5',
                     title: 'CASH ADVANCE REPORTS',
+                    footer: true,
                     exportOptions: {
                         columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
+                            },
+                            footer: function(data, column) {
+                                if (column === 7) {
+                                    return 'TOTAL: ';
+                                }
+                                return data;
                             }
                         }
                     },
@@ -30,11 +37,18 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                 {
                     extend: 'pdfHtml5',
                     title: 'CASH ADVANCE REPORTS',
+                    footer: true,
                     exportOptions: {
                         columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
+                            },
+                            footer: function(data, column) {
+                                if (column === 7) {
+                                    return 'TOTAL: ';
+                                }
+                                return data;
                             }
                         }
                     },
@@ -58,6 +72,13 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                             fillColor: '#f3f3f3',
                             alignment: 'center'
                         };
+
+                        doc.styles.tableFooter = {
+                            fontSize: 6,
+                            bold: true,
+                            fillColor: '#e0e0e0',
+                            alignment: 'right'
+                        };
                         
                         doc.styles.tableBodyEven = {
                             fontSize: 6
@@ -71,7 +92,12 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                         doc.content[1].layout = {
                             hLineWidth: function(i, node) { return 0.1; },
                             vLineWidth: function(i, node) { return 0.1; },
-                            fillColor: function(i, node) { return (i % 2 === 0) ? '#f3f3f3' : null; }
+                            fillColor: function(i, node) { 
+                                if (i === node.table.body.length - 1) {
+                                    return '#e0e0e0';
+                                }
+                                return (i % 2 === 0) ? '#f3f3f3' : null; 
+                            }
                         };
                     },
                     action: function(e, dt, node, config) {
@@ -86,11 +112,18 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                 {
                     extend: 'print',
                     title: 'CASH ADVANCE REPORTS',
+                    footer: true,
                     exportOptions: {
                         columns: [2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16],
                         format: {
                             body: function(data, row, column, node) {
                                 return data.toString().replace(/<[^>]*>/g, '').toUpperCase();
+                            },
+                            footer: function(data, column) {
+                                if (column === 7) {
+                                    return 'TOTAL: ';
+                                }
+                                return data;
                             }
                         }
                     },
@@ -327,6 +360,8 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                 startDate: thisMonth.clone().startOf('month'),
                 endDate: thisMonth,
                 maxDate: moment().format("MM/DD/YYYY"),
+                showDropdowns: true,
+                minDate: '01/01/2020',
                 buttonClasses: 'm-btn btn',
                 applyClass: 'btn-primary',
                 cancelClass: 'btn-secondary',
@@ -354,6 +389,29 @@ let = tblCashAdvanceReport = $('#cash_advance_reports')
                 }
             })
         },
+        footerCallback: function(row, data, start, end, display) {
+            let api = this.api();
+            let numVal = function(i) {
+                return typeof i === 'string' ? parseFloat(i.replace(/[₱,\s]/g, '')) : typeof i === 'number' ? i : 0;
+            };
+        
+            let amtApprovedTotal = api.column(8, { page: 'current' }).data().reduce((a, b) => numVal(a) + numVal(b), 0);
+            let medLoanTotal = api.column(9, { page: 'current' }).data().reduce((a, b) => numVal(a) + numVal(b), 0);
+            let totalDeductionSum = api.column(11, { page: 'current' }).data().reduce((a, b) => numVal(a) + numVal(b), 0);
+            let remBalanceSum = api.column(12, { page: 'current' }).data().reduce((a, b) => numVal(a) + numVal(b), 0);
+            $(api.column(8).footer()).html(
+                amtApprovedTotal.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })
+            );
+            $(api.column(9).footer()).html(
+                medLoanTotal.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })
+            );
+            $(api.column(11).footer()).html(
+                totalDeductionSum.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })
+            );
+            $(api.column(12).footer()).html(
+                remBalanceSum.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })
+            );
+        }
     });
 
     function exportAs(type) {

@@ -668,16 +668,15 @@ class Reports extends MY_Controller {
     function generate_contribution_deduction_list(){
         $post = $this->input->post();
         if(isset($post) && $post){
-            $ids = $post["ps_id"];
             if(is_array($post["ps_id"]) && count($post["ps_id"]) > 0){
-                $data = $this->reports->generatePayrollSheetContributionDeduction($ids);
+                $data = $this->reports->generatePayrollSheetContributionDeduction($post["ps_id"]);
                 if($data){
                     $this->db->select("LOWER(GROUP_CONCAT(DISTINCT(code))) as code");
                     $qCode = $this->db->get_where("payroll.loans", array("loan_type"=>1));
                     $tempCodes = $qCode->row_array()["code"] ? explode(",", $qCode->row_array()["code"]): array();
 
                     $tempColumns = array();
-                    foreach ($data as $key => $value) {
+                    foreach ($data as $value) {
                         $value = (object) $value;
                         if(isset($value->row_columns) && $value->row_columns){
                             foreach ($value->row_columns as $kk => $vv) {
@@ -698,12 +697,12 @@ class Reports extends MY_Controller {
                         $tempHtml .= "<th>EMPLOYEE #</th>";
                         $tempHtml .= "<th>EMPLOYEE NAME</th>";
                         
-                        foreach ($tempColumns as $key => $value) {
+                        foreach ($tempColumns as $value) {
                             $tempKey = strtolower($value);
                             if(!in_array($tempKey, $arrNoGrandTotal) && in_array($tempKey, $tempCodes)){
                                 $_tempHeader = strtoupper($tempKey);
-                                if(strtolower($tempKey) === 'cal.'){ $_tempHeader = 'SSS CAL'; }
-                                else if(strtolower($tempKey) == 'cal'){ $_tempHeader = 'HDMF CAL'; }
+                                if (strtolower($tempKey) === 'cal.'){ $_tempHeader = 'SSS CAL'; }
+                                elseif (strtolower($tempKey) == 'cal'){ $_tempHeader = 'HDMF CAL'; }
                                 $tempHtml .= "<th class='text-center'>{$_tempHeader}</th>";
                             }
                         }
@@ -711,13 +710,13 @@ class Reports extends MY_Controller {
                         $tempHtml .= "</tr>";
                         $tempHtml .="<thead>";
                         $tempHtml .="<tbody>";
-                        foreach ($data as $key => $value) {
+                        foreach ($data as $value) {
                             $tempValuex = (object) $value;
                             $tempHtml .= "<tr>";
                             $tempHtml .= "<td>{$tempValuex->idno}</td>";
                             $tempHtml .= "<td>{$tempValuex->employee_name}</td>";
 
-                            foreach ($tempColumns as $kkk => $vvv) {
+                            foreach ($tempColumns as $vvv) {
                                 $tempKey = strtolower($vvv);
                                 if(!in_array($tempKey, $arrNoGrandTotal) && in_array($tempKey, $tempCodes)){
                                     $tempValue = isset($tempValuex->$tempKey) && $tempValuex->$tempKey ? $tempValuex->$tempKey: 0;
@@ -1054,6 +1053,30 @@ class Reports extends MY_Controller {
     function update_print_payrollsheet_netpay(){
         $data = $this->reports->update_print_payrollsheet_netpay();
         $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+    }
+
+    public function nightdiff_summary() {
+        $this->load->model("payroll/payroll_m", "payroll");
+        $tempData = array(); 
+        $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
+        $tempData["company"] = $this->payroll->select2CompanyData();
+        $tempData["payout_schedule"] = $this->payroll->select2PayoutScheduleData();
+        
+        $this->core_layout->setPageTitle("Payroll - Night Differential Summary Report");
+        $this->core_layout->setPrivilegeName("payroll_nightdiff_summary");
+        $this->core_layout->addJs("js/buttons.print.min.js", true);
+        $this->core_layout->addJs("js/payroll/reports/nightdiff_summary.js", true, $tempData);
+
+        $this->load->view("core/templates/header");
+        $this->load->view("payroll/reports/nightdiff_summary");
+        $this->load->view("core/templates/footer");
+    }
+
+    function generate_nightdiff_summary(){
+        $data = $this->reports->generateNightDiffSummary();
+            $this->output
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
     }

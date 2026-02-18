@@ -110,14 +110,14 @@
                     <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll" id="append--table_content-payroll_sheet_grand_total">
                         <table width="100%" border='1' cellpadding='5' cellspacing='0' style='font-family: roboto; font-size: 10px; width: 100% !important;'>
                             <colgroup>
-                                <col width="12.5%">
-                                <col width="12.5%">
-                                <col width="12.5%">
-                                <col width="12.5%">
-                                <col width="12.5%">
-                                <col width="12.5%">
-                                <col width="12.5%">
-                                <col width="12.5%">
+                                <col width="11.11%">
+                                <col width="11.11%">
+                                <col width="11.11%">
+                                <col width="11.11%">
+                                <col width="11.11%">
+                                <col width="11.11%">
+                                <col width="11.11%">
+                                <col width="11.11%">
                             </colgroup>
                             <thead>
                                 <tr>
@@ -126,6 +126,7 @@
                                 <tr>
                                     <th class="text-center">OT</th>
                                     <th class="text-center">N.DIFF</th>
+                                    <th class="text-center">REG.NDIFF</th>
                                     <th class="text-center">HOLIDAY</th>
                                     <th class="text-center">BASIC</th>
                                     <th class="text-center">ALLOWANCES</th>
@@ -138,6 +139,7 @@
                                 <tr>
                                     <td class="text-right m--font-bolder">{{rowFormatNumber(grand_total.ot_amount)}}</td>
                                     <td class="text-right m--font-bolder">{{rowFormatNumber(grand_total.ot_ndiff_amount)}}</td>
+                                    <td class="text-right m--font-bolder">{{rowFormatNumber(grand_total.total_ndiff_amount)}}</td>
                                     <td class="text-right m--font-bolder">{{rowFormatNumber(grand_total.holiday_amount)}}</td>
                                     <td class="text-right m--font-bolder">{{rowFormatNumber(grand_total.basic_rate)}}</td>
                                     <td class="text-right m--font-bolder">{{rowFormatNumber(grand_total.allowances)}}</td>

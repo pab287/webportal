@@ -15,6 +15,7 @@
         protected $tbl_ps_regular_ndiff = "payroll.employee_regular_ndiff";
         protected $tbl_ps_auto_overtime = "payroll.employee_auto_overtime";
         protected $tbl_overtime = "gcceforms.overtime";
+        protected $temporaryTable = "TEMPORARY";
 
         private $db_debug;
 
@@ -2677,4 +2678,70 @@ public function getEmployeeNightDiffList(){
         else{ return ""; }
     }
 
+    public function getEmployeesWithoutPayrollGroup() {
+        $resultset = array();
+        $resultset["response"] = false;
+        $resultset["data"] = array();
+
+        $empId = $this->core_layout->getCurrentEmployeeId();
+        $tempTableName = "empcode_" . (int)$empId . "_temporary";
+        $isTemporary = $this->createTemporaryTable($tempTableName);
+        if($isTemporary){
+            $pgEmplyeeIds = array();
+            $this->db->select("employee_id");
+            $this->db->from($this->payrollGroupTable);
+            $this->db->where("status", 1);
+            $this->db->where("is_archived", 0);
+            $pGroup = $this->db->get();
+            if($pGroup->num_rows() > 0){
+                foreach($pGroup->result() as $row){
+                    $employeeIds = @unserialize($row->employee_id);
+                    if(is_array($employeeIds) && !empty($employeeIds)){
+                        $pgEmplyeeIds = array_merge($pgEmplyeeIds, $employeeIds);
+                        $pgEmplyeeIds = array_unique($pgEmplyeeIds);
+                    }
+                }
+            }
+
+            if(is_array($pgEmplyeeIds) && !empty($pgEmplyeeIds)){
+                $data = array_map(fn($id) => ['temp_id' => $id], $pgEmplyeeIds);
+                $chunks = array_chunk($data, 1000);
+                foreach($chunks as $chunk){
+                    $this->db->insert_batch($tempTableName, $chunk);
+                }
+            }
+
+            $this->db->select("UPPER(TRIM(CONCAT(emp.firstname, ' ', CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                        TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+                END, ' ', `emp`.`lastname`, CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                    UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                    emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''
+                END))) as employee_name, UPPER(comp.code) as company_code, emp.employee_status");
+            $this->db->from($this->employeeTable.' emp');
+            $this->db->join($tempTableName.' temp', 'temp.temp_id = emp.id', 'left');
+            $this->db->join($this->companyTable.' comp', 'comp.id = emp.company_id', 'left');
+            $this->db->where('temp.temp_id IS NULL', null, false);
+            $this->db->where('emp.employee_status', 'Active');
+            $this->db->order_by('comp.code', 'ASC');
+            $this->db->order_by('emp.firstname', 'ASC');
+            $query = $this->db->get();
+
+            if($query->num_rows() > 0){
+                $resultset["response"] = true;
+                $resultset["data"] = $query->result();
+            }
+        }
+        return $resultset;
+    }
+
+    protected function createTemporaryTable($tableName) {
+        $tableName = $this->db->escape_str($tableName);
+        $this->db->query("DROP TEMPORARY TABLE IF EXISTS `{$tableName}`");
+        $sql = "CREATE TEMPORARY TABLE IF NOT EXISTS `" . $tableName . "` (
+            `temp_id` int(11) NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+        return $this->db->query($sql);
+    }
+    
 }

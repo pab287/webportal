@@ -48,7 +48,9 @@ class Profile extends MY_Controller {
 			"profile_payroll_sheet"=>true,
 			"payroll_sheet_data"=>$this->get_employee_payroll_data($employee_id),
 			"payroll_sheet_max_id"=>$this->get_max_employee_payroll_data($employee_id),
-			"show_payroll_payslip"=>$showPayrollPayslip));
+			"show_payroll_payslip"=>$showPayrollPayslip,
+			"deductions" => $this->profile->get_employee_deductions($employee_id)));
+
 		$data->tab ='personalInfo';
 		$data->page = 'profile'; //added to display the sms notification to profile only because the 201 and profile shares the same view file
 		$data->questions_list = $this->employee_model->getQuestionsList();

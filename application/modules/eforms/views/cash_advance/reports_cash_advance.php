@@ -16,7 +16,7 @@
                         <div class="m-form m-form--label-align-right m--marginless">
 
                         </div>
-                        <div class="col-12 table-responsive">
+                        <div class="col-12">
                             <table id="cash_advance_reports" class="table table-bordered table-hover">
                                 <!-- <thead>
                                     <tr>
@@ -39,6 +39,28 @@
                                     </tr>
                                 </thead> -->
                                 <tbody></tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th></th>
+                                        <th>Total:</th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>

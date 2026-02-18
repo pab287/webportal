@@ -2366,8 +2366,8 @@ class Reports_m extends CI_Model{
             $this->db->join("gcchris.tblcompanies b", "b.id = ps.company_id", "LEFT");
             $this->db->join("payroll.payout_schedule c", "c.id = a.payout_sched", "INNER");
             $this->db->where("b.id", $post["company"]);
-            if (isset($post["employee"]) && $post["employee"]){
-                $this->db->where_in("a.id", $post["employee"]);
+            if (isset($post["employees"]) && $post["employees"]){
+                $this->db->where_in("a.id", $post["employees"]);
             } elseif (isset($post["serialized_employees"]) && $post["serialized_employees"]){
                 $this->db->where_in("a.id", explode(",",$post["serialized_employees"]));
             }
@@ -2483,6 +2483,7 @@ class Reports_m extends CI_Model{
                             $resultset["grand_total_footer"] = $tempData["grand_total_footer"];
                             $resultset["grand_total"] = $tempData["grand_total"];
                             $resultset["count"] = count($tempData["data"]);
+                            $resultset["raw_data"] = $tempData["_temp"];
                         }else{ $resultset["response"] = false; }
                     }else{ $resultset["response"] = false; }
                 }else{ $resultset["response"] = false; }
@@ -2572,10 +2573,13 @@ class Reports_m extends CI_Model{
                     if(is_array($tempArrData) && !empty($tempArrData)){ $contributionCode = $tempArrData; }
                 }
 
+                $arrTempData = array();
+
                 $adjustmentsTotal = 0;
                 $otAmountTotal = 0;
                 $otNdiffAmountTotal = 0;
                 $holidayAmountTotal = 0;
+                $regularNightDiffTotal = 0;
                 
                 $basicRateTotal = 0;
                 $allowancesTotal = 0;
@@ -2583,7 +2587,7 @@ class Reports_m extends CI_Model{
                 $netPayTotal = 0;
 
                 $arrFields = array("sss", "sss_prov", "ph", "hdmf", "tax");
-                $sqlSelect = "ps.id, ps.emp_id, emp.idno, ps.basic_rate, ps.total_allowances, ps.ot_amount, ps.ot_ndiff_amount, ps.total_holiday_amount, ps.gross_pay, ps.net_pay, ps.sss, ps.sss_prov, ps.ph, ps.hdmf, ps.tax,
+                $sqlSelect = "ps.id, ps.emp_id, emp.idno, ps.basic_rate, ps.total_allowances, ps.ot_amount, ps.ot_ndiff_amount, ps.total_ndiff_amount, ps.total_holiday_amount, ps.gross_pay, ps.net_pay, ps.sss, ps.sss_prov, ps.ph, ps.hdmf, ps.tax,
                 GROUP_CONCAT(DISTINCT(CONCAT(ps_custom_adj.particulars,'||',ps_custom_adj.amount, '||', ps_custom_adj.cadj_type))) custom_adjustments,
                 GROUP_CONCAT(DISTINCT(CONCAT(ps_created_adj.particulars,'||', ps_created_adj.amount, '||', ps_created_adj.adj_type, '||', ps_created_adj.description))) created_adjustments,
                 GROUP_CONCAT(DISTINCT(CONCAT(ps_loans.code,'||',ps_loan_payment.amount_due, '||', ps_loans.loan_class,'||',ps_loan_payment.id))) sss_hdmf_loan_deduction";
@@ -2718,12 +2722,14 @@ class Reports_m extends CI_Model{
                         $otAmountTotal = floatval($otAmountTotal) + floatval($value->ot_amount);
                         $otNdiffAmountTotal = floatval($otNdiffAmountTotal) + floatval($value->ot_ndiff_amount);
                         $holidayAmountTotal = floatval($holidayAmountTotal) + floatval($value->total_holiday_amount);
+                        $regularNightDiffTotal = floatval($regularNightDiffTotal) + floatval($value->total_ndiff_amount);
 
                         $basicRateTotal = floatval($basicRateTotal) + floatval($value->basic_rate);
                         $grossPayTotal = floatval($grossPayTotal) + floatval($value->gross_pay);
                         $netPayTotal = floatval($netPayTotal) + floatval($value->net_pay);
 
                         $arrPsData[$key] = $tempRow;
+                        $arrTempData[$key] = $value;
                     }
                 }
             }
@@ -2734,6 +2740,7 @@ class Reports_m extends CI_Model{
                 "ot_amount"=>round($otAmountTotal, 2),
                 "ot_ndiff_amount"=>round($otNdiffAmountTotal, 2),
                 "holiday_amount"=>round($holidayAmountTotal, 2),
+                "total_ndiff_amount"=>round($regularNightDiffTotal, 2),
                 "adjustments"=>round($adjustmentsTotal, 2),
                 "gross_pay"=>round($grossPayTotal, 2),
                 "net_pay"=>round($netPayTotal, 2),
@@ -2788,7 +2795,9 @@ class Reports_m extends CI_Model{
             $arrData["column_count"] = count($tempHeaderColumns);
             $arrData["grand_total_footer"] = $grandTotalFooter;
             $arrData["grand_total"] = $grandTotal;
+            $arrData["_temp"] = $arrTempData;
         }
+
         return $arrData;
     }
 
@@ -3098,10 +3107,14 @@ class Reports_m extends CI_Model{
                     $this->db->join($this->tbl_ps_loan_payments." ps_loan_payment", "ps_loan_payment.payroll_sheet_id = ps.id", "left");
                     $this->db->join($this->tbl_hris_loans." loans", "loans.id = ps_loan_payment.loan_id", "left");
                     $this->db->join($this->tbl_ps_loans." ps_loans", "ps_loans.id = loans.loan_id", "left");
+                    $this->db->group_start();
+                    $this->db->where("ps_loans.code !=", "");
+                    $this->db->or_where("ps_loans.code !=", null);
+                    $this->db->group_end();
                     $this->db->where_in("ps.id", $tempIds);
                     $this->db->group_by("ps.id");
                     $qx = $this->db->get();
-                    foreach ($qx->result() as $kkk => $vvv) {
+                    foreach ($qx->result() as $vvv) {
                         if($vvv->loan_code){
                             $arrD = explode(",", $vvv->loan_code);
                             $arx = array_count_values($arrD);
@@ -3961,7 +3974,7 @@ class Reports_m extends CI_Model{
 
     // function to display data for datatable of payroll journal request
     function payrollJournalReportList($filteredId, $search, $limit, $offset, $sortBy, $sortOrder){
-       
+
         if(is_array($filteredId) && count($filteredId) > 0){
             $sqlSelect = "a.id, a.emp_id, b.firstname, b.lastname, b.middlename, b.suffix, b.company_id, b.idno,
             a.gross_pay as gross_pay, IFNULL(comp.description, b.company_id) as company_description, a.basic_rate as basic_rate, a.pay_date as pay_date, b.biometricno, a.rate, a.date_start, a.date_end, a.net_pay";
@@ -4942,6 +4955,7 @@ class Reports_m extends CI_Model{
     public function generateLeaveCreditsReport(){
         $resultset = array();
         $post = $this->input->post();
+        $status = (isset($post['emp_status']) && $post['emp_status']) ? $post['emp_status'] : false;
         if(isset($post) && $post){
             $filteredCompany = null;
             if(isset($post["company"]) && $post["company"]){
@@ -4953,6 +4967,7 @@ class Reports_m extends CI_Model{
             }
             $hasEmployeeFilter = isset($post["employee"]) && is_array($post["employee"]) && count($post["employee"]) > 0;
             $hasMonthFilter = false;
+            $hasYearFilter = false;
 
             if(isset($post["filter_by"], $post["month"]) && ($post["filter_by"] == 2 && $post["month"])){
                 if($hasEmployeeFilter == false){
@@ -4960,7 +4975,15 @@ class Reports_m extends CI_Model{
                     $this->db->from($this->tbl_employees);
                     $this->db->where("MONTH(date_start)", $post["month"]);
                     $this->db->where("company_id", $post["company"]);
-                    $this->db->where("employee_status", "Active");
+                    
+                    if ($status != 'All') {
+                        $this->db->where('employee_status', $status);
+                    }
+
+                    if ($status == 'All' || $status == 'Active') {
+                        $this->db->where_not_in('work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME']); //added to generate only the regular and probi work status
+                    }
+
                     $this->db->group_by("id");
                     $qFilter = $this->db->get();
                     if($qFilter->num_rows() > 0){
@@ -4976,7 +4999,15 @@ class Reports_m extends CI_Model{
                     $this->db->select("id");
                     $this->db->from($this->tbl_employees);
                     $this->db->where("company_id", $post["company"]);
-                    $this->db->where("employee_status", "Active");
+                    
+                    if ($status != 'All') {
+                        $this->db->where('employee_status', $status);
+                    }
+
+                    if ($status == 'All' || $status == 'Active') {
+                        $this->db->where_not_in('work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME']); //added to generate only the regular and probi work status
+                    }
+
                     $this->db->group_by("id");
                     $qFilter = $this->db->get();
                     if($qFilter->num_rows() > 0){
@@ -5062,6 +5093,21 @@ class Reports_m extends CI_Model{
                 if($hasMonthFilter){ 
                     $this->db->where("MONTH(emp.date_start)", $post["month"]); 
                 }
+
+                $this->db->where('DATE_ADD(emp.date_start, INTERVAL 1 YEAR) < NOW()'); //added 1 year to date_start of employee and restrict employee if 1year below
+
+                // added to filtered out by employee status
+                if ($status){ 
+                    if ($status != 'All') {
+                        $this->db->where('emp.employee_status', $status);
+                    }
+
+                    if ($status == 'All' || $status == 'Active') {
+                        $this->db->where_not_in('emp.work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME']); //added to generate only the regular and probi work status
+                    }
+                }
+                // added to filtered out by employee status
+
                 $this->db->order_by("TRIM(emp.lastname), TRIM(emp.firstname)", "ASC");
                 $this->db->group_by("emp.id");
                 $queryCredits = $this->db->get();
@@ -5072,6 +5118,8 @@ class Reports_m extends CI_Model{
                     $nCharges = array();
                     foreach ($queryCredits->result() as $key => $credits) {
                         $credits->charges = 0;
+                        $empDateStart = date('Y-m-d', strtotime($credits->date_start));
+                        $empAddYear = date('Y-m-d', strtotime($empDateStart.' +1year'));
                         if(isset($arrCharges[$credits->id]["amount"]) && $arrCharges[$credits->id]["amount"]){
                             $credits->charges = $arrCharges[$credits->id]["amount"];
                             if(isset($arrCharges[$credits->id]["charges"]) && $arrCharges[$credits->id]["charges"]){
@@ -5081,6 +5129,7 @@ class Reports_m extends CI_Model{
                                 $nCharges[] = $rowCharges;
                             }
                         }
+                        $credits->add_year = $empAddYear;
                         $nResult[$key] = $credits;
                     }
 
@@ -6410,5 +6459,251 @@ class Reports_m extends CI_Model{
         }
 
         return $tempData;
+    }
+
+    function generateNightDiffSummary(){
+        $post = $this->input->post();
+        $search = $post['search']['value'] ?? false;
+        $group = $post['group'] ?? 1;
+        $filter_month = $post['filter_month'] ?? 0;
+        $filter_year = $post['filter_year'] ?? 0;
+        $company = $post['company'] ?? 0;
+        $filteredIds = $post['employee'] ?? [];
+        $coverageDate = $post['date_range'] ?? false;
+        $payrollGroup = isset($post["payroll_group"]) && $post["payroll_group"] ? $post["payroll_group"]: array();
+
+        $tempGroup = "PAY DATE";
+        $arrGroup = array(1=>"PAY DATE", 2=>"MONTH", 3=>"YEAR");
+        $arrCompany = array();
+        $employeeIds = array();
+        $tempStartDate = null;
+        $tempEndDate = null;
+        $hasDataFilter = false;
+        $tempGroup = $arrGroup[$group];
+        $tempArrFilter = array();
+        $tempArrFilter["filter_by"] = $tempGroup;
+
+        if(isset($post["company"]) && is_array($post["company"]) && count($post["company"]) > 0){
+            $this->db->select("description");
+            $this->db->from("gcchris.tblcompanies");
+            $this->db->where_in("id", $post["company"]);
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() > 0){
+                    foreach ($qTemp->result() as $key => $value) {
+                    if($value->description){
+                            $arrCompany[] = strtoupper($value->description);
+                    }
+                    }
+                    $tempArrFilter["companies"] = $arrCompany;
+            }
+        }
+
+        $tempCompRow = array();
+        if(isset($company) && $company){
+            $this->db->from("gcchris.tblcompanies");
+            $this->db->where("id", $company);
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() == 1){ $tempCompRow = $qTemp->row_array(); }
+        }
+
+        $filterPayrollGroup = null;
+        if(is_array($payrollGroup) && count($payrollGroup) > 0){
+            $this->db->select("GROUP_CONCAT(DISTINCT TRIM(UPPER(description))) as payroll_group");
+            $this->db->from("payroll.payroll_group");
+            $this->db->where_in("id", $payrollGroup);
+            $qPG = $this->db->get();
+
+            $filterPayrollGroup = $qPG->row()->payroll_group;
+        }
+
+        $isDateRange = isset($post["date_range"]) && $post["date_range"];
+        $isFilterMonth = isset($post["filter_month"]) && $post["filter_month"];
+
+        if(isset($post["date_range"]) && $post["date_range"]){
+            $dates = explode("-", $post["date_range"]);
+            if(is_array($dates) && count($dates) == 2){
+                    foreach ($dates as $key => $date) {
+                        $tempDate = date("Y-m-d", strtotime(trim($date)));
+                        $dates[$key] = $tempDate;
+                    }
+                    $tempStartDate = $dates[0];
+                    $tempEndDate = $dates[1];
+            }
+        }
+
+        if(isset($post["filter_month"], $post["filter_year"]) && ($post["filter_month"] && $post["filter_year"])){
+            $tempStartDate = date("Y-m-d", strtotime("{$post["filter_year"]}-{$post["filter_month"]}-01"));
+            $date = new DateTime($tempStartDate);
+            $date->modify('last day of this month');
+            $tempEndDate = $date->format('Y-m-d');
+        }elseif (isset($post["filter_year"]) && $post["filter_year"]){
+            $tempStartDate = date("Y-01-01", strtotime("{$post["filter_year"]}-01-01"));
+            $tempEndDate = date("Y-12-31", strtotime("{$post["filter_year"]}-12-31"));
+        }
+
+        if(isset($post["pay_date"]) && $post["pay_date"]){
+            $tempStartDate = date("Y-m-d", strtotime($post["pay_date"]));
+            $tempEndDate = date("Y-m-d", strtotime($post["pay_date"]));
+        }
+
+        $xDateFrom = date("F d, Y", strtotime($tempStartDate));
+        $xDateTo = date("F d, Y", strtotime($tempEndDate));
+        $tempArrFilter["coverage_date"] = strtoupper("{$xDateFrom} - {$xDateTo}");
+
+        if($isDateRange === false && $isFilterMonth){ $tempArrFilter["month"] = strtoupper(date("Y F", strtotime("{$post["filter_year"]}-{$post["filter_month"]}"))); }
+        $tempArrFilter["company_description"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? strtoupper(trim($tempCompRow['description'])): "";
+        $tempArrFilter["company_address"] = isset($tempCompRow['company_address']) && $tempCompRow['company_address']  ? strtoupper(trim($tempCompRow['company_address'])): "";
+        $tempArrFilter["has_comp_desc"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? true: false;
+        $tempArrFilter["payroll_group"] = $filterPayrollGroup;
+
+        $results = $this->nightdiffSummaryList($filteredIds, $filter_month, $filter_year, $company, $tempArrFilter["coverage_date"]);
+
+        return [
+            'data' => $results['data'] ?? [],
+            'filters' => $tempArrFilter ?? [],
+        ];
+    }
+
+    protected function nightdiffSummaryList($filteredIds, $filter_month, $filter_year, $company, $coverageDate) {
+        $data = array();
+        $tempData = array();
+        $minutes_per_day = 0;
+
+        $merged = $this->chunk_ndiff_records($filteredIds, $filter_month, $filter_year, $company, $coverageDate);
+
+        if (count($merged) > 0) {
+            $settings = $this->getSettings();
+            $minutes_per_day = $settings->minutes_in_a_day->setting_value;
+
+            foreach ($merged as $item) {
+                $payrateTemp = intval($item->has_shift) === 1 ? "regular" : "rest day";
+                $payrateSetting = $this->getPayrateSetting($payrateTemp);
+                $tempPayrateSetting = intval($item->payrate_id) > 0 ? $this->getPayrateSettingById($item->payrate_id) : $payrateSetting;
+
+                $dailyRate = 0;
+                $basicRate = 0;
+                $perMinute = 0;
+                $regularNdiffPay = 0;
+                $nightDiffPay = 0;
+                $totalHrs = 0;
+                $amount = 0;
+                $isPosted = $item->posted ? $item->posted : 0;
+                $night_diff_minutely = 0;
+
+                $tempRs = (array) $item;
+
+                $tempDisplay = (object) $this->core_layout->getDisplayName($tempRs);
+                $tempName = (isset($tempDisplay->display_name_0) && $tempDisplay->display_name_0)? strtoupper($tempDisplay->display_name_0): strtoupper("no display name");
+                $item->employee_name = $tempName;
+                $item->day = date('D', strtotime($item->date));
+
+                $NightDiffRate = floatval($tempPayrateSetting->night_diff_rate) > 0 ? floatval($tempPayrateSetting->night_diff_rate): 0.1;
+                $dailyRate = $item->daily ? $item->daily : ($item->basic_rate * 12) / $item->work_days;
+                //$totalHrs = $item->total_ndiff_rendered && $item->total_ndiff_rendered > 0 ? intdiv($item->total_ndiff_rendered, 60) : 0;
+                $totalHrs = $item->total_ndiff_rendered && $item->total_ndiff_rendered > 0 ? floatval($item->total_ndiff_rendered) / 60 : 0;
+                $totalHrs = round($totalHrs, 2);
+                
+                if ($item->daily) {
+                    $nightDiffPay = ($item->basic_rate / 8) * $NightDiffRate;
+                    $amount = $nightDiffPay * $totalHrs;
+                }
+
+                $item->daily_rate = $dailyRate;
+                $item->per_minute = $perMinute;
+                $item->ndiff_hrs = $totalHrs;
+                $item->night_diff = $nightDiffPay;
+                $item->per_minute = $night_diff_minutely;
+                $item->posted = $isPosted;
+                $item->amount = $amount;
+
+                $tempData[] = $item;
+            }
+
+            if (!empty($tempData)){
+                $data['data'] = $tempData;
+            }
+        }
+
+        return $data;
+    }
+
+    protected function chunk_ndiff_records($filteredIds, $filter_month, $filter_year, $company, $coverageDate){
+        $tempData = array();
+
+        $startDate = null;
+        $endDate = null;
+
+        $lastId = 0;
+        $chunkSize = 100;
+
+        do {
+            if ($filter_month && $filter_year) {
+                $startDate = date("Y-m-d", strtotime("first day of $filter_year-$filter_month"));
+                $endDate = date("Y-m-t", strtotime($startDate));
+            }
+
+            if (!$filter_month && $filter_year) {
+                $startDate = date("Y-m-d", strtotime("first day of January $filter_year"));
+                $endDate = date('Y-m-d', strtotime("last day of December $filter_year"));
+            }
+
+            if ($coverageDate) {
+                $dateRange = explode("-", $coverageDate);
+                $startDate = date("Y-m-d", strtotime(trim($dateRange[0])));
+                $endDate = date("Y-m-d", strtotime(trim($dateRange[1])));
+            }
+
+            $select = 'a.id, b.id as emp_id, a.date, a.emp_id, a.payrate_id, a.has_shift, b.firstname, b.middlename, b.lastname, b.suffix, a.verified, a.total_ndiff_rendered, c.id as payroll_id, c.date_start as payroll_start, c.date_end as payroll_end, c.posted, c.id as payroll_id, c.total_ndiff_minutes, c.total_ndiff_amount as amount, IFNULL(c.rate, b.basic_rate) as basic_rate, c.daily, ROUND(IFNULL(d.work_days_in_year, 314), 2) as work_days';
+            $this->db->select($select);
+            $this->db->join("gccmaster.tblemployees b", "a.emp_id = b.id", "LEFT");
+            $this->db->join('payroll.payroll_sheet c', 'c.emp_id = b.id AND (DATE(c.date_start) <= DATE(a.date) AND DATE(c.date_end) >= DATE(a.date))', 'LEFT');
+            $this->db->join('gcchris.tblcompanies d', 'd.id = b.company_id', 'LEFT');
+            $this->db->where('a.total_ndiff_rendered > ', 0);
+            $this->db->where('a.verified', 1);
+            $this->db->where('c.is_bonus', 0);
+            $this->db->from('gcctimeutility.timesheet a');
+
+            if ($lastId) {
+                $this->db->where('a.id >', $lastId);
+            }
+
+            if (is_array($filteredIds) && count($filteredIds) > 0) {
+                $this->db->where_in('a.emp_id', $filteredIds); 
+            }
+
+            $this->db->where('b.company_id', $company);
+
+            $this->db->group_start();
+                $this->db->where('DATE(a.date) >=', $startDate);
+                $this->db->where('DATE(a.date) <=', $endDate);
+            $this->db->group_end();
+
+            $this->db->order_by('a.id', 'asc');
+            $this->db->limit($chunkSize);
+
+            $query = $this->db->get();
+            $rows = $query->result();
+            $rowsA = $query->result_array();
+
+            if (!$rows) {
+                break;
+            }
+
+            $lastArray = end($rowsA);
+            if (!empty($lastArray)) {
+                $lastId = $lastArray['id'];
+            }
+
+            $tempData[] = $rows;
+        } while(count($rows) === $chunkSize);
+
+        $merged = array_merge(...$tempData);
+
+        usort($merged, function ($a, $b) {
+            return [$a->lastname, $a->firstname, $a->date]
+                <=> [$b->lastname, $b->firstname, $b->date];
+        });
+
+        return $merged;
     }
 }

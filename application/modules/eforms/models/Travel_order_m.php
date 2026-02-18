@@ -74,7 +74,7 @@
             $role_id = $this->authenticate->getRoleId();
             $current_date = date("Y-m-d");
 
-            $sql = "a.id, a.reference_no, a.company,a.driver, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt, tod.destination, toe.firstname, toe.lastname, a.created_dt, a.accomplished";
+            $sql = "a.id, a.reference_no, a.company,a.driver, a.status, a.vehicle_id, a.driver_id, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks,a.accomplishment_dt, tod.destination, toe.firstname, toe.lastname, a.created_dt, a.accomplished, a.is_emergency";
 
             $this->db->select($sql);
             $this->db->from("gcceforms.travel_order a");
@@ -930,7 +930,7 @@
             $this->db->from('gcchris.tblcompanies');
             $this->db->where('id', $company);
             $query = $this->db->get();
-            return is_array($query->row_array()) && iseet($query->row_array()['description']) ? $query->row_array()['description'] : "No Data Found!";
+            return is_array($query->row_array()) && isset($query->row_array()['description']) ? $query->row_array()['description'] : "No Data Found!";
         }
 
         function driver() {
@@ -3771,6 +3771,7 @@
             $commute = isset($post['is_commute']) ? $post['is_commute'] : 0;
             $personal = isset($post['is_personal']) ? $post['is_personal'] : 0;
             $other = isset($post['is_other']) ? $post['is_other'] : 0;
+            $is_emergency = isset($post['is_emergency']) && $post['is_emergency'] ? $post['is_emergency'] : 0;
 
             $vehicle = isset($post['vehicle']) ? $post['vehicle'] : 0;
             $driver = isset($post['driver']) ? $post['driver'] : 0;
@@ -3798,6 +3799,7 @@
                 'created_dt' => $current_date,
                 'created_id' => $this->user_data['emp_id'],
                 'status' => 'Pending',
+                'is_emergency' => $is_emergency
             );
 
             // commented for rollback
@@ -3845,6 +3847,11 @@
                 $resultarray['status'] = true;
                 $resultarray['msg'] = 'Travel order has been created successfully.';
                 $resultarray["redirect"] = site_url("eforms/travel_order/view_travel_order?id={$to_last_id}");
+
+                if ($is_emergency == 1) {
+                    $msg = "User has tagged the Travel Order Reference # `{$ref_no}` as emergency.";
+                    $this->core_layout->setEventLog($msg,"save", "success", "gcceforms", "user");
+                }
             } else {
                 $resultarray['status'] = false;
                 $resultarray['msg'] = 'Failed to create new travel order entry!';
@@ -3876,6 +3883,7 @@
             $vehicle = isset($post['vehicle']) ? $post['vehicle'] : 0;
             $driver = isset($post['driver']) ? $post['driver'] : 0;
             $driver_name = isset($post['driver']) ? $this->getName($driver) : '';
+            $is_emergency = isset($post['is_emergency']) && $post['is_emergency'] ? $post['is_emergency'] : 0;
 
             $data = array(
                 'company' => $post['company_id'],
@@ -3894,16 +3902,27 @@
                 'vehicle_id' => $vehicle,
                 'driver_id' => $driver,
                 'driver' => $driver_name,
+                'is_emergency' => $is_emergency
             );
 
             // commented for rollback
             // $checkPersonnel = $this->checkPersonnelEditTO($to_id);
 
             $reference_no = $this->db->get_where("gcceforms.travel_order", array("id"=>$to_id))->row('reference_no');
+            $last_data = $this->db->select('is_emergency')->get_where('gcceforms.travel_order', array('id' => $to_id))->row('is_emergency');
             if($this->update_travel_order(array('id' => $to_id), $data)){
                 $resultarray['status'] = true;
                 $resultarray['msg'] = 'Successfully update';
-                $this->core_layout->setEventLog("Updated ".$reference_no.".","update", "success", "gcceforms", "user");
+
+                $msg = "User has updated the Travel Order Reference # `{$reference_no}`";
+
+                if ($last_data != $is_emergency) {
+                    $last_description = $last_data == 1 ? 'Active' : 'Inactive';
+                    $new_description = $is_emergency == 1 ? 'Active' : 'Inactive';
+                    $msg .= "and changed the status of Emergency from `{$last_description}` to `{$new_description}`";
+                }
+
+                $this->core_layout->setEventLog($msg,"update", "success", "gcceforms", "user");
             }else{
                 $resultarray['status'] = false;
                 $resultarray['msg'] = 'Failed to update';
@@ -3938,7 +3957,14 @@
             if($this->checkAssignTravelType($id)){
                 $post = $this->update_travel_order(array('id' => $id), $data);
                 if ($post) {
-                    $this->sendTelegram($id);
+
+                    $destinationFrom = $this->db->select('date_from')->get_where('gcceforms.travel_destination', array('travel_order_id' => $id))->row('date_from');
+                    // $createdTO = $this->db->select('created_dt')->get_where('gcceforms.travel_destination', array('travel_order_id' => $id))->row('created_dt');
+
+                    // prevents sending notification when approving a backlogs
+                    if (date('Y-m-d', strtotime($date)) < date('Y-m-d', strtotime($destinationFrom))) {
+                        $this->sendTelegram($id);
+                    }
 
                     $message = "View Travel Order - Approve travel order ".$this->getReferenceNo($id).".";
                     $type = "success";
@@ -4014,6 +4040,8 @@
             $array_response = array();
             $telegram = "";
             $sms = "";
+            $tg_date_from = null;
+            $tg_date_to = null;
             if ($query->num_rows() > 0) {
                 foreach ($query->result() as $row) {
                     $tg_date_from = date_format(date_create($row->date_from),"F j, Y g:i a");
@@ -4030,6 +4058,8 @@
                 }
             }
             $array_response['telegram'] = $telegram;
+            $array_response['date_from'] = $tg_date_from;
+            $array_response['date_to'] = $tg_date_to;
             $array_response['sms'] = $sms;
             return $array_response;
         }
@@ -4081,46 +4111,59 @@
             $query = $this->db->get_where("gcceforms.travel_order", array("id"=>$id));
             $vehicle_details = '';
 
-            if($query->row('is_service') > 0){
-                $vehicle_name = $this->vehicle_details($query->row('vehicle_id'));
-                $veh_name = $vehicle_name->name." | ".$vehicle_name->plateno;
-                $vehicle_details = '<b>VEHICLE</b>: '.strtoupper($veh_name).chr(10).'<b>DRIVER</b>: '.strtoupper($query->row('driver')).chr(10).chr(10);
-            }
-            if($query->row('is_hitch') > 0){
-                $vehicle_name = $this->vehicle_details($query->row('vehicle_id'));
-                $veh_name = $vehicle_name->name." | ".$vehicle_name->plateno;
-                $vehicle_details = '<b>Vehicle</b>: '.strtoupper($veh_name).chr(10).'<b>Driver</b>: '.strtoupper($query->row('driver')).chr(10).chr(10);
-            }
-            if($query->row('is_commute') > 0){
-                $vehicle_details = '<b>VEHICLE</b>: COMMUTE'.chr(10);
-            }
-            if($query->row('is_personal') > 0){
-                $vehicle_details = '<b>VEHICLE</b>: PERSONAL VEHICLE'.chr(10);
-            }
-            if($query->row('is_others') > 0){
-                if($query->row('others_remarks') == ""){
-                    $vehicle_details = "".chr(10);
-                }else{
-                    $vehicle_details = '<b>REMARKS</b>: '.strtoupper($query->row('others_remarks')).chr(10).chr(10);
+            if ($query->num_rows() > 0) {
+                $row = $query->row();
+                if($row->is_service > 0){
+                    $vehicle_name = $this->vehicle_details($row->vehicle_id);
+                    $veh_name = $vehicle_name->name." | ".$vehicle_name->plateno;
+                    $vehicle_details = '<b>VEHICLE</b>: '.strtoupper($veh_name).chr(10).'<b>DRIVER</b>: '.strtoupper($row->driver).chr(10).chr(10);
+                }
+                if($row->is_hitch > 0){
+                    $vehicle_name = $this->vehicle_details($row->vehicle_id);
+                    $veh_name = $vehicle_name->name." | ".$vehicle_name->plateno;
+                    $vehicle_details = '<b>Vehicle</b>: '.strtoupper($veh_name).chr(10).'<b>Driver</b>: '.strtoupper($row->driver).chr(10).chr(10);
+                }
+                if($row->is_commute > 0){
+                    $vehicle_details = '<b>VEHICLE</b>: COMMUTE'.chr(10);
+                }
+                if($row->is_personal > 0){
+                    $vehicle_details = '<b>VEHICLE</b>: PERSONAL VEHICLE'.chr(10);
+                }
+                if($row->is_others > 0){
+                    if($row->others_remarks == ""){
+                        $vehicle_details = "".chr(10);
+                    }else{
+                        $vehicle_details = '<b>REMARKS</b>: '.strtoupper($row->others_remarks).chr(10).chr(10);
+                    }
+                }
+    
+                $dest = implode("=", (array)$destination['telegram']);
+                $pers = implode(" ", (array)$personnel);
+                $telegram_msg = '';
+                $tempEmergency = ($row->is_emergency && $row->is_emergency == 1) ? ' - [ EMERGENCY ]' : '';
+                $approved_remarks = isset($row->approved_remarks) && $row->approved_remarks ? $row->approved_remarks : 'NO REMARKS.';
+                $recomemnd_remarks = isset($row->approved_recommend_remarks) && $row->approved_recommend_remarks ? $row->approved_recommend_remarks : 'NO REMARKS';
+
+                $telegram_msg = "<b>".strtoupper($row->station).$tempEmergency."</b>".chr(10).chr(10);
+                
+                $telegram_msg .= '<b>TO #</b>: '.$row->reference_no.chr(10);
+                $telegram_msg .= '<b>FILE UNDER: </b>'.strtoupper($row->company).chr(10);
+                $telegram_msg .= '<b>PREP BY: </b>'.strtoupper($row->created_by).chr(10);
+                $telegram_msg .= '<b>RECOMMENDED BY: </b>'.strtoupper($row->approved_recommend_by).chr(10);
+                $telegram_msg .= '<b>RECOMMENDED REMARKS: </b>'.strtoupper($recomemnd_remarks).chr(10);
+                $telegram_msg .= '<b>RECOMMENDED DATE: </b>'.strtoupper($row->approved_recommend_date).chr(10);
+                $telegram_msg .= '<b>APPROVED BY: </b>'.strtoupper($row->approved_by).chr(10);
+                $telegram_msg .= '<b>APPROVED REMARKS: </b>'.strtoupper($approved_remarks).chr(10);
+                $telegram_msg .= '<b>APPROVED DATE: </b>'.date('F d, Y h:i A', strtotime($row->approved_dt)).chr(10);
+                $telegram_msg .= '<b>PERSONNEL: </b>'.$pers.chr(10);
+                $telegram_msg .= $vehicle_details;
+                $telegram_msg .= str_replace("=","",$dest);
+                if($this->telegram_config_if_exist('travel_order', 'count') > 0){
+                    $this->telegram($telegram_msg);
+    
+                    $this->sendTelegramToPersonnelHeads($id, $telegram_msg);
                 }
             }
-
-            $dest = implode("=", (array)$destination['telegram']);
-            $pers = implode(" ", (array)$personnel);
-            $telegram_msg = '';
-            $telegram_msg .= '<b>TO #</b>: '.$query->row('reference_no').chr(10);
-            $telegram_msg .= '<b>FILE: </b>'.strtoupper($query->row('company')).chr(10);
-            $telegram_msg .= '<b>PREP BY: </b>'.strtoupper($query->row('created_by')).chr(10);
-            $telegram_msg .= '<b>PERSONNEL: </b>'.$pers.chr(10);
-            $telegram_msg .= $vehicle_details;
-            $telegram_msg .= str_replace("=","",$dest);
-            if($this->telegram_config_if_exist('travel_order', 'count') > 0){
-                $this->telegram($telegram_msg);
-
-                $this->sendTelegramToPersonnelHeads($id, $telegram_msg);
-            }
-
-            // $this->sendSMStoDriver($query->row('driver_id'), $query->row('reference_no'), $destination['sms'][0], $pers);
         }
 
         function getPersonnelByIdDetails($id){

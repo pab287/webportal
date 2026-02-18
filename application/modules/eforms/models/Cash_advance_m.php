@@ -1876,7 +1876,7 @@ class Cash_advance_m extends CI_Model {
  
     protected function getUploadedCashAdvance($id, $sortBy, $sortOrder){
         $arrData = array();
-        $this->db->select("b.*, a.id, a.employee");
+        $this->db->select("b.*, b.id as attachment_id, a.id, a.employee, a.status");
         $this->db->from("gcceforms.cash_advance a");
         $this->db->join("gcceforms.ca_attachments b", "a.id = b.ca_id", "LEFT");
         $this->db->where('b.ca_id', $id);
@@ -3481,7 +3481,7 @@ class Cash_advance_m extends CI_Model {
         $resultSet = array();
         $is_paid = false;
         $filterFields = array("ca.id");
-        $this->db->select("ca.id,ca.company, ca.purpose, ca.department, ca.position, ca.approved_by, ca.approved_dt, ca.acctg_sss_loan as sss_loan, ca.acctg_hdmf_loan as hdmf_loan, created_dt as date_created, ca.amt_approved, ca.acctg_outside_loan as med_loan, ca.reference_no, ca.deduct_type, ca.amt_to_b_deducted,
+        $this->db->select("ca.id, ca.company, ca.purpose, ca.department, ca.position, ca.approved_by, ca.approved_dt, ca.acctg_sss_loan as sss_loan, ca.acctg_hdmf_loan as hdmf_loan, created_dt as date_created, ca.amt_approved, ca.acctg_outside_loan as med_loan, ca.reference_no, ca.deduct_type, ca.amt_to_b_deducted,
             CASE 
                 WHEN LENGTH(e.middlename) > 1 THEN CONCAT(e.firstname, ' ', SUBSTRING(e.middlename, 1, 1), '. ', e.lastname)
                 ELSE CONCAT(e.firstname, ' ', e.middlename, ' ', e.lastname)
@@ -3533,13 +3533,13 @@ class Cash_advance_m extends CI_Model {
                 }else{
                     $rs->reference = 'no reference no';
                     $rs->activebal = false;
-                    $rs->rembalance = 0;
+                    $rs->rembalance = $rs->amt_approved;
                     $rs->deduction = 0;
+                    $rs->total_deduction = 0;
                 }
 
-                if (!$is_paid && (int)$ca_status->active == 1) {
-                    $arrData[$key] = $rs;
-                }
+                $arrData[$key] = $rs;
+                
             }
 
             foreach($arrData as $k=>$v){
@@ -3769,5 +3769,36 @@ class Cash_advance_m extends CI_Model {
         $query = $this->db->get();
         return $query->row();
 
+    }
+
+    function remove_attachment(){
+        $post = $this->input->post();
+        $result = array();
+
+        if (isset($post['id']) && $post['id']) {
+            $id = $post['id'];
+            $reason = trim($post['reason']);
+    
+            $this->db->where('ca_id', $post['id']);
+            $this->db->where('id', $post['attachment']);
+            $query = $this->db->delete('gcceforms.ca_attachments');
+    
+            if ($query){
+                $result['state'] = true;
+                $result['msg'] = 'Successfully removed attachment.';
+    
+                $this->core_layout->setEventLog("Cash Advance Masterfile - Successfully removed the attachment of cash advance db id `$id` with reason of `$reason`.","delete", "success", "gcceforms", "user");
+            } else {
+                $result['state'] = false;
+                $result['msg'] = 'Failed to remove the attachment';
+    
+                $this->core_layout->setEventLog("Cash Advance Masterfile - Failed to remove the attachment of cash advance db id `$id` with reason of `$reason`.","delete", "error", "gcceforms", "system");
+            }
+        } else {
+            $result['state'] = false;
+            $result['msg'] = 'No data found.';
+        }
+
+        return $result;
     }
 }

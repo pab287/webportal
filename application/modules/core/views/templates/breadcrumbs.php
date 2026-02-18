@@ -18,7 +18,7 @@
                 <li class="m-nav__item">
                     <a href="javascript:void(0)" class="m-nav__link">
                         <span class="m-nav__link-text" style="text-transform: uppercase;">
-                            <?php echo str_replace("_"," ",$this->router->fetch_class());?>
+                            <?php echo ($crumbTitle)? $crumbTitle: str_replace("_"," ",$this->router->fetch_class());?>
                         </span>
                     </a>
                 </li>

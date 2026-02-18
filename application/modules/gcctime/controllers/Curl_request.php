@@ -121,13 +121,13 @@ class Curl_request extends MY_Controller {
 				$tempEnd = $meredien ? $amEnd: $pmEnd;
 
 				$meredien = strtoupper($meredien);
-				if(($createdAt >= $amStart && $createdAt <= $amEnd) && $meredien == "AM"){
+				if(($createdAt >= $amStart && ($createdAt <= $amEnd || $createdAt <= $pmStart)) && $meredien == "AM"){
 					$responseAM = $this->generateMorningAbsenteeData();
 					if($responseAM){
 						$this->trigger_email_late($meredien);
 						$this->trigger_email_absent($meredien);
 					}
-				}elseif(($createdAt >= $pmStart && $createdAt <= $pmEnd) && $meredien == "PM"){
+				}elseif(($createdAt >= $pmStart && ($createdAt <= $pmEnd || $createdAt >= $pmEnd)) && $meredien == "PM"){
 					$responsePM = $this->generateAfternoonAbsenteeData();
 					if($responsePM){
 						$this->trigger_email_late($meredien);
