@@ -7,6 +7,7 @@ let schedule = null;
 let selectedSchedule = null;
 let modalTraining = null;
 let attachment_type = null;
+let assigned_sched = null;
 
 const maxFileSize = 50 * 1024 * 1024; // 50MB
 const allowedTypes = [
@@ -54,9 +55,8 @@ if (_tempContentData !== undefined && _tempContentData !== null && _tempContentD
     attachments = _tempContentData.attachments;
     schedule = _tempContentData.schedule;
     attachment_type = _tempContentData.options.attachment_type;
+    assigned_sched = _tempContentData.assigned_sched;
 }
-
-console.log(attachment_type);
 
 let eventVue = new Vue({
     el: "#events-content",
@@ -93,7 +93,10 @@ let eventVue = new Vue({
         attendance:{},
         employee_attendance:{},
         emp_attendance_selected:{},
-        originalBudgetData: {}
+        originalBudgetData: {},
+        isRecent: false,
+        assigned_sched: assigned_sched
+
     },
     mounted: function () {
         const vm = this;
@@ -137,10 +140,7 @@ let eventVue = new Vue({
             const end = new Date(event_to || event_from);
             const endPlus3Days = new Date(end);
             endPlus3Days.setDate(endPlus3Days.getDate() + 3);
-            return (
-                (now >= start && now <= end) ||  // ongoing
-                now >= endPlus3Days              // 3 days after end
-            );
+            return ((now >= start && now <= end) || now >= endPlus3Days);
         },
         participantsCount() {
             let list = Object.values(this.participants);
@@ -184,14 +184,20 @@ let eventVue = new Vue({
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const start = new Date(date_from);
-            const end = new Date(date_to);
+            const end = new Date(date_to || date_from);
             const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
             const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+            const endPlus3Days = new Date(endDate);
+            endPlus3Days.setDate(endPlus3Days.getDate() + 3);
             if (today < startDate) {
                 return { label: "Upcoming Training", class: "bg-info text-dark" };
             }
             if (today >= startDate && today <= endDate) {
                 return { label: "Ongoing Training", class: "bg-warning text-dark" };
+            }
+            if (today > endDate && today <= endPlus3Days) {
+                this.isRecent = true;
+                return { label: "Recently Completed", class: "bg-primary text-white" };
             }
             return { label: "Training Done", class: "bg-success" };
         },
@@ -317,7 +323,6 @@ let eventVue = new Vue({
                                 if (self.attachments[type] && self.attachments[type].length === 0 || self.attachments[type] === undefined) {
                                     delete self.attachments[type];
                                 }
-                                console.log(self.attachments[type], self.attachments);
                             } else {
                                 toastr.error(response.message || "Failed to remove attachment.");
                             }
@@ -816,6 +821,10 @@ const participantsTable = $('#participantsTable').DataTable({
                         return `<span class="badge badge-dark">Did not attend</span>`;
                     }
                 }
+                if(row.status === 'confirmed' && !isDone){
+
+                    // check if assigned participantSched row.is
+                }
         
                 return `<span class="badge ${statusMap[data] || 'badge-secondary'}">${data}</span>`;
             }
@@ -1037,6 +1046,9 @@ let newValidation = $.validate({
             formData.emp_id = empId; 
         }
         formData.event_id = eventsDetails.id;
+        if(eventVue.isRecent){
+            formData.is_recent = 1;
+        }
         $.ajax({
             url: baseUrl('events/save_participant'),
             type: "POST",
@@ -1395,6 +1407,8 @@ $('#schedule_end').timepicker({
     defaultTime: '05:00 PM',
     minuteStep: 10,
 });
+
+console.log(assigned_sched);
 
 function assignSchedule(participant){
     $.ajax({

@@ -574,9 +574,13 @@ class Events_model extends MX_Controller {
     public function saveParticipant(){
         $resultArray = array();
         $post = $this->input->post();
-        $post['status'] = "pending";
+        if($post['is_recent']){
+            $post['status'] = "confirmed";
+        }else{
+            $post['status'] = "pending";
+        }
         $post['invited_by'] = $this->user_data['emp_id'];
-        unset($post['csrf_token']);
+        unset($post['csrf_token'], $post['is_recent']);
         $insert = $this->db->insert($this->eventsParticipantsTable, $post);
         if($insert){
             $resultArray['participants'] = $this->getEventParticipants($post['event_id']);
@@ -921,6 +925,16 @@ class Events_model extends MX_Controller {
         }
     
        return $response;
+    }
+
+    public function getAssignedSchedule($id){
+        return $this->db->select('a.participant_id, a.schedule_id, b.event_id, b.title')
+            ->from($this->events_attendance . ' a')
+            ->join($this->eventsSched . ' b', 'a.schedule_id = b.id', 'left')
+            ->where('b.event_id', $id)
+            ->where('b.is_archived', 0)
+            ->get()
+            ->result_array();
     }
 
     public function getEventSchedule($id){
