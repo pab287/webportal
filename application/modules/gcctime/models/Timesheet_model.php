@@ -493,13 +493,14 @@ class Timesheet_model extends CI_Model{
                             /*** $alteredShifts = $this->getCustomizedShiftScheduleByDate($date, $tempRow->emp_id); ***/
                             /*** $shift_id = 0; ***/
 
-                            $this->db->select("a.id, b.shift_id");
+                            $this->db->select("a.id, b.shift_id, b.is_flexi");
                             $this->db->from($this->tbl_employees." a");
                             $this->db->join($this->tbl_personnel." b", "b.biometric_id = a.biometricno OR b.biometricno = a.biometricno");
                             $this->db->where("a.id", $tempRow->emp_id);
                             $queryTempx = $this->db->get();
                             if($queryTempx->num_rows() == 1){
                                 /*** $shift_id = $queryTempx->row()->shift_id; ***/
+                                $ctrShiftCount = 0;
                                 $employee = $queryTempx->row();
 
                                 $updatedSchedule = $this->getCurrentShiftSchedule($date, $employee);
@@ -509,11 +510,35 @@ class Timesheet_model extends CI_Model{
                                     $tempSchedule = "shift_{$prop}";
                                     if(isset($schedule->$prop)){
                                         $tempRow->$tempSchedule = $schedule->$prop !== null ? $schedule->$prop: null;
+                                        if($tempRow->$tempSchedule !== null){ $ctrShiftCount++; }
                                     }
                                 }
 
                                 $tempRow->has_shift = $updatedSchedule->has_shift;
                                 $tempRow->custom_shift_id = $updatedSchedule->custom_shift_id;
+
+                                /*** custom script for timesheet attendance with 2 attendance records ***/
+                                if(intval($tempRow->has_shift) == 1 && intval($employee->is_flexi) > 0){
+                                    $tsAttendances = array();
+                                    $tsInOut = array("am_in", "am_out", "pm_in", "pm_out");
+                                    foreach ($tsInOut as $inOut) {
+                                        if(isset($tempRow->{$inOut}) && $tempRow->{$inOut} != null){
+                                            $tsAttendances[] = $tempRow->{$inOut};
+                                        }
+                                    }
+
+                                    if(is_array($tsAttendances) && !empty($tsAttendances) && count($tsAttendances) === 2 && $ctrShiftCount === 4){
+                                        $shifts = array("shift_am_start" => $tempRow->shift_am_start, "shift_am_end" => $tempRow->shift_am_end,
+                                        "shift_pm_start" => $tempRow->shift_pm_start, "shift_pm_end" => $tempRow->shift_pm_end);
+                                        $attendanceShift = $this->buildAttendanceFromShift($tsAttendances, $shifts);
+
+                                        $updatedTimesheetRecord = $this->db->update($this->tbl_timesheet, $attendanceShift, array("id" => $tempRow->id));
+                                        if($updatedTimesheetRecord && $this->db->affected_rows() > 0){
+                                            $tempRow = $this->db->get_where($this->tbl_timesheet, array("id"=>$tempRow->id))->row();
+                                        }
+                                    }
+                                }
+                                /*** custom script for timesheet attendance with 2 attendance records ***/
                             }
 
                             $temp_overtime = $this->db
@@ -10198,5 +10223,32 @@ class Timesheet_model extends CI_Model{
         }
 
         return $_empIds;
+    }
+
+    protected function buildAttendanceFromShift($logs, $shift) {
+        sort($logs);
+        $firstLog = $logs[0] ?? null;
+        $lastLog  = end($logs) ?: null;
+        $result = [
+            'am_in'  => null,
+            'am_out' => null,
+            'pm_in'  => null,
+            'pm_out' => null,
+        ];
+
+        $first = strtotime($firstLog);
+        $last  = strtotime($lastLog);
+
+        $amStart = strtotime($shift['shift_am_start']);
+        $amEnd   = strtotime($shift['shift_am_end']);
+        $pmStart = strtotime($shift['shift_pm_start']);
+        $pmEnd   = strtotime($shift['shift_pm_end']);
+
+        if ($first <= $amStart) { $result['am_in'] = date('H:i', $first); }
+        if ($last >= $pmStart) { $result['am_out'] = date('H:i', $amEnd); }
+        if ($last >= $pmStart) { $result['pm_in'] = date('H:i', $pmStart); }
+        if ($last >= $pmEnd) { $result['pm_out'] = date('H:i', $last); }
+
+        return $result;
     }
 }
