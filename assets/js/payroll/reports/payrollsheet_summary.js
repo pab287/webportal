@@ -449,17 +449,17 @@ $(document).ready(function(){
             },
             { data: 'ot_night_diff', width: '6%', className: "text-center",
                 render: function(data, type, row){
-                    return '₱ '+data;
+                    return '₱ '+numberFormat(data);
                 }
             },
             { data: 'amount_paid', width: '6%', className: "text-center",
                 render: function(data, type, row){
-                    return '₱ '+data;
+                    return '₱ '+numberFormat(data);
                 }
             },
             { data: 'total_pay', width: '6%', className: "text-center",
                 render: function(data, type, row){
-                    return '₱ '+data;
+                    return '₱ '+numberFormat(data);
                 }
             },
         ], rowGroup: {
