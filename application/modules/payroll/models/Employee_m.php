@@ -9,11 +9,12 @@
         protected $personnelTable = "gcctimeutility.personnel";
         protected $payrollGroupTable = "payroll.payroll_group";
         protected $employeeSalaryTable = "gcchris.tblsalaries";
-
+        protected $tbl_payroll_sheet = "payroll.payroll_sheet";
         protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
         protected $tbl_payroll_fixed_taxable = "payroll.fixed_taxable_deduction";
         protected $tbl_ps_regular_ndiff = "payroll.employee_regular_ndiff";
         protected $tbl_ps_auto_overtime = "payroll.employee_auto_overtime";
+        protected $tbl_overtime = "gcceforms.overtime";
         protected $temporaryTable = "TEMPORARY";
 
         private $db_debug;
@@ -2384,13 +2385,29 @@ public function getEmployeeNightDiffList(){
         $this->db->join($this->employeeTable." as cemp", "cemp.id = auto.created_by", "left");
         $this->db->join($this->employeeTable." as uemp", "uemp.id = auto.last_updated_by", "left");
         $this->db->where("emp.employee_status", "Active");
-        if(isset($filters["company"]) && intval($filters["company"]) > 0) { $this->db->where("cmp.id", $filters["company"]); }
+        
+        if(isset($filters["company"]) && intval($filters["company"]) > 0) { 
+            $this->db->where("cmp.id", $filters["company"]); 
+        }
+
         if(isset($filters["serialized_employees"]) && $filters["serialized_employees"]) {
             $arrIds = explode(",", $filters["serialized_employees"]);
             $this->db->where_in("emp.id", $arrIds);
         } elseif (isset($filters["employees"]) && is_array($filters["employees"]) && !empty($filters["employees"])) {
             $this->db->where_in("emp.id", $filters["employees"]);
         }
+
+        if(isset($filters['status']) && $filters['status'] != ' '){
+            if(intval($filters['status']) === 1){
+                $this->db->where("auto.allow_auto_overtime", 1);
+            }elseif(intval($filters['status']) === 0){
+                $this->db->group_start();
+                $this->db->where("auto.allow_auto_overtime", 0);
+                $this->db->or_where("auto.allow_auto_overtime IS NULL", null, false);
+                $this->db->group_end();
+            }
+        }
+
         if (isset($search) && $search) {
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
@@ -2526,6 +2543,139 @@ public function getEmployeeNightDiffList(){
 
         }
 
+    }
+
+    public function approveAutoOvertime(){
+        $responseArray = array();
+        $post = $this->input->post();
+        $date = $post['date'];
+        $currentUser = $this->core_layout->getCurrentEmployeeId();
+        $ids = $this->automated_approve_ot($date);
+
+        if (count($ids) > 0 && $ids) {
+            $data = $this->ts_model->get_automated_approved_ot($ids);
+            $message = $this->load->view("eforms/email_templates/email-overtime_approval_template", array('data' => $data), true);
+
+            $tempTitle = "EFORMS - AUTOMATE APPROVED OT by " . $this->getCurrentEmployeeName($currentUser);
+            $today = date("Y-m-d");
+            $module = 'eforms_overtime_approve';
+            $email_title = $tempTitle;
+            $content_title = $tempTitle;
+            $content = $message;
+
+            if ($content) {
+                $sent = $this->core_layout->send_email($module, $email_title, $content_title, $content);
+                if ($sent) {
+                    $responseArray['overtime_ids'] = $ids;
+                    $responseArray['message'] = 'Email Sent Successfully';
+                    $responseArray['status'] = true;
+                } else {
+                    $responseArray['message'] = 'Failed Sending Email';
+                    $responseArray['status'] = true;
+                }
+            }
+
+        } else {
+            $responseArray['message'] = 'No Overtime Found for Approval';
+            $responseArray['status'] = false;
+        }
+        return $responseArray;
+    }
+
+    private function automated_approve_ot($date) {
+        $overtimeIds = array();
+        [$start, $end] = array_map('trim', explode('-', $date));
+        $startDate = date('Y-m-d', strtotime($start));
+        $endDate   = date('Y-m-d', strtotime($end));
+        $this->db->select('employee_id');
+        $this->db->where('allow_auto_overtime', 1);
+        $this->db->from($this->tbl_ps_auto_overtime);
+        $query = $this->db->get();
+
+        $this->db->reset_query();
+
+        if ($query->num_rows() > 0) {
+            $ids = array_column($query->result(), 'employee_id');
+            if (is_array($ids) && !empty($ids)) {
+                $this->db->select('id, employee, date_from, date_to');
+                $this->db->where_in('employee', $ids);
+                $this->db->where('TIMESTAMPDIFF(MINUTE, date_from, date_to) <=', 180); //only gets the record 3hrs and under; 3 hrs = 180mins
+                $this->db->where('status', 'Pending');
+    
+                $this->db->group_start();
+                    $this->db->where('DATE(date_from) >=', $startDate);
+                    $this->db->where('DATE(date_to) <=', $endDate);
+                $this->db->group_end();
+    
+                $this->db->from($this->tbl_overtime);
+                $q = $this->db->get();
+
+                $this->db->reset_query();
+    
+                if ($q->num_rows() > 0) {
+                    foreach ($q->result() as $key => $rs) {
+                        $maxPayrollDate = $this->getPayrollMaxDate_OT($rs->employee);
+                        $isValidDate = $maxPayrollDate !== false ? strtotime($startDate) > strtotime($maxPayrollDate) : false; //blocks approving of OT when the date approved is greater than the last payroll end date
+                        if ($isValidDate) {
+                            $data = array('status' => 'Approved', 'approved_by' => $this->core_layout->getCurrentEmployeeId(), 'approved_at' => date("Y-m-d H:i:s"));
+                            $this->db->where('id', $rs->id);
+                            $_q = $this->db->update($this->tbl_overtime, $data);
+    
+                            if ($_q) {
+                                array_push($overtimeIds, $rs->id);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $overtimeIds;
+    }
+
+    protected function getPayrollMaxDate_OT($id=null){
+        if($id){
+            $this->db->select("MAX(ps.date_end) as max_date");
+            $this->db->from($this->employeeTable." emp");
+            $this->db->join($this->tbl_payroll_sheet." ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+            $this->db->where("emp.id", $id);
+            $this->db->group_by("emp.id");
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() == 1){ return $qTemp->row()->max_date; }
+            else{ return false; }
+        }else{ return false; }
+        
+    }
+
+    protected function getCurrentEmployeeName($empId=null){
+        $tempId = $empId ? $empId : $this->core_layout->getCurrentEmployeeId();
+        if ($tempId === null) return "";
+        
+        $this->db->select("UPPER(
+            CONCAT(
+                firstname,
+                ' ',
+                CASE
+                WHEN UPPER(TRIM(middlename)) NOT IN ('N/A', 'NONE')
+                    AND TRIM(middlename) != ''
+                    AND middlename IS NOT NULL
+                THEN CONCAT(SUBSTRING(middlename, 1, 1), '. ')
+                ELSE ''
+                END,
+                lastname,
+                CASE
+                WHEN UPPER(TRIM(suffix)) NOT IN ('N/A', 'NONE')
+                    AND TRIM(suffix) != ''
+                    AND suffix IS NOT NULL
+                THEN CONCAT(' ', suffix)
+                ELSE ''
+                END
+            )
+        ) AS employee_name", false);
+        $this->db->from("gccmaster.tblemployees");
+        $this->db->where("id", $tempId);
+        $query = $this->db->get();
+        if($query->num_rows() === 1){ return $query->row()->employee_name; }
+        else{ return ""; }
     }
 
     public function getEmployeesWithoutPayrollGroup() {
