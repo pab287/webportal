@@ -6932,7 +6932,7 @@ class Reports_m extends CI_Model{
             $this->db->join('payroll.payroll_sheet c', 'c.emp_id = b.id AND (DATE(c.date_start) <= DATE(a.date) AND DATE(c.date_end) >= DATE(a.date))', 'LEFT');
             $this->db->join('gcchris.tblcompanies d', 'd.id = b.company_id', 'LEFT');
             $this->db->where('c.posted', 1);
-            // $this->db->where('a.verified', 1);
+            $this->db->where('a.verified', 1);
             $this->db->where('c.is_bonus', 0);
             $this->db->from('gcctimeutility.timesheet a');
 

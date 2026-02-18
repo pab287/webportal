@@ -617,7 +617,7 @@ $(document).ready(function(){
                 if (json.data.length > 0) {
                     vmActionSignatories.show_signatories = true;
                     vmReportHeaders.filters = { ...json.filters };
-                    toastr.success('Regular Night Differential entries found!', "Filtered Night Differential Summary Report");
+                    toastr.success('Payroll Sheet entries found!', "Filtered Payroll Sheet Summary Report");
 
                     dtPayrollTable.clear().rows.add(json.data).draw();
 
@@ -625,7 +625,7 @@ $(document).ready(function(){
                         modalGenerateReport.modal("hide"); 
                     }, 750);
                 } else {
-                    toastr.error('No regular night differential entries available!', "Filtered Night Differential Summary Report");
+                    toastr.error('No Payroll Sheet entries available!', "Filtered Payroll Sheet Summary Report");
                 }
     
                 const currentSelectCompanyId = $(currentForm).find("#company").val();

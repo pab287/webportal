@@ -1087,11 +1087,13 @@ class Reports extends MY_Controller {
         $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
         $tempData["company"] = $this->payroll->select2CompanyData();
         $tempData["payout_schedule"] = $this->payroll->select2PayoutScheduleData();
+
+        $version = filemtime(FCPATH.'assets/js/payroll/reports/payrollsheet_summary.js');
         
         $this->core_layout->setPageTitle("Payroll - Payroll Sheet Summary Report");
         $this->core_layout->setPrivilegeName("payroll_payrollsheet_summary");
         $this->core_layout->addJs("js/buttons.print.min.js", true);
-        $this->core_layout->addJs("js/payroll/reports/payrollsheet_summary.js", true, $tempData);
+        $this->core_layout->addJs("js/payroll/reports/payrollsheet_summary.js", true, $tempData,"?v={$version}");
 
         $this->load->view("core/templates/header");
         $this->load->view("payroll/reports/payrollsheet_summary");
