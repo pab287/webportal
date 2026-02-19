@@ -486,8 +486,7 @@
                             <?php endforeach; ?>
                             
                             <?php if(is_numeric($item->adjustment_d_count) && intval($item->adjustment_d_count) > 0): ?>
-                            <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--margin-bottom-5"></div>
-                            <h5 class="m--marginless mt-3"><span class="mt-3">OTHER DEDUCTIONS</span></h5>
+                            <h5 class="m--marginless mt-3"><span class="mt-3">OTHER LOANS</span></h5>
                             <?php foreach ($item->adjustment_deductions as $kk => $vv): ?>
                                 <div class="row text-right">
                                     <div class="col-md-5 printable-width-5">

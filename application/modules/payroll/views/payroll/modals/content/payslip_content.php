@@ -273,8 +273,7 @@
             </div>
 
         <template v-if="row.adjustment_d_count > 0">
-            <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
-            <h6 class="mt-3">OTHER DEDUCTIONS</h6>
+            <h6 class="mt-3">OTHER LOANS</h6>
             <div class="row text-right" v-for="(item, index) in row.adjustment_deductions">
                 <div class="col-md-5">
                     <small class="m--font-bold">{{item.label}} </small>
