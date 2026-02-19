@@ -272,12 +272,25 @@
                 </template>
             </div>
 
+        <template v-if="row.adjustment_d_count > 0">
+            <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
+            <h6 class="mt-3">OTHER DEDUCTIONS</h6>
+            <div class="row text-right" v-for="(item, index) in row.adjustment_deductions">
+                <div class="col-md-5">
+                    <small class="m--font-bold">{{item.label}} </small>
+                </div>
+                <div class="col-md-7 text-left">
+                    <span class="m--font-bold">{{item.display_value}}</span>
+                </div>
+            </div>
+        </template>
+
             <div class="row m--margin-top-10 m--margin-bottom-5">
                 <div class="col-md-8">
                     <span class="m--font-bolder">TOTAL LOANS</span>
                 </div>
                 <div class="col-md-4 text-right">
-                    <span class="m--font-boldest" style="margin-right: 8px">( {{row.totalLoan}} )</span>
+                    <span class="m--font-boldest" style="margin-right: 8px">( {{ row.totalLoanPayable }} )</span>
                 </div>
             </div>
         </template>
@@ -293,26 +306,7 @@
             </div>
         </div>
     </template>
-    <template v-if="row.adjustment_d_count > 0">
-        <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
-        <h6 class="mt-3">OTHERS</h6>
-        <div class="row text-right" v-for="(item, index) in row.adjustment_deductions">
-            <div class="col-md-5">
-                <small class="m--font-bold">{{item.label}} </small>
-            </div>
-            <div class="col-md-7 text-left">
-                <span class="m--font-bold">{{item.display_value}}</span>
-            </div>
-        </div>
-        <div class="row m--margin-top-10 m--margin-bottom-5">
-            <div class="col-md-8">
-                <span class="m--font-bolder">TOTAL OTHERS DEDUCTIONS</span>
-            </div>
-            <div class="col-md-4 text-right">
-                <span class="m--font-boldest" style="margin-right: 8px">( {{row.total_others_deductions}} )</span>
-            </div>
-        </div>
-    </template>
+    
     <template v-if="row.overall_total_deductions && parseFloat(row.overall_total_deductions) > 0 && (raw_tl > 0 || raw_tod > 0 || raw_tli > 0)">
         <div class="m-form__seperator m-form__seperator--dashed m-form__seperator--space-1x m--margin-bottom-5"></div>
         <div class="row m--margin-top-10 m--margin-bottom-5 mt-3">

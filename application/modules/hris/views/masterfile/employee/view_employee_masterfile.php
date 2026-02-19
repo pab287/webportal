@@ -607,6 +607,7 @@
                     let totalDeduction = 0;
                     let totalOthersDeductions = 0;
                     let overAllTotal = 0;
+                    let overAllTotalLoansPayable = 0;
                     const tempCreatedAdjustments = data.created_adjustments;
 
                     if (data.sss && parseFloat(data.sss) > 0) {
@@ -719,9 +720,11 @@
                     });
 
                     overAllTotal = parseFloat(totalDeduction) + parseFloat(totalLoan) + parseFloat(totalOthersDeductions) + parseFloat(vmPayslipContent.row.total_loans_interest);
+                    overAllTotalLoansPayable = Number.parseFloat(totalLoan) + Number.parseFloat(totalOthersDeductions);
 
                     vmPayslipContent.row.loans = tempLoan;
                     vmPayslipContent.row.totalLoan = numberFormat(totalLoan);
+                    vmPayslipContent.row.totalLoanPayable = numberFormat(overAllTotalLoansPayable);
                     vmPayslipContent.row.total_allowances = numberFormat(vmPayslipContent.row.total_allowances);
                     vmPayslipContent.row.deductions = numberFormat(totalDeduction);
                     vmPayslipContent.row.total_others_deductions = numberFormat(totalOthersDeductions);

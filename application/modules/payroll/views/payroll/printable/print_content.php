@@ -484,12 +484,30 @@
                                     <?php endif; ?>
                                 </div>
                             <?php endforeach; ?>
+                            
+                            <?php if(is_numeric($item->adjustment_d_count) && intval($item->adjustment_d_count) > 0): ?>
+                            <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--margin-bottom-5"></div>
+                            <h5 class="m--marginless mt-3"><span class="mt-3">OTHER DEDUCTIONS</span></h5>
+                            <?php foreach ($item->adjustment_deductions as $kk => $vv): ?>
+                                <div class="row text-right">
+                                    <div class="col-md-5 printable-width-5">
+                                        <h5 class="m--font-bolder m--marginless"><?php echo strtoupper($vv->label); ?></h5>
+                                    </div>
+                                    <div class="col-md-7 printable-width-7 text-left">
+                                        <h5 class="m--font-bolder m--marginless"><?php echo $vv->display_value; ?></h5>
+                                    </div>
+                                </div>
+                                <?php $_temp_total_others += floatval(preg_replace('/[^\d\.\-]/', '', $vv->display_value)); ?>
+                            <?php endforeach; ?>
+                            <?php endif; ?>
+                            
+                            <?php $overall_total_loan_payable = floatval($temp_totalLoan) + floatval($_temp_total_others); ?>
                             <div class="row m--margin-top-5 m--margin-bottom-5">
                                 <div class="col-md-8 printable-width-8">
                                     <h5 class="m--font-bolder m--marginless">TOTAL LOANS</h5>
                                 </div>
                                 <div class="col-md-4 printable-width-4 text-right">
-                                    <h5 class="m--font-boldest mr-3">( <?php echo number_format($temp_totalLoan, 2); ?> )</h5>
+                                    <h5 class="m--font-boldest mr-3">( <?php echo number_format($overall_total_loan_payable, 2); ?> )</h5>
                                 </div>
                             </div>
                         <?php endif; ?>
@@ -507,33 +525,9 @@
                         </div>
                     <?php endif; ?>
                     
-                    <?php if(is_numeric($item->adjustment_d_count) && intval($item->adjustment_d_count) > 0): ?>
-                        <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--margin-bottom-5"></div>
-                        <h5 class="m--marginless mt-3"><span class="mt-3">OTHERS</span></h5>
-
-                        <?php foreach ($item->adjustment_deductions as $kk => $vv): ?>
-                            <div class="row text-right">
-                                <div class="col-md-5 printable-width-5">
-                                    <h5 class="m--font-bolder m--marginless"><?php echo strtoupper($vv->label); ?></h5>
-                                </div>
-                                <div class="col-md-7 printable-width-7 text-left">
-                                    <h5 class="m--font-bolder m--marginless"><?php echo $vv->display_value; ?></h5>
-                                </div>
-                            </div>
-                            <?php $_temp_total_others += floatval(preg_replace('/[^\d\.\-]/', '', $vv->display_value)); ?>
-                        <?php endforeach; ?>
-
-                        <div class="row m--margin-top-5 m--margin-bottom-5">
-                            <div class="col-md-8 printable-width-8">
-                                <h5 class="m--font-bolder m--marginless">TOTAL OTHERS DEDUCTIONS</h5>
-                            </div>
-                            <div class="col-md-4 printable-width-4 text-right">
-                                <h5 class="m--font-boldest mr-3">( <?php echo number_format($_temp_total_others, 2); ?> )</h5>
-                            </div>
-                        </div>
-                    <?php endif; ?>
                     <?php $overall_temp_loans = floatval($item->total_loans_interest) + floatval($temp_totalLoan) + floatval($_temp_total_others); ?>
                     <?php if(floatval($_tempDeductions) > 0 && floatval($overall_temp_loans) > 0): ?>
+                        <?php $overall_total_loans = floatval($overall_temp_loans) + floatval($_tempDeductions); ?>
                         <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--margin-bottom-5"></div>
                         <div class="row m--margin-top-5 m--margin-bottom-5">
                             <div class="col-md-8 printable-width-8">
