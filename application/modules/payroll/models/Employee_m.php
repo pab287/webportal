@@ -1444,13 +1444,13 @@
                     $resultset["response"] = true;
 
                     // log event
-                    $msg = "Payroll Employee Group has been archived by " . $this->getCurrentEmployeeName($logged_id);
+                    $msg = "Payroll Employee Group has been archived by " . $this->getCurrentEmployeeName($logged_id) . " at " . date("Y-m-d H:i:s");
                     $this->core_layout->setEventLog("Payroll Group - " . $msg, "archive", "success", "payroll", "user");
                 }else{
                     $resultset["response"] = false;
 
                     // log event
-                    $msg = "Failed to archive Payroll Employee Group attempted by " . $this->getCurrentEmployeeName($logged_id);
+                    $msg = "Failed to archive Payroll Employee Group attempted by " . $this->getCurrentEmployeeName($logged_id) . " at " . date("Y-m-d H:i:s");
                     $this->core_layout->setEventLog("Payroll Group - " . $msg, "archive", "error", "payroll", "user");
                 }
             }else{
@@ -2696,13 +2696,13 @@ public function getEmployeeNightDiffList(){
                 $resultset["response"] = true;
 
                 // log event
-                $msg = "Payroll Employee Group has been restored by " . $this->getCurrentEmployeeName($logged_id);
+                $msg = "Payroll Employee Group has been restored by " . $this->getCurrentEmployeeName($logged_id) . " at " . date("Y-m-d H:i:s");
                 $this->core_layout->setEventLog("Payroll Group - " . $msg, "restore", "success", "payroll", "user");
             } else {
 
                 $resultset["response"] = false;
                 // log event
-                $msg = "Failed to restore Payroll Employee Group attempted by " . $this->getCurrentEmployeeName($logged_id);
+                $msg = "Failed to restore Payroll Employee Group attempted by " . $this->getCurrentEmployeeName($logged_id) . " at " . date("Y-m-d H:i:s");
                 $this->core_layout->setEventLog("Payroll Group - " . $msg, "restore", "error", "payroll", "user");
             }
         } else {

@@ -684,6 +684,10 @@ $("#archive_payroll_group_modal").on("shown.bs.modal", async () => {
     }
 });
 
+$("#archive_payroll_group_modal").on("hidden.bs.modal", function () {
+    table.DataTable().clear().draw();
+});
+
 $(document).on("click", "button.btnRestoreGroup", function () {
     const _this = this;
     const rowUrl = $(_this).data("url");
