@@ -23,6 +23,53 @@
             $this->load->view('core/templates/footer');
         }
 
+        public function new_request(){
+            $data = array();
+            $data['employee'] = $this->eng_req->select2Employee();
+            $data['projects'] = $this->eng_req->select2Projects();
+            $data['req_types'] = $this->eng_req->getReqTypes();
+            $this->core_layout->setPageTitle("Request For Information");
+            // $this->core_layout->setPrivilegeName("eforms_new_rfi_request");
+            $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
+            $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
+            $this->core_layout->addExternalJs("https://cdn.ckeditor.com/ckeditor5/12.3.1/classic/ckeditor.js", true);
+            $this->core_layout->addJs("js/eforms/eng_request/new_request.js", true, $data);
+            $this->load->view('core/templates/header');
+            $this->load->view('eforms/engineering_request_forms/new_request');
+            $this->load->view('core/templates/footer');
+        }
+
+        public function req_types(){
+            $data = array();
+            $data['employee'] = $this->eng_req->select2Employee();
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+            $this->core_layout->addJs("js/eforms/eng_request/req_type.js", true, $data);
+            $this->load->view('core/templates/header');
+            $this->load->view('eforms/engineering_request_forms/req_type');
+            $this->load->view('core/templates/footer');
+        }
+
+        public function get_req_types(){
+            $data = $this->eng_req->getReqType();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function save_req_type(){
+            $data = $this->eng_req->saveReqType();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function update_req_type(){
+            $data = $this->eng_req->updateReqType();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function archive_req_type(){
+            $data = $this->eng_req->archiveReqType();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
         public function edit_rfi_request($id){
             $data = array();
             $this->core_layout->setPageTitle("Request For Information");
