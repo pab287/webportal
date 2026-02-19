@@ -99,117 +99,35 @@ var initSelect2Employee = function (tempModal, portlet) {
         let tempSelector = tempModal.find("select.select2--value");
         if (typeof portlet !== "undefined") { tempSelector = portlet.find("select.select2--value"); }
         if (typeof tempSelector !== "undefined") {
-            
-            tempSelector.each((_i, select2) => {
-                const $select = $(select2);
-                
-                if ($select.data("select2-initialized")) return;
-                
-                $select.off(".select2Events");
-                
-                if ($select.hasClass("select2-hidden-accessible")) {
-                    $select.select2("destroy");
-                }
-
-                let prevValue = null;
-                
-                $(select2).select2({
-                    tags: true,
-                    allowClear: true,
-                    placeholder: 'Select an option',
-                    width: '100%',
-                    dropdownParent: $("#parent"),
-                    ajax: {
-                        url: baseUrl("eforms/overtime/select_signatory_employee"),
-                        type: 'POST',
-                        data: function ({ term }) {
-                            return {
-                                csrf_token: _csrf_hash,
-                                q: term,
-                                ids: selectedEmployee,
-                                company_id: tempModal.find("#company").val()
-                            }
-                        },
-                        dataType: "json",
-                        delay: 250,
-                        global: false,
-                        processResults: function (data) {
-                            let tempData = [];
-                            $.each(data.results, function (i, v) {
-                                const dd = { id: v.text, text: v.text, empId: v.id };
-                                tempData.push(dd);
-                            });
-                            return { results: tempData };
+            tempSelector.select2({
+                tags: true,
+                allowClear: true,
+                placeholder: 'Select an option',
+                width: '100%',
+                dropdownParent: $("#parent"),
+                ajax: {
+                    url: baseUrl("eforms/overtime/select_signatory_employee"),
+                    type: 'POST',
+                    data: function ({ term }) {
+                        return {
+                            csrf_token: _csrf_hash,
+                            q: term,
+                            ids: selectedEmployee,
+                            company_id: tempModal.find("#company").val()
                         }
+                    },
+                    dataType: "json",
+                    delay: 250,
+                    global: false,
+                    processResults: function (data) {
+                        let tempData = [];
+                        $.each(data.results, function (i, v) {
+                            const dd = { id: v.text, text: v.text, empId: v.id };
+                            tempData.push(dd);
+                        });
+                        return { results: tempData };
                     }
-                }).on('select2:opening.select2Events', function (e) {
-                    prevValue = $(this).val();
-
-                }).on('select2:select.select2Events', function(e) {
-                    const self = $(e.target);
-                    self.validate();
-                    const data = e.params.data;
-
-                    // if (prevValue !== data.id) {
-                    //     if (!selectedEmployee.includes(data.id)) {
-                    //         const index = selectedEmployee.indexOf(prevValue);
-                    //         if (index > -1) {
-                    //             selectedEmployee.splice(index, 1);
-                    //         }
-                    //     } else {
-                    //         Swal.fire({
-                    //             title: 'Employee already selected!',
-                    //             text: 'Overtime Summary Signatory',
-                    //             icon: 'warning',
-                    //             allowOutsideClick: false,
-                    //         }).then((result) => {
-                    //             if (result.isConfirmed) {
-                    //                 if (prevValue) {
-                    //                     self.val(prevValue).trigger('change.select2');
-                    //                     prevValue = self.val();
-                    //                 } else {
-                    //                     const options = new Option('Select an Option', '', true, true);
-                    //                     $select.append(options).trigger('change');
-                    //                     prevValue = null;
-                    //                 }
-                    //             }
-                    //         });
-                    //     }
-                    // }
-
-                    // if (!selectedEmployee.includes(data.id)) {
-                    //     selectedEmployee.push(data.id);
-                    // } else {
-                    //     if (prevValue) {
-                    //         Swal.fire({
-                    //             title: 'Employee already selected!',
-                    //             text: 'Overtime Summary Signatory',
-                    //             icon: 'warning',
-                    //             allowOutsideClick: false,
-                    //         }).then((result) => {
-                    //             if (result.isConfirmed) {
-                    //                 if (prevValue) {
-                    //                     self.val(prevValue).trigger('change.select2');
-                    //                     prevValue = self.val();
-                    //                 } else {
-                    //                     const options = new Option('Select an Option', '', true, true);
-                    //                     $select.append(options).trigger('change');
-                    //                     prevValue = null;
-                    //                 }
-                    //             }
-                    //         });
-                    //     } else {
-                    //         selectedEmployee.push(data.id);
-                    //     }
-                    // }
-                }).on('select2:unselect.select2Events', function(e) {
-                    const data = e.params.data;
-                    const index = selectedEmployee.indexOf(data.id);
-
-                    if (index > -1) {
-                        selectedEmployee.splice(index, 1);
-                    }
-                });
+                }
             });
         }
     }
@@ -433,7 +351,7 @@ var vmEditSignatory = new Vue({
     }, mounted: function () {
         const _this = this;
         _this.appendCurrentCompany();
-        // _this.appendCurrentSignatory();
+        _this.appendCurrentSignatory();
         setTimeout(_this.validateFields(), 500);
     }
 });
@@ -449,139 +367,35 @@ var initEditSelect2Employee = function (tempModal, ids) {
         let tempSelector = tempModal.find("select.select2--value");
         if (typeof portlet !== "undefined") { tempSelector = portlet.find("select.select2--value"); }
         if (typeof tempSelector !== "undefined") {
-            
-            if (typeof ids != 'undefined') {    
-                $.each(ids, function(index, item) {
-                    selectedEmployee.push(item.value);
-                });
-            }
-
-            tempSelector.each((_i, select2) => {
-                const $select = $(select2);
-
-                if ($select.data("select2-initialized")) return;
-                
-                // Remove Select2 container
-                $select.next('.select2-container').remove();
-                
-                // Clear value
-                $select.val('');
-                
-                $select.off(".select2Events");
-                
-                if ($select.hasClass("select2-hidden-accessible")) {
-                    $select.select2("destroy");
-                }
-
-                const value = ids?.[_i]?.value;
-                if (value !== undefined && value !== null) {
-                    let tempOption = new Option(value, value, true, true);
-                    $select.append(tempOption).trigger('change');
-                }
-
-                let prevValue = null;
-                
-                $(select2).select2({
-                    tags: true,
-                    allowClear: true,
-                    placeholder: 'Select an option',
-                    width: '100%',
-                    dropdownParent: $("#edit-parent"),
-                    ajax: {
-                        url: baseUrl("eforms/overtime/select_signatory_employee"),
-                        type: 'POST',
-                        data: function ({ term }) {
-                            return {
-                                csrf_token: _csrf_hash,
-                                q: term,
-                                ids: selectedEmployee,
-                                company_id: tempModal.find("#company").val()
-                            }  
-                        },
-                        dataType: "json",
-                        delay: 250,
-                        global: false,
-                        processResults: function (data) {
-                            let tempData = [];
-                            $.each(data.results, function (i, v) {
-                                const dd = { id: v.text, text: v.text, empId: v.id };
-                                tempData.push(dd);
-                            });
-                            return { results: tempData };
+            tempSelector.select2({
+                tags: true,
+                allowClear: true,
+                placeholder: 'Select an option',
+                width: '100%',
+                dropdownParent: $("#edit-parent"),
+                ajax: {
+                    url: baseUrl("eforms/overtime/select_signatory_employee"),
+                    type: 'POST',
+                    data: function ({ term }) {
+                        return {
+                            csrf_token: _csrf_hash,
+                            q: term,
+                            ids: selectedEmployee,
+                            company_id: tempModal.find("#company").val()
                         }
+                    },
+                    dataType: "json",
+                    delay: 250,
+                    global: false,
+                    processResults: function (data) {
+                        let tempData = [];
+                        $.each(data.results, function (i, v) {
+                            const dd = { id: v.text, text: v.text, empId: v.id };
+                            tempData.push(dd);
+                        });
+                        return { results: tempData };
                     }
-                }).on('select2:opening.select2Events', function (e) {
-                    prevValue = $(this).val();
-                }).on('select2:select.select2Events', function(e) {
-                    const self = $(e.target);
-                    self.validate();
-                    const data = e.params.data;
-                    // if (prevValue !== data.id) {
-                    //     if (!selectedEmployee.includes(data.id)) {
-                    //         const index = selectedEmployee.indexOf(prevValue);
-                    //         if (index > -1) {
-                    //             selectedEmployee.splice(index, 1);
-                    //         }
-                    //     } else {
-                    //         e.preventDefault();
-
-                    //         Swal.fire({
-                    //             title: 'Employee already selected!',
-                    //             text: 'Overtime Summary Signatory',
-                    //             icon: 'warning',
-                    //             allowOutsideClick: false,
-                    //         }).then((result) => {
-                    //             if (result.isConfirmed) {
-                    //                 if (prevValue) {
-                    //                     self.val(prevValue).trigger('change.select2');
-                    //                     prevValue = self.val();
-                    //                 } else {
-                    //                     const options = new Option('Select an Option', '', true, false);
-                    //                     $select.append(options).trigger('change.select2');
-                    //                     prevValue = null;
-                    //                 }
-                    //             }
-                    //         });
-                    //         return false;
-                    //     }
-                    // }
-
-                    // if (!selectedEmployee.includes(data.id)) {
-                    //     selectedEmployee.push(data.id);
-                    // } else {
-                    //     e.preventDefault();
-
-                    //     Swal.fire({
-                    //         title: 'Employee already selected!',
-                    //         text: 'Overtime Summary Signatory',
-                    //         icon: 'warning',
-                    //         allowOutsideClick: false,
-                    //     }).then((result) => {
-                    //         if (result.isConfirmed) {
-                    //             console.log(prevValue)
-                    //             if (prevValue) {
-                    //                 self.val(prevValue).trigger('change.select2');
-                    //                 prevValue = self.val();
-                    //             } else {
-                    //                 const options = new Option('Select an Option', '', true, true);
-                    //                 $select.append(options).trigger('change');
-                    //                 prevValue = null;
-                    //             }
-                    //         }
-                    //     });
-                    //     return false;
-                    // }
-                }).on('select2:unselect.select2Events', function(e) {
-                    const data = e.params.data;
-
-                    const index = selectedEmployee.indexOf(data.id);
-
-                    if (index > -1) {
-                        selectedEmployee.splice(index, 1);
-                    }
-                });
-
-                $select.data("select2-initialized", true);
+                }
             });
         }
     }
@@ -589,7 +403,8 @@ var initEditSelect2Employee = function (tempModal, ids) {
 
 function removePortlet(e) {
     var $portlet = $(e.target).closest('.m-portlet');
-    const count = $("#payroll--create-signatory-modal #m_sortable_portlets .m-portlet").length;
+    var currentModal = $(e.target).closest('.modal').attr('id');
+    const count = $(`#${currentModal} #m_sortable_portlets .m-portlet`).length;
     var selectValue = $portlet.find('select').val();
     
     if (count > 1) {
