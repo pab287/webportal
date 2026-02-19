@@ -424,8 +424,7 @@ var vmEditSignatory = new Vue({
                 });
             }
         }, removePortlet(e, index) {
-            const count = $("#m_sortable_portlets .m-portlet").length;
-    
+            const count = $("#payroll--edit-signatory-modal #m_sortable_portlets .m-portlet").length;
             if (count > 1) {
                 selectedEmployee.splice(index, 1);
                 $(e.target).closest('.m-portlet').remove();
@@ -590,7 +589,7 @@ var initEditSelect2Employee = function (tempModal, ids) {
 
 function removePortlet(e) {
     var $portlet = $(e.target).closest('.m-portlet');
-    const count = $("#m_sortable_portlets .m-portlet").length;
+    const count = $("#payroll--create-signatory-modal #m_sortable_portlets .m-portlet").length;
     var selectValue = $portlet.find('select').val();
     
     if (count > 1) {

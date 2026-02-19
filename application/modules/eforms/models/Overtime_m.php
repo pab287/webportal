@@ -2572,8 +2572,13 @@ class Overtime_m extends CI_Model {
                             $currentRow->date_from = date("Y-m-d H:i:s", strtotime($rs->date_from));
                             $currentRow->date_to = date("Y-m-d H:i:s", strtotime($rs->date_to));
                             $currentRow->purpose = $rs->purpose;
+
+                            $regular_am_shift = isset($currShift->am_start) && date('h:i A', strtotime($currShift->am_start)) ? $currShift->am_start : '';
+                            $regular_pm_shift = isset($currShift->pm_end) && $currShift->pm_end ? date('h:i A', strtotime($currShift->pm_end)) : '';
+
+                            $regular_shift = $regular_am_shift && $regular_pm_shift ? $regular_am_shift . ' - ' . $regular_pm_shift : 'No Shift Assigned';
                             
-                            $currentRow->regular_shift = date('h:i A', strtotime($currShift->am_start)).' - '.date('h:i A', strtotime($currShift->pm_end));
+                            $currentRow->regular_shift = $regular_shift;
                             $currentRow->employee_name = $this->format_name($currentRow->employee);
                             
                             $time1 = date_create($get_actual_punch->actual_time_in);
@@ -2700,9 +2705,9 @@ class Overtime_m extends CI_Model {
 
     function get_actual_punch($date_from, $date_to, $biometricno = 0, $currShift) {
         $result = array();
-        $endShift = $currShift->pm_end;
         $date_from = date('Y-m-d H:i', strtotime($date_from));
         $date_to = date('Y-m-d H:i', strtotime($date_to));
+        $endShift = isset($currShift->pm_end) && $currShift->pm_end ? $currShift->pm_end : $date_to;
         $attendanceCount = 0;
         $logs = 0;
         $actualTimeIn = null;
