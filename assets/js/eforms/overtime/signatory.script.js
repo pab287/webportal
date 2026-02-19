@@ -104,7 +104,7 @@ var initSelect2Employee = function (tempModal, portlet) {
                 allowClear: true,
                 placeholder: 'Select an option',
                 width: '100%',
-                dropdownParent: $("#parent"),
+                dropdownParent: tempModal.find('.modal-body'),
                 ajax: {
                     url: baseUrl("eforms/overtime/select_signatory_employee"),
                     type: 'POST',
@@ -372,7 +372,7 @@ var initEditSelect2Employee = function (tempModal, ids) {
                 allowClear: true,
                 placeholder: 'Select an option',
                 width: '100%',
-                dropdownParent: $("#edit-parent"),
+                dropdownParent: tempModal.find('.modal-body'),
                 ajax: {
                     url: baseUrl("eforms/overtime/select_signatory_employee"),
                     type: 'POST',
@@ -415,6 +415,12 @@ function removePortlet(e) {
             }
         }
 
-        $(e.target).closest('.m-portlet').remove();
+        $portlet.find('select.select2--value').each(function () {
+            if ($(this).hasClass("select2-hidden-accessible")) {
+                $(this).select2('destroy');
+            }
+        });
+
+        $portlet.remove();
     }
 }
