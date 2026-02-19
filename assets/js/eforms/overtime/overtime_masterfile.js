@@ -1516,7 +1516,7 @@ $.validate({
                             if (!printWindow.closed) {
                                 printWindow.close();
                             }
-                        }, 1000);
+                        }, 500);
                     }, 100);
                 });
                 // if (typeof currentModal !== "undefined") { currentModal.modal("hide"); }
