@@ -2757,18 +2757,8 @@ class Overtime_m extends CI_Model {
 
             // $actualTimeIn = (strtotime($logIn) > strtotime($date_from)) ? $logIn : $date_from;
             // $actualTimeOut = (strtotime($logOut) < strtotime($date_to)) ? $logOut : $date_to;
-
-            if (strtotime($lastLog) <= strtotime($date_from)) {
-                $actualTimeIn = $logIn;
-            } else {
-                $actualTimeIn = $logOut;
-            }
-
-            if (strtotime($lastLog) <= strtotime($logOut)) {
-                $actualTimeOut = $logOut;
-            } else {
-                $actualTimeOut = $date_to;
-            }
+            $actualTimeIn = (strtotime($lastLog) <= strtotime($date_from)) ? $logIn : $logOut;
+            $actualTimeOut = (strtotime($lastLog) <= strtotime($logOut)) ? $logOut : $date_to;
         } else {
             return null;
         }
