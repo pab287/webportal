@@ -497,7 +497,8 @@ const vmNotification = new Vue({
             if (_this.notification_clicked === false) { _this.notification_clicked = true; }
             toastr.clear();
             return _this.notification_clicked;
-        }, addPayrollGroup: function () {
+        }, 
+        addPayrollGroup: function () {
             getEmployeesWithoutPayrollGroup(true);
         }
     }
@@ -565,7 +566,6 @@ const getEmployeesWithoutPayrollGroup = function (isClicked = false) {
                             }
                         }, 9800);
                     };
-
                     swalFireOption.willClose = () => {
                         return new Promise(resolve => setTimeout(resolve, 500));
                     };
@@ -619,3 +619,103 @@ $(document).ready(function () {
     getEmployeesWithoutPayrollGroup();
     renderNotificationRecords();
 });
+
+// ============================================================================
+// Restore Payroll Group
+
+const table = $("#table-archived_payroll_group");
+
+// prevent reinit
+if ($.fn.DataTable.isDataTable(table)) {
+    table.DataTable().destroy();
+    table.find("tbody").empty();
+}
+
+table.DataTable({
+    dom: '<"toolbar">frtlip',
+    processing: true,
+    searching: false,
+    ordering: false,
+    bAutoWidth: false,
+    data: [], // Initially empty, will be populated on modal archive_payroll_group_modal show 
+    columns: [
+        { data: "company", width: "200px" },
+        {
+            data: "employees", width: "500px",
+            render: function (data) {
+                let html = "<p style='line-height:28px;'>";
+                $.each(data, function (i, v) {
+                    html += `<span class='m-badge m-badge--metal m-badge--wide m-badge--rounded mr-1'>${v}</span>`;
+                });
+                return html + "</p>";
+            }
+        },
+        { data: "description", width: "200px" },
+        {
+            data: null,
+            width: "100px",
+            className: "text-center",
+            render: function (data, meta, row) {
+                return `<button class="btn btn-sm btn-default m-btn--pill btnRestore btnRestoreGroup" data-url="${row.restore_url}">
+                            <i class="la la-undo" style="font-size: 10px;"></i>
+                        </button>`;
+            }
+        }
+    ]
+});
+
+$("#archive_payroll_group_modal").on("shown.bs.modal", async () => {
+    try {
+        const res = await $.ajax({
+            url: baseUrl("payroll/employee/get_archived_employee_group"),
+            type: "POST",
+            dataType: "json",
+            data: { csrf_token : _csrf_hash },
+        });
+
+        table.DataTable().clear().rows.add(res).draw();
+    } catch (err) {
+        console.error("Error fetching archived payroll groups:", err);
+    }
+});
+
+$(document).on("click", "button.btnRestoreGroup", function () {
+    const _this = this;
+    const rowUrl = $(_this).data("url");
+    $.ajax({
+        url: rowUrl,
+        dataType: "json",
+        success: function (json) {
+            if (json.response) {
+                $("#archive_payroll_group_modal").modal("hide");
+
+                documentModal.empty().html(json.html);
+                documentModal.modal("show");
+
+                documentModal.find("form").on("submit", function (e) {
+                    const tempForm = e.target;
+                    e.preventDefault();
+
+                    $.ajax({
+                        url: tempForm.action,
+                        type: "post",
+                        dataType: "json",
+                        data: $(e.target).serialize(),
+                        beforeSend: function () {
+                            $(tempForm).find(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                        },
+                        success: function (json) {
+                            if (json.response) {
+                                documentModal.modal("hide");
+                                dtPayrollGroup.ajax.reload(null, false);
+                            }
+                            $(tempForm).find(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                        }
+                    })
+                });
+            }
+        }
+    });
+});
+
+// ============================================================================

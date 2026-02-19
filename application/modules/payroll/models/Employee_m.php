@@ -1123,10 +1123,27 @@
                 $this->db->select("a.*, IFNULL(b.description, '') as company, IFNULL(b.code, '') as company_code");
                 $this->db->from($this->payrollGroupTable." a");
                 $this->db->join($this->companyTable." b", "b.id = a.company_id", "LEFT");
-                $this->db->where(array(
-                    "a.id"=>$id,
-                    "a.is_archived"=>0
-                    ));
+
+                // OLD Start
+                // $this->db->where(array(
+                //     "a.id"=>$id,
+                //     "a.is_archived"=>0
+                //     ));
+                // OLD End
+                
+                /**
+                 * Added restore function in employee group, 
+                 * so that it will not include the is_archived condition if the type is restore, 
+                 * to be able to get the archived employee group data.
+                 */
+                // New start
+                $this->db->where("a.id", $id);
+
+                if ($type !== "restore") {
+                    $this->db->where("a.is_archived", 0);
+                }
+                // New end
+                    
                 $qTemp = $this->db->get();
                 if($qTemp->num_rows() == 1){
                     $employees = array();
@@ -1182,6 +1199,9 @@
                         break;
                         case "archive":
                             $html = $this->load->view("payroll/payroll/modals/archive_employee_group_modal", $arrData, true);
+                        break;
+                        case "restore":
+                            $html = $this->load->view("payroll/payroll/modals/restore_employee_group_modal", $arrData, true);
                         break;
                         default:
                             $html = $this->load->view("payroll/payroll/modals/edit_employee_group_modal", $arrData, true);
@@ -2592,6 +2612,84 @@ public function getEmployeeNightDiffList(){
             `temp_id` int(11) NOT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
         return $this->db->query($sql);
+    }
+
+    public function get_archived_employee_group() {
+        $arrData = array();
+        $this->db->select("a.*, IFNULL(b.description, 'ALL') as company");
+        $this->db->from($this->payrollGroupTable." a");
+        $this->db->join($this->companyTable." b", "b.id = a.company_id", "LEFT");
+        $this->db->where("a.is_archived", 1);
+        $query = $this->db->get();
+
+        if($query->num_rows() > 0){
+            foreach($query->result() as $kk => $vv){
+                $employees = array();
+                $tempIds = @unserialize($vv->employee_id);
+                $this->db->from($this->employeeTable);
+                $this->db->where_in("id", $tempIds);
+                $qTempEmp = $this->db->get();
+                if($qTempEmp->num_rows() > 0){
+                    foreach($qTempEmp->result() as $rs){
+                        $tempRs = (array) $rs;
+                        $tempName = $this->core_layout->getDisplayName($tempRs);
+                        $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                        $employees[] = $tempName;
+                    }
+                }
+                $vv->employees = $employees;
+
+                // get assigned employees when have a privilege of view by company
+                $allowed = array();
+                $tempAssigned = @unserialize($vv->assigned_employee_id);
+
+                if (!empty($tempAssigned)) {
+                    $this->db->select('id, firstname, lastname, middlename, suffix');
+                    $this->db->from($this->employeeTable);
+                    $this->db->where_in("id", $tempAssigned);
+                    $_qTempEmp = $this->db->get();
+                    if($_qTempEmp->num_rows() > 0){
+                        foreach($_qTempEmp->result() as $rs){
+                            $tempRs = (array) $rs;
+                            $_tempName = $this->core_layout->getDisplayName($tempRs);
+                            $_tempName = isset($_tempName["display_name_1"]) && $_tempName["display_name_1"] ? $_tempName["display_name_1"]: "No assigned name";
+                            $allowed[] = $_tempName;
+                        }
+                    }
+                }
+                $vv->assigned_employees = $allowed;
+                // get assigned employees when have a privilege of view by company
+
+                $vv->restore_url = site_url("payroll/employee/get_employee_group_data/restore/{$vv->id}");
+                unset($vv->employee_id, $vv->assigned_employee_id, $vv->is_allow_view);
+                $arrData[$kk] = $vv;
+            }
+        }
+
+        return $arrData;
+    }
+
+    function restorePayrollEmployeeGroup(){
+        $resultset = array();
+        $post = $this->input->post();
+
+        if ($post) {
+            $arrData = array();
+            $arrData["updated_by"] = $this->core_layout->getCurrentEmployeeId();
+            $arrData["updated_at"] = date("Y-m-d H:i:s");
+            $arrData["is_archived"] = 0;
+
+            $updated = $this->db->update($this->payrollGroupTable, $arrData, $post);
+
+            if($updated && $this->db->affected_rows() > 0) {
+                $resultset["response"] = true;
+            } else {
+                $resultset["response"] = false;
+            }
+        } else {
+            $resultset["response"] = false;
+        }
+        return $resultset;
     }
     
 }
