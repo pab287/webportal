@@ -1615,7 +1615,8 @@ class Payroll_m extends CI_Model{
                 $allowance_per_minute = array_reduce($allowances, function ($carry, $item) {
                     return $carry + $item->allowance_per_minute;
                 });
-
+                
+                $allowance_per_minute = $allowance_per_minute ?? 0;
                 $total_ot_allowance_amount = $total_ot_allowance_minutes * $allowance_per_minute;
 
                 /*** $employee_allowance = array_reduce($allowances, function ($carry, $item) {
@@ -4133,6 +4134,7 @@ class Payroll_m extends CI_Model{
         $allowances = $this->db
             ->select("hris_allowance.*, payroll_allowance.code, payroll_allowance.allowance_name")
             ->where("hris_allowance.emp_id", $employee->id)
+            ->where("hris_allowance.is_active", 1)
             ->where("hris_allowance.is_archived", 0)
             ->join("payroll.allowance payroll_allowance", "payroll_allowance.id = hris_allowance.allowance_id", "INNER")
             ->get("gcchris.allowances hris_allowance")
