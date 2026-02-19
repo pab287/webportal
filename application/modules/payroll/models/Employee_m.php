@@ -1431,6 +1431,8 @@
         function archivePayrollEmployeeGroup(){
             $resultset = array();
             $post = $this->input->post();
+            $logged_id = $this->core_layout->getCurrentEmployeeId(); // get current logged in employee id
+
             if($post){
                 $arrData = array();
                 $arrData["updated_by"] = $this->core_layout->getCurrentEmployeeId();
@@ -1440,8 +1442,16 @@
                 $updated = $this->db->update($this->payrollGroupTable, $arrData, $post);
                 if($updated && $this->db->affected_rows() > 0){
                     $resultset["response"] = true;
+
+                    // log event
+                    $msg = "Payroll Employee Group has been archived by " . $this->getCurrentEmployeeName($logged_id);
+                    $this->core_layout->setEventLog("Payroll Group - " . $msg, "archive", "success", "payroll", "user");
                 }else{
                     $resultset["response"] = false;
+
+                    // log event
+                    $msg = "Failed to archive Payroll Employee Group attempted by " . $this->getCurrentEmployeeName($logged_id);
+                    $this->core_layout->setEventLog("Payroll Group - " . $msg, "archive", "error", "payroll", "user");
                 }
             }else{
                 $resultset["response"] = false;
@@ -2672,6 +2682,7 @@ public function getEmployeeNightDiffList(){
     function restorePayrollEmployeeGroup(){
         $resultset = array();
         $post = $this->input->post();
+        $logged_id = $this->core_layout->getCurrentEmployeeId(); // get current logged in employee id
 
         if ($post) {
             $arrData = array();
@@ -2683,13 +2694,58 @@ public function getEmployeeNightDiffList(){
 
             if($updated && $this->db->affected_rows() > 0) {
                 $resultset["response"] = true;
+
+                // log event
+                $msg = "Payroll Employee Group has been restored by " . $this->getCurrentEmployeeName($logged_id);
+                $this->core_layout->setEventLog("Payroll Group - " . $msg, "restore", "success", "payroll", "user");
             } else {
+
                 $resultset["response"] = false;
+                // log event
+                $msg = "Failed to restore Payroll Employee Group attempted by " . $this->getCurrentEmployeeName($logged_id);
+                $this->core_layout->setEventLog("Payroll Group - " . $msg, "restore", "error", "payroll", "user");
             }
         } else {
             $resultset["response"] = false;
         }
         return $resultset;
+    }
+
+    protected function getCurrentEmployeeName($empId=null){
+        $tempId = $empId ? $empId : $this->core_layout->getCurrentEmployeeId();
+        if ($tempId === null) return "";
+        
+        $this->db->select("UPPER(
+            CONCAT(
+                firstname,
+                ' ',
+                CASE
+                WHEN UPPER(TRIM(middlename)) NOT IN ('N/A', 'NONE')
+                    AND TRIM(middlename) != ''
+                    AND middlename IS NOT NULL
+                THEN CONCAT(SUBSTRING(middlename, 1, 1), '. ')
+                ELSE ''
+                END,
+                lastname,
+                CASE
+                WHEN UPPER(TRIM(suffix)) NOT IN ('N/A', 'NONE')
+                    AND TRIM(suffix) != ''
+                    AND suffix IS NOT NULL
+                THEN CONCAT(' ', suffix)
+                ELSE ''
+                END
+            )
+        ) AS employee_name", false);
+        $this->db->from("gccmaster.tblemployees");
+        $this->db->where("id", $tempId);
+
+        $query = $this->db->get();
+
+        if($query->num_rows() === 1){ 
+            return $query->row()->employee_name; 
+        } else { 
+            return "";
+        }
     }
     
 }

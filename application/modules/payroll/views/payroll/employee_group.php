@@ -142,6 +142,12 @@
 				</button>
 			</div>
 			<div class="modal-body">
+				<div class="d-flex align-items-center justify-content-end">
+					<div class="col-4">
+						<input type="text" id="payroll_archived_search" class="form-control" placeholder="Search payroll group...">
+					</div>
+				</div>
+
 				<div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll ">
 					<table class="table table-striped table-bordered row-border" id="table-archived_payroll_group" style="width: 100%">
 						<thead>

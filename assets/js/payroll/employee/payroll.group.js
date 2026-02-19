@@ -632,9 +632,9 @@ if ($.fn.DataTable.isDataTable(table)) {
 }
 
 table.DataTable({
-    dom: '<"toolbar">frtlip',
+    dom: '<"toolbar">rtlip',
     processing: true,
-    searching: false,
+    searching: true,
     ordering: false,
     bAutoWidth: false,
     data: [], // Initially empty, will be populated on modal archive_payroll_group_modal show 
@@ -662,6 +662,11 @@ table.DataTable({
             }
         }
     ]
+});
+
+// custom search input
+$("#payroll_archived_search").on("keyup change", function () {
+    table.DataTable().search(this.value).draw();
 });
 
 $("#archive_payroll_group_modal").on("shown.bs.modal", async () => {
