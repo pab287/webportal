@@ -524,6 +524,7 @@ const uploadOvertimeCsvFile = function () {
 
                     setTimeout( function () {
                         $("#to-hide").removeClass('d-none');
+                        $("#submit-import-overtime").prop("disabled", false);
                     }, 600);
                 }
             },

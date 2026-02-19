@@ -2532,7 +2532,6 @@ class Overtime_m extends CI_Model {
     public function print_summary(){
         $result = array();
         $post = $this->input->post();
-
         if (isset($post) && $post) {
             $date = date('Y-m-d H:i:s');
             $year = substr($date, 2, 2);
@@ -2581,15 +2580,20 @@ class Overtime_m extends CI_Model {
                             $currentRow->regular_shift = $regular_shift;
                             $currentRow->employee_name = $this->format_name($currentRow->employee);
                             
-                            $time1 = date_create($get_actual_punch->actual_time_in);
-                            $time2 = date_create($get_actual_punch->actual_time_out);
-                            $time_diff = date_diff($time1, $time2);
-                            $totalMinutes = ($time_diff->days * 24 * 60) + ($time_diff->h * 60) + $time_diff->i;
-    
-                            $tempHr = floatval($totalMinutes / 60);
-                            $tempHr = round($tempHr);
-                            $currentRow->actual_in = $get_actual_punch->actual_time_in;
-                            $currentRow->actual_out = $get_actual_punch->actual_time_out;
+                            $time1 = isset($get_actual_punch->actual_time_in) && $get_actual_punch->actual_time_in ? date_create($get_actual_punch->actual_time_in) : '';
+                            $time2 = isset($get_actual_punch->actual_time_out) && $get_actual_punch->actual_time_out ? date_create($get_actual_punch->actual_time_out) : '';
+
+                            $tempHr = 0;
+                            if ($time1 && $time2) {
+                                $time_diff = date_diff($time1, $time2);
+                                $totalMinutes = ($time_diff->days * 24 * 60) + ($time_diff->h * 60) + $time_diff->i;
+        
+                                $tempHr = floatval($totalMinutes / 60);
+                                $tempHr = round($tempHr);
+                            }
+
+                            $currentRow->actual_in = isset($get_actual_punch->actual_time_in) && $get_actual_punch->actual_time_in ? $get_actual_punch->actual_time_in : '';
+                            $currentRow->actual_out = isset($get_actual_punch->actual_time_out) && $get_actual_punch->actual_time_out ? $get_actual_punch->actual_time_out : '';
                             $currentRow->total_hrs = $tempHr;
     
                             $isValidDate = strtotime(trim($rs->date_from)) > strtotime(trim($currentRow->max_date));
@@ -2705,13 +2709,19 @@ class Overtime_m extends CI_Model {
 
     function get_actual_punch($date_from, $date_to, $biometricno = 0, $currShift) {
         $result = array();
+
+        if (empty($currShift)) {
+            return null;
+        }
+
         $date_from = date('Y-m-d H:i', strtotime($date_from));
         $date_to = date('Y-m-d H:i', strtotime($date_to));
-        $endShift = isset($currShift->pm_end) && $currShift->pm_end ? $currShift->pm_end : $date_to;
+        $endShift = $currShift->pm_end;
         $attendanceCount = 0;
         $logs = 0;
         $actualTimeIn = null;
         $actualTimeOut = null;
+        $allowedAsOT = date('H:i', strtotime($currShift->pm_end.' + 30 minutes'));
 
         $this->db->select('datetime');
         $this->db->where('DATE(datetime)', date('Y-m-d', strtotime($date_from)));
@@ -2734,33 +2744,35 @@ class Overtime_m extends CI_Model {
             $logs = $_q->result();
         }
 
+        usort($logs, function ($a, $b) {
+            return strtotime($a->datetime) - strtotime($b->datetime);
+        });
+
         if ($attendanceCount) {
-            $lastLog    = $logs[$attendanceCount - 1]->datetime;
-            $secondLast = $logs[$attendanceCount - 2]->datetime;
-    
-            if ($attendanceCount > 4) {
-                $logIn  = $logs[$attendanceCount - 2]->datetime;
-                $logOut = $lastLog;
+            $lastLog = end($logs)->datetime;
+            $prevLog = prev($logs)->datetime;
+
+            $logIn = $prevLog;
+            $logOut = $lastLog;
+
+            // $actualTimeIn = (strtotime($logIn) > strtotime($date_from)) ? $logIn : $date_from;
+            // $actualTimeOut = (strtotime($logOut) < strtotime($date_to)) ? $logOut : $date_to;
+
+            if (strtotime($lastLog) <= strtotime($date_from)) {
+                $actualTimeIn = $logIn;
             } else {
-                $logDate = date('Y-m-d', strtotime($lastLog));
-                $logIn   = $logDate . ' ' . $endShift;
-                $logOut  = $lastLog;
+                $actualTimeIn = $logOut;
             }
-    
-            if ($attendanceCount > 4) {
-                $result['actual_time_in'] = $secondLast;
-                $result['actual_time_out'] = $lastLog;
+
+            if (strtotime($lastLog) <= strtotime($logOut)) {
+                $actualTimeOut = $logOut;
+            } else {
+                $actualTimeOut = $date_to;
             }
-    
-            $actualTimeIn = (strtotime($logIn) > strtotime($date_from)) ? $logIn : $date_from;
-            $actualTimeOut = (strtotime($logOut) < strtotime($date_to)) ? $logOut : $date_to;
-    
-            if (strtotime($actualTimeOut) <= strtotime($actualTimeIn)) {
-                return null;
-            }
-    
+        } else {
+            return null;
         }
-        
+
         $result['actual_time_in'] = $actualTimeIn;
         $result['actual_time_out'] = $actualTimeOut;
         return $result;
