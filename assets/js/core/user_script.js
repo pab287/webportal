@@ -65,7 +65,17 @@ const _dtUsers = $("#table-users").DataTable({
         { data: "username", width: "18%",
             render: function (data, type, row, meta) {
                 let tempHtml = `<p class='mb-0'>${data}</p>`;
-                tempHtml += `<p><small class='m--font-bolder'>${row.email ? row.email : "NO EMAIL ADDRESS"}</small></p>`;
+                let email;
+
+                if (row.email && row.email !== "") {
+                    email = row.email;
+                } else if (row.emp_email && row.emp_email !== "") {
+                    email = row.emp_email;
+                } else {
+                    email = "NO EMAIL ADDRESS";
+                }
+
+                tempHtml += `<p><small class='m--font-bolder'>${email}</small></p>`;
                 return tempHtml;
         }},
         { data: "user_role", width: "*", render: function (data, _type, row) {
