@@ -245,7 +245,10 @@ $(document).on("click", ".btnEditSignatory", function (e) {
 });
 
 $("#payroll--edit-signatory-modal").on('hidden.bs.modal', function () {
+    $('[id^="m--portlet_append_"]').remove();
     vmEditSignatory.row = Object.assign({});
+    $("#frmEditSignatory").trigger('reset');
+    $("#frmEditSignatory select").val('').trigger('change');
 });
 
 var vmEditSignatory = new Vue({
