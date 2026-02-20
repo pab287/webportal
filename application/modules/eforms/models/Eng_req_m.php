@@ -264,9 +264,9 @@ class Eng_req_m extends CI_Model {
             "request_cc" => $cc_to,
             "project_status" => "pending",
             "request_type" => $post['request_type'],
-            "attachments" => $attachments,
-            "remarks" => $post['remarks'],
-            "reply" => $post['reply'],
+            // "attachments" => $attachments,
+            // "remarks" => $post['remarks'],
+            // "reply" => $post['reply'],
             "created_by" => $this->user_data['emp_id'],
         );
         $this->db->insert($this->rfiTable, $data);

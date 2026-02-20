@@ -32,6 +32,8 @@
             // $this->core_layout->setPrivilegeName("eforms_new_rfi_request");
             $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
             $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
+            $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload.css", true);
+            $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload-ui.css", true);
             $this->core_layout->addExternalJs("https://cdn.ckeditor.com/ckeditor5/12.3.1/classic/ckeditor.js", true);
             $this->core_layout->addJs("js/eforms/eng_request/new_request.js", true, $data);
             $this->load->view('core/templates/header');

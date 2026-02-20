@@ -6,6 +6,21 @@ let rfaTable = null;
 let is_archive = 0;
 let informationEditor;
 
+const maxFileSize = 50 * 1024 * 1024; // 50MB
+const allowedTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/jpeg'
+];
+
+const mimeMap = {
+    "application/pdf": "pdf",
+    "application/msword": "doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "image/jpeg": "jpg"
+};
+
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.employee !== "undefined" && _tempContentData.employee.length > 0){
         _employee = _tempContentData.employee;
@@ -23,7 +38,12 @@ let rfi_vue = new Vue({
     data: {
         req_types: _req_types,
         selectedType: null,
-        otherText: ''
+        otherText: '',
+        attachments:{
+            className: "",
+            count: 0,
+            uploadedFiles: [],
+        }
     },
 
     computed: {
@@ -64,8 +84,39 @@ let rfi_vue = new Vue({
     },
 
     methods: {
+        getExtension: function(type) {
+            let extension = mimeMap[type] || (type.includes('/') ? type.split('/').pop() : type);
+            extension = extension.toLowerCase();
+            const iconMap = {
+                "doc": "doc.svg",
+                "docx": "doc.svg",
+                "pdf": "pdf.svg",
+                "jpg": "jpg.svg",
+                "jpeg": "jpg.svg"
+            };
+        
+            const fileName = iconMap[extension] || "default.svg";
+            return baseUrl(`assets/images/file_icons/${fileName}`);
+        },
+        getClass: function(type) {        
+            let extension = mimeMap[type] || (type.includes('/') ? type.split('/').pop() : type);
+            extension = extension.toLowerCase();
+            const classMap = {
+                "doc": "m-widget4 m-widget2__item m-widget2__item--primary col-lg-4 col-md-12 col-sm-12",
+                "docx": "m-widget4 m-widget2__item m-widget2__item--primary col-lg-4 col-md-12 col-sm-12",
+                "pdf": "m-widget4 m-widget2__item m-widget2__item--danger col-lg-4 col-md-12 col-sm-12",
+                "jpg": "m-widget4 m-widget2__item m-widget2__item--success col-lg-4 col-md-12 col-sm-12",
+                "jpeg": "m-widget4 m-widget2__item m-widget2__item--success col-lg-4 col-md-12 col-sm-12"
+            };
+        
+            return classMap[extension] || "m-widget4 m-widget2__item m-widget2__item--default col-lg-4 col-md-12 col-sm-12";
+        },
+        fileDelete: function(id){
+            console.log(id);
+            this.attachments.uploadedFiles.pop(id);
+            this.attachments.count = this.attachments.uploadedFiles.length;
+        },
         handleTypeSelect(type) {
-            console.log('Selected:', type);
             const employee = _employee.find(emp => 
                 emp.id == type.person_in_charge
             );
@@ -170,7 +221,6 @@ ClassicEditor.create( document.querySelector('#information_needed' ),{
 })
 .then(editor => {
     informationEditor = editor;
-
     informationEditor.model.document.on('change:data', () => {
         const data = informationEditor.getData();
         const plainText = data.replace(/<[^>]*>/g, '').trim();
@@ -180,7 +230,6 @@ ClassicEditor.create( document.querySelector('#information_needed' ),{
             $('#information_needed-error').show();
         }
     });
-
     editor.editing.view.change(writer => {
         writer.setStyle(
             'min-height',
@@ -188,10 +237,8 @@ ClassicEditor.create( document.querySelector('#information_needed' ),{
             editor.editing.view.document.getRoot()
         );
     });
-    // editor.setData('<p><strong>***nothing follows***</strong></p>');
 })
 .catch( error => {
-
 });
 
 $.validate({
@@ -199,7 +246,6 @@ $.validate({
     lang: "en",
     scrollToTopOnError: false,
     onValidate: function () {
-
         if (informationEditor) {
             const data = informationEditor.getData();
             const plainText = data.replace(/<[^>]*>/g, '').trim();
@@ -218,25 +264,58 @@ $.validate({
     onSuccess: function (form) {
         let formData = $(form).serializeArray();
         formData.push({ name: 'csrf_token', value: _csrf_hash });
-        console.log(formData);
-        // $.ajax({
-        //     url: siteUrl("eforms/engineering_request_forms/save_req_type"),
-        //     type: "POST",
-        //     dataType: "json",
-        //     data: formData,
-        //     success: function (response) {
-        //         if(response.success){
-        //             toastr.success(response.message,5000);
-        //         }else{
-        //             toastr.error(response.message,5000);
-        //         }
-        //         $('#new_type')[0].reset();
-        //         $('#person_in_charge').val(null).trigger('change');
-        //         $('#type_modal').modal('hide');
-        //         reqTable.ajax.reload();
-        //     }
-        // });
+        $.ajax({
+            url: siteUrl("eforms/engineering_request_forms/save_rfi"),
+            type: "POST",
+            dataType: "json",
+            data: formData,
+            success: function (response) {
+                
+            }
+        });
         return false;
     }
 });
 
+$('#fileupload').on('change', function(e) {
+    handleFiles(e.target.files);
+});
+
+function handleFiles(fileList) {
+    $.each(fileList, function(index, file) {
+        if (validateFile(file)) {
+            addFile(file);
+        }
+    });
+}
+
+function validateFile(file) {
+    console.log("FILE",file);
+    if (file.size > maxFileSize) {
+        toastr.error(`File "${file.name}" is too large. Maximum size is 10MB.`);
+        return false;
+    }
+    
+    if (!allowedTypes.includes(file.type)) {
+        toastr.error(`File "${file.name}" has an unsupported format. Only PDF and DOCX files are allowed.`, 'danger');
+        return false;
+    }
+    
+    const exists = rfi_vue.attachments.uploadedFiles.some(f => f.name === file.name);
+    if (exists) {
+        toastr.error(`File "${file.name}" is already selected.`);
+        return false;
+    }
+    
+    return true;
+}
+
+function addFile(file) {
+    let fileObj = {
+        id: 'f' + Math.floor(1000 + Math.random() * 9000),
+        name: file.name,
+        type: file.type,
+        size: file.size,
+    };
+    rfi_vue.attachments.uploadedFiles.push(fileObj);
+}
