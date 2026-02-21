@@ -166,12 +166,19 @@
 					<div class="col-md-12">
 						<div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
 							<table class="table table-striped table-bordered row-border" id="tableTransferApproval" style="width: 100%">
+								<colgroup>
+									<col width="20%">
+									<col width="20%">
+									<col width="*">
+									<col width="20%">
+									<col width="8%">
+								</colgroup>
 								<thead>
 									<tr>
-										<th class="text-center">Company</th>
-										<th class="text-center">Employee Name</th>
-										<th class="text-center">Payroll Group</th>
-										<th class="text-center">Reason</th>
+										<th>Company</th>
+										<th>Employee Name</th>
+										<th>Payroll Group</th>
+										<th>Reason</th>
 										<th class="text-center">Status</th>
 									</tr>
 								</thead>

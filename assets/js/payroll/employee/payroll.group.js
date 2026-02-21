@@ -5,14 +5,150 @@ const documentModal = $("#documentModal");
 let propAllFilter = false;
 const modalTransferGroup = $("#modalTransferGroup");
 const formTransferGroup = $("#formTransferGroup");
+const tableTransferApproval = $("#tableTransferApproval");
+let dtTableApproval;
 
-
+let _forApproval = [];
 let _companies = [];
-if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
-    if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){
+if(_tempContentData !== undefined && Object.keys(_tempContentData).length > 0){
+    if(_tempContentData.company !== undefined && _tempContentData.company.length > 0){
         _companies = _tempContentData.company;
     }
 }
+
+if(tableTransferApproval.length === 1){
+    dtTableApproval = tableTransferApproval.DataTable({
+        dom: '<"toolbar">frtlip',
+        serverSide: false,
+        processing: true,
+        searching: false,
+        ordering: false,
+        destroy: true,
+        columns: [
+            { data: 'company_code', className: 'text-left', width: "10%" },
+            { data: 'employees', className: 'text-left', width: "10%", render: function(data){
+                let tempHtml = `<p class='m--marginless' style='line-height: 28px; height: auto;'>`;
+                $.each(data, function(i, v){
+                    tempHtml += `<span class='m-badge m-badge--metal m-badge--wide m-badge--rounded mr-1'>${v.employee_name}</span>`;
+                });
+                tempHtml += `</p>`;
+                return tempHtml;
+                
+            } },
+            { data: 'payroll_group', className: 'text-left', width: "*"  },
+            { data: 'reason', className: 'text-left', width: "10%"  },
+            { data: "id", width: "8%", render: function(data, _type, row){
+                const rawData = JSON.stringify(row);
+                return `<button 
+                    class="btn btn-sm btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnApprove_action btnApproveTransfer"
+                    data-row='${rawData}'><i class="fa fa-thumbs-up"></i>
+                    </button> <button class="btn btn-sm btn-default m-btn m-btn--hover-danger m-btn--icon m-btn--icon-only m-btn--pill btnDisapprove_action btnDisapproveTransfer"
+                    data-row='${rawData}'><i class="fa fa-thumbs-down"></i></button>`;
+            }}
+        ]
+    });
+
+    if(_tempContentData !== undefined && Object.keys(_tempContentData).length > 0){
+        if(_tempContentData.for_approval !== undefined && _tempContentData.for_approval.length > 0){
+            _forApproval = _tempContentData.for_approval;
+    
+            setTimeout(function () {
+                dtTableApproval.clear();
+                dtTableApproval.rows.add(_forApproval).draw(false);
+            }, 1000);
+        }
+    }
+
+    $(document).on("click", ".btnApproveTransfer", function(){
+        const btnThis = $(this);
+        const dataRow = btnThis.data("row");
+        Swal.fire({
+            icon: "question",
+            title: "Employee Transfer?",
+            text: "Are you sure you want to approve this employee group transfer!",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Approve It!",
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        }).then((result) => {
+            if (result.value) {
+                $.ajax({
+                    url: baseUrl("payroll/employee/approve_employee_group_transfer"),
+                    type: "post",
+                    dataType: "json",
+                    data: { id: dataRow.id,
+                        employee_id: dataRow.employee_id,
+                        group_id: dataRow.group_id,
+                        csrf_token: _csrf_hash
+                    },
+                    beforeSend: function () {
+                        btnThis.addClass("m-loader m-loader--light m-loader--right");
+                    },
+                    success: function (json) {
+                        if (json.response) {
+                            dtTableApproval.row(btnThis.parents("tr")).remove().draw(false);
+                        }
+                        toastr[json.response ? "success" : "error"](json.message, "Approve Employee Transfer");
+                    },
+                    complete: function () {
+                        btnThis.removeClass("m-loader m-loader--light m-loader--right");
+                    }
+                });
+            }
+        });
+    });
+
+    $(document).on("click", ".btnDisapproveTransfer", function(){
+        const btnThis = $(this);
+        const dataRow = $(this).data("row");
+        Swal.fire({
+            icon: "question",
+            title: "Employee Transfer?",
+            text: "Are you sure you want to disapprove this employee group transfer!",
+            input: "textarea",
+            inputLabel: "Reason for disapproval",
+            inputValidator: (result) => { return !result && "Reason for disapproval is required!"; },
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, Disapprove It!",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            focusConfirm: false,
+            target: document.querySelector('.modal.show') || document.body,
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                $.ajax({
+                    url: baseUrl("payroll/employee/disapprove_employee_group_transfer"),
+                    type: "post",
+                    dataType: "json",
+                    data: { id: dataRow.id,
+                        employee_id: dataRow.employee_id,
+                        group_id: dataRow.group_id,
+                        reason: result.value,
+                        csrf_token: _csrf_hash
+                    },
+                    beforeSend: function () {
+                        btnThis.addClass("m-loader m-loader--light m-loader--right");
+                    },
+                    success: function (json) {
+                        if (json.response) {
+                            dtTableApproval.row(btnThis.parents("tr")).remove().draw(false);
+                        }
+                        toastr[json.response ? "success" : "error"](json.message, "Disapprove Employee Transfer");
+                    },
+                    complete: function () {
+                        btnThis.removeClass("m-loader m-loader--light m-loader--right");
+                    }
+                });
+            }
+        });
+    });
+}
+
 
 if (typeof tablePayrollGroup !== "undefined") {
     dtPayrollGroup = tablePayrollGroup.DataTable({
@@ -609,6 +745,7 @@ $.validate({
                     currentForm.reset();
                     dtPayrollGroup.ajax.reload(null, false);
                 }
+                
                 $(form[0])
                     .find(".btn-submit")
                     .removeClass(

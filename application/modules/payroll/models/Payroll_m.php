@@ -43,6 +43,7 @@ class Payroll_m extends CI_Model{
 
     protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
     protected $tbl_ps_employee_regular_ndiff = "payroll.employee_regular_ndiff";
+    protected $tbl_payroll_group_transfer = "payroll.payroll_group_transfer";
 
     public function __construct(){
         parent::__construct();
@@ -8616,5 +8617,40 @@ class Payroll_m extends CI_Model{
             $resultarray = $query->result();
         }
         return array("results" => $resultarray);
+    }
+
+    public function getTransferEmployeeGroupApproval(){
+        $arrResult = array();
+        $this->db->select("pgt.id, pgt.group_id, pgt.reason, pgt.status, pgt.employee_id, UPPER(pg.description) as payroll_group, comp.code as company_code");
+        $this->db->join($this->tbl_payroll_group." pg", " pg.id = pgt.group_id", "inner");
+        $this->db->join($this->tbl_tblcompanies." comp", "comp.id = pgt.company_id", "left");
+        $qpgt = $this->db->get_where($this->tbl_payroll_group_transfer." pgt", array("pgt.status" => 0));
+        if($qpgt->num_rows() > 0){
+            foreach ($qpgt->result() as $row) {
+                $row->employee_id = @unserialize($row->employee_id);
+                if(is_array($row->employee_id) && !empty($row->employee_id)){
+                    $this->db->select("TRIM(CONCAT(UPPER(emp.firstname), ' ',
+                        CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                                TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                            THEN CONCAT(SUBSTR(UPPER(emp.middlename), 1, 1), '.') ELSE ''
+                        END,' ', UPPER(emp.lastname),
+                        CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                            UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                            emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(emp.suffix)) ELSE ''
+                        END)) as employee_name");
+                    $this->db->from($this->tbl_employees." emp");
+                    $this->db->where_in("emp.id", $row->employee_id);
+                    $this->db->order_by("emp.firstname", "ASC");
+                    $employees = $this->db->get();
+                    if($employees->num_rows() > 0){
+                        $row->employees = $employees->result();
+                    }
+                    $this->db->reset_query();
+                }
+            }
+            $arrResult = $qpgt->result();
+        }
+        $this->db->reset_query();
+        return $arrResult;
     }
 }
