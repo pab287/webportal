@@ -2941,15 +2941,15 @@ public function getEmployeeNightDiffList(){
         foreach ($employees as $emp) {
             switch ($type) {
                 case 'approved':
-                    $message = "Payroll Employee Group Transfer for employee named '{$emp->employee_name}' has been approved and moved to Payroll Group named '{$extraData}'.";
+                    $message = "The payroll group transfer for employee '{$emp->employee_name}' has been approved. The employee has been moved to the payroll group '{$extraData}'.";
                 break;
                 case 'disapproved':
-                    $reason  = $extraData ?? "No disapproved remarks";
-                    $message = "Payroll Employee Group Transfer for employee named '{$emp->employee_name}' has been disapproved with reason: '{$reason}'.";
+                    $reason  = $extraData ?? "No disapproval remarks provided.";
+                    $message = "The payroll group transfer for employee '{$emp->employee_name}' has been disapproved. Reason: '{$reason}'.";
                 break;
                 case 'pending_transfer':
                     $groupName = $extraData ?? "Unknown Group";
-                    $message = "Payroll Employee Group Transfer request has been created for employee named '{$emp->employee_name}' to be moved to Payroll Group named '{$groupName}'.";
+                    $message = "A payroll group transfer request has been created for employee '{$emp->employee_name}'. The employee will be transferred to the payroll group '{$groupName}'.";
                 break;
                 default: continue 2;
             }
