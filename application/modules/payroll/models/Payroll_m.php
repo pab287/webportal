@@ -2253,6 +2253,10 @@ class Payroll_m extends CI_Model{
                 $updatedToDeductLoans = ($updatedTotalLoans + $updatedTotalLoansInterest) + $updatedSSSLoans + $updatedHDMFLoans;
                 /*** updated loans section ***/
 
+                if (floatval($_gross_pay) > 0 && floatval($gross_pay) > 0 && (!isset($payroll_sheet_row) || intval($payroll_sheet_row->posted) === 0) && !empty($loanId)) {
+                    $this->notifSuspended($employee->id, $loanId);
+                }
+
                 if (!isset($payroll_sheet_row) || intval($payroll_sheet_row->posted) === 0) {
                     $tempDeductions = $employee->total_govt_remittances + ($tempDeductions);
                     $tempGrossDeduction = $gross_pay - $tempGrossDeduction;
@@ -8638,7 +8642,7 @@ class Payroll_m extends CI_Model{
         return $qTemp->num_rows() === 1 ? $qTemp->row()->employee_name : $id;
     }
 
-    public function notifSuspended($id) {
+    public function notifSuspended($id, $loanIds = array()) {
         $userId = $this->core_layout->getCurrentEmployeeId();
         $employeeName = $this->getNoEarnerEmployeeNameById($id);
         $userLoggedName = $this->getNoEarnerEmployeeNameById($userId);
@@ -8656,6 +8660,11 @@ class Payroll_m extends CI_Model{
 
         $this->db->from($this->tbl_hris_loans." hrl");
         $this->db->join($this->tbl_ps_loans." psl", "psl.id = hrl.loan_id", "left");
+
+        if (!empty($loanIds) && count($loanIds) > 0) {
+            $this->db->where_not_in('hrl.id', $loanIds);
+        }
+
         $this->db->where('hrl.emp_id', $id);
         $this->db->where('hrl.active', 1);
         $this->db->where('hrl.paid', 0);
@@ -8681,14 +8690,13 @@ class Payroll_m extends CI_Model{
                     $listLoans .= "- " . trim($lnx) . "\n";
                 }
 
-                $telegramMessage = "Employee `$employeeName` has active loan(s) with no deductions due to insufficient gross pay.\n\n";
+                $telegramMessage = "Employee `$employeeName` has active loan(s) with no payroll deductions due to insufficient gross pay.\n\n";
                 $telegramMessage .= $listLoans;
                 $telegramMessage .= "\nLast Updated By: $userLoggedName";
                 $telegramMessage .= "\nDate and Time: " . date("D, F j, Y, g:i a");
                 $telegramResponse = $this->sendTelegramPayrollNotificationNoEarners($telegramMessage);
                 $logState = $telegramResponse['ok'] ? "success" : "error";
-
-                $this->core_layout->setEventLog($telegramResponse['error'] ?? "Telegram Notification Sending {$logState}!!", "update", $logState, "payroll", "system");
+                $message = "Employee `$employeeName` has active loan(s)  `<b>$loanDescriptions</b>` with no payroll deductions due to insufficient gross pay. Last Updated by: `$userLoggedName` at ".date("D, F j, Y, g:i a");
             }
         }
 
