@@ -167,7 +167,7 @@
                     </span>
                 </button>
             </div>
-            <form id="project_form">
+            <form id="new_rfi_form">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-6">

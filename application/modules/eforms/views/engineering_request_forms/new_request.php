@@ -31,7 +31,7 @@
                 </div>
             </div>
             <div id="rfi-content">
-                <form id="rfi-form">
+                <form id="new_rfi_form" enctype="multipart/form-data">
                     <div class="row">
                         <div class="col-6">
                             <div class="form-group">
@@ -143,10 +143,10 @@
                                             <img v-bind:src="getExtension(item.type)" alt="" height="50" width="50">
                                         </div>
                                         <div class="m-widget2__desc">
-                                            <span class="m-widget4__text">{{ item.name.length > 50 ? item.name.slice(0, 50) + '...' : item.name, item.id }}</span>
+                                            <span class="m-widget4__text">{{ item.name.length > 50 ? item.name.slice(0, 50) + '...' : item.name }}</span>
                                         </div>
                                         <div class="m-widget2__actions ml-auto">
-                                            <button type="button" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView" v-on:click="fileDelete(item.id)">
+                                            <button type="button" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView" v-on:click="fileDelete(index)">
                                                 <i class="m-nav__link-icon flaticon-circle"></i>
                                             </button>
                                         </div>

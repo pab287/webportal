@@ -5,6 +5,9 @@ let rfiTable = null;
 let rfaTable = null;
 let is_archive = 0;
 let informationEditor;
+let person_in_charge = null;
+let request_type_id = null;
+let request_type_code = null;
 
 const maxFileSize = 50 * 1024 * 1024; // 50MB
 const allowedTypes = [
@@ -111,12 +114,14 @@ let rfi_vue = new Vue({
         
             return classMap[extension] || "m-widget4 m-widget2__item m-widget2__item--default col-lg-4 col-md-12 col-sm-12";
         },
-        fileDelete: function(id){
-            console.log(id);
-            this.attachments.uploadedFiles.pop(id);
+        fileDelete: function(index){
+            this.attachments.uploadedFiles.splice(index,1);
             this.attachments.count = this.attachments.uploadedFiles.length;
         },
         handleTypeSelect(type) {
+            person_in_charge = type.person_in_charge;
+            request_type_id = type.id;
+            request_type_code = type.type_code;
             const employee = _employee.find(emp => 
                 emp.id == type.person_in_charge
             );
@@ -132,7 +137,6 @@ let rfi_vue = new Vue({
             });
         },
         clearForm: function () {
-            console.log("CLEAR");
         }
     }
 });
@@ -242,7 +246,7 @@ ClassicEditor.create( document.querySelector('#information_needed' ),{
 });
 
 $.validate({
-    form: "#rfi-form",
+    form: "#new_rfi_form",
     lang: "en",
     scrollToTopOnError: false,
     onValidate: function () {
@@ -260,17 +264,41 @@ $.validate({
                 $('.ck-editor__editable').removeClass('is-invalid');
             }
         }
+        return true;
     },
-    onSuccess: function (form) {
-        let formData = $(form).serializeArray();
-        formData.push({ name: 'csrf_token', value: _csrf_hash });
+    onSuccess: function () {
+        const form = $('#new_rfi_form');
+        const formData = new FormData(form[0]);
+        formData.append('csrf_token', _csrf_hash);
+        formData.append('consultant_id', person_in_charge);
+        formData.append('request_type_id', request_type_id);
+        formData.append('request_type_code', request_type_code);
         $.ajax({
             url: siteUrl("eforms/engineering_request_forms/save_rfi"),
             type: "POST",
-            dataType: "json",
+            dataType: "JSON",
             data: formData,
+            processData: false,
+            contentType: false,
             success: function (response) {
-                
+                if (response.success) {
+                    toastr.options.escapeHtml = false;
+                    const fileList = response.file_upload.length ? response.file_upload.map(file => `• ${file.file_name}`).join('<br>') : 'None';
+                    const message = `
+                        <strong>RFI created successfully.</strong><br><br>
+                        <strong>Files uploaded:</strong><br>
+                        ${fileList}
+                    `;
+                    toastr.success(message);
+                    setTimeout(() => {
+                        window.location.href = siteUrl(`eforms/engineering_request_forms/view_rfi_request/${response.rfi_id}`);
+                    }, 3000);
+                }
+                else{
+                    toastr.error(response.message || 'An error occurred while creating the RFI.');
+                }
+            },
+            error: function (xhr) {
             }
         });
         return false;
@@ -290,7 +318,6 @@ function handleFiles(fileList) {
 }
 
 function validateFile(file) {
-    console.log("FILE",file);
     if (file.size > maxFileSize) {
         toastr.error(`File "${file.name}" is too large. Maximum size is 10MB.`);
         return false;
@@ -306,7 +333,6 @@ function validateFile(file) {
         toastr.error(`File "${file.name}" is already selected.`);
         return false;
     }
-    
     return true;
 }
 

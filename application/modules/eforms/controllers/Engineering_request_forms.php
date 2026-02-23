@@ -34,7 +34,7 @@
             $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
             $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload.css", true);
             $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload-ui.css", true);
-            $this->core_layout->addExternalJs("https://cdn.ckeditor.com/ckeditor5/12.3.1/classic/ckeditor.js", true);
+            $this->core_layout->addJs("global/plugins/ckeditor/build/ckeditor.js", true);
             $this->core_layout->addJs("js/eforms/eng_request/new_request.js", true, $data);
             $this->load->view('core/templates/header');
             $this->load->view('eforms/engineering_request_forms/new_request');
@@ -72,8 +72,14 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
-        public function edit_rfi_request($id){
+        public function view_rfi_request($id){
             $data = array();
+            $result = $this->eng_req->viewRFIRequest($id);
+            $data['request'] = $result['data'];
+            $data['attachments'] = $result['attachments'];
+            $data['employee'] = $this->eng_req->select2Employee();
+            $data['projects'] = $this->eng_req->select2Projects();
+            $data['req_types'] = $this->eng_req->getReqTypes();
             $this->core_layout->setPageTitle("Request For Information");
             // $this->core_layout->setPrivilegeName("eforms_edit_rfi_request");
             $this->core_layout->addJs("js/eforms/eng_request/edit_rfi_request.js", true, $data);
@@ -113,7 +119,7 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
-        public function save_rfi(): void{
+        public function save_rfi(){
             $data = $this->eng_req->createRFI();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }

@@ -33,11 +33,7 @@ $(document).ready(function () {
         },
         columns: [
             { data: "id",visible : false, searchable: false },
-            { data: "id",
-                render: function (data, type, row) {
-                    return 'HWCC - ' + String(data).padStart(4, '0');
-                }
-            },
+            { data: "rfi_no"},
             { data: "project_name" },
             { data: "project_location" },
             { data: "reply_needed" },
