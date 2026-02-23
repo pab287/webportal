@@ -1756,8 +1756,6 @@ class Payroll_m extends CI_Model{
 
                 $employee->gross_pay = number_format($gross_pay, 2, '.', '');
 
-                //here
-
                 // added additional checker that if $_gross_pay <= 0, it returns empty() array to prevent deduction even employee is no earners
                 $loans = (floatval($_gross_pay) <= 0) ? array() : $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
                 $employee->loans = $loans;
@@ -2185,6 +2183,10 @@ class Payroll_m extends CI_Model{
                 //     $this->suspendNoEarnersLoans($employee->id);
                 // }
                 // commented source code to disable suspending no earners loan
+
+                if (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0 && (intval($payroll_sheet_row->posted) === 0)) {
+                    $this->notifSuspended($employee->id);
+                }
 
                 $loans = (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0)
                     ? $this->getEmployeeActiveLoansNotPaid($employee->id, $gross_pay, 0, $_gross_pay, true) //get all active employee loans that is not still paid
@@ -8621,5 +8623,125 @@ class Payroll_m extends CI_Model{
             $resultarray = $query->result();
         }
         return array("results" => $resultarray);
+    }
+
+    protected function getNoEarnerEmployeeNameById($id=0){
+        $this->db->select("UPPER(CONCAT(lastname, ', ', firstname,
+            CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND
+                    TRIM(middlename) !='' AND middlename IS NOT NULL
+                THEN CONCAT(' ', SUBSTR(middlename, 1, 1), '.') ELSE ''
+            END,'',
+            CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND
+                UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND
+                suffix IS NOT NULL THEN CONCAT(' ', suffix) ELSE ''
+            END)) as employee_name");
+        $qTemp = $this->db->get_where($this->tbl_employees, array('id' => $id));
+        return $qTemp->num_rows() === 1 ? $qTemp->row()->employee_name : $id;
+    }
+
+    public function notifSuspended($id) {
+        $userId = $this->core_layout->getCurrentEmployeeId();
+        $employeeName = $this->getNoEarnerEmployeeNameById($id);
+        $userLoggedName = $this->getNoEarnerEmployeeNameById($userId);
+
+        $this->db->select("
+            hrl.id,
+            CASE
+                WHEN hrl.debit_note IS NOT NULL AND hrl.debit_note != ''
+                    THEN CONCAT(UPPER(psl.loan_name), ' | ', UPPER(hrl.debit_note))
+                WHEN hrl.reference IS NOT NULL AND hrl.reference != ''
+                    THEN CONCAT(UPPER(psl.loan_name), ' | ', UPPER(hrl.reference))
+                ELSE UPPER(psl.loan_name)
+            END AS loan_name
+        ", false);
+
+        $this->db->from($this->tbl_hris_loans." hrl");
+        $this->db->join($this->tbl_ps_loans." psl", "psl.id = hrl.loan_id", "left");
+        $this->db->where('hrl.emp_id', $id);
+        $this->db->where('hrl.active', 1);
+        $this->db->where('hrl.paid', 0);
+        $this->db->where("hrl.is_archived", 0);
+        $empLoans = $this->db->get();
+        if($empLoans->num_rows() > 0){
+            $loanDescriptions = array();
+            foreach($empLoans->result() as $loan){
+                $this->db->where('id', $loan->id);
+                $loanDescriptions[] = $loan->loan_name;
+            }
+
+            if(!empty($loanDescriptions)){
+                $suspendedLoans = array_unique($loanDescriptions);
+                $loanDescriptions = implode(', ', array_unique($loanDescriptions));
+                $rawMessage = "Active loan(s) of employee `$employeeName` for the loan(s) `$loanDescriptions` has been automatically suspended due to insufficient gross pay amount.";
+                $msg = "System Generated: " . $rawMessage;
+                $this->core_layout->setEventLog($msg, "update", "success", "payroll");
+                
+                $tempLoans = explode(", ", $loanDescriptions);
+                $listLoans = "Loan Descriptions: \n";
+                foreach($tempLoans as $lnx){
+                    $listLoans .= "- " . trim($lnx) . "\n";
+                }
+
+                $telegramMessage = "Employee `$employeeName` has active loan(s) with no deductions due to insufficient gross pay.\n\n";
+                $telegramMessage .= $listLoans;
+                $telegramMessage .= "\nLast Updated By: $userLoggedName";
+                $telegramMessage .= "\nDate and Time: " . date("D, F j, Y, g:i a");
+                $telegramResponse = $this->sendTelegramPayrollNotification($telegramMessage);
+                $logState = $telegramResponse['ok'] ? "success" : "error";
+
+                $this->core_layout->setEventLog($telegramResponse['error'] ?? "Telegram Notification Sending {$logState}!!", "update", $logState, "payroll", "system");
+            }
+        }
+
+        return true;
+    }
+
+    protected function sendTelegramPayrollNotification($message=null){
+        if (empty($message)) {
+            return [ 'ok' => false, 'error' => 'Message is empty' ];
+        }
+
+        $config = $this->telegram_config_if_exist('payroll_notification', null);
+        if(!$config){
+            return [ 'ok' => false, 'error' => 'Telegram config not found' ];
+        }
+
+        $botToken = $config->telegram_bot_token;
+        $chatId   = $config->chat_id;
+
+        $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
+        $payload = [ 'chat_id' => $chatId, 'text' => $message, 'parse_mode' => 'HTML' ];
+
+        $context = stream_context_create([
+            'http' => [
+                'method'  => 'POST',
+                'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
+                'content' => http_build_query($payload),
+                'timeout' => 5,
+                'ignore_errors' => true
+            ]
+        ]);
+
+        set_error_handler(function ($severity, $msg) {
+            throw new Exception($msg);
+        });
+
+        try {
+            $response = file_get_contents($url, false, $context);
+            restore_error_handler();
+            if ($response === false) {
+                throw new Exception('Telegram API unreachable');
+            }
+
+            $decoded = json_decode($response, true);
+            if (isset($decoded['ok']) && $decoded['ok'] === true) {
+                return [ 'ok' => true, 'error' => null ];
+            }else{
+                return [ 'ok' => false, 'error' => $decoded['description'] ];
+            }
+        } catch (Exception $e) {
+            restore_error_handler();
+            return [ 'ok' => false, 'error' => "Error sending telegram notification: " . $e->getMessage() ];
+        }
     }
 }
