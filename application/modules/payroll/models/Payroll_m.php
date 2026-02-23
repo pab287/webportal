@@ -8685,7 +8685,7 @@ class Payroll_m extends CI_Model{
                 $telegramMessage .= $listLoans;
                 $telegramMessage .= "\nLast Updated By: $userLoggedName";
                 $telegramMessage .= "\nDate and Time: " . date("D, F j, Y, g:i a");
-                $telegramResponse = $this->sendTelegramPayrollNotification($telegramMessage);
+                $telegramResponse = $this->sendTelegramPayrollNotificationNoEarners($telegramMessage);
                 $logState = $telegramResponse['ok'] ? "success" : "error";
 
                 $this->core_layout->setEventLog($telegramResponse['error'] ?? "Telegram Notification Sending {$logState}!!", "update", $logState, "payroll", "system");
@@ -8695,7 +8695,7 @@ class Payroll_m extends CI_Model{
         return true;
     }
 
-    protected function sendTelegramPayrollNotification($message=null){
+    protected function sendTelegramPayrollNotificationNoEarners($message=null){
         if (empty($message)) {
             return [ 'ok' => false, 'error' => 'Message is empty' ];
         }
