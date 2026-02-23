@@ -1756,7 +1756,10 @@ class Payroll_m extends CI_Model{
 
                 $employee->gross_pay = number_format($gross_pay, 2, '.', '');
 
-                $loans = $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
+                //here
+
+                // added additional checker that if $_gross_pay <= 0, it returns empty() array to prevent deduction even employee is no earners
+                $loans = (floatval($_gross_pay) <= 0) ? array() : $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
                 $employee->loans = $loans;
 
                 $postedPayrollSheetRecord = isset($payroll_sheet_row) && !empty($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1;
@@ -2177,9 +2180,11 @@ class Payroll_m extends CI_Model{
                 }
 
                 // suspends employee active loans when the gross pay is 0 when the generated payrollsheet is not posted
-                if (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0 && intval($payroll_sheet_row->posted) === 0) {
-                    $this->suspendNoEarnersLoans($employee->id);
-                }
+                // commented source code to disable suspending no earners loan
+                // if (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0 && intval($payroll_sheet_row->posted) === 0) {
+                //     $this->suspendNoEarnersLoans($employee->id);
+                // }
+                // commented source code to disable suspending no earners loan
 
                 $loans = (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0)
                     ? $this->getEmployeeActiveLoansNotPaid($employee->id, $gross_pay, 0, $_gross_pay, true) //get all active employee loans that is not still paid
@@ -2209,7 +2214,7 @@ class Payroll_m extends CI_Model{
                             if(floatval($loan->interest_amount) > 0 && round($_gross_pay, 2) >= round($loan->interest_amount, 2)){
                                 $updatedTotalLoansInterest += $loan->interest_amount;
                                 $_gross_pay = $_gross_pay - $loan->interest_amount;
-                                 $loanId[] = $loan->id;
+                                $loanId[] = $loan->id;
                             }
                             /*** loan interest ***/
                         }
@@ -2224,7 +2229,7 @@ class Payroll_m extends CI_Model{
                         (floatval($loan->amount_due) > 0 && round($_gross_pay, 2) >= round($loan->amount_due, 2))){
                             $updatedSSSLoans += $loan->amount_due;
                             $_gross_pay = $_gross_pay - $loan->amount_due;
-                             $loanId[] = $loan->id;
+                            $loanId[] = $loan->id;
                         }
                     }
                     /*** loans sss ***/
@@ -2236,7 +2241,7 @@ class Payroll_m extends CI_Model{
                         (floatval($loan->amount_due) > 0 && round($_gross_pay, 2) >= round($loan->amount_due, 2))){
                             $updatedHDMFLoans += $loan->amount_due;
                             $_gross_pay = $_gross_pay - $loan->amount_due;
-                             $loanId[] = $loan->id;
+                            $loanId[] = $loan->id;
                         }
                     }
                     /*** loans hdmf
