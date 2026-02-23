@@ -1756,8 +1756,7 @@ class Payroll_m extends CI_Model{
 
                 $employee->gross_pay = number_format($gross_pay, 2, '.', '');
 
-                // added additional checker that if $_gross_pay <= 0, it returns empty() array to prevent deduction even employee is no earners
-                $loans = (floatval($_gross_pay) <= 0) ? array() : $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
+                $loans =  $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
                 $employee->loans = $loans;
 
                 $postedPayrollSheetRecord = isset($payroll_sheet_row) && !empty($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1;
@@ -1766,7 +1765,7 @@ class Payroll_m extends CI_Model{
                 $employee->sss_loan = $postedPayrollSheetRecord ? $payroll_sheet_row->sss_loan : 0;
                 $employee->hdmf_loan = $postedPayrollSheetRecord ? $payroll_sheet_row->hdmf_loan : 0;
 
-                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false){
+                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false && (floatval($_gross_pay) > 0)){ // added additional checker that for $_gross_pay to prevent deduction to no earners employees
                     foreach ($loans as $loan) {
                         if($loan->active == 1 && $loan->loan_type == 0){
                             /*** loan internal ***/
@@ -2184,7 +2183,7 @@ class Payroll_m extends CI_Model{
                 // }
                 // commented source code to disable suspending no earners loan
 
-                if (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0 && (intval($payroll_sheet_row->posted) === 0)) {
+                if (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0 && (!isset($payroll_sheet_row) || intval($payroll_sheet_row->posted) === 0)) {
                     $this->notifSuspended($employee->id);
                 }
 
@@ -2199,7 +2198,7 @@ class Payroll_m extends CI_Model{
                 $updatedHDMFLoans = $postedPayrollSheetRecord ? $payroll_sheet_row->hdmf_loan : 0;
 
                 $loanId = array();
-                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false){
+                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false && floatval($_gross_pay) > 0){ //added checker for gross pay to prevent running the loans foreach
                     foreach ($loans as $loan) {
                         if($loan->active == 1 && $loan->loan_type == 0){
                             /*** loan internal ***/
