@@ -1365,7 +1365,7 @@ $.validate({
 
                             $("#resetSignatory").removeClass('d-none');
                         } else {
-                            $("#resetSignatory").addCkass('d-none');
+                            $("#resetSignatory").addClass('d-none');
                         }
 
                         if (typeof currentModal !== "undefined" && currentModal.length == 1) {
