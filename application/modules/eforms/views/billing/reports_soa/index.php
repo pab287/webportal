@@ -270,7 +270,7 @@
 
 				<hr>
 
-				<input type="hidden" value="selectedDate" id="selectedDate">
+				<input type="hidden" value="" id="selectedDate">
 				<input type="hidden" value="customer_id" id="customer_id">
 				<input type="hidden" value="account_name" id="account_name">
 				<input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
@@ -504,7 +504,7 @@
 			</div>
 
 			<div class="modal-footer">
-				<button type="button" class="btn btn-success btnPrint" id="print_ledger">Print</button>
+				<button type="button" class="btn btn-success btnPrint" id="print_ledger" disabled>Print</button>
 				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 			</div>
 		</div>

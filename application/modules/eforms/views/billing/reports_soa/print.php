@@ -1,3 +1,8 @@
+<?php 
+echo "<pre>";
+print_r($data);
+echo "</pre>";
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -221,7 +226,12 @@
                             <table border="0" align="right" width="60%" cellpadding="0" cellspacing="0" class="container980">
                                 <tr>
                                     <td align="right" style="padding: 3px; font-weight: 600;">OVERDUE BALANCE: </td>
-                                    <td align="left" style="padding: 3px; font-weight: 600;">P <?= number_format($overdue_charges, 2); ?></td>
+                                    <td align="left" style="padding: 3px; font-weight: 600;">
+                                        P 
+                                        <?php 
+                                            echo number_format($overdue_charges < 0 ? 0 : $overdue_charges, 2); 
+                                        ?>
+                                    </td>
                                 </tr>
 
                                 <tr>
@@ -236,7 +246,14 @@
                                 
                                 <tr>
                                     <td align="right" style="padding: 3px; font-weight: 600;"><i>TOTAL BALANCE:</i></td>
-                                    <td align="left" style="padding: 3px; font-weight: 600; border-top: 1px solid black;"><i>P <?= number_format(($overdue_charges + $total_penalty), 2); ?></i></td>
+                                    <td align="left" style="padding: 3px; font-weight: 600; border-top: 1px solid black;">
+                                        <i>P 
+                                            <?php 
+                                                $_total = $overdue_charges + $total_penalty;
+                                                echo number_format($_total < 0 ? 0 : $_total, 2); 
+                                            ?>
+                                        </i>
+                                    </td>
                                 </tr>
                             </table>
                         </td>
@@ -559,7 +576,7 @@
             <?php } else { ?>
 
                 <table id="ledger_table" border="0" align="center" width="890" cellpadding="0" cellspacing="0" class="container980">
-									<tbody>
+                <tbody>
                     <?php
                         $current_date   = date("Y-m-d");
                         $temp_penalties = $this->db->get_where("hydra_billing.penalties")->row_array();
@@ -588,26 +605,42 @@
                         // --- FILTERING --- //
                         if ($data['selectedDate'] === 'all') {
 
-                            // No date filtering
+    // No date filtering
 
-                        } elseif ($data['selectedDate'] !== 'custom') {
+} elseif ($data['selectedDate'] !== 'custom') {
 
-                            // Filter by specific YEAR
-                            $this->db->where("YEAR(bill.due_date)", $data['selectedDate']);
+    // Filter by specific YEAR
+    $this->db->where("YEAR(bill.due_date)", $data['selectedDate']);
 
-                        } else {
+} elseif ($data['selectedDate'] !== '' || !$data['selectedDate']) {
+    return "Ari ko d";
+    // Custom range filtering
+    if (!empty($data['startDate']) && !empty($data['endDate'])) {
 
-                            // Custom range filtering
-                            if (!empty($data['startDate']) && !empty($data['endDate'])) {
+        $start_date = date("Y-m-d", strtotime($data['startDate']));
+        $end_date   = date("Y-m-d", strtotime($data['endDate']));
 
-                                $start_date = date("Y-m-d", strtotime($data['startDate']));
-                                $end_date   = date("Y-m-d", strtotime($data['endDate']));
+        $this->db->where("bill.due_date >=", $start_date);
+        $this->db->where("bill.due_date <=", $end_date);
+    }
+}
 
-                                $this->db->where("bill.due_date >=", $start_date);
-                                $this->db->where("bill.due_date <=", $end_date);
-                            }
-                        }
 
+                        // if (empty($data['selectedDate']) || $data['selectedDate'] !== 'all') {
+                        //     // No date filtering
+                        //     $this->db->where("YEAR(bill.due_date)", $data['selectedDate']);
+
+                        // } elseif ($data['selectedDate'] === 'custom') {
+                        //     // Custom range filtering
+                        //     if (!empty($data['startDate']) && !empty($data['endDate'])) {
+
+                        //         $start_date = date("Y-m-d", strtotime($data['startDate']));
+                        //         $end_date   = date("Y-m-d", strtotime($data['endDate']));
+
+                        //         $this->db->where("bill.due_date >=", $start_date);
+                        //         $this->db->where("bill.due_date <=", $end_date);
+                        //     }
+                        // }
 
                         $this->db->order_by("bill.due_date asc, payment.created_date asc");
                         $query = $this->db->get();
@@ -722,7 +755,7 @@
                           <td></td>
                           <td align="right"><small>Total Charges + Penalties + RF = Debit</small></td>
                           <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right"></td>
-                          <td align="center"><strong>₱ <?= number_format($overdue_charges, 2);  ?></strong></td>
+                          <td align="center"><strong>₱ <?= number_format($overdue_charges < 0 ? 0 : $overdue_charges, 2);  ?></strong></td>
                       </tr>
                     </tbody>
                 </table>

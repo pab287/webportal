@@ -6,6 +6,8 @@ const initReadingEndDate = moment();
 let selectedReadingStartDate = moment();
 let selectedReadingEndDate = moment();
 
+let reportGenerated = false;
+
 
 const tbl_reports = $("#table-reports").DataTable({
     dom: '<"toolbar">rtlip',
@@ -525,6 +527,11 @@ var vm_waterUsage = new Vue({
 });
 
 $(".btnPrint").on("click", function(){
+    if (!reportGenerated) {
+        toastr.warning("Please click Generate first before printing.", "Action Required");
+        return;
+    }
+
     const account_name = document.getElementById("account_name").value;
     const customer_id = document.getElementById("customer_id").value;
     const selectedDate = document.getElementById("selectedDate").value;
@@ -549,13 +556,13 @@ $(".btnPrint").on("click", function(){
             w.document.write(response);
             w.document.close();
 
-            setTimeout(function(){
-                w.print();
-                w.close();
-            }, 250);
+            // setTimeout(function(){
+            //     w.print();
+            //     w.close();
+            // }, 250);
         },
         error: function (request, status, error) {
-        toastr.error("Please check your internet connection.", "Connection error");
+            toastr.error("Please check your internet connection.", "Connection error");
         }
     });
 
@@ -570,20 +577,22 @@ $("#date_filter").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
     ajax: {
-      url: baseUrl("eforms/billing/get_reports_soa_dates"),
-      global: false,
-      processResults: function (data) {
-        return data;
-      }
+        url: baseUrl("eforms/billing/get_reports_soa_dates"),
+        global: false,
+        processResults: function (data) {
+            return data;
+        }
     }
 }).on("change", function(){
     $("#selectedDate").val($(this).val());
 
-    if($("#date_filter").val() == "custom"){
+    if ($(this).val() == "custom") {
         $("#custom_range").removeClass("m--hide");
-    }else{
+    } else {
         $("#custom_range").addClass("m--hide");
-        $("#date-picker").val("");
+        $("#date-range").val("");
+        _startDate = "";
+        _endDate = "";
     }
 });
 
@@ -594,25 +603,31 @@ let tempRangeDates = {
 
 var generateDateTimePicker = function (min = null, max = null) {
     $("#date-range").val("");
-    $("#date-picker")
-        .daterangepicker({
-            // minDate: min,
-            // maxDate: max,
-            buttonClasses: 'm-btn btn',
-            applyClass: 'btn-primary',
-            cancelClass: 'btn-secondary',
-            locale: {
-                format: 'MM/DD/YYYY'
-            }
-        }).on('apply.daterangepicker', function (ev, picker) {
-            $("#date-range")
-                .val(picker.startDate.format('MMM DD, YYYY') + ' - ' + picker.endDate.format('MMM DD, YYYY'))
-        });
+    $("#date-picker").daterangepicker({
+        buttonClasses: 'm-btn btn',
+        applyClass: 'btn-primary',
+        cancelClass: 'btn-secondary',
+        locale: {
+            format: 'MM/DD/YYYY'
+        }
+    }).on('apply.daterangepicker', function (ev, picker) {
+        $("#date-range").val(picker.startDate.format('MMM DD, YYYY') + ' - ' + picker.endDate.format('MMM DD, YYYY'));
+        _startDate = picker.startDate.format('MMM DD, YYYY');
+        _endDate = picker.endDate.format('MMM DD, YYYY');
+    });
 }
 generateDateTimePicker(tempRangeDates.min_date, tempRangeDates.max_date);
 
 
 function generateReport(e){
+    const date_filter = $("#date_filter").val();
+    const report_type = $("#report_type").val();
+
+    if (date_filter == '' || report_type == '') {
+        toastr.error("Please select a type & year.", "Error");
+        return; 
+    }
+
     _selectedDate = $("#date_filter").val();
     _customer_id = document.getElementById("customer_id").value;
 
@@ -645,6 +660,10 @@ function generateReport(e){
             load_ledger_report();
             break;
     }
+
+    // mark as generated
+    reportGenerated = true;
+    $(".btnPrint").prop("disabled", false);
 }
 
 $("#m_soa").on('hidden.bs.modal', function(){
@@ -664,4 +683,9 @@ $("#m_soa").on('hidden.bs.modal', function(){
     vm_reports_soa_ledger.totalBalance = 0;
 
     $('#balance, #total_penalty, #overPayment, #total_balance').html('₱ 0.00');
+});
+
+$("#date_filter, #report_type").on("change", function(){
+    reportGenerated = false;
+    $(".btnPrint").prop("disabled", true);
 });
