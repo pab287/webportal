@@ -623,15 +623,16 @@ $(document).ready(function () {
 // ============================================================================
 // Restore Payroll Group
 
-const table = $("#table-archived_payroll_group");
+const archived_payroll_group_table = $("#table-archived_payroll_group");
 
 // prevent reinit
-if ($.fn.DataTable.isDataTable(table)) {
-    table.DataTable().destroy();
-    table.find("tbody").empty();
+if ($.fn.DataTable.isDataTable(archived_payroll_group_table)) {
+    archived_payroll_group_table.DataTable().destroy();
+    archived_payroll_group_table.find("tbody").empty();
+
 }
 
-table.DataTable({
+archived_payroll_group_table.DataTable({
     dom: '<"toolbar">rtlip',
     processing: true,
     searching: true,
@@ -656,7 +657,7 @@ table.DataTable({
             width: "100px",
             className: "text-center",
             render: function (data, meta, row) {
-                return `<button class="btn btn-sm btn-default m-btn--pill btnRestore btnRestoreGroup" data-url="${row.restore_url}">
+                return `<button title="Restore" class="btn btn-sm btn-default m-btn--pill btnRestore btnRestoreGroup" data-url="${row.restore_url}">
                             <i class="la la-undo" style="font-size: 10px;"></i>
                         </button>`;
             }
@@ -666,7 +667,7 @@ table.DataTable({
 
 // custom search input
 $("#payroll_archived_search").on("keyup change", function () {
-    table.DataTable().search(this.value).draw();
+    archived_payroll_group_table.DataTable().search(this.value).draw();
 });
 
 $("#archive_payroll_group_modal").on("shown.bs.modal", async () => {
@@ -678,14 +679,16 @@ $("#archive_payroll_group_modal").on("shown.bs.modal", async () => {
             data: { csrf_token : _csrf_hash },
         });
 
-        table.DataTable().clear().rows.add(res).draw();
+        archived_payroll_group_table.DataTable().clear().rows.add(res).draw();
     } catch (err) {
         console.error("Error fetching archived payroll groups:", err);
     }
 });
 
 $("#archive_payroll_group_modal").on("hidden.bs.modal", function () {
-    table.DataTable().clear().draw();
+    archived_payroll_group_table.DataTable().search('');
+    archived_payroll_group_table.DataTable().clear().draw();
+    $("#payroll_archived_search").val("");
 });
 
 $(document).on("click", "button.btnRestoreGroup", function () {
