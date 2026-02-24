@@ -988,6 +988,7 @@ $(document)
                                 createTimeAdjustment = ``,
                                 regenerateRecord = ``,
                                 timeAdjustmentDetails = ``;
+                                restDay = ``;
 
                             let isHolidayAction = ``;
                             /*** if (allowPaidHoliday && hasOvertime == false) { ***/
@@ -1066,12 +1067,24 @@ $(document)
                                     <li class="m-nav__item time-adjustment-details">
                                         <a href="javascript:void(0)" class="m-nav__link"
                                         data-id="${row.id}"
-                                        onclick="openTimeAdjustmentListModal(this, ${row._emp_id})">
+                                        onclick="openTimeAdjustmentListModal(this, ${row._date}, ${row._emp_id})">
                                             <i class="m-nav__link-icon fa fa-clock-o"></i>
                                             <span class="m-nav__link-text">TIME ADJUSTMENT DETAILS</span>
                                         </a>
                                     </li>`;
                                 }
+
+                                restDay = `
+                                <li class="m-nav__item restday-button">
+                                    <a href="javascript:void(0)" class="m-nav__link"
+                                    data-id="${row.id}"
+                                    onclick="confirmRestDay(this, ${row._emp_id})">
+                                        <i class="m-nav__link-icon fa fa-clock-o"></i>
+                                        <span class="m-nav__link-text">REST DAY</span>
+                                    </a>
+                                </li>`;
+                                // if (parseInt(row.verified) == 0 && regenHiddenClass === false) {
+                                // }
 
                                 tempTemplate = `
                                     <div class="m-dropdown m-dropdown--inline m-dropdown--align-right m-dropdown--large"
@@ -1101,6 +1114,7 @@ $(document)
                                                             </li>
                                                             ${undoVerification}
                                                             ${regenerateRecord}
+                                                            ${restDay}
                                                             ${timeAdjustmentDetails}
                                                         </ul>
                                                     </div>
@@ -5590,4 +5604,46 @@ const resetFilter = function (event) {
             });
         }
     }
+}
+
+//here
+const confirmRestDay = function (date, id) {
+    Swal.fire({
+        icon : 'warning',
+        title : 'Rest Day',
+        html: 'Are you sure you want to tag this date as `<b>Rest Day</b>`?',
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes",
+        confirmButtonText: "No",
+        allowOutsideClick: false,
+        preConfirm: () => {
+            $.ajax({
+                url: baseUrl('gcctime/timesheet/tag_date_restday'),
+                type: 'post',
+                data: {
+                    csrf_token: _csrf_hash,
+                    date: date,
+                    id: id
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.state) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Rest Day',
+                            html: 'Successfully tagged the day as `<b>Rest Day</b>`!'
+                        })
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Rest Day',
+                            html: 'Failed to tag the day as `<b>Rest Day</b>`!'
+                        })
+                    }
+                }
+            })
+        }
+    })
 }

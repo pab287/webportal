@@ -326,5 +326,10 @@ class Timesheet extends MY_Controller {
         ini_set('max_execution_time', 7200);
         echo json_encode($this->ts_model->generateDefaultTimesheet());
     }
+
+    //here
+    public function tag_date_restday($timesheet_id, $employee_id) {
+        echo json_encode($this->ts_model->tag_date_restday($timesheet_id, $employee_id));
+    }
 }
 /* End of file Timesheet.php */

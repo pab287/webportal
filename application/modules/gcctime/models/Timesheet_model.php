@@ -10155,4 +10155,134 @@ class Timesheet_model extends CI_Model{
 
         return $_empIds;
     }
+
+    // here
+    public function tag_date_restday($timesheet_id, $employee_id) {
+        $post = $this->input->post();
+
+        var_dump($post);
+        die;
+        // $post = $this->arrayToStdClass($this->input->post());
+        // $record = $this->db->get_where($this->tbl_timesheet, array("id" => $timesheet_id))->row();
+        // $weekday = strtolower(date('l', strtotime($post->date)));
+
+        // $employee = $this->db->select("emp.*, person.biometric_id")
+        //     ->join("gcctimeutility.personnel person", "person.biometricno = emp.biometricno", "INNER")
+        //     ->get_where($this->tbl_employees . " emp", array("emp.id" => $employee_id))
+        //     ->row();
+
+        // $attendance_params = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "TS_OT_PARAMS"))->row();
+        // $att_end_day = new DateTime($post->date . " " . $attendance_params->start_time);
+        // $att_end_day->modify("+1 day");
+
+        // $att_start_day = new DateTime($post->date . " " . $attendance_params->end_time);
+
+        // $attendance = !empty($employee) ?
+        //     $this->db->order_by("datetime", "ASC")
+        //         ->get_where($this->tbl_attendance,
+        //             array(
+        //                 "biometric_id" => $employee->biometric_id,
+        //                 "`datetime` >=" => $att_start_day->format("Y-m-d H:i"),
+        //                 "`datetime` <=" => $att_end_day->format("Y-m-d H:i"),
+        //             )
+        //         )
+        //         ->result() : null;
+
+        // $to = array();
+        // $loa = array();
+
+        // if (!empty($post->has_TO)) {
+        //     $to = $this->getEmployeeDetailedTravelOrderForSelect($employee_id, $post->date);
+        // }
+
+        // if (!empty($post->has_LOA)) {
+        //     $loa = $this->getEmployeeDetailedLoaForSelect($employee_id, $post->date);
+        // }
+
+        // $overtime = $this->db->select("ts_ot.*, ot.reference_no, ot.purpose, ot.date_from, ot.date_to, CONCAT(emp.lastname,
+        //                               CASE
+        //                                   WHEN emp.suffix != 'N/A' AND emp.suffix != 'NONE' AND emp.suffix != '' AND emp.suffix IS NOT NULL
+        //                                       THEN CONCAT(' ', emp.suffix)
+        //                                   ELSE '' END, ', ',
+        //                               emp.firstname, ' ', CASE
+        //                                                       WHEN emp.middlename != 'N/A' AND emp.middlename != 'NONE'
+        //                                                           AND emp.middlename != '' AND emp.middlename IS NOT NULL
+        //                                                           THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.')
+        //                                                       ELSE '' END)                  `requestor`")
+        //     ->join($this->tbl_timesheet . " ts", "ts.id = ts_ot.timesheet_id")
+        //     ->join($this->tbl_overtime . " ot", "ot.id = ts_ot.overtime_id")
+        //     ->join($this->tbl_employees . " emp", "emp.id = ot.requested_by")
+        //     ->where("ts_ot.timesheet_id", $timesheet_id)
+        //     ->where("ts.has_overtime", 1)
+        //     ->where("ot.status", "Approved")
+        //     ->get($this->tbl_timesheet_overtime . " ts_ot")
+        //     ->result();
+
+        // $holiday_references = array();
+        // $temp_holiday = $this->db
+        //     ->where(array(
+        //         "DATE(start_date) <=" => $post->date,
+        //         "DATE(end_date) >=" => $post->date,
+        //     ))
+        //     ->get($this->tbl_tblholidays);
+
+        // if($temp_holiday->num_rows() == 1){
+        //     $holiday_references = $temp_holiday->row();
+        // }
+
+        // $schedule = array();
+
+        // if (empty($timesheet_id) || $timesheet_id === "null") {
+        //     $shift_resource = $this->db->select("resource.*")
+        //         ->join($this->tbl_personnel . " personnel", "personnel.shift_id = resource.shift_id", "INNER")
+        //         ->join($this->tbl_employees . " emp", "emp.biometricno = personnel.biometricno", "INNER")
+        //         ->where("emp.id", $employee_id)
+        //         ->get($this->tbl_shift_schedule_resource . " resource")
+        //         ->row("shift_resource");
+
+        //     if (!empty($shift_resource)) {
+        //         $schedule = $this->db->select("am_start shift_am_start, am_end shift_am_end, pm_start shift_pm_start, pm_end shift_pm_end")
+        //             ->where_in("id", unserialize($shift_resource))
+        //             ->where("weekday", $weekday)
+        //             ->get($this->tbl_shift_schedule_list)
+        //             ->row_array();
+        //     }
+        // } else {
+        //     $schedule = array(
+        //         "shift_am_start" => $record->shift_am_start,
+        //         "shift_am_end" => $record->shift_am_end,
+        //         "shift_pm_start" => $record->shift_pm_start,
+        //         "shift_pm_end" => $record->shift_pm_end,
+        //     );
+        // }
+
+        // $_schedule = array();
+        // $alteredShiftSchedule = $this->getCustomizedShiftScheduleByDate($post->date, $employee_id);
+        // if(isset($alteredShiftSchedule->schedule)){
+        //     $shift_schedule_row = new stdClass();
+        //     $tempProps = array("shift_am_start"=>"am_start", "shift_am_end"=>"am_end", "shift_pm_in"=>"pm_in", "shift_pm_end"=>"pm_end");
+        //     foreach ($alteredShiftSchedule->schedule as $key => $value) {
+        //         $tempKey = "shift_{$key}";
+        //         if($value && $alteredShiftSchedule->has_shift == 1){
+        //             $_schedule[$tempKey] = $value;
+        //             $schedule[$tempKey] = $value;
+        //         }
+        //         if($alteredShiftSchedule->has_shift == 0){
+        //             $_schedule[$tempKey] = $value;
+        //             $schedule[$tempKey] = $value;
+        //         }
+        //     }
+        // }
+
+        // return array(
+        //     "record" => $record,
+        //     "attendance" => $attendance,
+        //     "to" => $to,
+        //     "loa" => $loa,
+        //     "schedule" => $schedule,
+        //     "altered_schedule" => $_schedule,
+        //     "overtime" => $overtime,
+        //     "holiday_references" => $holiday_references,
+        // );
+    }
 }
