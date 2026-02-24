@@ -1078,7 +1078,7 @@ $(document)
                                 <li class="m-nav__item restday-button">
                                     <a href="javascript:void(0)" class="m-nav__link"
                                     data-id="${row.id}"
-                                    onclick="confirmRestDay(this, ${row._emp_id})">
+                                    onclick="confirmRestDay(this, '${row._date}', ${row.has_shift ?? 0 }, ${row._emp_id})">
                                         <i class="m-nav__link-icon fa fa-clock-o"></i>
                                         <span class="m-nav__link-text">REST DAY</span>
                                     </a>
@@ -5607,7 +5607,7 @@ const resetFilter = function (event) {
 }
 
 //here
-const confirmRestDay = function (date, id) {
+const confirmRestDay = function (e, date, has_shift, id) {
     Swal.fire({
         icon : 'warning',
         title : 'Rest Day',
@@ -5616,7 +5616,7 @@ const confirmRestDay = function (date, id) {
         confirmButtonColor: "#3085d6",
         cancelButtonColor: "#d33",
         confirmButtonText: "Yes",
-        confirmButtonText: "No",
+        cancelButtonText: "No",
         allowOutsideClick: false,
         preConfirm: () => {
             $.ajax({
@@ -5624,8 +5624,9 @@ const confirmRestDay = function (date, id) {
                 type: 'post',
                 data: {
                     csrf_token: _csrf_hash,
-                    date: date,
-                    id: id
+                    date,
+                    has_shift,
+                    id
                 },
                 dataType: 'json',
                 success: function(response) {

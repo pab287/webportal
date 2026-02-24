@@ -328,8 +328,8 @@ class Timesheet extends MY_Controller {
     }
 
     //here
-    public function tag_date_restday($timesheet_id, $employee_id) {
-        echo json_encode($this->ts_model->tag_date_restday($timesheet_id, $employee_id));
+    public function tag_date_restday() {
+        echo json_encode($this->ts_model->tag_date_restday());
     }
 }
 /* End of file Timesheet.php */
