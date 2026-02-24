@@ -2860,42 +2860,5 @@ public function getEmployeeNightDiffList(){
         }
         return $resultset;
     }
-
-    protected function getCurrentEmployeeName($empId=null){
-        $tempId = $empId ? $empId : $this->core_layout->getCurrentEmployeeId();
-        if ($tempId === null) return "";
-        
-        $this->db->select("UPPER(
-            CONCAT(
-                firstname,
-                ' ',
-                CASE
-                WHEN UPPER(TRIM(middlename)) NOT IN ('N/A', 'NONE')
-                    AND TRIM(middlename) != ''
-                    AND middlename IS NOT NULL
-                THEN CONCAT(SUBSTRING(middlename, 1, 1), '. ')
-                ELSE ''
-                END,
-                lastname,
-                CASE
-                WHEN UPPER(TRIM(suffix)) NOT IN ('N/A', 'NONE')
-                    AND TRIM(suffix) != ''
-                    AND suffix IS NOT NULL
-                THEN CONCAT(' ', suffix)
-                ELSE ''
-                END
-            )
-        ) AS employee_name", false);
-        $this->db->from("gccmaster.tblemployees");
-        $this->db->where("id", $tempId);
-
-        $query = $this->db->get();
-
-        if($query->num_rows() === 1){ 
-            return $query->row()->employee_name; 
-        } else { 
-            return "";
-        }
-    }
     
 }
