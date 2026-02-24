@@ -12,6 +12,15 @@
 					</div>
 					<div class="m-portlet__head-tools">
 						<ul id="group_notification" class="m-portlet__nav">
+							<li class="m-portlet__nav-item">
+								<a href="<?= site_url("payroll/employee/archive_payroll_group"); ?>"
+									class="m-portlet__nav-link m-portlet__nav-link--icon"
+									data-toggle="modal" 
+									data-target="#archive_payroll_group_modal">
+									<i class="flaticon-open-box m--font-danger"></i>
+									<small class="m--font-danger m--font-bolder">Archived</small>
+								</a>
+							</li>
 							<li v-if="no_payroll_group === true" class="m-portlet__nav-item">
 								<a href="javascript:void(0);"
 									class="m-portlet__nav-link m-portlet__nav-link--icon" @click="addPayrollGroup()">
@@ -117,6 +126,40 @@
 							</template>
 						</ol>
 					</template>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div id="archive_payroll_group_modal" class="modal fade document-modal-container" data-keyboard="false" data-backdrop="static" modal-exempt-custom tabindex="-1">
+	<div class="modal-dialog modal-xl">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exampleModalLabel">Archived Payroll Group</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">×</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div class="d-flex align-items-center justify-content-end">
+					<div class="col-4">
+						<input type="text" id="payroll_archived_search" class="form-control" placeholder="Search payroll group...">
+					</div>
+				</div>
+
+				<div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll ">
+					<table class="table table-striped table-bordered row-border" id="table-archived_payroll_group" style="width: 100%">
+						<thead>
+							<tr>
+								<th class="text-center">Company</th>
+								<th class="text-center">Employee(s)</th>
+								<th class="text-center">Description</th>
+								<th class="text-center">Restore</th>
+							</tr>
+						</thead>
+						<tbody></tbody>
+					</table>
 				</div>
 			</div>
 		</div>

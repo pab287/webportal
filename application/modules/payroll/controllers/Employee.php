@@ -560,4 +560,15 @@
             ->set_output(json_encode($data));
         }
 
+        function get_archived_employee_group() {
+            $data = $this->employee->get_archived_employee_group();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        function restore_payroll_employee_group() {
+            $data = $this->employee->restorePayrollEmployeeGroup();
+            $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+        }
     }
