@@ -154,7 +154,13 @@ class Events extends MX_Controller {
     }
 
     public function set_modal_trainings() {
-        $data = $this->em->setModalTrainings();
+        $post = $this->input->post();
+
+        $data['data'] = $this->em->setModalTrainings();
+        if(isset($post['sched_id'])){
+            $data['attendance'] = $this->em->takeAttendance($post['sched_id']);
+            unset($post['sched_id']);
+        }
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 

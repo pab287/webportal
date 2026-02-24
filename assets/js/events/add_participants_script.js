@@ -10,6 +10,7 @@ let attachment_type = null;
 let assigned_sched = null;
 let departments = null;
 let employee_selection = null;
+let sched_id = null;
 
 const maxFileSize = 50 * 1024 * 1024; // 50MB
 const allowedTypes = [
@@ -497,6 +498,7 @@ let eventVue = new Vue({
             });
         },
         takeAttendance(sched) {
+            sched_id = sched.id
             const btn = $(event.currentTarget);
             btn.prop("disabled", true);
             $.ajax({
@@ -676,6 +678,7 @@ let eventVue = new Vue({
                                 formData += "&is_employee=" + encodeURIComponent(rowData.is_employee);
                                 formData += "&applicant_id=" + encodeURIComponent(rowData.id);
                                 formData += "&emp_id=" + encodeURIComponent(rowData.emp_id);
+                                formData += "&sched_id=" + encodeURIComponent(sched_id);
                                 $.ajax({
                                     url: url,
                                     type: "post",
@@ -687,18 +690,20 @@ let eventVue = new Vue({
                                             .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
                                     },
                                     success: function (json) {
-                                        if (json.response) {
+                                        if (json.data.response) {
                                             toastr.success(
-                                                json.toastr_msg,
+                                                json.data.toastr_msg,
                                                 "Employee training and seminar has been saved.",
                                                 5000
                                             );
                                             currentForm.reset();
                                             modalTempContent.modal("hide");
-                                            setParticipantsData(json.participants,true);
+                                            eventVue.attendance = json.attendance;
+                                            console.log(eventVue.attendance);
+                                            setParticipantsData(json.data.participants,true);
                                         } else {
                                             toastr.error(
-                                                json.toastr_msg,
+                                                json.data.toastr_msg,
                                                 "Error updating employee training and seminar!",
                                                 5000
                                             );

@@ -743,6 +743,9 @@ class Events_model extends MX_Controller {
             $id = $post['is_employee'] ? $post['emp_id'] : $post['applicant_id'];
             $tempAttachment = $post["training_attachment"];
             $eventId = $post['event_id'];
+            if(isset($post["sched_id"])){
+                unset($post["sched_id"]);
+            }
             unset($post["csrf_token"], $post["training_attachment"], $post["files"], $post['event_id'], $post['applicant_id'], $post['is_employee']);
             $loggedIn = $this->core_layout->getCurrentSession();
 
@@ -1093,9 +1096,13 @@ class Events_model extends MX_Controller {
         return $resultset;
     }
 
-    public function takeAttendance() {
+    public function takeAttendance($sch = null) {
         $post = $this->input->post();
-        $schedule_id = $post['sched_id'];
+        if(isset($post['sched_id']) && $post['sched_id'] != null){
+            $schedule_id = $post['sched_id'];
+        }else{
+            $schedule_id = $sch;
+        }
         $this->db->select("a.id,a.participant_id,a.is_present, b.firstname, b.middlename, b.lastname, b.cert_awarded, t.attachment as cert_attachment,
         CONCAT(
             LOWER(b.firstname),
