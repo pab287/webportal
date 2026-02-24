@@ -154,7 +154,7 @@ $station_title = (isset($station_title) && $station_title) ? $station_title : ""
                                     <td align="center" height="70" style="height:70px;">
 										<h1 style="font-family: Quicksand, Calibri, sans-serif; color:#343434;">GC&amp;C - GCCTIME</h1>
 										<h2 style="font-family: Quicksand, Calibri, sans-serif; margin-top: 15px; color:#343434; text-transform: uppercase;">
-                                            <?= $station_title; ?> | Absent Report - <?= $meridiem; ?>
+                                            <?= $station_title; ?> | Absentee Report - <?= $meridiem; ?>
                                         </h2>
 									</td>
                                 </tr>
