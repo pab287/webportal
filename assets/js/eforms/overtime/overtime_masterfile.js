@@ -1094,8 +1094,6 @@ function signatorySelect2(targetElement, destroy = false, data = [], id = 0) {
     }).on('select2:select', function(e) {
         const _data = e.params.data;
 
-        console.log(_data);
-
         vmPrint.signatory = Object.assign({}, {
             company_id: _data.company_id, 
             tempId: _data.tempId,
