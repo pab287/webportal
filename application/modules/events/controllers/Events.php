@@ -41,6 +41,7 @@ class Events extends MX_Controller {
         $this->core_layout->setPageTitle("EVENTS - Event Calendar");
         $data = array();
         $data["company"] = $this->em->select2CompanyData();
+        $data['departments'] = $this->em->select2DepartmentData();
         $data['event_details'] = $this->em->getEventDetails($id);
         $data['participants'] = $this->em->getEventParticipants($id);
         $data['employees'] = $this->em->getEmployeeSelection($id);
@@ -142,7 +143,8 @@ class Events extends MX_Controller {
     }
 
     public function get_modal_training($id = null) {
-        $data = $this->employee_model->getModalContainerContent($id, "training");
+        $post = $this->input->post();
+        $data = $this->employee_model->getModalContainerContent($post['participant_id'], "training");
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
@@ -239,6 +241,11 @@ class Events extends MX_Controller {
 
     public function update_budget(){
         $data = $this->em->updateBudget();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function mass_add_participants(){
+        $data = $this->em->massAddParticipants();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 

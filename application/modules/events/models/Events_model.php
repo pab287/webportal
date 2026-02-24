@@ -59,7 +59,7 @@ class Events_model extends MX_Controller {
         $this->db->from($this->eventsCalendarTable . " a");
         $this->db->join($this->eventsSpeakersTable . " b", "a.id = b.event_id", "left");
 
-        $this->db->where("YEAR(a.event_to)", $year);
+        // $this->db->where("YEAR(a.event_to)", $year);
         $this->db->where("a.is_archive", $is_archived ? 1 : 0);
         if (in_array("view_own_request", $this->actions)) {
             $this->db->join($this->eventsParticipantsTable . " c", "a.id = c.event_id", "left");
@@ -301,29 +301,45 @@ class Events_model extends MX_Controller {
         $deptIds = @unserialize($filterIds->department_ids);
 
         $this->db->select("
-            id,
+            employee.id,
             CASE
-                WHEN LENGTH(middlename) > 1 
-                    THEN CONCAT(firstname, ' ', LEFT(middlename, 1), '. ', lastname)
-                WHEN LENGTH(middlename) = 1 
-                    THEN CONCAT(firstname, ' ', middlename, '. ', lastname)
-                ELSE CONCAT(firstname, ' ', lastname)
-            END AS text
+                WHEN LENGTH(employee.middlename) > 1 
+                    THEN CONCAT(employee.firstname, ' ', LEFT(employee.middlename, 1), '. ', employee.lastname)
+                WHEN LENGTH(employee.middlename) = 1 
+                    THEN CONCAT(employee.firstname, ' ', employee.middlename, '. ', employee.lastname)
+                ELSE CONCAT(employee.firstname, ' ', employee.lastname)
+            END AS text,
+            employee.firstname, 
+            employee.middlename, 
+            employee.lastname, 
+            employee.suffix,
+            employee.department_id,
+            employee.mobile_no,
+            user.email,
+            department.description as department,
+            company.description as company,
+            position.name as position
         ", false);
-    
-        $this->db->from($this->employeesTable);
-        $this->db->where('employee_status', 'Active');
+        
+        $this->db->from($this->employeesTable . " as employee");
+        $this->db->join($this->companyTable . " as company", "company.id = employee.company_id", "left");
+        $this->db->join($this->departmentTable . " as department", "department.id = employee.department_id", "left");
+        $this->db->join($this->usersTable . " as user", "user.emp_id = employee.id", "left");
+        $this->db->join($this->positionsTable." as position", "employee.position = position.id", "left");
+
+        $this->db->where('employee.employee_status', 'Active');
         if (!empty($ids)) {
-            $this->db->where_not_in('id', $ids);
+            $this->db->where_not_in('employee.id', $ids);
         }
         if (!empty($compIds)) {
-            $this->db->where_in('company_id', $compIds);
+            $this->db->where_in('employee.company_id', $compIds);
         }
         if (!empty($deptIds)) {
-            $this->db->where_in('department_id', $deptIds);
+            $this->db->where_in('employee.department_id', $deptIds);
         }
 
-        $this->db->order_by('firstname', 'ASC');
+        $this->db->order_by('employee.firstname', 'ASC');
+        $this->db->group_by('employee.id');
         $result = $this->db->get()->result();
         return $result;
     }
@@ -574,21 +590,25 @@ class Events_model extends MX_Controller {
     public function saveParticipant(){
         $resultArray = array();
         $post = $this->input->post();
-        if($post['is_recent']){
+        if(isset($post['is_recent']) && $post['is_recent'] == 1){
             $post['status'] = "confirmed";
-        }else{
+            unset($post['is_recent']);
+        }
+        else{
             $post['status'] = "pending";
         }
         $post['invited_by'] = $this->user_data['emp_id'];
-        unset($post['csrf_token'], $post['is_recent']);
+        unset($post['csrf_token']);
         $insert = $this->db->insert($this->eventsParticipantsTable, $post);
         if($insert){
             $resultArray['participants'] = $this->getEventParticipants($post['event_id']);
             $resultArray['success'] = true;
-            $resultArray['message'] = "Successfully saved participant.";
+            $this->core_layout->setEventLog("Successfully added trainee with id: {$post['emp_id']} to event with id: {$post['event_id']}","insert","success","gcchris","user");
+            $resultArray['message'] = "Successfully added trainee.";
         }else{
             $resultArray['success'] = false;
-            $resultArray['message'] = "Failed to save participant.";
+            $this->core_layout->setEventLog("Failure to add trainee with id: {$post['emp_id']} to event with id: {$post['event_id']}","insert","error","gcchris","system");
+            $resultArray['message'] = "Failed to add trainee.";
         }
         return $resultArray;
     }
@@ -1076,7 +1096,7 @@ class Events_model extends MX_Controller {
     public function takeAttendance() {
         $post = $this->input->post();
         $schedule_id = $post['sched_id'];
-        $this->db->select("a.id,a.participant_id,a.is_present, b.firstname, b.middlename, b.lastname,
+        $this->db->select("a.id,a.participant_id,a.is_present, b.firstname, b.middlename, b.lastname, b.cert_awarded, t.attachment as cert_attachment,
         CONCAT(
             LOWER(b.firstname),
             IF(b.middlename IS NOT NULL AND b.middlename != '', CONCAT(' ', UPPER(LEFT(b.middlename, 1)), '.'), ''),
@@ -1086,6 +1106,7 @@ class Events_model extends MX_Controller {
         $this->db->from($this->events_attendance.' a');
         $this->db->where('schedule_id', $schedule_id);
         $this->db->join($this->eventsParticipantsTable.' b', 'a.participant_id = b.id', 'left');
+        $this->db->join($this->tbltrainings." as t", "b.cert_awarded = t.id", "left");
         $result = $this->db->get()->result_array();
         return $result;
     }
@@ -1417,5 +1438,10 @@ class Events_model extends MX_Controller {
         }
         return $response;
     }
+
+    // public function massAddParticipants(){
+    //     $employee = $this->getEmployeeInformation();
+
+    // }
 
 }

@@ -8,6 +8,8 @@ let selectedSchedule = null;
 let modalTraining = null;
 let attachment_type = null;
 let assigned_sched = null;
+let departments = null;
+let employee_selection = null;
 
 const maxFileSize = 50 * 1024 * 1024; // 50MB
 const allowedTypes = [
@@ -56,6 +58,7 @@ if (_tempContentData !== undefined && _tempContentData !== null && _tempContentD
     schedule = _tempContentData.schedule;
     attachment_type = _tempContentData.options.attachment_type;
     assigned_sched = _tempContentData.assigned_sched;
+    departments = _tempContentData.departments;
 }
 
 let eventVue = new Vue({
@@ -95,7 +98,8 @@ let eventVue = new Vue({
         emp_attendance_selected:{},
         originalBudgetData: {},
         isRecent: false,
-        assigned_sched: assigned_sched
+        assigned_sched: assigned_sched,
+        multipleEmployees: employees,
 
     },
     mounted: function () {
@@ -132,7 +136,7 @@ let eventVue = new Vue({
         eventStatus() {
             return this.eventsStatus(this.eventsData.event_from, this.eventsData.event_to);
         },
-        eventAlreadyHappened() {
+        buttonAddTrainee() {
             const { event_from, event_to } = this.eventsData || {};
             if (!event_from) return false;
             const now = new Date();
@@ -140,7 +144,19 @@ let eventVue = new Vue({
             const end = new Date(event_to || event_from);
             const endPlus3Days = new Date(end);
             endPlus3Days.setDate(endPlus3Days.getDate() + 3);
-            return ((now >= start && now <= end) || now >= endPlus3Days);
+            return now <= endPlus3Days;
+        },
+        buttonTakeAttendance() {
+            const { event_from, event_to } = this.eventsData || {};
+            if (!event_from) return false;
+            const now = new Date();
+            const start = new Date(event_from);
+            const end = new Date(event_to || event_from);
+            const endPlus3Days = new Date(end);
+            endPlus3Days.setDate(endPlus3Days.getDate() + 3);
+            const isOngoing = now >= start && now <= end;
+            const isWithin3DaysAfter = now > end && now <= endPlus3Days;
+            return isOngoing || isWithin3DaysAfter;
         },
         participantsCount() {
             let list = Object.values(this.participants);
@@ -180,6 +196,10 @@ let eventVue = new Vue({
 
     },
     methods:{
+        viewCertificate(id) {
+            const rowData = participantsTable.row(`#${id}`).data();
+            openCertificate(id);
+        },
         eventsStatus(date_from, date_to) {
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -553,156 +573,151 @@ let eventVue = new Vue({
         },
         uploadCertificate(rowId) {
             const rowData = participantsTable.row(`#${rowId}`).data();
-            $('#attendanceCheck').modal('hide');
-            let modalTempContent = $("#modalTempContent"); // grab the whole modal
-            let modalContent = modalTempContent.find("#modal-content");
-            if (typeof modalContent !== "undefined" && typeof modalTraining !== "undefined") {
-                modalContent.empty();
-                modalContent.append(modalTraining);
-                modalTempContent.modal('show');
+            $.ajax({
+                url: baseUrl("events/get_modal_training"),
+                type: "POST",
+                global: false,
+                data: {
+                    csrf_token: _csrf_hash,
+                    participant_id: rowId
+                },
+                success: function(res) {
+                    if(res){
+                        console.log(rowData);
+                        modalTraining = res.html;
+                        let fullname = rowData?.fullname;
+                        $('#attendanceCheck').modal('hide');
+                        let modalTempContent = $("#modalTempContent"); 
+                        let modalContent = modalTempContent.find("#modal-content");
+                        modalContent.empty();
+                        modalContent.append(modalTraining);
+                        modalContent.find(".modal-body").prepend('<div class="text-dark text-center font-weight-bold mb-2"><h3>'+fullname+'</h3></div>');
+                        modalTempContent.modal('show');
+                        
+                        if ($('#train_from').data('daterangepicker')) {
+                            $('#train_from').data('daterangepicker').remove();
+                        }
+                        if ($('#train_to').data('daterangepicker')) {
+                            $('#train_to').data('daterangepicker').remove();
+                        }
 
-                if ($('#train_from').data('daterangepicker')) {
-                    $('#train_from').data('daterangepicker').remove();
-                }
-                if ($('#train_to').data('daterangepicker')) {
-                    $('#train_to').data('daterangepicker').remove();
-                }
-                
-                $('#train_from').daterangepicker({
-                    showDropdowns: true,
-                    autoUpdateInput: false,
-                    singleDatePicker: true,
-                    startDate: eventsDetails.event_from ? moment(eventsDetails.event_from) : moment(),
-                    locale: {
-                        format: 'YYYY-MM-DD',
-                        cancelLabel: 'Clear'
-                    }
-                });
-                
-                $('#train_from').on('apply.daterangepicker', function(ev, picker) {
-                    $(this).val(picker.startDate.format('YYYY-MM-DD'));
-                });
-                
-                $('#train_from').on('cancel.daterangepicker', function(ev, picker) {
-                    $(this).val('');
-                });
-                
-                $('#train_to').daterangepicker({
-                    showDropdowns: true,
-                    autoUpdateInput: false,
-                    singleDatePicker: true,
-                    startDate: eventsDetails.event_to ? moment(eventsDetails.event_to) : moment(),
-                    locale: {
-                        format: 'YYYY-MM-DD',
-                        cancelLabel: 'Clear'
-                    }
-                });
-                
-                $('#train_to').on('apply.daterangepicker', function(ev, picker) {
-                    $(this).val(picker.startDate.format('YYYY-MM-DD'));
-                });
-                
-                $('#train_to').on('cancel.daterangepicker', function(ev, picker) {
-                    $(this).val('');
-                });
-                $("#train_from").val(moment(eventsDetails.event_from).format("YYYY-MM-DD"));
-                $("#train_to").val(moment(eventsDetails.event_to).format("YYYY-MM-DD"));
-
-                $("#train_from").attr("data-original", eventsDetails.event_from); 
-                $("#train_from").attr("value", moment(eventsDetails.event_from).format("MMM DD, YYYY"));
-
-                $("#train_to").attr("data-original", eventsDetails.event_to);
-                $("#train_to").attr("value", moment(eventsDetails.event_to).format("MMM DD, YYYY"));
-
-                $("#training").val(eventsDetails.event_title);
-                $("#train_institution").val(eventsDetails.events_by);
-
-                if (Array.isArray(eventsDetails.speakers)) {
-                    const speakers = eventsDetails.speakers
-                        .map(s => s.speaker_name)
-                        .join(", ");
-                    $("#train_conductor").val(speakers);
-                }
-                $("#train_venue").val(eventsDetails.event_venue);
-
-                let url = baseUrl("events/upload_employee_training");
-                $("#fileupload_training")
-                    .fileupload({
-                        url: url,
-                        dataType: "json",
-                        formData: { csrf_token: _csrf_hash, employee_id: rowData.emp_id, is_employee:rowData.is_employee, applicant_id:rowData.id },
-                        done: function (e, data) {
-                            var result = data.result;
-                            if (result.response) {
-                                modalContent.find("#training_attachment").val(result.filename);
-                                modalContent.find("#temp_fileupload").empty().text(result.filename);
-                                toastr.success(result.toastr_msg, "Upload Training and Seminar File", 5000);
-                            } else {
-                                toastr.error(result.toastr_msg, "Upload Training and Seminar File", 5000);
+                        $('#train_from').daterangepicker({
+                            showDropdowns: true,
+                            autoUpdateInput: false,
+                            singleDatePicker: true,
+                            startDate: eventsDetails.event_from ? moment(eventsDetails.event_from) : moment(),
+                            locale: {
+                                format: 'YYYY-MM-DD',
+                                cancelLabel: 'Clear'
                             }
-                        }
-                    })
-                    .prop("disabled", !$.support.fileInput)
-                    .parent()
-                    .addClass($.support.fileInput ? undefined : "disabled");
-
-                $.validate({
-                    form: "#form-trainings",
-                    lang: "en",
-                    onSuccess: function (form) {
-                        let attachment = $("#training_attachment").val().trim();
-                        if (!attachment) {
-                            toastr.warning("Please upload a training attachment before submitting.", "Missing File");
-                            return false; 
-                        }
-                        let currentForm = form[0];
-                        let url = baseUrl("events/set_modal_trainings");
-                        let formData = $(currentForm).serialize();
-                        formData += "&event_id=" + encodeURIComponent(eventsDetails.id);
-                        formData += "&is_employee=" + encodeURIComponent(rowData.is_employee);
-                        formData += "&applicant_id=" + encodeURIComponent(rowData.id);
-                        formData += "&emp_id=" + encodeURIComponent(rowData.emp_id);
-                        $.ajax({
-                            url: url,
-                            type: "post",
-                            dataType: "json",
-                            data: formData,
-                            beforeSend: function () {
-                                $(currentForm)
-                                    .find(".btn-submit")
-                                    .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                            },
-                            success: function (json) {
-                                if (json.response) {
-                                    toastr.success(
-                                        json.toastr_msg,
-                                        "Employee training and seminar has been saved.",
-                                        5000
-                                    );
-                                    currentForm.reset();
-                                    modalTempContent.modal("hide");
-                                    setParticipantsData(json.participants,true);
-                                } else {
-                                    toastr.error(
-                                        json.toastr_msg,
-                                        "Error updating employee training and seminar!",
-                                        5000
-                                    );
-                                }
-
-                                $(currentForm)
-                                    .find(".btn-submit")
-                                    .removeClass(
-                                        "m-btn--custom m-loader m-loader--light m-loader--right"
-                                    );
-                            },
-
                         });
-                        return false;
-                    }
-                });
-            }
 
+                        $('#train_to').on('apply.daterangepicker', function(ev, picker) {
+                            $(this).val(picker.startDate.format('YYYY-MM-DD'));
+                        });
+                        
+                        $('#train_to').on('cancel.daterangepicker', function(ev, picker) {
+                            $(this).val('');
+                        });
+                        $("#train_from").val(moment(eventsDetails.event_from).format("YYYY-MM-DD"));
+                        $("#train_to").val(moment(eventsDetails.event_to).format("YYYY-MM-DD"));
+        
+                        $("#train_from").attr("data-original", eventsDetails.event_from); 
+                        $("#train_from").attr("value", moment(eventsDetails.event_from).format("MMM DD, YYYY"));
+        
+                        $("#train_to").attr("data-original", eventsDetails.event_to);
+                        $("#train_to").attr("value", moment(eventsDetails.event_to).format("MMM DD, YYYY"));
+        
+                        $("#training").val(eventsDetails.event_title);
+                        $("#train_institution").val(eventsDetails.events_by);
+        
+                        if (Array.isArray(eventsDetails.speakers)) {
+                            const speakers = eventsDetails.speakers
+                                .map(s => s.speaker_name)
+                                .join(", ");
+                            $("#train_conductor").val(speakers);
+                        }
+                        $("#train_venue").val(eventsDetails.event_venue);
+
+                        let url = baseUrl("events/upload_employee_training");
+                        $("#fileupload_training")
+                            .fileupload({
+                                url: url,
+                                dataType: "json",
+                                formData: { csrf_token: _csrf_hash, employee_id: rowData.emp_id, is_employee:rowData.is_employee, applicant_id:rowData.id },
+                                done: function (e, data) {
+                                    var result = data.result;
+                                    if (result.response) {
+                                        modalContent.find("#training_attachment").val(result.filename);
+                                        modalContent.find("#temp_fileupload").empty().text(result.filename);
+                                        toastr.success(result.toastr_msg, "Upload Training and Seminar File", 5000);
+                                    } else {
+                                        toastr.error(result.toastr_msg, "Upload Training and Seminar File", 5000);
+                                    }
+                                }
+                            })
+                            .prop("disabled", !$.support.fileInput)
+                            .parent()
+                            .addClass($.support.fileInput ? undefined : "disabled");
+        
+                        $.validate({
+                            form: "#form-trainings",
+                            lang: "en",
+                            onSuccess: function (form) {
+                                let attachment = $("#training_attachment").val().trim();
+                                if (!attachment) {
+                                    toastr.warning("Please upload a training attachment before submitting.", "Missing File");
+                                    return false; 
+                                }
+                                let currentForm = form[0];
+                                let url = baseUrl("events/set_modal_trainings");
+                                let formData = $(currentForm).serialize();
+                                formData += "&event_id=" + encodeURIComponent(eventsDetails.id);
+                                formData += "&is_employee=" + encodeURIComponent(rowData.is_employee);
+                                formData += "&applicant_id=" + encodeURIComponent(rowData.id);
+                                formData += "&emp_id=" + encodeURIComponent(rowData.emp_id);
+                                $.ajax({
+                                    url: url,
+                                    type: "post",
+                                    dataType: "json",
+                                    data: formData,
+                                    beforeSend: function () {
+                                        $(currentForm)
+                                            .find(".btn-submit")
+                                            .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                                    },
+                                    success: function (json) {
+                                        if (json.response) {
+                                            toastr.success(
+                                                json.toastr_msg,
+                                                "Employee training and seminar has been saved.",
+                                                5000
+                                            );
+                                            currentForm.reset();
+                                            modalTempContent.modal("hide");
+                                            setParticipantsData(json.participants,true);
+                                        } else {
+                                            toastr.error(
+                                                json.toastr_msg,
+                                                "Error updating employee training and seminar!",
+                                                5000
+                                            );
+                                        }
+        
+                                        $(currentForm)
+                                            .find(".btn-submit")
+                                            .removeClass(
+                                                "m-btn--custom m-loader m-loader--light m-loader--right"
+                                            );
+                                    },
+        
+                                });
+                                return false;
+                            }
+                        });
+                    }
+                }
+            });
         },
         removeCertificate(rowId) {
             const rowData = participantsTable.row(`#${rowId}`).data();
@@ -766,6 +781,7 @@ const participantsTable = $('#participantsTable').DataTable({
     order: [[1, 'asc']],
     columns: [
         { data: 'id', visible: false, defaultContent: '' },
+        { data: 'emp_id', visible: false, defaultContent: '' },
         { data: 'fullname', title:'Name', visible: false, defaultContent: '' },
         { data: 'position', title:'Position', visible: false, defaultContent: '' },
         { data: 'department_head_fullname', title:'Department Head', visible: false, defaultContent: '' },
@@ -905,8 +921,8 @@ function itemDatatableActions(id, status, awarded) {
                     <a href="javascript:void(0)" 
                         class="btn btn-primary btn-sm m-btn m-btn--pill btnSave" 
                         onclick="awardCertificate(${id})" 
-                        title="Check Attendance">
-                        <i class="la la-clipboard"></i> Check Attendance
+                        title="Verify Attendance">
+                        <i class="la la-clipboard"></i> Verify Attendance
                     </a>`;
             } else {
                 _actionButton += `
@@ -942,7 +958,7 @@ function awardCertificate(rowId) {
         success: function (res) {
             const rowData = participantsTable.row(`#${rowId}`).data();
             eventVue.employee_attendance = res.attendance;
-            modalTraining = res.modal.html;
+            // modalTraining = res.modal.html;
             eventVue.emp_attendance_selected = rowData;
             $("#attendanceCheck").modal("show");
         },
@@ -950,7 +966,7 @@ function awardCertificate(rowId) {
             toastr.error("An error occurred while checking attendance.", "Error");
         },
         complete: function () {
-            btn.prop("disabled", false).html('<i class="la la-clipboard"></i> Check Attendance');
+            btn.prop("disabled", false).html('<i class="la la-clipboard"></i> Verify Attendance');
         }
     });
 }
@@ -1070,7 +1086,7 @@ let newValidation = $.validate({
                         position: '',
                         suffix: '',
                     },
-                    $("#addNewParticipant").modal('hide');
+                    // $("#addNewParticipant").modal('hide');
                     toastr.success(res.message, 'Success', 5000);
                     $("#employee-select option[value='" + empId + "']").remove();
                     $("#employee-select").trigger('change.select2');
@@ -1608,4 +1624,151 @@ $.validate({
             });
         return false;
     }
+});
+
+function addMultipleEmployees() {
+    let participantIds = participantsTable.column(1).data().toArray();
+    const idSet = new Set([...new Set(participantIds)].map(String));
+    employee_selection = employees.filter(emp =>
+        !idSet.has(String(emp.id))
+    );
+    multipleEmployeeTable.clear();
+    multipleEmployeeTable.rows.add(employee_selection);
+    multipleEmployeeTable.draw();
+    $("#departments").val(null).trigger('change');
+    $("#modalMassAddtion").modal("show");
+}
+
+let multipleEmployeeTable = $('#multipleEmployeeTable').DataTable({
+    dom: 'frtlip',
+    data: employee_selection,
+    responsive: true,
+    autoWidth: false,
+    rowId: 'id',
+    columns: [
+        { data: 'id',
+            render: function (data, type, row, meta) {
+                return `
+                    <div class="font-weight-bold text-uppercase">${row.text}</div>
+                    <div class="text-muted small">${row.position ?? ''}</div>
+                `;
+            }
+         },
+        { data: null, orderable: false, render: function (data, type, row, meta) {
+            return `
+                <div>${row.company ?? ''}</div>
+                <div class="text-muted small">${row.department ?? ''}</div>
+            `;
+            }
+        },
+        { data: null, orderable: false, render: function (data, type, row, meta) {
+            return `
+                ${row.email ? `<div>${row.email}</div>` : 'No Email'}
+                ${row.mobile_no ? `<div> ${row.mobile_no}</div>` : ''}
+            `;
+            } 
+        },
+        {
+            data: null,
+            orderable: false,
+            title: 'Action',
+            render: function (data, type, row, meta) {
+                
+                if (row._added) {
+                    return `
+                        <button 
+                            type="button"
+                            class="btn btn-sm btn-success btnSave"
+                            disabled>
+                            <i class="la la-check mr-1"></i>
+                            Already Added
+                        </button>
+                    `;
+                }
+        
+                return `
+                    <button 
+                        type="button"
+                        class="btn btn-sm btn-primary btnSave"
+                        onclick="addSelectedEmployee(${row.id})">
+                        <i class="la la-user-plus mr-1"></i>
+                        Add Trainee
+                    </button>
+                `;
+            }
+        }
+    ]
+});
+
+$("#departments").select2({
+    dropdownParent: $('#modalMassAddtion'),
+    data: departments,
+    allowClear: true,
+    placeholder: "Select an option",
+    width: '100%'
+});
+
+$("#departments").on("change", function () {
+    const selectedDept = $(this).val(); 
+    let filteredData;
+    if (!selectedDept) {
+        filteredData = employee_selection;
+    } else {
+        filteredData = employee_selection.filter(emp =>
+            String(emp.department_id) === String(selectedDept)
+        );
+    }
+    multipleEmployeeTable.clear();
+    multipleEmployeeTable.rows.add(filteredData);
+    multipleEmployeeTable.draw();
+});
+
+function addSelectedEmployee(empId) {
+    let rowData = multipleEmployeeTable.row(`#${empId}`).data();
+    let data = { ...rowData };
+    data.csrf_token = _csrf_hash;
+    data.emp_id = empId;
+    data.event_id = eventsDetails.id;
+    if(eventVue.isRecent){
+        data.is_recent = 1;
+    }
+    data.is_employee = 1;
+    delete data.id;
+    delete data.text;
+    delete data.department_id;
+    $.ajax({
+        url: baseUrl('events/save_participant'),
+        type: "POST",
+        global: false,
+        dataType: "json",
+        data: data,
+        success: function(res) {
+            if(res.success){
+                toastr.success(res.message, 'Success', 5000);
+                $("#employee-select option[value='" + empId + "']").remove();
+                $("#employee-select").trigger('change.select2');
+                rowData._added = true;
+                multipleEmployeeTable.row(`#${empId}`).invalidate().draw(false);
+                setParticipantsData(res.participants);
+            }else{
+                toastr.error(res.message, 'Error', 5000);
+            }
+        }
+    });
+}
+
+$('#modalTempContent').on('show.bs.modal', function () {
+    $('#generate_attendance .modal-content').addClass('modal-blur');
+});
+
+$('#modalTempContent').on('hidden.bs.modal', function () {
+    $('#generate_attendance .modal-content').removeClass('modal-blur');
+});
+
+$('#modalTempContent').on('show.bs.modal', function () {
+    var zIndex = 1060 + (10 * $('.modal:visible').length);
+    $(this).css('z-index', zIndex);
+    setTimeout(function () {
+        $('.modal-backdrop').not('.modal-backdrop:first').css('z-index', zIndex - 1);
+    }, 0);
 });

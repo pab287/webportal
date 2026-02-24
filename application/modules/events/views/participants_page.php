@@ -65,9 +65,11 @@
             line-height: 50px; /* Match the height of the parent */
         }
 
-        #portlet_body {
-            transition: height 0.3s ease;
+        .modal-blur {
+            filter: blur(3px);
+            transition: filter 0.2s ease;
         }
+
 </style>
 <div class="row" id="events-content">
     <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
@@ -206,7 +208,7 @@
                                 <div class="tab-pane" id="participantTab">
                                     <div class="row">
                                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
-                                            <button type="button" v-if="!eventAlreadyHappened" class="btn m-btn m-btn--sm btn-success mb-2 btnNew" data-toggle="modal" data-target="#addNewParticipant">
+                                            <button type="button" v-if="buttonAddTrainee" class="btn m-btn m-btn--sm btn-success mb-2 btnNew" data-toggle="modal" data-target="#addNewParticipant">
                                                 ADD TRAINEES
                                             </button>
                                         </div>
@@ -585,6 +587,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
+                        <button class="btn btn-primary text-white mr-auto btnSave" data-dismiss="modal" onClick="addMultipleEmployees()"><i class="la la-users mr-2"></i>Add Multiple Employees</button>
                         <button type="submit" class="btn btn-success btnSave"><i class="la la-check mr-2"></i>SAVE</button>
                         <button class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
                     </div>
@@ -923,8 +926,22 @@
         </div>
     </div>
 
-    <div class="modal fade" id="generate_attendance" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-xl" role="document">
+    <div class="modal fade" id="modalTempContent" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content" id="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">DO NOT REMOVE THIS IS FOR UPLOADING</h5>
+                    <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">DO NOT REMOVE THIS IS FOR UPLOADING</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="generate_attendance" tabindex="-1">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Generate Attendance</h5>
@@ -978,6 +995,7 @@
                                                 <th>Company</th>
                                                 <th>Contact</th>
                                                 <th>Attendance</th>
+                                                <th>Certificate</th>
                                             </tr>
                                         </thead>
                                     </template>
@@ -1007,9 +1025,39 @@
                                                 </td>
                                                 <td class="text-center">
                                                     <label class="m-checkbox m-checkbox--bold m-checkbox--state-success">
-                                                        <input type="checkbox" class="form-check-input h-10px w-10px" :value="item.is_present" @change="togglePresence(item.id,$event.target.checked ? 1 : 0)" true-value="1" false-value="0" :checked="item.is_present == 1"/>
+                                                        <input
+                                                            type="checkbox"
+                                                            class="form-check-input h-10px w-10px"
+                                                            v-model="item.is_present"
+                                                            :true-value="1"
+                                                            :false-value="0"
+                                                            @change="togglePresence(item.id,$event.target.checked ? 1 : 0)"
+                                                        />
                                                         <span></span>
                                                     </label>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div v-if="item.is_present == 1 && item.cert_awarded == 0" class="mt-2">
+                                                        <a href="javascript:void(0)"
+                                                        class="btn btn-success btn-sm m-btn m-btn--pill"
+                                                        @click="uploadCertificate(item.participant_id)"
+                                                        title="Award Certificate">
+                                                            <i class="la la-clipboard"></i>
+                                                            Award Certificate
+                                                        </a>
+                                                    </div>
+                                                    <div v-else-if="item.cert_attachment != null">
+                                                        <a href="javascript:void(0)"
+                                                        class="btn btn-info btn-sm m-btn m-btn--pill"
+                                                        @click="viewCertificate(item.participant_id)"
+                                                        title="View Certificate">
+                                                            <i class="la la-eye"></i>
+                                                            View Certificate
+                                                        </a>
+                                                    </div>
+                                                    <div v-else>
+                                                        <span class="text-muted">No Certificate</span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -1042,20 +1090,6 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger btnArchive" @click="removeCertificate(emp_attendance_selected.id)">Remove Certificate</button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade show" id="modalTempContent" tabindex="-1">
-        <div class="modal-dialog modal-md">
-            <div class="modal-content" id="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">DO NOT REMOVE THIS IS FOR UPLOADING</h5>
-                    <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">DO NOT REMOVE THIS IS FOR UPLOADING</div>
             </div>
         </div>
     </div>
@@ -1112,4 +1146,51 @@
         </div>
     </div>
 
+    <div class="modal fade show" id="modalMassAddtion" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">ADD MULTIPLE EMPLOYEES</h5>
+                    <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <form id="#formAddMultiple">
+                    <div class="modal-body">
+                        <div class="row">
+
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="companies" class="form-control-label">Department</label>
+                                    <select name="departments" id="departments">
+                                        <option></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <table id="multipleEmployeeTable" class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Trainee Information</th>
+                                            <th>Company</th>
+                                            <th>Contact</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btnClose" data-dismiss="modal">Close</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
 </div>
