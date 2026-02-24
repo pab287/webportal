@@ -2253,7 +2253,7 @@ class Payroll_m extends CI_Model{
                 $updatedToDeductLoans = ($updatedTotalLoans + $updatedTotalLoansInterest) + $updatedSSSLoans + $updatedHDMFLoans;
                 /*** updated loans section ***/
 
-                if (floatval($_gross_pay) > 0 && floatval($gross_pay) > 0 && (!isset($payroll_sheet_row) || intval($payroll_sheet_row->posted) === 0) && !empty($loanId)) {
+                if (floatval($_gross_pay) > 0 && floatval($gross_pay) > 0 && (!isset($payroll_sheet_row) || intval($payroll_sheet_row->posted) === 0)) {
                     $this->notifSuspended($employee->id, $loanId);
                 }
 
