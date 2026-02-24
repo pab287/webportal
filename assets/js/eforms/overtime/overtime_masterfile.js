@@ -1094,6 +1094,8 @@ function signatorySelect2(targetElement, destroy = false, data = [], id = 0) {
     }).on('select2:select', function(e) {
         const _data = e.params.data;
 
+        console.log(_data);
+
         vmPrint.signatory = Object.assign({}, {
             company_id: _data.company_id, 
             tempId: _data.tempId,
@@ -1352,7 +1354,7 @@ $.validate({
 
                         vmPrint.signatory = Object.assign({}, {
                             company_id: currentData.company_id, 
-                            tempId: currentData.id,
+                            tempId: currentData.tempId,
                             signatory_id: currentData.signatory_id, 
                             text: currentData.text, 
                             meta : currentData.meta,
@@ -1424,7 +1426,7 @@ $.validate({
 
                 vmPrint.signatory = Object.assign({}, {
                     company_id: tempRow.company_id, 
-                    tempId: tempRow.id,
+                    tempId: tempRow.tempId,
                     signatory_id: tempRow.signatory_id, 
                     text: tempRow.text, 
                     meta : tempRow.meta,
@@ -1502,17 +1504,14 @@ $.validate({
                 printWindow.document.close();
 
                 printWindow.addEventListener('load', function() {
-                    // Give browser time to render
                     setTimeout(function() {
                         printWindow.focus();
                         printWindow.print();
                         
-                        // Handle cleanup after print
                         printWindow.addEventListener('afterprint', function() {
                             printWindow.close();
                         });
                         
-                        // Fallback close if user cancels print
                         setTimeout(function() {
                             if (!printWindow.closed) {
                                 printWindow.close();
@@ -1520,7 +1519,6 @@ $.validate({
                         }, 500);
                     }, 100);
                 });
-                // if (typeof currentModal !== "undefined") { currentModal.modal("hide"); }
             }
         });
 
