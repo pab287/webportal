@@ -6706,4 +6706,277 @@ class Reports_m extends CI_Model{
 
         return $merged;
     }
+
+    public function generate_payrollsheet_summary() {
+        $post = $this->input->post();
+        $search = $post['search']['value'] ?? false;
+        $group = $post['group'] ?? 1;
+        $filter_month = $post['filter_month'] ?? 0;
+        $filter_year = $post['filter_year'] ?? 0;
+        $company = $post['company'] ?? 0;
+        $filteredIds = $post['employee'] ?? [];
+        $coverageDate = $post['date_range'] ?? false;
+        $payrollGroup = isset($post["payroll_group"]) && $post["payroll_group"] ? $post["payroll_group"]: array();
+
+        $tempGroup = "PAY DATE";
+        $arrGroup = array(1=>"PAY DATE", 2=>"MONTH", 3=>"YEAR");
+        $arrCompany = array();
+        $employeeIds = array();
+        $tempStartDate = null;
+        $tempEndDate = null;
+        $hasDataFilter = false;
+        $tempGroup = $arrGroup[$group];
+        $tempArrFilter = array();
+        $tempArrFilter["filter_by"] = $tempGroup;
+
+        if(isset($post["company"]) && is_array($post["company"]) && count($post["company"]) > 0){
+            $this->db->select("description");
+            $this->db->from("gcchris.tblcompanies");
+            $this->db->where_in("id", $post["company"]);
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() > 0){
+                    foreach ($qTemp->result() as $key => $value) {
+                    if($value->description){
+                            $arrCompany[] = strtoupper($value->description);
+                    }
+                    }
+                    $tempArrFilter["companies"] = $arrCompany;
+            }
+        }
+
+        $tempCompRow = array();
+        if(isset($company) && $company){
+            $this->db->from("gcchris.tblcompanies");
+            $this->db->where("id", $company);
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() == 1){ $tempCompRow = $qTemp->row_array(); }
+        }
+
+        $filterPayrollGroup = null;
+        if(is_array($payrollGroup) && count($payrollGroup) > 0){
+            $this->db->select("GROUP_CONCAT(DISTINCT TRIM(UPPER(description))) as payroll_group");
+            $this->db->from("payroll.payroll_group");
+            $this->db->where_in("id", $payrollGroup);
+            $qPG = $this->db->get();
+
+            $filterPayrollGroup = $qPG->row()->payroll_group;
+        }
+
+        $isDateRange = isset($post["date_range"]) && $post["date_range"];
+        $isFilterMonth = isset($post["filter_month"]) && $post["filter_month"];
+
+        if(isset($post["date_range"]) && $post["date_range"]){
+            $dates = explode("-", $post["date_range"]);
+            if(is_array($dates) && count($dates) == 2){
+                    foreach ($dates as $key => $date) {
+                        $tempDate = date("Y-m-d", strtotime(trim($date)));
+                        $dates[$key] = $tempDate;
+                    }
+                    $tempStartDate = $dates[0];
+                    $tempEndDate = $dates[1];
+            }
+        }
+
+        if(isset($post["filter_month"], $post["filter_year"]) && ($post["filter_month"] && $post["filter_year"])){
+            $tempStartDate = date("Y-m-d", strtotime("{$post["filter_year"]}-{$post["filter_month"]}-01"));
+            $date = new DateTime($tempStartDate);
+            $date->modify('last day of this month');
+            $tempEndDate = $date->format('Y-m-d');
+        }elseif (isset($post["filter_year"]) && $post["filter_year"]){
+            $tempStartDate = date("Y-01-01", strtotime("{$post["filter_year"]}-01-01"));
+            $tempEndDate = date("Y-12-31", strtotime("{$post["filter_year"]}-12-31"));
+        }
+
+        if(isset($post["pay_date"]) && $post["pay_date"]){
+            $tempStartDate = date("Y-m-d", strtotime($post["pay_date"]));
+            $tempEndDate = date("Y-m-d", strtotime($post["pay_date"]));
+        }
+
+        $xDateFrom = date("F d, Y", strtotime($tempStartDate));
+        $xDateTo = date("F d, Y", strtotime($tempEndDate));
+        $tempArrFilter["coverage_date"] = strtoupper("{$xDateFrom} - {$xDateTo}");
+
+        if($isDateRange === false && $isFilterMonth){ $tempArrFilter["month"] = strtoupper(date("Y F", strtotime("{$post["filter_year"]}-{$post["filter_month"]}"))); }
+        $tempArrFilter["company_description"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? strtoupper(trim($tempCompRow['description'])): "";
+        $tempArrFilter["company_address"] = isset($tempCompRow['company_address']) && $tempCompRow['company_address']  ? strtoupper(trim($tempCompRow['company_address'])): "";
+        $tempArrFilter["has_comp_desc"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? true: false;
+        $tempArrFilter["payroll_group"] = $filterPayrollGroup;
+
+        $results = $this->payrollsheetSummaryList($filteredIds, $filter_month, $filter_year, $company, $tempArrFilter["coverage_date"]);
+
+        return [
+            'data' => $results['data'] ?? [],
+            'filters' => $tempArrFilter ?? [],
+        ];
+    }
+
+    public function payrollsheetSummaryList($filteredIds, $filter_month, $filter_year, $company, $coverageDate){
+        $data = array();
+        $tempData = array();
+
+        $merged = $this->chunck_payrollsheet_records($filteredIds, $filter_month, $filter_year, $company, $coverageDate);
+
+        if (count($merged) > 0) {
+            $settings = $this->getSettings();
+
+            foreach ($merged as $item) {
+                $dailyRate = 0;
+                $hourlyRate = 0;
+                $total_no_of_hrs_worked = 0;
+                $regular_total_no_of_hrs_worked = 0;
+                $overtime_total_no_of_hrs_worked = 0;
+                $ot_rate = 0;
+                $ot_pay_25 = 0;
+                $regular_nd_hrs_worked = 0;
+                $ot_ndiff_hrs_worked = 0;
+                $regular_night_diff = 0;
+                $ot_night_diff = 0;
+                $amount_paid = 0;
+                $bonus_13th = 0;
+                $total_pay = 0;
+
+                $payrateTemp = intval($item->has_shift) === 1 ? "regular" : "rest day";
+                $payrateSetting = $this->getPayrateSetting($payrateTemp);
+                $tempPayrateSetting = intval($item->payrate_id) > 0 ? $this->getPayrateSettingById($item->payrate_id) : $payrateSetting;
+                $NightDiffRate = floatval($tempPayrateSetting->night_diff_rate) > 0 ? floatval($tempPayrateSetting->night_diff_rate): 0.1;
+                $otRate = floatval($tempPayrateSetting->ot_rate) > 0 ? floatval($tempPayrateSetting->ot_rate): 1;
+                $otNightDiffRate = floatval($tempPayrateSetting->ot_night_diff_rate) > 0 ? floatval($tempPayrateSetting->ot_night_diff_rate) : 0;
+                $regular_nd_hrs_worked = round(floatval($item->total_ndiff_rendered / 60), 2);
+
+                $tempOtRate = ($otRate * 100) - 100;
+                $tempRs = (array) $item;
+
+                $tempDisplay = (object) $this->core_layout->getDisplayName($tempRs);
+                $tempName = (isset($tempDisplay->display_name_0) && $tempDisplay->display_name_0)? strtoupper($tempDisplay->display_name_0): strtoupper("no display name");
+                $item->employee_name = $tempName;
+                $item->day = date('D', strtotime($item->date));
+
+                $dailyRate = $item->daily;
+                $regular_total_no_of_hrs_worked = round(floatval($item->total_time_rendered / 60), 2);
+                $hourlyRate = floatval($item->daily) / 8;
+                $overtime_total_no_of_hrs_worked = $item->ot_hrs;
+                $total_no_of_hrs_worked = round(floatval($regular_total_no_of_hrs_worked) + floatval($overtime_total_no_of_hrs_worked), 2);
+                $ot_rate = floatval($hourlyRate) * $otRate;
+
+                $ot_pay_25 = floatval($hourlyRate) * floatval($overtime_total_no_of_hrs_worked) * floatval($otRate);
+                $ot_ndiff_hrs_worked = $item->ot_ndiff_hrs;
+
+                $regular_night_diff = $hourlyRate * $NightDiffRate * $regular_nd_hrs_worked;
+                $ot_night_diff = $ot_rate * $otNightDiffRate * $ot_ndiff_hrs_worked;
+                $ot_night_diff = ($ot_rate * $ot_ndiff_hrs_worked) + $ot_night_diff;
+                $amount_paid = ($hourlyRate * $regular_total_no_of_hrs_worked) + $ot_pay_25 + $regular_night_diff + $ot_night_diff;
+                
+                $overtime_total_no_of_hrs_worked = round($overtime_total_no_of_hrs_worked, 2);
+                $hourlyRate = round($hourlyRate, 2);
+                $ot_rate = round($ot_rate, 2);
+                $ot_pay_25 = round($ot_pay_25, 2);
+                $regular_night_diff = round($regular_night_diff, 2);
+                $ot_night_diff = round($ot_night_diff, 2);
+                $amount_paid = round($amount_paid, 2);
+
+                $item->daily_rate = $dailyRate;
+                $item->hourly_rate = $hourlyRate;
+                $item->total_no_of_hrs_worked = $total_no_of_hrs_worked;
+                $item->regular_total_no_of_hrs_worked = $regular_total_no_of_hrs_worked;
+                $item->overtime_total_no_of_hrs_worked = $overtime_total_no_of_hrs_worked;
+                $item->ot_rate = $ot_rate;
+                $item->ot_pay_25 = $ot_pay_25;
+                $item->regular_nd_hrs_worked = $regular_nd_hrs_worked;
+                $item->ot_ndiff_hrs_worked = $ot_ndiff_hrs_worked;
+                $item->regular_night_diff = $regular_night_diff;
+                $item->ot_night_diff = $ot_night_diff;
+                $item->amount_paid = $amount_paid;
+                $item->bonus_13th = $bonus_13th;
+                $item->total_pay = $amount_paid;
+
+                $tempData[] = $item;
+            }
+
+            if (!empty($tempData)){
+                $data['data'] = $tempData;
+            }
+        }
+
+        return $data;
+    }
+
+    public function chunck_payrollsheet_records($filteredIds, $filter_month, $filter_year, $company, $coverageDate){
+        $tempData = array();
+
+        $startDate = null;
+        $endDate = null;
+
+        $lastId = 0;
+        $chunkSize = 100;
+
+        do {
+            if ($filter_month && $filter_year) {
+                $startDate = date("Y-m-d", strtotime("first day of $filter_year-$filter_month"));
+                $endDate = date("Y-m-t", strtotime($startDate));
+            }
+
+            if (!$filter_month && $filter_year) {
+                $startDate = date("Y-m-d", strtotime("first day of January $filter_year"));
+                $endDate = date('Y-m-d', strtotime("last day of December $filter_year"));
+            }
+
+            if ($coverageDate) {
+                $dateRange = explode("-", $coverageDate);
+                $startDate = date("Y-m-d", strtotime(trim($dateRange[0])));
+                $endDate = date("Y-m-d", strtotime(trim($dateRange[1])));
+            }
+
+            $select = 'a.id, b.id as emp_id, a.date, a.emp_id, a.payrate_id, a.has_shift, b.firstname, b.middlename, b.lastname, b.suffix, a.verified, a.total_ndiff_rendered, a.total_time_rendered, c.id as payroll_id, c.date_start as payroll_start, c.date_end as payroll_end, c.posted, c.id as payroll_id, c.total_ndiff_minutes, IFNULL(c.rate, b.basic_rate) as basic_rate, c.daily, ROUND(IFNULL(d.work_days_in_year, 314), 2) as work_days, c.payroll_type, c.total_minutes_worked, IFNULL(a.total_accredited_ot_hrs, 0) as ot_hrs, IFNULL(a.total_accredited_ndiff_ot_hrs, 0) as ot_ndiff_hrs';
+            $this->db->select($select);
+            $this->db->join("gccmaster.tblemployees b", "a.emp_id = b.id", "LEFT");
+            $this->db->join('payroll.payroll_sheet c', 'c.emp_id = b.id AND (DATE(c.date_start) <= DATE(a.date) AND DATE(c.date_end) >= DATE(a.date))', 'LEFT');
+            $this->db->join('gcchris.tblcompanies d', 'd.id = b.company_id', 'LEFT');
+            $this->db->where('c.posted', 1);
+            $this->db->where('a.verified', 1);
+            $this->db->where('c.is_bonus', 0);
+            $this->db->from('gcctimeutility.timesheet a');
+
+            if ($lastId) {
+                $this->db->where('a.id >', $lastId);
+            }
+
+            if (is_array($filteredIds) && count($filteredIds) > 0) {
+                $this->db->where_in('a.emp_id', $filteredIds); 
+            }
+
+            $this->db->where('b.company_id', $company);
+
+            $this->db->group_start();
+                $this->db->where('DATE(a.date) >=', $startDate);
+                $this->db->where('DATE(a.date) <=', $endDate);
+            $this->db->group_end();
+
+            $this->db->order_by('a.id', 'asc');
+            $this->db->limit($chunkSize);
+
+            $query = $this->db->get();
+            $rows = $query->result();
+            $rowsA = $query->result_array();
+
+            if (!$rows) {
+                break;
+            }
+
+            $lastArray = end($rowsA);
+            if (!empty($lastArray)) {
+                $lastId = $lastArray['id'];
+            }
+
+            $tempData[] = $rows;
+        } while(count($rows) === $chunkSize);
+
+        $merged = array_merge(...$tempData);
+
+        usort($merged, function ($a, $b) {
+            return [$a->lastname, $a->firstname, $a->date]
+                <=> [$b->lastname, $b->firstname, $b->date];
+        });
+
+        return $merged;
+    }
 }
