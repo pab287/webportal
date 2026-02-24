@@ -2774,12 +2774,6 @@ class Overtime_m extends CI_Model {
             return null;
         }
 
-        echo '<pre>';
-            var_dump('in '.$actualTimeIn);
-            var_dump('out '.$actualTimeOut);
-        echo '</pre>';
-        die;
-
         $result['actual_time_in'] = $actualTimeIn;
         $result['actual_time_out'] = $actualTimeOut;
         return $result;
