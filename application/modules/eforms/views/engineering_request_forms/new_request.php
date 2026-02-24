@@ -120,6 +120,58 @@
                         </div>
                     </div>
                     <div class="m-separator m-separator--dashed m-separator--md"></div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-control-label required">ATTACHMENTS:</label>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label for="att_plans" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="attachments_type[]" value="Plumbling" id="att_plans" data-validation="validate_checkbox_group" data-validation-qty="min1">
+                                            Plans/Drawings
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="att_mats" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="attachments_type[]" value="Plumbling" id="att_mats" data-validation="validate_checkbox_group" data-validation-qty="min1">
+                                            Material Sample/s
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label for="att_spec" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="attachments_type[]" value="Plumbling" id="att_spec" data-validation="validate_checkbox_group" data-validation-qty="min1">
+                                            Specifications
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="att_others" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="attachments_type[]" value="Plumbling" id="att_others" data-validation="validate_checkbox_group" data-validation-qty="min1">
+                                            Others:
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label for="att_test" class="m-checkbox m-checkbox--solid form-control-label">
+                                            <input type="checkbox" name="attachments_type[]" value="Plumbling" id="att_test" data-validation="validate_checkbox_group" data-validation-qty="min1">
+                                            Test Results
+                                            <span></span>
+                                        </label>
+                                    </div>
+                                     <div class="col-6">
+                                        <input class="form-control" type="text" id="att_others_text">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="m-separator m-separator--dashed m-separator--md"></div>
                     <div class="row pb-2">
                         <div class="col-12">
                             <label for="fileupload" class="form-control-label">

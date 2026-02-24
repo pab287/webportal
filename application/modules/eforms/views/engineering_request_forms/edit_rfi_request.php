@@ -1,4 +1,74 @@
-<div class="m-content" id="edit_rfi">
+<div class="m-content" id="edit_rfi_content">
+    <div class="row">
+        <div class="col-md-8 col-sm-12">
+            <div class="m-portlet m-portlet--mobile">
+                <div class="m-portlet__head">
+                    <div class="m-portlet__head-caption">
+                        <div class="m-portlet__head-title">
+                            <h3 class="m-portlet__head-text">
+                                Request for Information details
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="m-portlet__body">
+                    <div class="row">
+                        <div class="m-portlet__head-tools text-align-right">
+                            <ul class="nav nav-tabs m-tabs m-tabs-line m-tabs-line--left m-tabs-line--primary" role="tablist">
+                                <li class="nav-item m-tabs__item">
+                                    <a class="nav-link m-tabs__link active" data-toggle="tab" href="#rfiForm" role="tab">
+                                        <h5 class="m-portlet__head-text">FORM</h5>
+                                    </a>
+                                </li>
+                                <li class="nav-item m-tabs__item">
+                                    <a class="nav-link m-tabs__link" data-toggle="tab" href="#replies" role="tab">
+                                        <h5 class="m-portlet__head-text">REPLY</h5>
+                                    </a>
+                                </li>
+                                <li class="nav-item m-tabs__item">
+                                    <a class="nav-link m-tabs__link" data-toggle="tab" href="#attachment" role="tab">
+                                        <h5 class="m-portlet__head-text">ATTACHMENT</h5>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="rfiForm">
+                                HELLO       
+                            </div>
+                            <div class="tab-pane" id="replies">
+                                MY
+                            </div>
+                            <div class="tab-pane" id="attachment">
+Mothere
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-12">
+            <div class="m-portlet m-portlet--mobile">
+                <div class="m-portlet__head">
+                    <div class="m-portlet__head-caption">
+                        <div class="m-portlet__head-title">
+                            <h3 class="m-portlet__head-text">
+                                Other Information
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="m-portlet__body">
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- <div class="m-content" id="edit_rfi">
     <div class="m-portlet m-portlet--mobile">
         <div class="m-portlet__head">
             <div class="m-portlet__head-caption">
@@ -8,13 +78,20 @@
                     </h3>
                 </div>
             </div>
-            <!-- <div class="m-portlet__head-tools">
-                <a href="javascript:void(0);" class="m-nav__link btnArchive">
-                    <span class="m-nav__link-text">
-                        Archive
-                    </span>
-                </a>
-            </div> -->
+            <div class="m-portlet__head-tools">
+                <ul class="nav nav-pills nav-pills--brand m-nav-pills--align-right m-nav-pills--btn-pill m-nav-pills--btn-sm" role="tablist">
+                    <li class="nav-item m-tabs__item">
+                        <a class="nav-link m-tabs__link active" data-toggle="tab" href="#manpowerTab" role="tab">
+                            Manpower
+                        </a>
+                    </li>
+                    <li class="nav-item m-tabs__item" v-show="content.status != 'for approval'">
+                        <a class="nav-link m-tabs__link" data-toggle="tab" href="#candidatesTab" role="tab">
+                            Candidates
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
         <div class="m-portlet__body">
             <div class="row">
@@ -322,4 +399,4 @@
             </div>
         </div>
     </div>
-</div>
+</div> -->
