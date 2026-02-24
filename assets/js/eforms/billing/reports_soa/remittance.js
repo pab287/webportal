@@ -670,6 +670,12 @@ const vm_save_remit = new Vue({
         save_remittance() {
             const data = vm_remit.$data;
             const vm = this;
+
+            // Verify if payment collected is greater than 0
+            if (parseFloat(data.payment_collected) <= 0) {
+                toastr.error('Theres no payment collected.', 'Invalid Input');
+                return;
+            }
     
             // Verify everything first
             if (data.deposit_amount === null || data.deposit_date === null || data.cashiers === null || data.date_range_picked === null) {
