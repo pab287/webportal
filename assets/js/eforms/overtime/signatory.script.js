@@ -427,3 +427,8 @@ function removePortlet(e) {
         $portlet.remove();
     }
 }
+
+$('#generalSearch').donetyping(function (callback) {
+    search_val = $(this).val();
+    dtSignatory.ajax.reload();
+});
