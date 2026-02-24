@@ -325,7 +325,7 @@
                                             <template v-if="valid_ctr > 0">
                                                 <div class="row m--margin-top-10">
                                                     <div class="col-md-6">
-                                                        <div class="form-group m-form__group">
+                                                        <div id="approved-content" class="form-group m-form__group">
                                                             <label for="approved_by" class="required">
                                                                 Approved By
                                                             </label>

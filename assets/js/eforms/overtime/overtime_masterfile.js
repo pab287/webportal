@@ -783,7 +783,7 @@ const vmTempUploadedContent = new Vue({
                 currentSelect2.select2({
                     width: "100%",
                     placeholder: "Select an option",
-                    dropdownParent: currentModal,
+                    dropdownParent: currentModal.find('#approved-content'),
                     ajax: {
                         url: siteUrl("eforms/overtime/get_employee_department_head"),
                         dataType: "json",
