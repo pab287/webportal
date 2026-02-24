@@ -2486,17 +2486,25 @@ class Overtime_m extends CI_Model {
                 }
             }
 
-            $post["meta"] = serialize($arrMetaValue);
-            $post["updated_by"] = $this->core_layout->getCurrentEmployeeId();
-            $post["updated_at"] = date("Y-m-d H:i:s");
-            
-            $updated = $this->db->update($this->otSignatory, $post, $tempWhere);
-            if($updated){
-                $resultset["response"] = true;
-                $resultset["toastr_msg"] = "Signatory data has been updated.";
-            }else{
+            $this->db->where('company_id', $post['company_id']);
+            $this->db->where('id !=', $tempWhere["id"]);
+            $qSearch = $this->db->get($this->otSignatory);
+            if ($qSearch->num_rows() == 0) {
+                $post["meta"] = serialize($arrMetaValue);
+                $post["updated_by"] = $this->core_layout->getCurrentEmployeeId();
+                $post["updated_at"] = date("Y-m-d H:i:s");
+                
+                $updated = $this->db->update($this->otSignatory, $post, $tempWhere);
+                if($updated){
+                    $resultset["response"] = true;
+                    $resultset["toastr_msg"] = "Signatory data has been updated.";
+                }else{
+                    $resultset["response"] = false;
+                    $resultset["toastr_msg"] = "Failed to update signatory data!";
+                }
+            } else {
                 $resultset["response"] = false;
-                $resultset["toastr_msg"] = "Failed to update signatory data!";
+                $resultset["toastr_msg"] = "Failed to edit signatory data, signatory company already exist!";
             }
         }else{
             $resultset["response"] = false;
