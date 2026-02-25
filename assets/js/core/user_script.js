@@ -67,9 +67,11 @@ const _dtUsers = $("#table-users").DataTable({
                 let tempHtml = `<p class='mb-0'>${data}</p>`;
                 let email;
 
-                if (row.email && row.email !== "") {
+                const invalidEmailPatterns = ["no email address", "no email", "no email add", "n/a", "na", "none", "null"];
+
+                if (row.email && !invalidEmailPatterns.includes(row.email.toLowerCase())) {
                     email = row.email;
-                } else if (row.emp_email && row.emp_email !== "") {
+                } else if (row.email === "" || row.emp_email) {
                     email = row.emp_email;
                 } else {
                     email = "NO EMAIL ADDRESS";
