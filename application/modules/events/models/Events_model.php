@@ -931,7 +931,6 @@ class Events_model extends MX_Controller {
                 if (!unlink($decodedPath)) {
                     $response['message'] = 'Unable to delete file from server.';
                     return $response;
-                    ;
                 }
             }
     
@@ -1236,6 +1235,7 @@ class Events_model extends MX_Controller {
     public function removeCertificate(){
         $post = $this->input->post();
         $id = $post['participant_id'] ?? null;
+        $cert_id = $post['cert_id'] ?? null;
         if (!$id) {
             return ['success' => false,'message' => 'Invalid participant ID.'];
         }
@@ -1249,8 +1249,8 @@ class Events_model extends MX_Controller {
             return ['success' => false,'message' => 'Failed to update participant record.'];
         }
     
-        $this->db->where('id', $id);
-        $delete = $this->db->update($this->tbltrainings, ['is_archived' => 0]);
+        $this->db->where('id', $cert_id);
+        $delete = $this->db->update($this->tbltrainings, ['is_archived' => 1]);
     
         if (!$delete) {
             $this->db->trans_rollback();

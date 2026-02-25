@@ -743,17 +743,21 @@ let eventVue = new Vue({
                     $.ajax({
                         url: baseUrl("events/remove_certificate"),
                         type: "POST",
+                        global: false,
                         data: {
                             csrf_token: _csrf_hash,
                             event_id: eventsDetails.id,
                             participant_id: rowData.id,
                             cert_id : rowData.cert_awarded,
                             file_path: fileUrl,
+                            sched_id: sched_id
                         },
                         dataType: "JSON",
                         success: function(res) {
                             if(res.success){
                                 toastr.success(res.message,"Certificate Removed", 5000);
+                                console.log("REMOVE");
+                                eventVue.attendance = res.attendance;
                                 setParticipantsData(res.participants,true);
                             }else{
                                 toastr.error(res.message,"Failed", 5000);
@@ -850,7 +854,7 @@ const participantsTable = $('#participantsTable').DataTable({
                 return `<span class="badge ${statusMap[data] || 'badge-secondary'}">${data}</span>`;
             }
         },        
-        { data: null, title: 'Actions', className: "text-left", orderable: false, defaultContent: '',
+        { data: null, title: 'Actions', className: "text-left", orderable: false, defaultContent: '', width: "18%",
             render: function (data, type, row, meta) {
                 return itemDatatableActions(row.id, row.status, row.cert_awarded);
             }
@@ -914,8 +918,22 @@ function itemDatatableActions(id, status, awarded) {
                 class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnEdit" 
                 onclick="assignSchedule(${id})" 
                 title="Manage Schedule">
-                <i class="la 	la-calendar-plus-o"></i>
+                <i class="la la-calendar-plus-o"></i>
             </a>`;
+            if(!awarded || awarded == 0){
+                _actionButton += `
+                <a href="javascript:void(0)" 
+                    class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
+                    onclick="awardCertificate(${id})" 
+                    title="Verify Attendance">
+                    <i class="la la-clipboard"></i>
+                </a>`;
+            }else{
+                _actionButton += `
+                <button class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" title="View Certificate" onclick="openCertificate(${id})">
+                    <i class="la la-certificate"></i>
+                </button>`;
+            }
         }
     }
 
@@ -931,7 +949,7 @@ function itemDatatableActions(id, status, awarded) {
                     </a>`;
             } else {
                 _actionButton += `
-                    <button class="btn btn-secondary btn-sm m-btn m-btn--pill text-dark" onclick="openCertificate(${id})">
+                    <button class="btn btn-secondary btn-sm m-btn m-btn--pill text-dark btnSave" onclick="openCertificate(${id})">
                         <i class="la la-certificate"></i> View Certificate
                     </button>`;
             }
@@ -948,7 +966,8 @@ function itemDatatableActions(id, status, awarded) {
 
 function awardCertificate(rowId) {
     const btn = $(`.btnSave[onclick="awardCertificate(${rowId})"]`);
-    btn.prop("disabled", true).html('<i class="la la-spinner la-spin"></i> Checking...');
+    btn.prop("disabled", true);
+    btn.find("i").removeClass().addClass("m-loader");
     $.ajax({
         url: baseUrl("events/check_attendance"),
         type: "post",
@@ -971,13 +990,16 @@ function awardCertificate(rowId) {
             toastr.error("An error occurred while checking attendance.", "Error");
         },
         complete: function () {
-            btn.prop("disabled", false).html('<i class="la la-clipboard"></i> Verify Attendance');
+            btn.prop("disabled", false).html('<i class="la la-clipboard"></i>');
         }
     });
 }
 
 
 function openCertificate(id) {
+    const btn = $(`.btnSave[onclick="openCertificate(${id})"]`);
+    btn.prop("disabled", true);
+    btn.find("i").removeClass().addClass("m-loader");
     const rowData = participantsTable.row(`#${id}`).data();
     eventVue.emp_attendance_selected = rowData;
     let fileUrl = "";
@@ -997,8 +1019,16 @@ function openCertificate(id) {
             $modalBody.html('<iframe id="pdfFrame" style="width:100%;height:600px;" frameborder="0"></iframe>');
             $('#pdfViewerModal').modal('show');
             $('#pdfFrame').attr('src', fileUrl);
+            $('#pdfViewerModal').on('shown.bs.modal', function () {
+                btn.prop("disabled", false)
+                   .html('<i class="la la-certificate"></i>');
+            });
         } else {
             window.open(fileUrl, '_blank');
+            window.onload = function () {
+                btn.prop("disabled", false)
+                   .html('<i class="la la-certificate"></i>');
+            };
         }
     });
 }
@@ -1122,13 +1152,23 @@ function setParticipantsData(newData, redraw = false) {
 }
 
 function onEditEvent(id) {
+    const btn = $(`.btnEdit[onclick="onEditEvent(${id})"]`);
+    btn.prop("disabled", true);
+    btn.find("i").removeClass().addClass("m-loader");
     let rowData = participantsTable.row('#'+id).data();
     selectedData = rowData; 
     eventVue.participantDataSelected = JSON.parse(JSON.stringify(rowData));
     $("#editParticipant").modal("show");
+    $('#editParticipant').on('shown.bs.modal', function () {
+        btn.prop("disabled", false)
+           .html('<i class="la la-eye"></i>');
+    });
 }
 
 function archiveParticipant(id) {
+    const btn = $(`.btnArchive[onclick="archiveParticipant(${id})"]`);
+    btn.prop("disabled", true);
+    btn.find("i").removeClass().addClass("m-loader");
     let rowData = participantsTable.row('#'+id).data();
     let fullname = rowData.firstname + ' ' + rowData.middlename + ' ' + rowData.lastname;
     Swal.fire({
@@ -1145,6 +1185,7 @@ function archiveParticipant(id) {
             $.ajax({
                 url: baseUrl('events/archive_participant'),
                 type: 'POST',
+                global: false,
                 data: {
                     csrf_token: $("#csrf_token").val(),
                     id: id,
@@ -1180,8 +1221,11 @@ function archiveParticipant(id) {
                 },
                 error: function(xhr, status, error) {
                     toastr.error('Something went wrong. Please try again.', 'Error', { timeOut: 5000 });
-                }
+                },
             });
+        }
+        else{
+            btn.prop("disabled", false).html('<i class="la la-file-archive-o"></i>');
         }
     });
 }
@@ -1429,9 +1473,10 @@ $('#schedule_end').timepicker({
     minuteStep: 10,
 });
 
-console.log(assigned_sched);
-
 function assignSchedule(participant){
+    const btn = $(`.btnEdit[onclick="assignSchedule(${participant})"]`);
+    btn.prop("disabled", true);
+    btn.find("i").removeClass().addClass("m-loader");
     $.ajax({
         url: baseUrl("events/assign_schedule"),
         type: "POST",
@@ -1457,6 +1502,9 @@ function assignSchedule(participant){
                 eventVue.participantSched = res;
                 $('#attendanceSheet').modal('show');
             }
+        },
+        complete: function() {
+            btn.prop("disabled", false).html('<i class="la la-calendar-plus-o"></i>');
         }   
     });
 }
@@ -1540,6 +1588,7 @@ function checkFileExists(url, callback) {
     $.ajax({
         url: url,
         type: 'HEAD',
+        global: false,
         success: function(response, status, xhr) {
             var mimeType = xhr.getResponseHeader("Content-Type");
             callback(true, mimeType);

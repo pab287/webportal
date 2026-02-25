@@ -155,7 +155,6 @@ class Events extends MX_Controller {
 
     public function set_modal_trainings() {
         $post = $this->input->post();
-
         $data['data'] = $this->em->setModalTrainings();
         if(isset($post['sched_id'])){
             $data['attendance'] = $this->em->takeAttendance($post['sched_id']);
@@ -221,7 +220,12 @@ class Events extends MX_Controller {
     }
 
     public function remove_certificate(){
+        $post = $this->input->post();
         $data = $this->em->removeCertificate();
+        if(isset($post['sched_id'])){
+            $data['attendance'] = $this->em->takeAttendance($post['sched_id']);
+            unset($post['sched_id']);
+        }
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
