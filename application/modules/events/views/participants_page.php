@@ -1,74 +1,74 @@
 <style>
    .toggle-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-            padding: 16px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            border: 1px solid #e9ecef;
-        }
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+    }
 
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
 
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
 
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: 0.3s;
-            border-radius: 24px;
-        }
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.3s;
+        border-radius: 24px;
+    }
 
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: 0.3s;
-            border-radius: 50%;
-        }
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+    }
 
-        input:checked + .toggle-slider {
-            background-color: #5BC236;
-        }
+    input:checked + .toggle-slider {
+        background-color: #5BC236;
+    }
 
-        input:checked + .toggle-slider:before {
-            transform: translateX(26px);
-        }
+    input:checked + .toggle-slider:before {
+        transform: translateX(26px);
+    }
 
-        .toggle-label {
-            font-weight: 500;
-            color: #333;
-            font-size: 14px;
-        }
+    .toggle-label {
+        font-weight: 500;
+        color: #333;
+        font-size: 14px;
+    }
 
-        .m-widget2__desc {
-            line-height: 50px; /* Match the height of the parent */
-        }
+    .m-widget2__desc {
+        line-height: 50px; /* Match the height of the parent */
+    }
 
-        .modal-blur {
-            filter: blur(3px);
-            transition: filter 0.2s ease;
-        }
+    .modal-blur {
+        filter: blur(3px);
+        transition: filter 0.2s ease;
+    }
 
 </style>
 <div class="row" id="events-content">
@@ -587,9 +587,9 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-primary text-white mr-auto btnSave" id="multipleBtn" data-dismiss="modal" onClick="addMultipleEmployees()"><i class="la la-users mr-2"></i>Add Multiple Employees</button>
+                        <button type="button" class="btn btn-primary text-white mr-auto btnSave" id="multipleBtn" onClick="addMultipleEmployees()"><i class="la la-users mr-2"></i>Add Multiple Employees</button>
                         <button type="submit" class="btn btn-success btnSave"><i class="la la-check mr-2"></i>SAVE</button>
-                        <button class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
+                        <button type="button" class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
                     </div>
                 </form>
             </div>
@@ -1094,6 +1094,48 @@
         </div>
     </div>
 
+    <div class="modal fade show" id="modalMassAddition">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">ADD MULTIPLE EMPLOYEES</h5>
+                    <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="companies" class="form-control-label">Department</label>
+                                <select name="departments" id="departments">
+                                    <option></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <table id="multipleEmployeeTable" class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Trainee Information</th>
+                                        <th>Company</th>
+                                        <th>Contact</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade show" id="attendanceCheck" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -1146,51 +1188,5 @@
         </div>
     </div>
 
-    <div class="modal fade show" id="modalMassAddtion" tabindex="-1">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">ADD MULTIPLE EMPLOYEES</h5>
-                    <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <form id="#formAddMultiple">
-                    <div class="modal-body">
-                        <div class="row">
 
-                        </div>
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="form-group">
-                                    <label for="companies" class="form-control-label">Department</label>
-                                    <select name="departments" id="departments">
-                                        <option></option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <table id="multipleEmployeeTable" class="table table-bordered table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>Trainee Information</th>
-                                            <th>Company</th>
-                                            <th>Contact</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary btnClose" data-dismiss="modal">Close</button>
-                    </div>
-                </form>
-
-            </div>
-        </div>
-    </div>
 </div>

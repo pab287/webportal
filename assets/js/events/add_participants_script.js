@@ -1678,16 +1678,17 @@ $.validate({
 });
 
 function addMultipleEmployees() {
+    $('#addNewParticipant').one('hidden.bs.modal', function () {
+        $("#modalMassAddition").modal("show");
+    });
+    $('#addNewParticipant').modal('hide');
     let participantIds = participantsTable.column(1).data().toArray();
     const idSet = new Set([...new Set(participantIds)].map(String));
-    employee_selection = employees.filter(emp =>
-        !idSet.has(String(emp.id))
-    );
+    employee_selection = employees.filter(emp => !idSet.has(String(emp.id)));
     multipleEmployeeTable.clear();
     multipleEmployeeTable.rows.add(employee_selection);
     multipleEmployeeTable.draw();
     $("#departments").val(null).trigger('change');
-    $("#modalMassAddtion").modal("show");
 }
 
 let multipleEmployeeTable = $('#multipleEmployeeTable').DataTable({
@@ -1752,7 +1753,7 @@ let multipleEmployeeTable = $('#multipleEmployeeTable').DataTable({
 });
 
 $("#departments").select2({
-    dropdownParent: $('#modalMassAddtion'),
+    dropdownParent: $('#modalMassAddition'),
     data: departments,
     allowClear: true,
     placeholder: "Select an option",
@@ -1815,6 +1816,10 @@ $('#modalTempContent').on('show.bs.modal', function () {
 $('#modalTempContent').on('hidden.bs.modal', function () {
     $('#generate_attendance .modal-content').removeClass('modal-blur');
 });
+
+// $("#modalMassAddition").on("shown.bs.modal", function () {
+//     $("body").addClass("modal-open");
+// });
 
 $('#modalTempContent').on('show.bs.modal', function () {
     var zIndex = 1060 + (10 * $('.modal:visible').length);
