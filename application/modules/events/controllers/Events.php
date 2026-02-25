@@ -259,4 +259,14 @@ class Events extends MX_Controller {
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
+    public function hold_event(){
+        $data = $this->em->holdEvent();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function resume_event(){
+        $data = $this->em->resumeEvent();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
 }

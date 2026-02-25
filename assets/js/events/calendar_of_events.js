@@ -66,8 +66,10 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
                         } else {
                             schedule = displayFrom + " - " + displayTo;
                         }
-            
-                        if (today.isBefore(fromDate, 'day')) {
+                        if(row.on_hold == 1){
+                            statusTag = `<span class="badge badge-danger">On Hold</span>`;
+                         }
+                        else if (today.isBefore(fromDate, 'day')) {
                             statusTag = `<span class="badge badge-info">Upcoming</span>`;
                         } else if (today.isBetween(fromDate, toDate, 'day', '[]')) {
                             statusTag = `<span class="badge badge-warning">Ongoing</span>`;
@@ -105,7 +107,7 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
                 orderable: false,
                 width: "10%",
                 render: function (data, type, row, meta) {
-                    return itemDatatableActions(row.id, row.participant_status, row.event_from, row.event_to);
+                    return itemDatatableActions(row.id, row.participant_status, row.event_from, row.event_to, row.on_hold);
                 }
             },            
         ]
@@ -250,31 +252,8 @@ $.validate({
     }
 });
 
-function itemDatatableActions(id, status, from, to) {
+function itemDatatableActions(id, status, from, to, on_hold) {
     let _actionButton = "<span class='action-buttons'>";
-
-    if (_currentActions.includes("view_own_request")) {
-        if (status !== undefined && status === "pending") {
-            _actionButton += `
-                <a href="javascript:void(0)" 
-                    class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
-                    onclick="confirmParticipant(${id})" 
-                    title="Confirm Attendance">
-                    <i class="la la-check-circle text-success"></i>
-                </a>
-                <a href="javascript:void(0)" 
-                    class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
-                    onclick="declineParticipant(${id})" 
-                    title="Decline Attendance">
-                    <i class="la la-times-circle text-danger"></i>
-                </a>`;
-        } else {
-            _actionButton += `<span class="text-success">Attendance Confirmed</span>`;
-        }
-
-        _actionButton += "</span>";
-        return _actionButton;
-    }
 
     _actionButton += `
         <a style="text-decoration: none;" 
@@ -293,14 +272,37 @@ function itemDatatableActions(id, status, from, to) {
             data-skin="dark">
             <i class="la la-file-archive-o"></i>
         </button>
-        <a 
-            href="${baseUrl('events/add_participants/') + id}" 
-            class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnNew" 
-            data-toggle="m-tooltip" data-placement="bottom" title="Manage Training" 
-            data-skin="dark">
-            <i class="la la-user"></i>
-        </a>
     `;
+
+    if(on_hold == 0){
+        _actionButton += `        
+            <a 
+                href="${baseUrl('events/add_participants/') + id}" 
+                class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnNew" 
+                data-toggle="m-tooltip" data-placement="bottom" title="Manage Training" 
+                data-skin="dark">
+                <i class="la la-user"></i>
+            </a>
+
+            <a style="text-decoration: none;" 
+                class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit" 
+                onclick="onHoldEvent(${id})" 
+                data-toggle="m-tooltip" data-placement="bottom" 
+                data-skin="dark" 
+                title="Hold Training">
+                <i class="la la-hand-stop-o"></i>
+            </a>`
+    }else{
+        _actionButton += `        
+        <a style="text-decoration: none;" 
+            class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit" 
+            onclick="continueEvent(${id})" 
+            data-toggle="m-tooltip" data-placement="bottom" 
+            data-skin="dark" 
+            title="Resume Training">
+            <i class="la la-play"></i>
+        </a>`
+    }
 
     _actionButton += "</span>";
 
@@ -507,7 +509,6 @@ function normalize(obj) {
 function checkChanges(newData, oldData) {
     const normNew = normalize(newData);
     const normOld = normalize(oldData);
-    console.log(normNew, normOld);
     return JSON.stringify(normNew) !== JSON.stringify(normOld);
 }
 
@@ -570,6 +571,69 @@ function deleteArchive(id){
                         tblCalendarOfHolidays.ajax.reload(null, false);
                     }else{
                         Swal.fire('Error!', res.message, 'error');
+                    }
+                }
+            });
+        }
+    });
+}
+
+function onHoldEvent(id){
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This training will be on hold!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, hold it!',
+        cancelButtonText: 'Cancel'
+        
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl('events/hold_event'),
+                type: "POST",
+                dataType: "json",
+                data: {
+                    csrf_token : _csrf_hash,
+                    id:id
+                },
+                success: function(res) {
+                    if(res.success){
+                        toastr.success(res.message, 'Success', 5000);
+                        tblCalendarOfHolidays.ajax.reload(null, false);
+                    }
+                }
+            });
+        }
+    });
+}
+
+function continueEvent(id){
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This training will be continue!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, resume it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl('events/resume_event'),
+                type: "POST",
+                dataType: "json",
+                data: {
+                    csrf_token : _csrf_hash,
+                    id:id
+                },
+                success: function(res) {
+                    if(res.success){
+                        toastr.success(res.message, 'Success', 5000);
+                        tblCalendarOfHolidays.ajax.reload(null, false);
                     }
                 }
             });
@@ -653,6 +717,11 @@ const CalendarBasic = function () {
                             'background-color': background,
                             'border-color': background
                         });
+                        if (parseInt(event.on_hold) === 1) {
+                            element.css({
+                                'border': '1.5px solid #dc3545' // bootstrap danger red
+                            });
+                        }
                     },
                 });
             calendarInitialized = true;

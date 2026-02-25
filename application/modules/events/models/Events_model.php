@@ -45,7 +45,7 @@ class Events_model extends MX_Controller {
 
     private function getEventsData($limit, $offset, $sortBy, $sortOrder, $search , $year,$is_archived){
         $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to","b.speaker_name","b.position","b.company","a.company_array","a.department_array","a.events_by");
-        $this->db->select("a.budget, a.company_source, a.expense, a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array, a.events_by, a.training_type, a.init_type, a.training_category, 
+        $this->db->select("a.on_hold, a.budget, a.company_source, a.expense, a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array, a.events_by, a.training_type, a.init_type, a.training_category, 
             GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
             GROUP_CONCAT(b.id SEPARATOR '||') as speaker_id,
             GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
@@ -157,6 +157,7 @@ class Events_model extends MX_Controller {
 
     public function getEvents(){
         $this->db->select("
+            e.on_hold,
             e.id, 
             e.event_title title, 
             e.events_by,
@@ -1446,9 +1447,34 @@ class Events_model extends MX_Controller {
         return $response;
     }
 
-    // public function massAddParticipants(){
-    //     $employee = $this->getEmployeeInformation();
+    public function holdEvent(){
+        $post = $this->input->post();
+        $id = $post['id'];
+        $this->db->where('id', $id);
+        $update = $this->db->update($this->eventsCalendarTable, ['on_hold' => 1]);
+        if($update){
+            $response['success'] = true;
+            $response['message'] = "Training has been held.";
+        }else{
+            $response['success'] = false;
+            $response['message'] = "Failed to hold event.";
+        }
+        return $response;
+    }
 
-    // }
+    public function resumeEvent(){
+        $post = $this->input->post();
+        $id = $post['id'];
+        $this->db->where('id', $id);
+        $update = $this->db->update($this->eventsCalendarTable, ['on_hold' => 0]);
+        if($update){
+            $response['success'] = true;
+            $response['message'] = "Training has been unheld.";
+        }else{
+            $response['success'] = false;
+            $response['message'] = "Failed to unhold event.";
+        }
+        return $response;
+    }
 
 }

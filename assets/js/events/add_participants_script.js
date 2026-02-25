@@ -585,7 +585,6 @@ let eventVue = new Vue({
                 },
                 success: function(res) {
                     if(res){
-                        console.log(rowData);
                         modalTraining = res.html;
                         let fullname = rowData?.fullname;
                         $('#attendanceCheck').modal('hide');
@@ -699,7 +698,6 @@ let eventVue = new Vue({
                                             currentForm.reset();
                                             modalTempContent.modal("hide");
                                             eventVue.attendance = json.attendance;
-                                            console.log(eventVue.attendance);
                                             setParticipantsData(json.data.participants,true);
                                         } else {
                                             toastr.error(
@@ -756,7 +754,6 @@ let eventVue = new Vue({
                         success: function(res) {
                             if(res.success){
                                 toastr.success(res.message,"Certificate Removed", 5000);
-                                console.log("REMOVE");
                                 eventVue.attendance = res.attendance;
                                 setParticipantsData(res.participants,true);
                             }else{
