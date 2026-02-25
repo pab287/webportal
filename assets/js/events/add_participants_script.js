@@ -1823,3 +1823,11 @@ $('#modalTempContent').on('show.bs.modal', function () {
         $('.modal-backdrop').not('.modal-backdrop:first').css('z-index', zIndex - 1);
     }, 0);
 });
+
+$('#nonEmployeeToggle').on('change', function () {
+    if ($(this).is(':checked')) {
+        $('#multipleBtn').show();
+    } else {
+        $('#multipleBtn').hide();
+    }
+});

@@ -587,7 +587,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-primary text-white mr-auto btnSave" data-dismiss="modal" onClick="addMultipleEmployees()"><i class="la la-users mr-2"></i>Add Multiple Employees</button>
+                        <button class="btn btn-primary text-white mr-auto btnSave" id="multipleBtn" data-dismiss="modal" onClick="addMultipleEmployees()"><i class="la la-users mr-2"></i>Add Multiple Employees</button>
                         <button type="submit" class="btn btn-success btnSave"><i class="la la-check mr-2"></i>SAVE</button>
                         <button class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
                     </div>
