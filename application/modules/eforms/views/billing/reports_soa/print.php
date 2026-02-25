@@ -1,8 +1,3 @@
-<?php 
-echo "<pre>";
-print_r($data);
-echo "</pre>";
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -576,7 +571,7 @@ echo "</pre>";
             <?php } else { ?>
 
                 <table id="ledger_table" border="0" align="center" width="890" cellpadding="0" cellspacing="0" class="container980">
-                <tbody>
+                    <tbody>
                     <?php
                         $current_date   = date("Y-m-d");
                         $temp_penalties = $this->db->get_where("hydra_billing.penalties")->row_array();
@@ -602,45 +597,18 @@ echo "</pre>";
                         $this->db->where("bill.account_id", $data['id']);
                         $this->db->where("bill.status", 1);
 
-                        // --- FILTERING --- //
-                        if ($data['selectedDate'] === 'all') {
+                        if ($data['selectedDate'] === 'custom') {
+                            if (!empty($data['startDate']) && !empty($data['endDate'])) {
+                                $start_date = date("Y-m-d", strtotime($data['startDate']));
+                                $end_date   = date("Y-m-d", strtotime($data['endDate']));
 
-    // No date filtering
-
-} elseif ($data['selectedDate'] !== 'custom') {
-
-    // Filter by specific YEAR
-    $this->db->where("YEAR(bill.due_date)", $data['selectedDate']);
-
-} elseif ($data['selectedDate'] !== '' || !$data['selectedDate']) {
-    return "Ari ko d";
-    // Custom range filtering
-    if (!empty($data['startDate']) && !empty($data['endDate'])) {
-
-        $start_date = date("Y-m-d", strtotime($data['startDate']));
-        $end_date   = date("Y-m-d", strtotime($data['endDate']));
-
-        $this->db->where("bill.due_date >=", $start_date);
-        $this->db->where("bill.due_date <=", $end_date);
-    }
-}
-
-
-                        // if (empty($data['selectedDate']) || $data['selectedDate'] !== 'all') {
-                        //     // No date filtering
-                        //     $this->db->where("YEAR(bill.due_date)", $data['selectedDate']);
-
-                        // } elseif ($data['selectedDate'] === 'custom') {
-                        //     // Custom range filtering
-                        //     if (!empty($data['startDate']) && !empty($data['endDate'])) {
-
-                        //         $start_date = date("Y-m-d", strtotime($data['startDate']));
-                        //         $end_date   = date("Y-m-d", strtotime($data['endDate']));
-
-                        //         $this->db->where("bill.due_date >=", $start_date);
-                        //         $this->db->where("bill.due_date <=", $end_date);
-                        //     }
-                        // }
+                                $this->db->where("bill.due_date >=", $start_date);
+                                $this->db->where("bill.due_date <=", $end_date);
+                            }
+                        } elseif ($data['selectedDate'] !== 'all') {
+                            // Filter by specific YEAR
+                            $this->db->where("YEAR(bill.due_date)", $data['selectedDate']);
+                        }
 
                         $this->db->order_by("bill.due_date asc, payment.created_date asc");
                         $query = $this->db->get();
@@ -699,39 +667,39 @@ echo "</pre>";
                             // ---------------------------------------
                     ?>
 
-                      <tr style="background-color: #efefef">
-                          <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180">
-                              <?= date("Y-m-d", strtotime($_query["due_date"])); ?>
-                          </td>
+                        <tr style="background-color: #efefef">
+                            <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180">
+                                <?= date("Y-m-d", strtotime($_query["due_date"])); ?>
+                            </td>
 
-                          <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180">
-                            <?= $_query["ref_no"]; ?>
-                          </td>
+                            <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180">
+                                <?= $_query["ref_no"]; ?>
+                            </td>
 
-                          <td align="right" style="font-family: arial; color:#343434; padding: 6px;" width="180">
-                              <span class="m--text-muted" style="font-size: 9px;">
-                                  <small>
-                                      ₱ <?= number_format($base_charge, 2) ?> 
-                                      + ₱ <?= number_format($penalty_amount, 2) ?>
-                                      + ₱ <?= number_format($_query['reconnection_fee'], 2) ?>
-                                  </small>
-                              </span><br>
-                              ₱ <?= number_format($debit, 2); ?>
-                          </td>
+                            <td align="right" style="font-family: arial; color:#343434; padding: 6px;" width="180">
+                                <span class="m--text-muted" style="font-size: 9px;">
+                                    <small>
+                                        ₱ <?= number_format($base_charge, 2) ?> 
+                                        + ₱ <?= number_format($penalty_amount, 2) ?>
+                                        + ₱ <?= number_format($_query['reconnection_fee'], 2) ?>
+                                    </small>
+                                </span><br>
+                                ₱ <?= number_format($debit, 2); ?>
+                            </td>
 
-                          <td align="right" style="font-family: arial; color:#343434; padding: 6px;" width="180">
-                              <span class="m--text-muted" style="font-size: 11px;">
-                                  <small>
-                                      <?= $_query['payment_date'] ? 'PD: '.date("M d, Y", strtotime($_query['payment_date'])) : "--" ?>
-                                  </small>
-                              </span><br>
-                              ₱ <?= number_format($credit, 2); ?>
-                          </td>
+                            <td align="right" style="font-family: arial; color:#343434; padding: 6px;" width="180">
+                                <span class="m--text-muted" style="font-size: 11px;">
+                                    <small>
+                                        <?= $_query['payment_date'] ? 'PD: '.date("M d, Y", strtotime($_query['payment_date'])) : "--" ?>
+                                    </small>
+                                </span><br>
+                                ₱ <?= number_format($credit, 2); ?>
+                            </td>
 
-                          <td align="right" style="font-family: arial; color:#343434; padding: 6px;" width="180">
-                              ₱ <?= number_format($new_balance, 2); ?>
-                          </td>
-                      </tr>
+                            <td align="right" style="font-family: arial; color:#343434; padding: 6px;" width="180">
+                                ₱ <?= number_format($new_balance, 2); ?>
+                            </td>
+                        </tr>
                       
                     <?php 
                         } // End foreach

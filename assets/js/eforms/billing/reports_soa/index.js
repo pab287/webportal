@@ -556,10 +556,10 @@ $(".btnPrint").on("click", function(){
             w.document.write(response);
             w.document.close();
 
-            // setTimeout(function(){
-            //     w.print();
-            //     w.close();
-            // }, 250);
+            setTimeout(function(){
+                w.print();
+                w.close();
+            }, 250);
         },
         error: function (request, status, error) {
             toastr.error("Please check your internet connection.", "Connection error");
@@ -571,7 +571,15 @@ $(".btnPrint").on("click", function(){
 $("#report_type").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
-});
+}).on("change", function(){
+    const selectedDate = $("#selectedDate").val();
+    
+    if (selectedDate) {
+        generateReport(); // generate report onchange if not custom    
+        reportGenerated = true; // mark as generated
+        enablePrintButton(reportGenerated);
+    }
+});;
 
 $("#date_filter").select2({
     placeholder: 'SELECT AN OPTION',
@@ -589,6 +597,14 @@ $("#date_filter").select2({
     if ($(this).val() == "custom") {
         $("#custom_range").removeClass("m--hide");
     } else {
+        generateReport(); // generate report onchange if not custom    
+        reportGenerated = true; // mark as generated
+        enablePrintButton(reportGenerated);
+
+        let date_picker = $("#date-picker").data('daterangepicker');
+        date_picker.setStartDate(moment());
+        date_picker.setEndDate(moment());
+
         $("#custom_range").addClass("m--hide");
         $("#date-range").val("");
         _startDate = "";
@@ -614,6 +630,19 @@ var generateDateTimePicker = function (min = null, max = null) {
         $("#date-range").val(picker.startDate.format('MMM DD, YYYY') + ' - ' + picker.endDate.format('MMM DD, YYYY'));
         _startDate = picker.startDate.format('MMM DD, YYYY');
         _endDate = picker.endDate.format('MMM DD, YYYY');
+
+        generateReport(); // generate report onchange of date range picker
+        reportGenerated = true; // mark as generated
+    }).on('cancel.daterangepicker', function(ev, picker) {
+        $("#date-range").val("");
+
+        // Reset the internal dates
+        picker.setStartDate(moment());
+        picker.setEndDate(moment());
+
+        generateReport(); // generate report onchange of date range picker
+        reportGenerated = true; // mark as generated
+        enablePrintButton(reportGenerated);
     });
 }
 generateDateTimePicker(tempRangeDates.min_date, tempRangeDates.max_date);
@@ -663,7 +692,13 @@ function generateReport(e){
 
     // mark as generated
     reportGenerated = true;
-    $(".btnPrint").prop("disabled", false);
+    enablePrintButton(reportGenerated);
+}
+
+function enablePrintButton(reportGenerated){
+    if (reportGenerated) {
+        $(".btnPrint").prop("disabled", false);
+    }
 }
 
 $("#m_soa").on('hidden.bs.modal', function(){
@@ -683,9 +718,6 @@ $("#m_soa").on('hidden.bs.modal', function(){
     vm_reports_soa_ledger.totalBalance = 0;
 
     $('#balance, #total_penalty, #overPayment, #total_balance').html('₱ 0.00');
-});
 
-$("#date_filter, #report_type").on("change", function(){
-    reportGenerated = false;
     $(".btnPrint").prop("disabled", true);
 });
