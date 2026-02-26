@@ -40,7 +40,11 @@ class Overtime extends MY_Controller {
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
 
-        $this->core_layout->addJs("js/eforms/overtime/overtime_masterfile.js", true);
+        $tempData = array();
+        $tempData['signatory'] = $this->overtime->get_all_signatory();
+
+        $version = filemtime(FCPATH.'assets/js/eforms/overtime/overtime_masterfile.js');
+        $this->core_layout->addJs("js/eforms/overtime/overtime_masterfile.js", true, $tempData,"?v={$version}");
         $this->core_layout->setPrivilegeName("overtime_masterfile");
 
         $this->load->view('core/templates/header');
@@ -83,32 +87,32 @@ class Overtime extends MY_Controller {
     }
 
     function select_company() {
-      $data = $this->overtime->selectCompany();
-      $this->output
-          ->set_content_type('json')
-          ->set_output(json_encode($data));
-  }
+        $data = $this->overtime->selectCompany();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 
-  function select_payroll_group() {
-    $data = $this->overtime->selectPayrollGroup();
-    $this->output
-        ->set_content_type('json')
-        ->set_output(json_encode($data));
-}
+    function select_payroll_group() {
+        $data = $this->overtime->selectPayrollGroup();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 
-function select_payroll_group_multiple() {
-  $data = $this->overtime->selectPayrollGroupMultiple();
-  $this->output
-      ->set_content_type('json')
-      ->set_output(json_encode($data));
-}
+    function select_payroll_group_multiple() {
+        $data = $this->overtime->selectPayrollGroupMultiple();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 
-function select_employee() {
-  $data = $this->overtime->selectEmployee();
-  $this->output
-      ->set_content_type('json')
-      ->set_output(json_encode($data));
-}
+    function select_employee() {
+        $data = $this->overtime->selectEmployee();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 
     public function edit_overtime() {
         $this->core_layout->setPageTitle("Overtime - Edit Overtime Request");
@@ -145,20 +149,20 @@ function select_employee() {
     }
 
     public function reports(){
-      $this->core_layout->setPageTitle("Overtime - Reports");
-      $tempData["company"] = $this->overtime->select2CompanyData();
-      $this->core_layout->addJs("js/eforms/overtime/overtime_reports.js", true,$tempData);
-      $this->core_layout->setPrivilegeName("overtime_masterfile");
-      $this->load->view('core/templates/header');
-      $this->load->view('eforms/overtime/overtime_reports');
-      $this->load->view('core/templates/footer');
+        $this->core_layout->setPageTitle("Overtime - Reports");
+        $tempData["company"] = $this->overtime->select2CompanyData();
+        $this->core_layout->addJs("js/eforms/overtime/overtime_reports.js", true,$tempData);
+        $this->core_layout->setPrivilegeName("overtime_masterfile");
+        $this->load->view('core/templates/header');
+        $this->load->view('eforms/overtime/overtime_reports');
+        $this->load->view('core/templates/footer');
     }
 
     public function get_reports(){
-      $data = $this->overtime->getReports();
-      $this->output
-          ->set_content_type('json')
-          ->set_output(json_encode($data));
+        $data = $this->overtime->getReports();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
     }
 
     function get_analytics_for_dashboard(){
@@ -211,7 +215,7 @@ function select_employee() {
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
-  }
+    }
 
     function get_employee_department_head(){
         $data = $this->overtime->getEmployeeDepartmentHead();
@@ -411,6 +415,90 @@ function select_employee() {
     public function get_payroll_group_multiple() {
         $this->load->model("payroll/payroll_m", "payroll");
         $data = $this->payroll->getPayrollGroupMultiple();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function signatories() {
+        $this->core_layout->setPageTitle("Overtime - Signatories");
+        $this->core_layout->setPrivilegeName("overtime_summary");
+
+        $tempData = array();
+        $tempData["company"] = $this->overtime->select2CompanyData();
+
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
+
+        $version = filemtime(FCPATH.'assets/js/eforms/overtime/signatory.script.js');
+        $this->core_layout->addJs("vendors/custom/jquery-ui/jquery-ui.bundle.js");
+        $this->core_layout->addJs("js/eforms/overtime/signatory.script.js", true, $tempData, "?v={$version}");
+        $this->core_layout->setPrivilegeName("overtime_masterfile");
+
+        $this->load->view('core/templates/header');
+        $this->load->view('eforms/overtime/signatories');
+        $this->load->view('core/templates/footer');
+    }
+
+    public function get_signatory(){
+        $data = $this->overtime->get_signatory();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function select_signatory_employee() {
+        $data = $this->overtime->select_signatory_employee();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function create_signatory_content(){
+        $html = $this->load->view("eforms/overtime/modals/signatory_portlet", null, true);
+        $data = array("html"=>$html);
+        $this->output
+        ->set_content_type('json')
+        ->set_output(json_encode($data));
+    }
+
+    public function create_printable_signatory(){
+        $data = $this->overtime->create_printable_signatory();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function get_current_signatory($id=null){
+        $data = $this->overtime->getCurrentSignatory($id);
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function update_printable_signatory(){
+        $data = $this->overtime->updatePrintableSignatory();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function print_summary(){
+        $data = $this->overtime->print_summary();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function update_printable_signatories() {
+        $data = $this->overtime->update_printable_signatories();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+    
+    public function reset_printable_signatories() {
+        $data = $this->overtime->reset_printable_signatories();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
