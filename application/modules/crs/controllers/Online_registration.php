@@ -10,9 +10,14 @@
 
         public function index()
         {
+            $tempData = array();
+            $tempData['data']['position'] = $this->registration->select2PositionData();
+            $tempData['data']['referral'] = $this->registration->select2RefferalData();
+            $tempData['data']['schools'] = $this->registration->select2SchoolsData();
+            $tempData['data']['courses'] = $this->registration->select2CoursesData();
             $this->load->view("core/templates/external/header");
             $this->load->view("crs/registration/index");
-            $this->load->view("core/templates/external/footer");
+            $this->load->view("core/templates/external/footer",$tempData);
         }
         public function backup()
         {
