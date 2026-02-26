@@ -63,8 +63,14 @@ if(tableTransferApproval.length === 1){
                     const rawData = JSON.stringify(row);
                     return `<button 
                         class="btn btn-sm btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnApprove_action btnApproveTransfer"
+                        data-placement="bottom"
+                        data-toggle="m-tooltip"
+                        title="Approve Employee Group Transfer" data-original-title="Approve Employee Group Transfer"
                         data-row='${rawData}'><i class="fa fa-thumbs-up"></i>
                         </button> <button class="btn btn-sm btn-default m-btn m-btn--hover-danger m-btn--icon m-btn--icon-only m-btn--pill btnDisapprove_action btnDisapproveTransfer"
+                        data-placement="bottom"
+                        data-toggle="m-tooltip"
+                        title="Disapprove Employee Group Transfer" data-original-title="Disapprove Employee Group Transfer"
                         data-row='${rawData}'><i class="fa fa-thumbs-down"></i></button>`;
                 }else{
                     return "---";
@@ -115,6 +121,7 @@ if(tableTransferApproval.length === 1){
                     success: function (json) {
                         if (json.response) {
                             dtTableApproval.row(btnThis.parents("tr")).remove().draw(false);
+                            if(notificationCounter.count > 0) notificationCounter.count--;
                         }
                         toastr[json.response ? "success" : "error"](json.message, "Approve Employee Transfer");
                     },
@@ -162,6 +169,7 @@ if(tableTransferApproval.length === 1){
                     success: function (json) {
                         if (json.response) {
                             dtTableApproval.row(btnThis.parents("tr")).remove().draw(false);
+                            if(notificationCounter.count > 0) notificationCounter.count--;
                         }
                         toastr[json.response ? "success" : "error"](json.message, "Disapprove Employee Transfer");
                     },
