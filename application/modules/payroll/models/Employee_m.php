@@ -1123,13 +1123,17 @@
         function getEmployeeGroupData($type="edit", $id=null){
             $resultset = array();
             if($type && $id){
-                $this->db->select("a.*, IFNULL(b.description, '') as company, IFNULL(b.code, '') as company_code");
-                $this->db->from($this->payrollGroupTable." a");
-                $this->db->join($this->companyTable." b", "b.id = a.company_id", "LEFT");
-                $this->db->where(array(
-                    "a.id"=>$id,
-                    "a.is_archived"=>0
-                    ));
+                $this->db->select("
+                    a.*,
+                    IFNULL(b.description, '') as company,
+                    IFNULL(b.code, '') as company_code,
+                    IF(TIMESTAMPDIFF(DAY, a.created_at, NOW()) <= 3, 1, 0) as allow_transfer
+                ", false);
+
+                $this->db->from($this->payrollGroupTable . " a");
+                $this->db->join($this->companyTable . " b", "b.id = a.company_id", "LEFT");
+                $this->db->where(array("a.id" => $id, "a.is_archived" => 0));
+
                 $qTemp = $this->db->get();
                 if($qTemp->num_rows() == 1){
                     $employees = array();
@@ -1363,31 +1367,44 @@
             return $resultset;
         }
 
-        function setNewPayrollEmployeeGroup(){
+        public function setNewPayrollEmployeeGroup(){
             $resultset = array();
             $post = $this->input->post();
+            $logInfo = null;
             if($post){
                 $post["employee_id"] = serialize($post["employee_id"]);
                 $post["created_by"] = $this->core_layout->getCurrentEmployeeId();
                 $post["created_at"] = date("Y-m-d H:i:s");
                 $post['is_allow_view'] = isset($post['is_allow_view']) && $post['is_allow_view'] ? 1: 0;
                 $post['assigned_employee_id'] = isset($post['is_allow_view']) && $post['is_allow_view'] == 1 ? serialize($post['assigned_employee_id']) : serialize(array());
-
+                
+                $logDescription = strtoupper($post['description']);
                 $added = $this->db->insert($this->payrollGroupTable, $post);
                 if($added){
                     $resultset["response"] = true;
+                    $logInfo = "New payroll employee group has been added with payroll group description of `{$logDescription}`.";
                 }else{
                     $resultset["response"] = false;
+                    $logInfo = "Failed to add new payroll employee group with payroll group description of `{$logDescription}`.";
                 }
             }else{
                 $resultset["response"] = false;
+                $logInfo = "Failed to add new payroll employee group, required parameters missing.";
             }
+
+            if($logInfo){
+                $type = $resultset["response"] ? "success" : "failed";
+                $logType = $resultset["response"] ? "user": "system";
+                $this->core_layout->setEventLog($logInfo, "insert", $type, "payroll", $logType);
+            }
+
             return $resultset;
         }
 
-        function updatePayrollEmployeeGroup(){
+        public function updatePayrollEmployeeGroup(){
             $resultset = array();
             $post = $this->input->post();
+            $logInfo = null;
             if($post){
                 $tempWhere = array();
                 $tempWhere["id"] = $post["id"];
@@ -1398,16 +1415,27 @@
                 $post["updated_at"] = date("Y-m-d H:i:s");
                 $post['is_allow_view'] = isset($post['is_allow_view']) && $post['is_allow_view'] ? 1: 0;
                 $post['assigned_employee_id'] = isset($post['is_allow_view']) && $post['is_allow_view'] == 1 ? serialize($post['assigned_employee_id']) : serialize(array());
-
+                
+                $logDescription = strtoupper($post['description']);
                 $updated = $this->db->update($this->payrollGroupTable, $post, $tempWhere);
                 if($updated && $this->db->affected_rows() > 0){
                     $resultset["response"] = true;
+                    $logInfo = "Payroll employee group with payroll group description of `{$logDescription}` has been updated.";
                 }else{
                     $resultset["response"] = false;
+                    $logInfo = "Failed to update payroll employee group with payroll group description of `{$logDescription}`.";
                 }
             }else{
                 $resultset["response"] = false;
+                $logInfo = "Failed to update payroll employee group, required parameters missing.";
             }
+
+            if($logInfo){
+                $type = $resultset["response"] ? "success" : "failed";
+                $logType = $resultset["response"] ? "user": "system";
+                $this->core_layout->setEventLog($logInfo, "update", $type, "payroll", $logType);
+            }
+
             return $resultset;
         }
 
@@ -2545,8 +2573,10 @@ public function getEmployeeNightDiffList(){
                     $employeeIds = array_unique(array_merge($employeeIds, $tempIds));
                 }
             }
-
-            if(is_array($employeeIds) && !empty($employeeIds)){
+            
+            $allowSearch = isset($get["company_id"]) && $get["company_id"] && $all_filter === false;
+            $allowSearch = $all_filter || $allowSearch;
+            if(is_array($employeeIds) && !empty($employeeIds) && $allowSearch){
                 $this->db->select("emp.id, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
                 CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
                         TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
@@ -2631,23 +2661,27 @@ public function getEmployeeNightDiffList(){
     public function transferEmployeeGroup(){
         $post = $this->input->post();
         $result = ["response" => false, "message" => "Transfer Employee Group Failed."];
-
         if (empty($post) || empty($post['employee_id'])) { return $result; }
         $insertData = $this->prepareTransferPayload($post);
         $inserted = $this->db->insert($this->payrollGroupTransferTable, $insertData);
-
         if ($inserted && $this->db->affected_rows() > 0) {
-            $group = $this->db
-                ->select("description")
-                ->where("id", $post['group_id'])
-                ->get($this->payrollGroupTable)
-                ->row();
-
-            $groupDescription = $group ? strtoupper($group->description) : "Unknown Group";
-            $this->logEmployeeGroupTransfer((array) $post['employee_id'], 'pending_transfer', $groupDescription);
-            return ["response" => true, "message" => "Transfer Employee Group Successfully."];
+            if(isset($post["approving_authority"]) && intval($post["approving_authority"]) == 1){
+                $this->db->select("id, employee_id, group_id");
+                $arrData = $this->db->get_where($this->payrollGroupTransferTable, array("id" => $this->db->insert_id()))->row_array();
+                $arrData["employee_id"] = unserialize($arrData["employee_id"]);
+                $result = $this->approveEmployeeGroupTransfer($arrData);
+            }else{
+                $group = $this->db
+                    ->select("description")
+                    ->where("id", $post['group_id'])
+                    ->get($this->payrollGroupTable)
+                    ->row();
+    
+                $groupDescription = $group ? strtoupper($group->description) : "Unknown Group";
+                $this->logEmployeeGroupTransfer((array) $post['employee_id'], 'pending_transfer', $groupDescription);
+                return ["response" => true, "message" => "Transfer Employee Group Successfully."];
+            }
         }
-
         return $result;
     }
 
@@ -2777,8 +2811,8 @@ public function getEmployeeNightDiffList(){
         return $resultset;
     }
 
-    public function approveEmployeeGroupTransfer(){
-        $post = $this->input->post();
+    public function approveEmployeeGroupTransfer($data = array()){
+        $post = is_array($data) && !empty($data) ? $data : $this->input->post();
         $result = ["response" => false, "message"  => "Approve Employee Group Transfer Failed."];
         if (empty($post['id']) || empty($post['employee_id']) || empty($post['group_id'])) { return $result; }
 
@@ -2853,7 +2887,7 @@ public function getEmployeeNightDiffList(){
         ]);
 
         if ($updated && $this->db->affected_rows() > 0) {
-            $this->logEmployeeGroupTransfer($employeeIds, 'approved', $groupDescription);
+            $this->logEmployeeGroupTransfer($employeeIds, 'approved', $group->description);
             return true;
         }
 

@@ -8653,4 +8653,89 @@ class Payroll_m extends CI_Model{
         $this->db->reset_query();
         return $arrResult;
     }
+
+    public function getTransferEmployeeGroupHistory(){
+        $arrResult = array();
+        $this->db->select("
+            pgt.id,
+            pgt.group_id,
+            pgt.reason,
+            pgt.status,
+            pgt.employee_id,
+            pg.description as payroll_group,
+            comp.code as company_code,
+            CASE
+                WHEN pgt.status = 1 THEN 'Approved'
+                WHEN pgt.status = 2 THEN 'Disapproved'
+                ELSE 'Pending'
+            END as status_name,
+            TRIM(CONCAT(
+                UPPER(e_act.firstname), ' ',
+                IF(
+                    e_act.middlename IS NOT NULL
+                    AND TRIM(e_act.middlename) NOT IN ('', 'N/A', 'NONE'),
+                    CONCAT(SUBSTR(UPPER(e_act.middlename),1,1), '.'),
+                    ''
+                ),
+                ' ',
+                UPPER(e_act.lastname)
+            )) as action_by,
+
+            IF(pgt.updated_by > 0, pgt.updated_at, pgt.created_at) as action_at,
+            TRIM(CONCAT(
+                UPPER(e_stat.firstname), ' ',
+                IF(
+                    e_stat.middlename IS NOT NULL
+                    AND TRIM(e_stat.middlename) NOT IN ('', 'N/A', 'NONE'),
+                    CONCAT(SUBSTR(UPPER(e_stat.middlename),1,1), '.'),
+                    ''
+                ),
+                ' ',
+                UPPER(e_stat.lastname)
+            )) as action_status_by,
+
+            CASE
+                WHEN pgt.status = 1 THEN pgt.approved_at
+                WHEN pgt.status = 2 THEN pgt.disapproved_at
+                ELSE NULL
+            END as action_status_at
+        ", false);
+
+        $this->db->join($this->tbl_payroll_group." pg", "pg.id = pgt.group_id", "inner");
+        $this->db->join($this->tbl_tblcompanies." comp", "comp.id = pgt.company_id", "left");
+        $this->db->join($this->tbl_employees." e_act", "e_act.id = COALESCE(NULLIF(pgt.updated_by,0), pgt.created_by)", "left");
+        $this->db->join($this->tbl_employees." e_stat", "e_stat.id = CASE
+        WHEN pgt.status = 1 THEN pgt.approved_by
+        WHEN pgt.status = 2 THEN pgt.disapproved_by
+        ELSE NULL END", "left", false);
+        $this->db->order_by("pgt.id", "DESC");
+        $qpgt = $this->db->get_where($this->tbl_payroll_group_transfer." pgt", array("pgt.status !=" => 0));
+        if($qpgt->num_rows() > 0){
+            foreach ($qpgt->result() as $row) {
+                $row->employee_id = @unserialize($row->employee_id);
+                if(is_array($row->employee_id) && !empty($row->employee_id)){
+                    $this->db->select("TRIM(CONCAT(UPPER(emp.firstname), ' ',
+                        CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                                TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                            THEN CONCAT(SUBSTR(UPPER(emp.middlename), 1, 1), '.') ELSE ''
+                        END,' ', UPPER(emp.lastname),
+                        CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                            UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                            emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(emp.suffix)) ELSE ''
+                        END)) as employee_name");
+                    $this->db->from($this->tbl_employees." emp");
+                    $this->db->where_in("emp.id", $row->employee_id);
+                    $this->db->order_by("emp.firstname", "ASC");
+                    $employees = $this->db->get();
+                    if($employees->num_rows() > 0){
+                        $row->employees = $employees->result();
+                    }
+                    $this->db->reset_query();
+                }
+            }
+            $arrResult = $qpgt->result();
+        }
+        $this->db->reset_query();
+        return $arrResult;
+    }
 }

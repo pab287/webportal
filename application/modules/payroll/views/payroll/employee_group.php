@@ -1,3 +1,27 @@
+<style>
+	.custom--floating-air-badge {
+		position: absolute;
+		top: -10px;
+		right: -10px;
+	}
+	.pulse {
+        animation: lockPulse 1.5s infinite ease-in-out;
+    }
+	@keyframes lockPulse {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+</style>
 <div class="m-content">
 	<div class="row">
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
@@ -40,21 +64,25 @@
                                             <span>NEW EMPLOYEE GROUP</span>
                                         </span>
                                         </button>
-										<button type="button"
-                                        class="btn btn-primary m-btn m-btn--icon btnNew" data-toggle="modal" data-target="#modalTransferGroup">
-                                        <span>
-                                            <i class="fa fa-exchange"></i>
-                                            <span>TRANSFER EMPLOYEE GROUP</span>
-                                        </span>
-                                        </button>
-
-										<button type="button"
-                                        class="btn btn-warning m-btn m-btn--icon btnNew text-white" data-toggle="modal" data-target="#modalTransferApproval">
-                                        <span>
-                                            <i class="fa fa-bell m-animate-shake"></i>
-                                            <span>FOR APPROVAL</span>
-                                        </span>
-                                        </button>
+										<div id="notificationCounter" class="dropdown" style="display: inline-block;">
+											<button class="btn btn-info dropdown-toggle btnNew" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+												More Options <span v-if="count > 0" class="m-badge m-badge--warning text-white custom--floating-air-badge pulse" v-text="count">0</span>
+											</button>
+											<div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+												<a class="dropdown-item" href="javascript:void(0);" data-toggle="modal" data-target="#modalTransferGroup">
+													<i class="fa fa-exchange"></i>
+													TRANSFER EMPLOYEE GROUP
+												</a>
+												<a class="dropdown-item" href="javascript:void(0);" data-toggle="modal" data-target="#modalTransferApproval">
+													<i class="fa fa-bell"></i>
+													FOR APPROVAL <span v-if="count > 0" class="m-badge m-badge--warning text-white" v-text="count">0</span>
+												</a>
+												<a class="dropdown-item" href="javascript:void(0);" data-toggle="modal" data-target="#modalTransferHistory">
+													<i class="fa fa-history"></i>
+													EMPLOYEE TRANSFER HISTORY
+												</a>
+											</div>
+										</div>
                                     </div>
 								</div>
 							</div>
@@ -96,17 +124,19 @@
 			</div>
 			<form id="formTransferGroup" method="post" action="<?php echo site_url("payroll/employee/transfer_employee_group"); ?>">
 				<input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+				<input type="hidden" name="approving_authority" value="<?php echo in_array("approve_action", $this->core_layout->getCurrentActions()) ? 1 : 0; ?>" />
 				<div class="modal-body">
-					<div class="form-group m-form__group">
-						<label for="company_id">Company *</label>
-						<div class="row">
-							<div class="col-md-6">
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group m-form__group">
+								<label for="company_id">Company *</label>
 								<select id="company_id" class="form-control " name="company_id" data-validation="required">
 									<option value="">&nbsp;</option>
 								</select>
 							</div>
-							<div class="col-md-6">
-							<div class="m-form__group form-group row">
+						</div>
+						<div class="col-md-6">
+							<div class="form-group m-form__group row">
 								<div class="col-9 text-right">
 									<label for="all_company_filter" class="col-form-label">
 										All Company Filter
@@ -121,9 +151,9 @@
 									</span>
 								</div>
 							</div>
-							</div>
 						</div>
 					</div>
+					
 					<div class="form-group m-form__group">
 						<label for="employee_id">Employee(s) *</label>
 						<select id="employee_id" class="form-control" name="employee_id[]" multiple="" data-validation="required">
@@ -142,8 +172,11 @@
 					</div>
 				</div>
 				<div class="modal-footer">
-					<button type="submit" id="btnSaveTransfer" class="btn btn-primary btnSave">Transfer</button>
+					<?php if(in_array("approve_action", $this->core_layout->getCurrentActions())): ?>
 					<button type="submit" id="btnSaveTransferAndApprove" class="btn btn-success btnSave">Transfer and Approve</button>
+					<?php else: ?>
+					<button type="submit" id="btnSaveTransfer" class="btn btn-primary btnSave">Transfer</button>
+					<?php endif; ?>
 					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 				</div>
 			</form>
@@ -167,11 +200,11 @@
 						<div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
 							<table class="table table-striped table-bordered row-border" id="tableTransferApproval" style="width: 100%">
 								<colgroup>
-									<col width="20%">
-									<col width="20%">
-									<col width="*">
-									<col width="20%">
-									<col width="8%">
+									<col style="width: 20%">
+									<col style="width: 20%">
+									<col style="width: *;">
+									<col style="width: 20%">
+									<col style="width: 8%">
 								</colgroup>
 								<thead>
 									<tr>
@@ -179,7 +212,46 @@
 										<th>Employee Name</th>
 										<th>Payroll Group</th>
 										<th>Reason</th>
-										<th class="text-center">Status</th>
+										<th class="text-center">Action</th>
+									</tr>
+								</thead>
+								<tbody></tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div id="modalTransferHistory" class="modal fade" data-keyboard="false" data-backdrop="static" modal-exempt-custom tabindex="-1">
+	<div class="modal-dialog modal-xl">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Employee Payroll Group <small>( Transfer History )</small></h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">×</span>
+				</button>
+			</div>
+
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
+							<table class="table table-striped table-bordered row-border" id="tableTransferHistory" style="width: 100%">
+								<colgroup>
+									<col style="width: 20%">
+									<col style="width: 20%">
+									<col style="width: *;">
+									<col style="width: 20%">
+								</colgroup>
+								<thead>
+									<tr>
+										<th>Company</th>
+										<th>Employee Name</th>
+										<th>Payroll Group</th>
+										<th>Reason</th>
 									</tr>
 								</thead>
 								<tbody></tbody>
