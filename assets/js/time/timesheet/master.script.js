@@ -1759,7 +1759,6 @@ function regenerateRow(form) {
                         }
                     });
                 } else {
-                    //here
                     dtTimesheet.ajax.reload(null, false);
                 }
             }
