@@ -328,7 +328,6 @@ class Timesheet extends MY_Controller {
         echo json_encode($this->ts_model->generateDefaultTimesheet());
     }
 
-    //here
     public function tag_date_restday() {
         echo json_encode($this->ts_model->tag_date_restday());
     }
