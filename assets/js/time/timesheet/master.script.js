@@ -494,14 +494,8 @@ $(document)
                         _data.csrf_token = _csrf_hash;
                         _data.filter = {};
                         _data.filter.cut_off = $('#cut-offs').val();
-                        // _data.filter.dates = $('#date-range').val();
-                        // _data.filter.employees = $('#employees').val();
-
-                        // to remove
-                        _data.filter.dates = 'Feb 21, 2026 / Mar 05, 2026';
-                        _data.filter.employees = 1762;
-                        // to remove
-
+                        _data.filter.dates = $('#date-range').val();
+                        _data.filter.employees = $('#employees').val();
                         _data.filter.company = $('#company').val();
                         _data.filter.status = $('#timesheet-status-filter').val();
                         _data.inclusive_filter = $('input[name="inclusive_filter"]:checked').val() || 3;
