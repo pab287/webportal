@@ -3017,6 +3017,7 @@ class Timesheet_model extends CI_Model{
         return json_decode(json_encode($array));
     }
 
+    //here
     public function getTimeSheet()
     {
         $post = $this->arrayToStdClass($this->input->post());
@@ -10160,61 +10161,102 @@ class Timesheet_model extends CI_Model{
     public function tag_date_restday() {
         $result = array();
         $post = $this->input->post();
-        $weekDay = date('l', strtotime($post['date']));
+        $date = isset($post['date']) && $post['date'] ? date('Y-m-d', strtotime($post['date'])) : date('Y-m-d');
+        $id = isset($post['id']) && $post['id'] ? $post['id'] : 0;
+        $has_shift = isset($post['has_shift']) ? $post['has_shift'] : 0;
+        $reason = isset($post['reason']) && $post['reason'] ? trim($post['reason']) : null;
+        $timesheetId = isset($post['timesheetId']) && $post['timesheetId'] ? $post['timesheetId'] :
+        $weekDay = date('l', strtotime($date));
 
-        var_dump($post);
+        if ($id) {
+            $shiftId = $this->get_shift_id($post['id']);
 
-        $shiftSchedule = $this->generateShiftScheduleResource($post['id'], $weekDay);
-        if(isset($shiftSchedule) && $shiftSchedule && count($shiftSchedule) > 0){
-            $shiftSchedule = $this->arrayToStdClass($shiftSchedule);
-            // $timesheet->has_shift = 1;
-            // $timesheet->shift_am_start = $shiftSchedule->shift_am_start;
-            // $timesheet->shift_am_end = $shiftSchedule->shift_am_end;
-            // $timesheet->shift_pm_start = $shiftSchedule->shift_pm_start;
-            // $timesheet->shift_pm_end = $shiftSchedule->shift_pm_end;
-            var_dump($shiftSchedule);
+            $data = array(
+                'shift_id' => serialize(array()),
+                'employee_id' => serialize(array($id)),
+                'scheduled_date' => $date,
+                'shift_am_start' => '',
+                'shift_am_end' => '',
+                'shift_pm_start' => '',
+                'shift_pm_end' => '',
+                'remarks' => $reason,
+                'has_shift' => 0,
+                'created_by' => $this->core_layout->getCurrentEmployeeId(),
+                'created_at' => date('Y-m-d')
+            );
+
+            $this->db->select('employee_id, shift_id');
+            $this->db->where('DATE(scheduled_date)', $date);
+            $this->db->from($this->tbl_timesheet_customized_shift_schedule);
+            $_query = $this->db->get();
+
+            $isExist = false;
+            if ($_query->num_rows() > 0) {
+                $row = $_query->row();
+                $shift = @unserialize($row->shift_id);
+                $meta = @unserialize($row->employee_id);
+
+                var_dump($shiftId);
+                if (!empty($shift) && $shift) {
+                    if (in_array($shiftId, $shift)) {
+                        $isExist = true;
+                    } else {
+                        if (!empty($meta) && $meta) {
+                            if (in_array($id, $meta)) {
+                                $isExist = true;
+                            }
+                        }
+                    }
+                } else {
+                    if (!empty($meta) && $meta) {
+                        if (in_array($id, $meta)) {
+                            $isExist = true;
+                        }
+                    }
+                }
+
+            }
+
+            if (!$isExist) {
+                $query = $this->db->insert($this->tbl_timesheet_customized_shift_schedule, $data);
+
+                if ($query) {
+                    if ($timesheetId && $timesheetId > 0) {
+                        $this->db->where('id', $timesheetId);
+                        $this->db->update($this->tbl_timesheet, array('has_shift' => 0));
+                    }
+
+                    $result['state'] = true;
+                    $result['msg'] = 'Successfully added rest day.';
+                } else {
+                    $result['state'] = false;
+                    $result['msg'] = 'Failed to add rest day.';
+                }
+            } else {
+                $result['state'] = false;
+                $result['msg'] = 'Employee already exists in custom shift schedule';
+            }
+
         }
 
-        die;
-
-        // if(isset($post) && $post){
-        //     $tempData = array();
-        //     $tempShiftData = new StdClass();
-        //     $tempShiftData = (isset($post->has_shift) && intval($post->has_shift) == 1)? $post->shift: $tempShiftData;
-
-        //     $post->shift_id = isset($post->shift_id) && $post->shift_id ? serialize($post->shift_id): serialize(array());
-        //     $post->employee_id = isset($post->employee_id) && $post->employee_id ? serialize($post->employee_id): serialize(array());
-
-        //     if(isset($post->has_shift) && intval($post->has_shift) == 1){ unset($post->shift); }
-
-        //     if(isset($tempShiftData) && $tempShiftData){
-        //         foreach ($tempShiftData as $key => $value) {
-        //             $tempTime = date("H:i:s", strtotime($value));
-        //             if($value && $tempTime !== null){
-        //                 $tempData["shift_{$key}"] = $tempTime;
-        //             }
-        //         }
-        //     }
-
-        //     $post->created_by = $this->core_layout->getCurrentEmployeeId();
-        //     $post->created_at = date("Y-m-d H:i:s");
-        //     $tempPost = (array)$post;
-
-        //     $tempPost = array_merge($tempPost, $tempData);
-
-        //     $tempData = $this->db->insert($this->tbl_timesheet_customized_shift_schedule, $tempPost);
-        //     if($tempData){
-        //         $resultset["response"] = true;
-        //         $resultset["toastr_msg"] = "Custom shift schedule has been added successfully.";
-        //     }else{
-        //         $resultset["response"] = false;
-        //         $resultset["toastr_msg"] = "Failed to add custom shift schedule!";
-        //     }
-        // }else{
-        //     $resultset["response"] = false;
-        //     $resultset["toastr_msg"] = "No post data found!";
-        // }
-
         return $result;
+    }
+
+    public function get_shift_id ($id = null) {
+        $shiftId = 0;
+        if ($id) {
+            $shift_id = $this->db->select("resource.shift_id")
+                ->join($this->tbl_personnel . " personnel", "personnel.shift_id = resource.shift_id", "INNER")
+                ->join($this->tbl_employees . " emp", "emp.biometricno = personnel.biometricno", "INNER")
+                ->where("emp.id", $id)
+                ->get($this->tbl_shift_schedule_resource . " resource")
+                ->row("shift_id");
+            
+            if ($shift_id) {
+                $shiftId = $shift_id;
+            }
+        }
+
+        return $shiftId;
     }
 }

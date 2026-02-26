@@ -494,8 +494,14 @@ $(document)
                         _data.csrf_token = _csrf_hash;
                         _data.filter = {};
                         _data.filter.cut_off = $('#cut-offs').val();
-                        _data.filter.dates = $('#date-range').val();
-                        _data.filter.employees = $('#employees').val();
+                        // _data.filter.dates = $('#date-range').val();
+                        // _data.filter.employees = $('#employees').val();
+
+                        // to remove
+                        _data.filter.dates = 'Feb 21, 2026 / Mar 05, 2026';
+                        _data.filter.employees = 1762;
+                        // to remove
+
                         _data.filter.company = $('#company').val();
                         _data.filter.status = $('#timesheet-status-filter').val();
                         _data.inclusive_filter = $('input[name="inclusive_filter"]:checked').val() || 3;
@@ -973,6 +979,10 @@ $(document)
                             const pendingAdjustment = row.has_pending_adjustment;
                             const widthAdjustment = parseInt(row.with_adjustment);
                             const id = row.id ? parseInt(row.id) : null;
+                            const hasShift = parseInt(row.has_shift) === 1;
+
+                            //here
+                            console.log(row);
 
                             const isMonthlyPaid = typeof row.is_monthly_paid !== "undefined" && row.is_monthly_paid ? row.is_monthly_paid : false;
 
@@ -1074,17 +1084,30 @@ $(document)
                                     </li>`;
                                 }
 
-                                restDay = `
-                                <li class="m-nav__item restday-button">
-                                    <a href="javascript:void(0)" class="m-nav__link"
-                                    data-id="${row.id}"
-                                    onclick="confirmRestDay(this, '${row._date}', ${row.has_shift ?? 0 }, ${row._emp_id})">
-                                        <i class="m-nav__link-icon fa fa-clock-o"></i>
-                                        <span class="m-nav__link-text">REST DAY</span>
-                                    </a>
-                                </li>`;
-                                // if (parseInt(row.verified) == 0 && regenHiddenClass === false) {
-                                // }
+                                //here
+                                if (hasShift && (row.custom_shift_id == 0 || row.custom_shift_id == 1 || row.custom_shift_id == null) && (row.verified == 0 || row.verified == null)) {
+                                    restDay = `
+                                    <li class="m-nav__item restday-button">
+                                        <a href="javascript:void(0)" class="m-nav__link"
+                                        data-id="${row.id}"
+                                        onclick="confirmRestDay(this, '${row._date}', ${row.has_shift ?? 0 }, ${row._emp_id}, ${row.tsID})">
+                                            <i class="m-nav__link-icon fa fa-clock-o"></i>
+                                            <span class="m-nav__link-text">REST DAY</span>
+                                        </a>
+                                    </li>`;
+                                } 
+                                
+                                if (hasShift == 0 && (row.custom_shift_id == 0 || row.custom_shift_id == 1 || row.custom_shift_id == null) && (row.verified == 0 || row.verified == null) && row.altered_shift.length > 0){
+                                    restDay = `
+                                    <li class="m-nav__item restday-button">
+                                        <a href="javascript:void(0)" class="m-nav__link"
+                                        data-id="${row.id}"
+                                        onclick="undoRestDay(this, '${row._date}', ${row.has_shift ?? 0 }, ${row._emp_id}, ${row.tsID})">
+                                            <i class="m-nav__link-icon fa fa-undo"></i>
+                                            <span class="m-nav__link-text">UNDO REST DAY</span>
+                                        </a>
+                                    </li>`;
+                                }
 
                                 tempTemplate = `
                                     <div class="m-dropdown m-dropdown--inline m-dropdown--align-right m-dropdown--large"
@@ -1113,8 +1136,8 @@ $(document)
                                                                 </a>
                                                             </li>
                                                             ${undoVerification}
-                                                            ${regenerateRecord}
                                                             ${restDay}
+                                                            ${regenerateRecord}
                                                             ${timeAdjustmentDetails}
                                                         </ul>
                                                     </div>
@@ -5607,18 +5630,24 @@ const resetFilter = function (event) {
 }
 
 //here
-const confirmRestDay = function (e, date, has_shift, id) {
+const confirmRestDay = function (e, date, has_shift, id, tsId) {
     Swal.fire({
-        icon : 'warning',
+        icon : 'question',
         title : 'Rest Day',
         html: 'Are you sure you want to tag this date as `<b>Rest Day</b>`?',
+        input: "textarea",
+        inputLabel: "Reason for tagging the day as rest day.",
+        inputValidator: (result) => {
+            return !result && "Reason is required!";
+        },
         showCancelButton: true,
         confirmButtonColor: "#3085d6",
         cancelButtonColor: "#d33",
         confirmButtonText: "Yes",
         cancelButtonText: "No",
-        allowOutsideClick: false,
-        preConfirm: () => {
+        allowOutsideClick: false
+    }).then((result) => {
+        if (result.isConfirmed && typeof result.value != undefined && result.value) {
             $.ajax({
                 url: baseUrl('gcctime/timesheet/tag_date_restday'),
                 type: 'post',
@@ -5626,7 +5655,9 @@ const confirmRestDay = function (e, date, has_shift, id) {
                     csrf_token: _csrf_hash,
                     date,
                     has_shift,
-                    id
+                    id,
+                    timesheetId: tsId,
+                    reason : result.value
                 },
                 dataType: 'json',
                 success: function(response) {
