@@ -3017,7 +3017,6 @@ class Timesheet_model extends CI_Model{
         return json_decode(json_encode($array));
     }
 
-    //here -----
     public function getTimeSheet()
     {
         $post = $this->arrayToStdClass($this->input->post());
@@ -3190,7 +3189,6 @@ class Timesheet_model extends CI_Model{
             $tempLoaRecord = $this->getLoaRecordByDateRange($start);
             $tempOvertimeRecord = $this->getOvertimeRecordByDateRange($start, $empIds);
 
-            //here
             $alteredShiftRecords = $this->getAlteredShiftRecordByDateRange($start, $end);
             
             foreach ($employees->result() as $employee) {
