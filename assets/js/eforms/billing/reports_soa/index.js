@@ -175,22 +175,39 @@ var tbl_reports_dialog = $("#table-reports_soa").DataTable({
             d.endDate = _endDate
         },
         error: function (xhr, error, code){
-            $('#m_soa').modal('hide');
+            // $('#m_soa').modal('hide');
+            console.log(error);
         }
     },
     searching: true,
     columns: [
+        { data: "payment_date", width: "20%", 
+            render: function (data) { 
+                return moment(data).format("MMM DD, YYYY");
+            } 
+        },
+        { data: "created_date", width: "20%", 
+            render: function (data) { 
+                return moment(data).format("MMM DD, YYYY");
+            } 
+        },
         { data: "ref_no", render: function (data) { return "<strong>"+data+"</strong>"; } },
         { data: "bill_ref", render: function (data) { return "<strong>"+data+"</strong>";} },
-        { data: "created_date", width: "20%", render: function (data) { return data; } },
         { data: "payment_type" },
-        { data: "total_charges" },
-        { data: "net_payment", className: "text-right", render: function (data) {
-            return numberWithCommas(parseFloat(data).toFixed(2));
-            }
+        { data: "total_charges", className: "text-right", render: function (data) {
+                return numberWithCommas(parseFloat(data).toFixed(2));
+            } 
+        },
+        { data: "penalty", className: "text-right", render: function (data) {
+                return numberWithCommas(parseFloat(data).toFixed(2));
+            } 
         },
         { data: "balance_covered", className: "text-right", render: function (data) {
-                return data > 0 ? '-'+numberWithCommas(parseFloat(data).toFixed(2)) : '';
+                return data > 0 ? '-'+numberWithCommas(parseFloat(data).toFixed(2)) : '0.00';
+            }
+        },
+        { data: "net_payment", className: "text-right", render: function (data) {
+            return numberWithCommas(parseFloat(data).toFixed(2));
             }
         },
         { data: "received_amount", className: "text-right", render: function (data) {
@@ -230,37 +247,16 @@ var tbl_reports_dialog = $("#table-reports_soa").DataTable({
     ],
     "footerCallback": function ( row, data, start, end, display ) {
         var api = this.api(), data;
-
-        // var totalNetPayment = api
-        //     .column(5)
-        //     .data()
-        //     .reduce(function (a, b) {
-        //         return parseFloat(a) + parseFloat(b);
-        //     }, 0);
-
-        // var totalBalance = api
-        //     .column(6)
-        //     .data()
-        //     .reduce(function (a, b) {
-        //         return parseFloat(a) + parseFloat(b);
-        //     }, 0);
-        
         var totalPayment = api
-            .column(7)
+            .column(9)
             .data()
             .reduce(function (a, b) {
                 return parseFloat(a) + parseFloat(b);
             }, 0);
 
         // Update footer by showing the total with the reference of the column index 
-        $(api.column(0).footer()).html();
-        $(api.column(1).footer()).html();
-        $(api.column(2).footer()).html();
-        $(api.column(3).footer()).html();
-        $(api.column(6).footer()).html('Total');
-        // $(api.column(5).footer()).html('₱ '+numberWithCommas(totalNetPayment.toFixed(2)));
-        // $(api.column(6).footer()).html('₱ -'+numberWithCommas(totalBalance.toFixed(2)));
-        $(api.column(7).footer()).html('₱ '+numberWithCommas(totalPayment.toFixed(2)));
+        $(api.column(8).footer()).html('Total');
+        $(api.column(9).footer()).html('₱ '+numberWithCommas(totalPayment.toFixed(2)));
     },
 });
 
@@ -288,7 +284,7 @@ var tbl_reports_dialog_billing = $("#table-reports_billing").DataTable({
             d.endDate = _endDate
         },
         error: function (xhr, error, code){
-            // $('#m_soa').modal('hide');
+            console.log(error);
         }
     },
     searching: true,
@@ -556,10 +552,10 @@ $(".btnPrint").on("click", function(){
             w.document.write(response);
             w.document.close();
 
-            setTimeout(function(){
-                w.print();
-                w.close();
-            }, 250);
+            // setTimeout(function(){
+            //     w.print();
+            //     w.close();
+            // }, 250);
         },
         error: function (request, status, error) {
             toastr.error("Please check your internet connection.", "Connection error");

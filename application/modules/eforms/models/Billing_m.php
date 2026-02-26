@@ -5554,16 +5554,15 @@ class Billing_m extends CI_Model {
     function getReportsSOA_details(){
         $resultarray = array();
         $post = $this->input->post();
-        $this->db->select("p.ref_no, b.ref_no as bill_ref_no, b.total_charges, p.created_date, p.payment_type, p.payment_details, p.received_amount, p.balance_covered, p.sub_total, p.net_payment, p.is_archive");
+        $this->db->select("p.ref_no, b.ref_no as bill_ref_no, b.total_charges, p.created_date, p.payment_date, p.payment_type, p.payment_details, p.received_amount, p.balance_covered, p.sub_total, p.net_payment, p.is_archive, p.penalties");
         $this->db->from("hydra_billing.payments as p");
         $this->db->join("hydra_billing.bills as b", "b.id = p.bill_id", "LEFT");
         $this->db->where("p.account_id", $post['id']);
-        // $this->db->where("p.is_archive", "0");
 
-        if($post['selectedDate'] != 'all' AND $post['selectedDate'] != ""){ 
+        if($post['selectedDate'] != 'all' AND $post['selectedDate'] != "") { 
             $this->db->where("year(created_date)",$post['selectedDate']); 
-        }else{
-            if($post['startDate'] != "" && $post['endDate'] != ""){
+        } else {
+            if ($post['startDate'] != "" && $post['endDate'] != "") {
                 $start_date = date("Y-m-d", strtotime($post['startDate']));
                 $end_date = date("Y-m-d", strtotime($post['endDate'])); 
 
@@ -5571,7 +5570,7 @@ class Billing_m extends CI_Model {
                 $this->db->where("created_date <=",$end_date);
             }
         }  
-        $this->db->order_by("created_date","DESC");
+        $this->db->order_by("created_date", "ASC");
         $query = $this->db->get();
 
         if($query->num_rows() > 0){
@@ -5586,13 +5585,17 @@ class Billing_m extends CI_Model {
                     $net_payment = $_query["net_payment"];
                 }
 
+                $penalty = unserialize($_query['penalties']);
+
                 $data = array();
                 $data["created_date"] = date('Y-m-d g:i A', strtotime($_query["created_date"]));
+                $data["payment_date"] = date('Y-m-d g:i A', strtotime($_query["payment_date"]));
                 $data["payment_type"] = $_query['payment_type'];
                 $data["payment_details"] = $_query['payment_details'];
                 $data["sub_total"] = $_query["sub_total"];
                 $data["received_amount"] = $received_amount;
                 $data["balance_covered"] = $balance_covered;
+                $data["penalty"] = (is_array($penalty) && isset($penalty[0]['overdue'])) ? $penalty[0]['overdue'] : 0;
                 $data["net_payment"] = $net_payment;
                 $data["ref_no"] = $_query["ref_no"];
                 $data["bill_ref"] = $_query["bill_ref_no"];

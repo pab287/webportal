@@ -321,29 +321,35 @@
 						<h4 class="text-center mb-3" style="font-weight: 600;">Payment</h4>
 
 						<table class="table table-striped table-bordered table-responsive" id="table-reports_soa" width="100%" style="display: table; width: 100%;">
-							<col width="13%" />
-							<col width="13%" />
-							<col width="13%" />
-							<col width="*" />
-							<col width="10%" />
-							<col width="10%" />
-							<col width="13%" />
-							<col width="12%" />
+							<col width="10%">
+							<col width="10%">
+							<col width="12%">
+							<col width="12%">
+							<col width="5%">
+							<col width="*">
+							<col width="*">
+							<col width="*">
+							<col width="*">
+							<col width="*">
 							<thead>
 								<tr>
-									<th>Reference no.</th>
+									<th>Date Paid</th>
+									<th>Date Log</th>
+									<th>Pay. Ref. #</th>
+									<th>Bill. Ref. #</th>
+									<th>Type</th>
 									<th>Bill</th>
-									<th>Date</th>
-									<th>Payment Type</th>
-									<th>Bill Amount</th>
-									<th>Net Payment</th>
-									<th>Balance Covered</th>
-									<th>Payment Amount</th>
+									<th>Penalty</th>
+									<th>Covered</th>
+									<th>Net</th>
+									<th>Received</th>
 								</tr>
 							</thead>
 
 							<tfoot align="right">
 								<tr>
+									<th></th>
+									<th></th>
 									<th></th>
 									<th></th>
 									<th></th>

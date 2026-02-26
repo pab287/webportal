@@ -141,6 +141,11 @@
             .content, td {
                 page-break-inside: avoid;
             }
+
+            #header_info {
+                width: 740px !important;
+                margin: 0 auto;
+            }
         }
         .watermark {
             opacity: 0.3;
@@ -162,7 +167,7 @@
     <table border="0" width="100%" cellpadding="0" cellspacing="0">
         <tr class="head">
             <td align="center">
-                <table border="0" align="center" width="890" cellpadding="0" cellspacing="0" class="container980" bgcolor="ffffff">
+                <table id="header_info" border="0" align="center" width="890" cellpadding="0" cellspacing="0" class="container980" bgcolor="ffffff">
                     <tr>
                         <td colspan="2" height="25" style="font-size: 25px; line-height: 25px;">&nbsp;</td>
                     </tr>
@@ -222,32 +227,28 @@
                                 <tr>
                                     <td align="right" style="padding: 3px; font-weight: 600;">OVERDUE BALANCE: </td>
                                     <td align="left" style="padding: 3px; font-weight: 600;">
-                                        P 
-                                        <?php 
-                                            echo number_format($overdue_charges < 0 ? 0 : $overdue_charges, 2); 
-                                        ?>
+                                        <?= "₱ ". number_format($overdue_charges < 0 ? 0 : $overdue_charges, 2); ?>
                                     </td>
                                 </tr>
 
                                 <tr>
                                     <td align="right" style="padding: 3px; font-weight: 600;">TOTAL PENALTY:</td>
-                                    <td align="left" style="padding: 3px; font-weight: 600;">P <?= number_format($total_penalty, 2); ?></td>
+                                    <td align="left" style="padding: 3px; font-weight: 600;"><?= "₱ ". number_format($total_penalty, 2); ?></td>
                                 </tr>
 
                                 <tr>
                                     <td align="right" style="padding: 3px; font-weight: 600;">OVER PAYMENT BALANCE:</td>
-                                    <td align="left" style="padding: 3px; font-weight: 600;">P <?= number_format($overPayment, 2); ?></td>
+                                    <td align="left" style="padding: 3px; font-weight: 600;"><?= "₱ ". number_format($overPayment, 2); ?></td>
                                 </tr>
                                 
                                 <tr>
-                                    <td align="right" style="padding: 3px; font-weight: 600;"><i>TOTAL BALANCE:</i></td>
+                                    <td align="right" style="padding: 3px; font-weight: 600;">TOTAL BALANCE:</td>
                                     <td align="left" style="padding: 3px; font-weight: 600; border-top: 1px solid black;">
-                                        <i>P 
-                                            <?php 
-                                                $_total = $overdue_charges + $total_penalty;
-                                                echo number_format($_total < 0 ? 0 : $_total, 2); 
-                                            ?>
-                                        </i>
+                                         
+                                        <?php 
+                                            $_total = $overdue_charges + $total_penalty;
+                                            echo "₱ ". number_format($_total < 0 ? 0 : $_total, 2); 
+                                        ?>
                                     </td>
                                 </tr>
                             </table>
@@ -262,16 +263,26 @@
                 <?php if(isset($data['report_type']) && $data['report_type'] == "payment") { ?>
 
                     <table border="0" width="890" cellpadding="0" cellspacing="0" class="container980" align="center">
+                        <col width="12.50%">
+                        <col width="12.50%">
+                        <col width="12.50%">
+                        <col width="12.50%">
+                        <col width="10%">
+                        <col width="10%">
+                        <col width="10%">
+                        <col width="10%">
+                        <col width="10%">
+
                         <tr style="background-color: #bad3f1">
-                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">DATE</th>
-                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">REFERENCE NO.</th>
-                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">PAYMENT TYPE</th>
-                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">BILL AMOUNT</th>
-                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">PENALTIES</th>
-                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">OP BALANCE COVERED</th>
-                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">NET PAY</th>
-                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">PAYMENT</th>
-                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">ACCT BALANCE</th>
+                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;">Date Paid</th>
+                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;">Pay. Ref. #</th>
+                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;">Bill. Ref. #</th>
+                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;">Type</th>
+                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;">Bill</th>
+                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;">Penalty</th>
+                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;">Covered</th>
+                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;">Net</th>
+                            <th align="center" style="font-family: arial; color:#343434; padding: 6px;">Received</th>
                         </tr>
                     </table>
 
@@ -319,86 +330,101 @@
             <?php if(isset($data['report_type']) && $data['report_type'] == 'payment') { ?>
 
                 <table border="0" align="center" width="890" cellpadding="0" cellspacing="0" class="container980">
+                    <col width="12.50%">
+                    <col width="12.50%">
+                    <col width="12.50%">
+                    <col width="12.50%">
+                    <col width="10%">
+                    <col width="10%">
+                    <col width="10%">
+                    <col width="10%">
+                    <col width="10%">
+
                     <?php
-                        $subTotal = 0;
-                        $netPayment = 0;
-                        $balanceTotal = 0;
-                        $paymentTotal = 0;
-                        $AccbalanceTotal = 0;
-                        $bgcolor="#efefef";
+                        $bill = 0;
+                        $penalty = 0;
+                        $covered = 0;
+                        $net = 0;
+                        $received = 0;
+                        $bgcolor = "#efefef";
 
-                        $this->db->select("created_date, payment_type, payment_details, received_amount, balance_covered, sub_total, net_payment, ref_no, balance, penalties");
-                        $this->db->from("hydra_billing.payments");
-                        $this->db->where("account_id",$data['id']);
-                        $this->db->where("is_archive","0");
+                        $this->db->select("p.ref_no, b.ref_no as bill_ref_no, b.total_charges, p.created_date, p.payment_date, p.payment_type, p.payment_details, p.received_amount, p.balance_covered, p.sub_total, p.net_payment, p.is_archive, p.penalties");
+                        $this->db->from("hydra_billing.payments as p");
+                        $this->db->join("hydra_billing.bills as b", "b.id = p.bill_id", "LEFT");
+                        $this->db->where("p.account_id", $data['id']);
+                        $this->db->where("is_archive", 0);
 
-                        if($data['selectedDate'] != 'all' AND $data['selectedDate'] != "") { 
+                        if ($data['selectedDate'] != 'all' AND $data['selectedDate'] != "") { 
                             $this->db->where("year(created_date)",$data['selectedDate']); 
                         } else {
-                            if($data['startDate'] != "" && $data['endDate'] != ""){
-                                $this->db->where("created_date >=",$data['startDate']);
-                                $this->db->where("created_date <=",$data['endDate']);
-                            }
-                        }
+                            if ($data['startDate'] != "" && $data['endDate'] != "") {
+                                $start_date = date("Y-m-d", strtotime($data['startDate']));
+                                $end_date = date("Y-m-d", strtotime($data['endDate'])); 
 
-                        $this->db->order_by('created_date', 'desc');
+                                $this->db->where("created_date >=",$start_date);
+                                $this->db->where("created_date <=",$end_date);
+                            }
+                        }  
+
+                        $this->db->order_by('created_date', 'ASC');
                         $query = $this->db->get();
                         $bill_total_penalty = 0;
 
                         if($query->num_rows() > 0) {
                             foreach($query->result_array() as $_query) {
-                                if ($bgcolor=="#efefef") $bgcolor="#ffffff";
-                                elseif ($bgcolor=="#ffffff") $bgcolor="#efefef";
+                                $penalty_ser = unserialize($_query['penalties']);
+                                
+                                // penalty for this row
+                                $row_penalty = (is_array($penalty_ser) && isset($penalty_ser[0]['overdue']))
+                                    ? (float) $penalty_ser[0]['overdue']
+                                    : 0;
 
-                                $subTotal = $subTotal + $_query["sub_total"];
-                                $netPayment = $netPayment + $_query["net_payment"];
-                                $balanceTotal = $balanceTotal + $_query["balance_covered"];
-                                $paymentTotal = $paymentTotal + $_query["received_amount"];
-                                $AccbalanceTotal = $AccbalanceTotal + $_query["balance"];
-                                $penalty = unserialize($_query['penalties']);
-                                $bill_penalty= 0;
+                                // accumulate
+                                $total_penalty += $row_penalty;
+                                $bill += $_query["total_charges"];
+                                $covered += $_query["balance_covered"];
+                                $net += $_query["net_payment"];
+                                $received += $_query["received_amount"];
 
-                                foreach($penalty as $penalties) {
-                                    $bill_penalty = $penalties['overdue'];
-                                    $bill_total_penalty -= $bill_penalty;
-                                }
+                                // row color toggle
+                                $bgcolor = ($bgcolor == "#efefef") ? "#ffffff" : "#efefef";
 
                     ?>
                                 <tr style="background-color: <?php echo $bgcolor ?>">
-                                    <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">
-                                        <?php echo date('Y-m-d', strtotime($_query["created_date"])); ?>
+                                    <td align="center" style="font-family: arial; color:#343434; padding: 6px;">
+                                        <?= date('M d, Y', strtotime($_query["payment_date"])); ?>
                                     </td>
 
-                                    <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">
-                                        <?php echo strtoupper($_query["ref_no"]); ?>
+                                    <td align="center" style="font-family: arial; color:#343434; padding: 6px;">
+                                        <?= strtoupper($_query["ref_no"]); ?>
                                     </td>
 
-                                    <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">
-                                        <strong><?php echo strtoupper($_query["payment_type"]); ?></strong>
+                                    <td align="center" style="font-family: arial; color:#343434; padding: 6px;">
+                                        <?= strtoupper($_query["bill_ref_no"]); ?>
                                     </td>
 
-                                    <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">
-                                        <?php echo number_format($_query["sub_total"],2) ?>
+                                    <td align="center" style="font-family: arial; color:#343434; padding: 6px;">
+                                        <?= strtoupper($_query["payment_type"]); ?>
                                     </td>
 
-                                    <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">
-                                        <?php echo number_format($bill_penalty, 2) ?>
+                                    <td align="right" style="font-family: arial; color:#343434; padding: 6px;">
+                                        <?= '₱ '. number_format($_query["total_charges"], 2); ?>
                                     </td>
 
-                                    <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">
-                                        <?php echo number_format($_query["balance_covered"],2); ?>
+                                    <td align="right" style="font-family: arial; color:#343434; padding: 6px;">
+                                        <?= '₱ '. number_format($row_penalty, 2); ?>
                                     </td>
 
-                                    <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">
-                                        <?php echo number_format($_query["net_payment"],2) ?>
+                                    <td align="right" style="font-family: arial; color:#343434; padding: 6px;">
+                                        <?= '₱ '. number_format($_query["balance_covered"],2) ?>
                                     </td>
 
-                                    <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">
-                                        <?php echo number_format($_query["received_amount"],2) ?>
+                                    <td align="right" style="font-family: arial; color:#343434; padding: 6px;">
+                                        <?= '₱ '. number_format($_query["net_payment"],2); ?>
                                     </td>
 
-                                    <td align="right" style="font-family: arial; color:#343434; font-weight: bold; padding: 6px;" width="180" align="right">
-                                        <?php echo number_format($_query["balance"],2); ?>
+                                    <td align="right" style="font-family: arial; color:#343434; padding: 6px;">
+                                        <?= '₱ '. number_format($_query["received_amount"],2); ?>
                                     </td>
                                 </tr>
                     <?php 
@@ -409,31 +435,28 @@
                     <?php } ?>
 
                       <tr class="footer" style="background-color: #bad3f1;">
-                          <td align="left" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right"></td>
-                          <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right"></td>
+                          <td></td>
+                          <td></td>
+                          <td></td>
                           <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right"><strong>TOTAL</strong></td>
-                          <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">
-                              <strong><?php echo '₱ '.number_format($subTotal,2); ?></strong>
+                          <td align="right" style="font-family: arial; color:#343434; font-weight: bold; padding: 6px;" width="180" align="right">
+                              <?= '₱ '.number_format($bill, 2); ?>
                           </td>
 
-                          <td align="center" style="font-family: arial; color:#343434; font-weight: bold; padding: 6px;" width="180" align="right">
-                              <strong><?php echo '₱ '.number_format($bill_total_penalty,2); ?></strong>
+                          <td align="right" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">
+                              <?= '₱ '.number_format($total_penalty, 2); ?>
                           </td>
 
-                          <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">
-                              <strong><?php echo '₱ '.number_format($balanceTotal,2); ?></strong>
+                          <td align="right" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">
+                              <?= '₱ '.number_format($covered, 2); ?>
                           </td>
 
-                          <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">
-                              <strong><?php echo '₱ '.number_format($netPayment,2); ?></strong>
-                          </td>
-
-                          <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">
-                              <strong><?php echo '₱'.number_format($paymentTotal,2); ?></strong>
+                          <td align="right" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right">
+                              <?= '₱ '.number_format($net, 2); ?>
                           </td>
 
                           <td align="right" style="font-family: arial; color:#343434; font-weight: bold; padding: 6px;" width="180" align="right">
-                              <strong><?php echo '₱ '.number_format($AccbalanceTotal,2); ?></strong>
+                              <?= '₱ '.number_format($received, 2); ?>
                           </td>
                       </tr>
                 </table>
