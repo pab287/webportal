@@ -87,8 +87,8 @@
             echo $data;
         }
 
-        public function forgot_password(){
-            $data = $this->GCCTIME_APP->forgotPassword();
+        public function travel_order_check(){
+            $data = $this->GCCTIME_APP->travelOrderCheck();
             echo $data;
         }
     }

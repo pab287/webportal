@@ -1721,4 +1721,11 @@ class Curl_request extends MY_Controller {
         }else{ return false; }
         
     }
+
+	function app_hook_attendance_data(){
+		$data = $this->attendance->appHookAttendanceData();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+	}
 }

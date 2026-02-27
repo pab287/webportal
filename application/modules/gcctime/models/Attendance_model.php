@@ -1737,4 +1737,64 @@ class Attendance_model extends CI_Model {
         }
         return $resultset;
     }
+
+    public function appHookAttendanceData()
+    {
+
+        $emp_id = $this->input->post('emp_id', true);
+        $dataStr = $this->input->post('data');
+        $timeStamp = date("mYd");
+        $result = [
+            "response" => false,
+            "message" => "",
+        ];
+
+        if (!$emp_id) {
+            $result["message"] = "Missing emp_id";
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode($result));
+        }
+
+        if (!$dataStr) {
+            $result["message"] = "Missing data";
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode($result));
+        }
+
+        $newArr = json_decode($dataStr, true);
+        if (!is_array($newArr)) $newArr = [];
+
+        $uploadPath = FCPATH . "uploads/data/app";
+        if (!is_dir($uploadPath)) {
+            mkdir($uploadPath, 0755, true);
+        }
+                    
+        $fileUpload = $uploadPath . "/{$emp_id}-{$timeStamp}.json";
+
+        $oldArr = [];
+        if (file_exists($fileUpload)) {
+            $oldStr = file_get_contents($fileUpload);
+            $decoded = json_decode($oldStr, true);
+            if (is_array($decoded)) $oldArr = $decoded;
+        }
+
+        $merged = array_merge($oldArr, $newArr);
+
+        $writeOk = file_put_contents($fileUpload, json_encode($merged));
+
+        if ($writeOk === false) {
+            $result["message"] = "Failed to write file. Check folder permissions.";
+        } else {
+            $result["response"] = true;
+            $result["message"] = "Logs appended successfully.";
+            $result["count_added"] = count($newArr);
+            $result["count_total"] = count($merged);
+        }
+
+        return $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode($result));
+    }
 }
