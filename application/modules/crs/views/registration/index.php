@@ -4,11 +4,11 @@
     border-radius: 6px;
     padding: 15px;
 }
-
-.nav-tabs .nav-link.disabled {
+.m-tabs__link {
     pointer-events: none;
-    opacity: 0.5;
+    cursor: default;
 }
+
 </style>
 <div class="m-content" id="m_content">
     <div class="row">
@@ -28,32 +28,32 @@
                         <ul class="nav nav-tabs m-tabs m-tabs-line m-tabs-line--left m-tabs-line--primary" role="tablist">
                             <li class="nav-item m-tabs__item">
                                 <a data-toggle="tab" href="#personal_information" role="tab" class="nav-link m-tabs__link active">
-                                    Personal Info
+                                    <i class="fa fa-user"></i> Personal Info
                                 </a>
                             </li>
                             <li class="nav-item m-tabs__item">
-                                <a data-toggle="tab" href="#additional_information" role="tab" class="nav-link m-tabs__link disabled">
-                                    Additional Info
+                                <a data-toggle="tab" href="#additional_information" role="tab" class="nav-link m-tabs__link">
+                                    <i class="fa fa-info-circle"></i> Additional Info
                                 </a>
                             </li>
                             <li class="nav-item m-tabs__item">
-                                <a data-toggle="tab" href="#contact_information" role="tab" class="nav-link m-tabs__link disabled">
-                                    Contact Info
+                                <a data-toggle="tab" href="#contact_information" role="tab" class="nav-link m-tabs__link">
+                                    <i class="fa fa-envelope"></i> Contact Info
                                 </a>
                             </li>
                             <li class="nav-item m-tabs__item">
-                                <a data-toggle="tab" href="#work_experience" role="tab" class="nav-link m-tabs__link disabled">
-                                    Work Experience
+                                <a data-toggle="tab" href="#work_experience" role="tab" class="nav-link m-tabs__link">
+                                    <i class="fa fa-briefcase"></i> Work Experience
                                 </a>
                             </li>
                             <li class="nav-item m-tabs__item">
-                                <a data-toggle="tab" href="#application_information" role="tab" class="nav-link m-tabs__link disabled">
-                                    Application Info
+                                <a data-toggle="tab" href="#application_information" role="tab" class="nav-link m-tabs__link">
+                                    <i class="fa fa-file"></i> Application Info
                                 </a>
                             </li>
                             <li class="nav-item m-tabs__item">
-                                <a data-toggle="tab" href="#resume_upload" role="tab" class="nav-link m-tabs__link disabled">
-                                    Resume Upload
+                                <a data-toggle="tab" href="#resume_upload" role="tab" class="nav-link m-tabs__link">
+                                    <i class="fa fa-upload"></i> Resume Upload
                                 </a>
                             </li>
                         </ul>
@@ -115,7 +115,7 @@
                             </form>
                         </div>
                         <div id="additional_information" class="tab-pane">
-                            <form id="additional_information_form">
+                            <form id="additional_information_form" action="javascript:void(0);">
                                 <div class="row mt-2">
                                     <div class="col">
                                         <div class="m-portlet__head-title">
@@ -185,7 +185,7 @@
                             </form>
                         </div>
                         <div id="contact_information" class="tab-pane">
-                            <form id="contact_information_form">
+                            <form id="contact_information_form" action="javascript:void(0);">
                                 <div class="row mt-2">
                                     <div class="col">
                                         <div class="m-portlet__head-title">
@@ -234,7 +234,7 @@
                             </form>
                         </div>
                         <div id="work_experience" class="tab-pane">
-                            <form id="work_experience_form">
+                            <form id="work_experience_form" action="javascript:void(0);">
                                 <div class="row mt-2">
                                     <div class="col">
                                         <div class="m-portlet__head-title">
@@ -259,107 +259,111 @@
                             </form>
                         </div>
                         <div id="application_information" class="tab-pane">
-                            <div class="row mt-2">
-                                <div class="col">
-                                    <div class="m-portlet__head-title">
-                                        <h5 class="m-portlet__head-text">APPLICATION INFORMATION</h5>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row mt-2">
-                                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
-                                    <div class="form-group">
-                                        <label class="form-control-label required">Recruitment Source</label>
-                                        <select id="recruitment" name="recruitment" class="form-control" data-validation="required">
-                                            <option></option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-xl-8 col-lg-8 col-md-8 col-sm-12">
-                                    <div class="form-group">
-                                        <label class="form-control-label required">Position Applied FOR</label>
-                                        <select id="position_id" name="positions[]" multiple="multiple" class="form-control" data-validation="required">
-                                        </select>
-                                        <label class="m-form__help mb-0 pt-1 text-muted m--regular-font-size-sm1"
-                                            style="text-transform: none;">Note: You can select multiple position.</label>
-                                    </div>
-                                </div>
-                                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 referral d-none">
-                                    <div class="form-group">
-                                        <label class="form-control-label required">referral</label>
-                                        <select id="referral" name="referral" class="form-control"  data-validation="required">
-                                            <option></option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
-                                    <div class="form-group">
-                                        <label class="form-control-label required">Date of Application</label>
-                                        <div class='input-group date'>
-                                            <input class="form-control m-input" type="text" id="applied_dt" name="applied_dt" placeholder="mm/dd/yyyy" maxlength="12" size="12" data-validation="required" autocomplete="off" readonly/>
-                                            <span class="input-group-addon">
-                                            <i class="la la-calendar glyphicon-th"></i>
-                                        </span>
+                            <form id="application_information_form" action="javascript:void(0);">
+                                <div class="row mt-2">
+                                    <div class="col">
+                                        <div class="m-portlet__head-title">
+                                            <h5 class="m-portlet__head-text">APPLICATION INFORMATION</h5>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                                <div class="row mt-2">
+                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+                                        <div class="form-group">
+                                            <label class="form-control-label required">Recruitment Source</label>
+                                            <select id="recruitment" name="recruitment" class="form-control" data-validation="required">
+                                                <option></option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-8 col-lg-8 col-md-8 col-sm-12">
+                                        <div class="form-group">
+                                            <label class="form-control-label required">Position Applied FOR</label>
+                                            <select id="position_id" name="positions[]" multiple="multiple" class="form-control" data-validation="required">
+                                            </select>
+                                            <label class="m-form__help mb-0 pt-1 text-muted m--regular-font-size-sm1"
+                                                style="text-transform: none;">Note: You can select multiple position.</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 referral d-none">
+                                        <div class="form-group">
+                                            <label class="form-control-label required">referral</label>
+                                            <select id="referral" name="referral" class="form-control"  data-validation="required">
+                                                <option></option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+                                        <div class="form-group">
+                                            <label class="form-control-label required">Date of Application</label>
+                                            <div class='input-group date'>
+                                                <input class="form-control m-input" type="text" id="applied_dt" name="applied_dt" placeholder="mm/dd/yyyy" maxlength="12" size="12" data-validation="required" autocomplete="off" readonly/>
+                                                <span class="input-group-addon">
+                                                <i class="la la-calendar glyphicon-th"></i>
+                                            </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                         <div id="resume_upload" class="tab-pane">
-                            <div class="row mt-2 mb-2">
-                                <div class="col">
-                                    <div class="m-portlet__head-title">
-                                        <h5 class="m-portlet__head-text">RESUME UPLOAD</h5>
+                            <form id="resume_upload_form" action="javascript:void(0);">
+                                <div class="row mt-2 mb-2">
+                                    <div class="col">
+                                        <div class="m-portlet__head-title">
+                                            <h5 class="m-portlet__head-text">RESUME UPLOAD</h5>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="row pb-2">
-                                <div class="col-12">
-                                    <div class="form-group">
-                                        <span class="btn btn-success fileinput-button">
-                                            <i class="glyphicon glyphicon-plus"></i>
-                                            <span>SELECT FILE</span>
-                                            <input type="file" id="fileupload" name="files[]" accept=".pdf, .docx, application/pdf, .jpg" multiple>
-                                        </span>
+                                <div class="row pb-2">
+                                    <div class="col-12">
+                                        <div class="form-group">
+                                            <span class="btn btn-success fileinput-button">
+                                                <i class="glyphicon glyphicon-plus"></i>
+                                                <span>SELECT FILE</span>
+                                                <input type="file" id="fileupload" name="files[]" accept=".pdf, .docx, application/pdf, .jpg" multiple>
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div id="new_preview" class="m-portlet__body">
-                                <template v-if="uploadedFiles.length >= 1">
-                                    <div class="row col-12 m-widget2">
-                                        <template v-for="(item, index) in uploadedFiles">
-                                            <div v-bind:class="getClass(item.type)">
-                                                <div class="m-widget4__item d-flex align-items-center">
-                                                    <div class="m-widget4__img m-widget4__img--icon">
-                                                        <img v-bind:src="getExtension(item.type)" alt="" height="50" width="50">
-                                                    </div>
-                                                    <div class="m-widget2__desc">
-                                                        <span class="m-widget4__text">{{ item.name.length > 50 ? item.name.slice(0, 50) + '...' : item.name }}</span>
-                                                    </div>
-                                                    <div class="m-widget2__actions ml-auto">
-                                                        <button type="button" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView" v-on:click="fileDelete(index)">
-                                                            <i class="m-nav__link-icon flaticon-circle"></i>
-                                                        </button>
+                                <div id="new_preview" class="m-portlet__body">
+                                    <template v-if="uploadedFiles.length >= 1">
+                                        <div class="row col-12 m-widget2">
+                                            <template v-for="(item, index) in uploadedFiles">
+                                                <div v-bind:class="getClass(item.type)">
+                                                    <div class="m-widget4__item d-flex align-items-center">
+                                                        <div class="m-widget4__img m-widget4__img--icon">
+                                                            <img v-bind:src="getExtension(item.type)" alt="" height="50" width="50">
+                                                        </div>
+                                                        <div class="m-widget2__desc">
+                                                            <span class="m-widget4__text">{{ item.name.length > 50 ? item.name.slice(0, 50) + '...' : item.name }}</span>
+                                                        </div>
+                                                        <div class="m-widget2__actions ml-auto">
+                                                            <button type="button" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView" v-on:click="fileDelete(index)">
+                                                                <i class="m-nav__link-icon flaticon-circle"></i>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </template>
-                                <template v-else>
-                                    <div class="col-12">
-                                        <strong><h5>NO ATTACHMENTS</h5></strong>
-                                    </div>
-                                </template>
-                            </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template v-else>
+                                        <div class="col-12">
+                                            <strong><h5>NO ATTACHMENTS</h5></strong>
+                                        </div>
+                                    </template>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
                 <div class="m-portlet__foot text-right">
                     <div class="m-form__actions">
-                        <button id="back" type="button" class="btn btn-secondary">BACK</button>
-                        <button id="next" type="button" class="btn btn-primary">NEXT</button>
-                        <button id="submit" type="submit" class="btn btn-success">SUBMIT</button>
+                        <button id="back" type="button" class="btn btn-secondary" @click="goBack" v-if="canGoBack">BACK</button>
+                        <button id="next" type="button" class="btn btn-primary" @click="goNext" v-if="canGoNext">NEXT</button>
+                        <button id="submit" type="submit" class="btn btn-success" @click="submitAll" v-if="canSubmit">SUBMIT</button>
                     </div>
                 </div>
             </div>

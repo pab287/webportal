@@ -7,15 +7,6 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     if(typeof _tempContentData.courses != "undefined" && _tempContentData.courses.length > 0){ courses = _tempContentData.courses; }
 }
 
-const forms = [
-    "#personal_information_form",
-    "#additional_information_form",
-    "#contact_information_form",
-    "#work_experience_form",
-    "#application_information_form",
-    "#resume_upload_form"
-];
-
 const recruitmentSources = [
     { id: 'mynimo', text: 'MYNIMO' },
     { id: 'jobstreet', text: 'JOBSTREET' },
@@ -98,6 +89,14 @@ $(document).ready(function () {
         multiple: true,
     });
 
+
+    $("#civil_status").select2({
+        placeholder: 'SELECT AN OPTION',
+        width: '100%',
+        data: civilStatusOptions,
+    });
+
+
     $("#gender").select2({
         width: '100%',
         placeholder: 'SELECT GENDER',
@@ -157,41 +156,64 @@ let application_vue = new Vue({
         count: 0,
         uploadedFiles: [],
         currentStep:"#personal_information",
-        tabs: {
-            "#personal_information": false,
-            "#additional_information": false,
-            "#contact_information": false,
-            "#work_experience": false,
-            "#application_information": false,
-            "#resume_upload": false
-        }
+        steps: [
+            {
+                tab: "#personal_information",
+                form: "personal_information_form",
+                valid: false,
+                data: {}
+            },
+            {
+                tab: "#additional_information",
+                form: "additional_information_form",
+                valid: false,
+                data: {}
+            },
+            {
+                tab: "#contact_information",
+                form: "contact_information_form",
+                valid: false,
+                data: {}
+            },
+            {
+                tab: "#work_experience",
+                form: "work_experience_form",
+                valid: false,
+                data: {}
+            },
+            {
+                tab: "#application_information",
+                form: "application_information_form",
+                valid: false,
+                data: {}
+            },
+            {
+                tab: "#resume_upload",
+                form: "resume_upload_form",
+                valid: false,
+                data: this.uploadedFiles
+            }
+        ]
+    },
+    mounted: function () {
+        console.log(this.uploadedFiles);
     },
     computed: {
-        // isLastStep() {
-        //     return this.currentStep === this.steps.length - 1;
-        // }
+        canGoBack() {
+            return this.steps.findIndex(
+                step => step.tab === this.currentStep
+            ) > 0;
+        },
+        canGoNext() {
+            return this.steps.findIndex(
+                step => step.tab === this.currentStep
+            ) < this.steps.length - 1;
+        },
+        canSubmit() {
+            return this.steps.every(step => step.valid);
+        }
     },
     methods: {
-        submitApplication() {
-            this.submitBtn = true;
-            console.log("Submitting full application");
-        },
-        // goToStep(index) {
-        //     if (this.canAccessStep(index)) {
-        //         this.currentStep = index;
-
-        //         $('.nav-tabs a[href="' + this.steps[index] + '"]').tab('show');
-        //     }
-        // },
-        canAccessStep(index) {
-            if (index <= this.currentStep) return true;
-            return this.completedSteps.includes(index - 1);
-        },
-        markStepComplete(index) {
-            if (!this.completedSteps.includes(index)) {
-                this.completedSteps.push(index);
-            }
-        },
         getExtension: function(type) {
             let extension = mimeMap[type] || (type.includes('/') ? type.split('/').pop() : type);
             extension = extension.toLowerCase();
@@ -219,10 +241,42 @@ let application_vue = new Vue({
         
             return classMap[extension] || "m-widget4 m-widget2__item m-widget2__item--default col-lg-4 col-md-4 col-sm-12";
         },
-        fileDelete: function(id){
-            this.uploadedFiles.pop(id);
+        fileDelete: function(id) {
+            const index = this.uploadedFiles.findIndex(file => file.id === id);
+            if (index !== -1) {
+                this.uploadedFiles.splice(index, 1);
+            }
             this.count = this.uploadedFiles.length;
+            this.steps.find(s => s.tab === "#resume_upload").data = this.uploadedFiles;
         },
+        goBack() {
+            let currentIndex = this.steps.findIndex(
+                step => step.tab === this.currentStep
+            );
+    
+            if (currentIndex > 0) {
+                let prevStep = this.steps[currentIndex - 1];
+                this.currentStep = prevStep.tab;
+                $('a[href="' + prevStep.tab + '"]').tab('show');
+            }
+        },
+        goNext() {
+            let currentIndex = this.steps.findIndex(
+                step => step.tab === this.currentStep
+            );
+    
+            let nextStep = this.steps[currentIndex + 1];
+            if (nextStep && this.steps[currentIndex].valid) {
+                this.currentStep = nextStep.tab;
+                $('a[href="' + nextStep.tab + '"]').tab('show');
+            } else if (!this.steps[currentIndex].valid) {
+                $("#" + this.steps[currentIndex].form).submit();
+            }
+            console.log(nextStep);
+        },
+        submitAll() {
+            console.log(this.steps);
+        }
     },
 });
 
@@ -267,36 +321,46 @@ function addFile(file) {
         size: file.size,
     };
     application_vue.uploadedFiles.push(fileObj);
+    application_vue.steps.find(s => s.tab === "#resume_upload").data = application_vue.uploadedFiles;
 }
 
-forms.forEach(function (form) {
+application_vue.steps.forEach(function(step, index) {
     $.validate({
-        form: form,
+        form: "#" + step.form,
         onSuccess: function () {
-            console.log("success");
+            application_vue.steps[index].valid = true;
+            const formData = {};
+            $("#" + step.form).serializeArray().forEach(function(field) {
+                formData[field.name] = field.value;
+            });
+            application_vue.steps[index].data = formData;
+            application_vue.$nextTick(function () {
+                let nextStep = application_vue.steps[index + 1];
+                if (nextStep) {
+                    $('a[href="' + nextStep.tab + '"]').tab('show');
+                }
+            });
             return false;
         },
+
         onError: function () {
-            console.log("error");
+            application_vue.steps[index].valid = false;
             return false;
         }
     });
 });
 
-
-$('#next').on('click', function () {
-    let currentForm = application_vue.currentStep + "_form";
-    $(currentForm).submit();
+$('.nav-tabs a').on('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
 });
-
-$('#back').on('click', function () {
-
-});
-
 
 $('.nav-tabs a').on('shown.bs.tab', function (e) {
     let tabId = $(this).attr('href');
     application_vue.currentStep = tabId;
-    console.log(application_vue.currentStep);
+    let step = application_vue.steps.find(s => s.tab === tabId);
+    if (step) {
+        step.valid = false;
+    }
 });
-
