@@ -1,11 +1,20 @@
 let position,referral, schools, courses;
-console.log(_tempContentData);
+
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.position != "undefined" && _tempContentData.position.length > 0){ position = _tempContentData.position; }
     if(typeof _tempContentData.referral != "undefined" && _tempContentData.referral.length > 0){ referral = _tempContentData.referral; }
     if(typeof _tempContentData.schools != "undefined" && _tempContentData.schools.length > 0){ schools = _tempContentData.schools; }
     if(typeof _tempContentData.courses != "undefined" && _tempContentData.courses.length > 0){ courses = _tempContentData.courses; }
 }
+
+const forms = [
+    "#personal_information_form",
+    "#additional_information_form",
+    "#contact_information_form",
+    "#work_experience_form",
+    "#application_information_form",
+    "#resume_upload_form"
+];
 
 const recruitmentSources = [
     { id: 'mynimo', text: 'MYNIMO' },
@@ -50,6 +59,8 @@ const mimeMap = {
 
 
 $(document).ready(function () {
+
+    
     $('#applied_dt').datepicker({
         endDate: new Date(),
         todayHighlight: true,
@@ -139,14 +150,48 @@ function formatDate(input) {
     input.value = value;
 }
 
-let previewFile = new Vue({
-    el: "#new_preview",
+let application_vue = new Vue({
+    el: "#m_content",
     data: { 
         className: "",
         count: 0,
         uploadedFiles: [],
+        currentStep:"#personal_information",
+        tabs: {
+            "#personal_information": false,
+            "#additional_information": false,
+            "#contact_information": false,
+            "#work_experience": false,
+            "#application_information": false,
+            "#resume_upload": false
+        }
+    },
+    computed: {
+        // isLastStep() {
+        //     return this.currentStep === this.steps.length - 1;
+        // }
     },
     methods: {
+        submitApplication() {
+            this.submitBtn = true;
+            console.log("Submitting full application");
+        },
+        // goToStep(index) {
+        //     if (this.canAccessStep(index)) {
+        //         this.currentStep = index;
+
+        //         $('.nav-tabs a[href="' + this.steps[index] + '"]').tab('show');
+        //     }
+        // },
+        canAccessStep(index) {
+            if (index <= this.currentStep) return true;
+            return this.completedSteps.includes(index - 1);
+        },
+        markStepComplete(index) {
+            if (!this.completedSteps.includes(index)) {
+                this.completedSteps.push(index);
+            }
+        },
         getExtension: function(type) {
             let extension = mimeMap[type] || (type.includes('/') ? type.split('/').pop() : type);
             extension = extension.toLowerCase();
@@ -205,7 +250,7 @@ function validateFile(file) {
         return false;
     }
     
-    const exists = previewFile.uploadedFiles.some(f => f.name === file.name);
+    const exists = application_vue.uploadedFiles.some(f => f.name === file.name);
     if (exists) {
         toastr.error(`File "${file.name}" is already selected.`);
         return false;
@@ -221,5 +266,37 @@ function addFile(file) {
         type: file.type,
         size: file.size,
     };
-    previewFile.uploadedFiles.push(fileObj);
+    application_vue.uploadedFiles.push(fileObj);
 }
+
+forms.forEach(function (form) {
+    $.validate({
+        form: form,
+        onSuccess: function () {
+            console.log("success");
+            return false;
+        },
+        onError: function () {
+            console.log("error");
+            return false;
+        }
+    });
+});
+
+
+$('#next').on('click', function () {
+    let currentForm = application_vue.currentStep + "_form";
+    $(currentForm).submit();
+});
+
+$('#back').on('click', function () {
+
+});
+
+
+$('.nav-tabs a').on('shown.bs.tab', function (e) {
+    let tabId = $(this).attr('href');
+    application_vue.currentStep = tabId;
+    console.log(application_vue.currentStep);
+});
+

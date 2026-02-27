@@ -1,6 +1,9 @@
         </div>
     </div>
 </div>
+<!-- <div class="footer">
+    images of logos here
+</div> -->
 <script>
     let _tempContentData = <?php echo json_encode($data ?? []); ?>;
     let baseUrl = "<?php echo base_url(); ?>";
