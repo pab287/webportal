@@ -5119,6 +5119,9 @@ class Billing_m extends CI_Model {
                 $first_unpaid_penalty = $this->first_unpaid_penalty($_query["id"]);
                 $penalty = $balance["total_penalty"] - $first_unpaid_penalty;
 
+                $total_penalty = $penalty + $reconnection;
+                $_total_penalties = $total_penalty < 0 ? 0 : $total_penalty;
+
                 $data = array();
                 $data["id"] = $_query["id"];
                 $data["customer_name"] = $_query['customer_name'];
@@ -5126,13 +5129,21 @@ class Billing_m extends CI_Model {
                 $data["meterno"] = $_query['meterno'];
                 $data["subdivision_name"] = $_query['subdivision_name'];
                 $data["overPayment"] = $this->computeOverPayment($_query["id"]);
-                $data["total_penalty"] = number_format($penalty,2, '.', '');
+                $data["total_penalty"] = number_format($_total_penalties, 2, '.', '');
                 $total_balance_data = $this->getTotalBalanceCustomer($_query["id"]);
                 $total_balance = isset($total_balance_data['balance']) ? $total_balance_data['balance'] : 0;
-                $data["overdue_charges"] = number_format($total_balance < 0 ? 0 : $total_balance, 2, '.', '');
-                $total = ($total_balance + $penalty);
+
+                $overdue_charges = number_format($total_balance < 0 ? 0 : $total_balance, 2, '.', '');
+
+                $data["raw_total_balance"] = $total_balance;
+                $data["overdue_charges"] = $overdue_charges - $penalty;
+                $total = $data["overdue_charges"] + $_total_penalties;
+                // $total = $total_balance;
                 if ($total < 0) { $total = 0;}
                 $data["total_balance"] = number_format($total, 2, '.', '');
+
+                $data["ref"] = $total_balance_data;
+
                 $resultarray[] = $data;
             }
         }
@@ -5152,7 +5163,7 @@ class Billing_m extends CI_Model {
         $final_bal = 0;
         $post = $this->input->post();
       
-        $sql = "SELECT p.id as payment_id, b.id AS bill_id, b.ref_no, b.total_charges, b.is_paid, b.created_at, b.due_date, IFNULL(p.received_amount, 0) AS received_amount, IFNULL(p.net_payment, 0) AS net_payment, IFNULL(p.balance_covered, 0) AS balance_covered
+        $sql = "SELECT p.id as payment_id, b.id AS bill_id, b.ref_no, b.total_charges, b.is_paid, b.created_at, b.due_date, IFNULL(p.received_amount, 0) AS received_amount, IFNULL(p.net_payment, 0) AS net_payment, IFNULL(p.balance_covered, 0) AS balance_covered, b.billing_to, a.id AS account_id
                 FROM hydra_billing.bills AS b
                 LEFT JOIN
                     (SELECT MIN(id) AS min_id, bill_id
@@ -5163,9 +5174,12 @@ class Billing_m extends CI_Model {
                     AS first_payments ON b.id = first_payments.bill_id
                 LEFT JOIN
                     hydra_billing.payments AS p ON p.id = first_payments.min_id
+                LEFT JOIN
+                    hydra_billing.accounts AS a ON a.id = b.account_id
                 WHERE
                     b.account_id = ?
                     AND b.status = 1
+                    AND b.is_paid = 0
                 ORDER BY
                     b.due_date ASC";
       
@@ -5201,8 +5215,14 @@ class Billing_m extends CI_Model {
       
                 $balance = ($res["debit"] - $res["credit"]);
                 $final_bal += $balance;
-      
-                $res['balance'] = $final_bal;
+
+                $bill_id = $row["bill_id"];
+                $customer_id = $row["account_id"];
+                $billing_to = $row["billing_to"];
+                $pending_as_balance = $this->getAccumulatedPendingAmount($bill_id, $customer_id, $billing_to)['pending_amount'];
+
+                // $res['balance'] = $final_bal;
+                $res['balance'] = $pending_as_balance;
             }
         } else {
             $res['error_msgs'] = "Unable to count data";
@@ -5225,12 +5245,13 @@ class Billing_m extends CI_Model {
         $data['lastbill'] = $balance; // Useless but as is
 
         $penalty = $balance["total_penalty"] - $first_unpaid_penalty;
+        $_penalty = $penalty < 0 ? 0 : $penalty;
 
-        $_total = $total_balance + $penalty;
+        $_total = $total_balance + $_penalty;
         
         $data['overdue_charges'] = number_format(($total_balance_data["balance"] < 0) ? 0 : $total_balance_data["balance"], 2, '.', ''); 
         $data['overpayment'] = $overpayment;
-        $data['total_penalty'] = number_format($penalty, 2, '.', '');
+        $data['total_penalty'] = number_format($_penalty, 2, '.', '');
         $data["total_balance"] = number_format($_total < 0 ? 0 : $_total, 2, '.', '');
 
         return $data;

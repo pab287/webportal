@@ -195,23 +195,23 @@ var tbl_reports_dialog = $("#table-reports_soa").DataTable({
         { data: "bill_ref", render: function (data) { return "<strong>"+data+"</strong>";} },
         { data: "payment_type" },
         { data: "total_charges", className: "text-right", render: function (data) {
-                return numberWithCommas(parseFloat(data).toFixed(2));
+                return "₱ " + numberWithCommas(parseFloat(data).toFixed(2));
             } 
         },
         { data: "penalty", className: "text-right", render: function (data) {
-                return numberWithCommas(parseFloat(data).toFixed(2));
+                return "₱ " + numberWithCommas(parseFloat(data).toFixed(2));
             } 
         },
         { data: "balance_covered", className: "text-right", render: function (data) {
-                return data > 0 ? '-'+numberWithCommas(parseFloat(data).toFixed(2)) : '0.00';
+                return (data > 0) ? "₱ " + numberWithCommas(parseFloat(data).toFixed(2)) : '₱ 0.00';
             }
         },
         { data: "net_payment", className: "text-right", render: function (data) {
-            return numberWithCommas(parseFloat(data).toFixed(2));
+                return "₱ " + numberWithCommas(parseFloat(data).toFixed(2));
             }
         },
         { data: "received_amount", className: "text-right", render: function (data) {
-                return "<strong>"+numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
+                return "<strong>₱ "  +numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
             }
         },
     ],
@@ -294,11 +294,11 @@ var tbl_reports_dialog_billing = $("#table-reports_billing").DataTable({
              }
          },
         { data: "billing_from", width: "15%", render: function (data) {
-                 return data;
+                return moment(data).format("MMM DD, YYYY");
              }
          },
         { data: "billing_to", width: "15%", render: function (data) {
-                return data;
+                return moment(data).format("MMM DD, YYYY");
             }
         },
         { data: "is_paid", class: 'text-center', render: function (data){
@@ -387,13 +387,13 @@ var tbl_reports_dialog_reading = $("#table-reports_reading").DataTable({
     searching: true,
     columns: [
         { data: "ref_no", render: function (data) {
-                 return "<strong style='color: #525252;'>"+data+"</strong>";
-             }
-         },
+                return "<strong style='color: #525252;'>"+data+"</strong>";
+            }
+        },
         { data: "reading_date", render: function (data) {
-                 return data;
-             }
-         },
+                return moment(data).format("MMM DD, YYYY");
+            }
+        },
         { data: "reading", class: "text-center"},
     ],
     select: {
@@ -552,10 +552,10 @@ $(".btnPrint").on("click", function(){
             w.document.write(response);
             w.document.close();
 
-            // setTimeout(function(){
-            //     w.print();
-            //     w.close();
-            // }, 250);
+            setTimeout(function(){
+                w.print();
+                w.close();
+            }, 250);
         },
         error: function (request, status, error) {
             toastr.error("Please check your internet connection.", "Connection error");

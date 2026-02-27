@@ -198,7 +198,7 @@
 									<th>Subdivision</th>
 									<th>Over Payment</th>
 									<th>Total Penalty</th>
-									<th>Overdue Charges</th>
+									<th>Total Charges</th>
 									<th>Total Balance</th>
 									<th class="notExport">Action</th>
 								</tr>
@@ -427,18 +427,18 @@
 										<h6 class="text-center mb-0">Ref. No.</h6>
 									</div>
 
-									<div class="col">
-										<h6 class="text-center mb-0">DEBIT</h6>
-										<small class="d-block text-center mt-1 mb-0" style="font-size: 9px;">Total Charges + Penalties + RF = Debit</small>
+									<div class="col px-3">
+										<h6 class="text-right mb-0">DEBIT</h6>
+										<small class="d-block text-right mt-1 mb-0" style="font-size: 9px;">Total Charges + Penalties + RF = Debit</small>
 									</div>
 
-									<div class="col">
-										<h6 class="text-center mb-0">CREDIT</h6>
-										<small class="d-block text-center mt-1 mb-0" style="font-size: 9px;">Rec Amt + Bal Cov = Debit</small>
+									<div class="col px-3">
+										<h6 class="text-right mb-0">CREDIT</h6>
+										<small class="d-block text-right mt-1 mb-0" style="font-size: 9px;">Rec Amt + Bal Cov = Debit</small>
 									</div>
 
-									<div class="col">
-										<h6 class="text-center mb-0">BALANCE</h6>
+									<div class="col px-3">
+										<h6 class="text-right mb-0">BALANCE</h6>
 									</div>
 								</div>
 							</div>
