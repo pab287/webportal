@@ -2316,6 +2316,7 @@ class Gcctime_app_m extends Dbase{
             $latitude  = $matches[1];
             $longitude = $matches[2];
         }
+
         $isCheck_type = isset($_POST['check_type']) ? $_POST['check_type'] : null;
         $check_type = 0;
         if ($isCheck_type === "check_in") {
@@ -2342,14 +2343,17 @@ class Gcctime_app_m extends Dbase{
         try {
 
             $sql = "INSERT INTO gcceforms.travel_checkin_out
-                (destination_id, employee_id, check_type, check_location)
-                VALUES (:destination_id, :employee_id, :check_type, :check_location)";
-
+                (destination_id, employee_id, check_type, check_location, latitude, longitude)
+                VALUES (:destination_id, :employee_id, :check_type, :check_location, :latitude, :longitude)";
+            $temp_lat = (float)$latitude;
+            $temp_lng = (float)$longitude;
             $data = $conn->prepare($sql);
             $data->bindParam(':destination_id', $destination_id, PDO::PARAM_INT);
             $data->bindParam(':employee_id', $employeeId, PDO::PARAM_INT);
             $data->bindParam(':check_type', $check_type, PDO::PARAM_INT);
             $data->bindParam(':check_location', $location, PDO::PARAM_STR);
+            $data->bindParam(':latitude', $temp_lat, PDO::PARAM_STR);
+            $data->bindParam(':longitude', $temp_lng, PDO::PARAM_STR);
 
             if ($data->execute()) {
 
@@ -2414,7 +2418,7 @@ class Gcctime_app_m extends Dbase{
 
             return json_encode([
                 'status' => false,
-                'msg'=> "Failed to save travel check.",
+                'msg'=> "Failed to save travel check. " . $e->getMessage(),
                 'check_type' => 0
             ]);
         }
