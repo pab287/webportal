@@ -131,10 +131,15 @@ function getTotalBalanceEtc(){
             endDate: _endDate
         },
         success: function (result) {
-            $("#m_soa #balance").html('₱ '+numberWithCommas(result.overdue_charges));
-            $("#m_soa #total_penalty").html('₱ '+numberWithCommas(result.total_penalty));
-            $("#m_soa #overPayment").html('₱ '+numberWithCommas(result.overpayment));
-            $("#m_soa #total_balance").html('₱ '+ numberWithCommas(result.total_balance));
+            // $("#m_soa #balance").html('₱ '+numberWithCommas(result.total_charges));
+            // $("#m_soa #total_penalty").html('₱ '+numberWithCommas(result.total_penalty));
+            // $("#m_soa #overPayment").html('₱ '+numberWithCommas(result.overpayment));
+            // $("#m_soa #total_balance").html('₱ '+ numberWithCommas(result.total_balance));
+
+            statement_details.total_charges = result.total_charges;
+            statement_details.total_penalty = result.total_penalty;
+            statement_details.overpayment = result.overpayment;
+            statement_details.total_balance = result.total_balance;
         },
         error: function (request, status, error) {
             toastr.error("Please check your internet connection.", "Connection error");
@@ -552,10 +557,10 @@ $(".btnPrint").on("click", function(){
             w.document.write(response);
             w.document.close();
 
-            setTimeout(function(){
-                w.print();
-                w.close();
-            }, 250);
+            // setTimeout(function(){
+            //     w.print();
+            //     w.close();
+            // }, 250);
         },
         error: function (request, status, error) {
             toastr.error("Please check your internet connection.", "Connection error");
@@ -698,6 +703,13 @@ function enablePrintButton(reportGenerated){
 }
 
 $("#m_soa").on('hidden.bs.modal', function(){
+    Object.assign(statement_details.$data, {
+        total_charges: 0,
+        total_penalty: 0,
+        overpayment: 0,
+        total_balance: 0
+    });
+
     $("#report_type").val([]).trigger("change");
     $("#date_filter").val([]).trigger("change");
     $("#customer_id").val("");
@@ -713,7 +725,20 @@ $("#m_soa").on('hidden.bs.modal', function(){
     vm_reports_soa_ledger.ledger_data = [];
     vm_reports_soa_ledger.totalBalance = 0;
 
-    $('#balance, #total_penalty, #overPayment, #total_balance').html('₱ 0.00');
-
     $(".btnPrint").prop("disabled", true);
+});
+
+const statement_details = new Vue({
+    el: "#statement_details",
+    data: {
+        total_charges: 0,
+        total_penalty: 0,
+        overpayment: 0,
+        total_balance: 0
+    },
+    methods: {
+        numberWithCommas(x) {
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+    }
 });

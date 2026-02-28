@@ -218,7 +218,7 @@
 			<div class="modal-header" id="soa_modal">
 				<h5 class="modal-title" style="margin-top: 7px;">Account Statement</h5>
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-					<span aria-hidden="true">×</span>
+					<span>×</span>
 				</button>
 			</div>
 
@@ -293,25 +293,25 @@
 						</div>
 					</div>
 
-					<div class="col-6">
+					<div id="statement_details" class="col-6">
 						<div class="col-6 mb-2">
 							<strong>Overdue Charges : </strong>
-							<strong id="balance">₱ 0.00</strong>
+							<strong id="balance">₱ {{ total_charges }}</strong>
 						</div>
 
 						<div class="col-6 mb-2">
 							<strong>Total Penalty : </strong>
-							<strong id="total_penalty">₱ 0.00</strong>
+							<strong id="total_penalty">₱ {{ total_penalty }}</strong>
 						</div>
 
 						<div class="col-6 mb-2">
 							<strong>Overpayment Balance : </strong>
-							<strong id="overPayment">₱ 0.00</strong>
+							<strong id="overPayment">₱ {{ overpayment }}</strong>
 						</div>
 
 						<div class="col-12">
 							<strong style="font-weight: bold; color: #6b6b71; font-size: 15px;">Total balance : </strong>
-							<strong id="total_balance" style="font-weight: bold; color: #6b6b71; font-size: 15px;">₱ 0.00</strong>
+							<strong id="total_balance" style="font-weight: bold; color: #6b6b71; font-size: 15px;">₱ {{ total_balance }}</strong>
 						</div>
 					</div>
 				</div>

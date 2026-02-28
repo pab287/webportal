@@ -164,15 +164,19 @@
                 max-width: 90%;
                 margin: 0 auto;
             }
+
+            .watermark { 
+                transform: scale(2);
+            }
         }
         .watermark {
             opacity: 0.3;
             color: BLACK;
             position: fixed;
             top: auto;
-            left: 20%;
+            left: 30%;
             right: 20%;
-            top: 42%;
+            top: 50%;
             font-size: 35px;
             font-weight: 'bold';
             rotate: 320deg;
@@ -257,7 +261,7 @@
 
                                     <tr>
                                         <td align="right" style="padding: 3px; font-weight: 600;">OVER PAYMENT BALANCE:</td>
-                                        <td align="left" style="padding: 3px; font-weight: 600;"><?= "₱ ". number_format($overPayment, 2); ?></td>
+                                        <td align="left" style="padding: 3px; font-weight: 600;"><?= "₱ ". number_format($overpayment, 2); ?></td>
                                     </tr>
                                     
                                     <tr>
@@ -750,10 +754,10 @@
                             } // End foreach
                         ?>
                             <tr>
-                            <td colspan="6">
-                                <!-- <div class="watermark"><?//= number_format(($total_balance + $total_penalty) - $overPayment, 2) > 0 ? "--FOR DISCONNECTION--" : "--FOR RECONNECTION--" ; ?></div> -->
-                                <div class="watermark">--FOR DISCONNECTION--</div>
-                            </td>
+                                <td colspan="6">
+                                    <!-- <div class="watermark"><?//= number_format(($total_balance + $total_penalty) - $overPayment, 2) > 0 ? "--FOR DISCONNECTION--" : "--FOR RECONNECTION--" ; ?></div> -->
+                                    <div class="watermark">--FOR DISCONNECTION--</div>
+                                </td>
                             </tr>
                 <?php 
                         } else { 
@@ -766,9 +770,9 @@
                         <tr class="footer" style="background-color: #bad3f1;">
                             <td></td>
                             <td></td>
-                            <td align="right"><small>Total Charges + Penalties + RF = Debit</small></td>
-                            <td align="center" style="font-family: arial; color:#343434; padding: 6px;" width="180" align="right"></td>
-                            <td align="center"><strong>₱ <?= number_format($overdue_charges < 0 ? 0 : $overdue_charges, 2);  ?></strong></td>
+                            <td align="right" style="font-family: arial; color:#343434; padding: 6px;" width="180"><small>Total Charges + Penalties + RF = Debit</small></td>
+                            <td></td>
+                            <td align="right" style="font-family: arial; color:#343434; padding: 6px;"><strong><?= "₱ ". number_format($overdue_charges < 0 ? 0 : $overdue_charges, 2); ?></strong></td>
                         </tr>
                         </tbody>
                     </table>

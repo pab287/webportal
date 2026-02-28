@@ -5233,6 +5233,85 @@ class Billing_m extends CI_Model {
 
     function get_total_balance_etc(){
         $post = $this->input->post();
+        $accountId = $post['id'];
+        $currentDate = date('Y-m-d');
+
+        $data = [];
+
+        // Fetch penalties config
+        $penaltiesConfig = $this->getPenalties();
+
+        // Fetch unpaid bills
+        $this->db->select("b.id, a.id AS customer_id, b.billing_to, b.due_date, b.total_charges, a.is_disconnected");
+        $this->db->from("hydra_billing.bills b");
+        $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
+        $this->db->where([
+            "b.status" => 1,
+            "b.is_paid" => 0,
+            "b.account_id" => $accountId
+        ]);
+        $this->db->group_by("b.id");
+
+        $query = $this->db->get();
+
+        // Compute penalties & pending bills
+        $computedPenalty = 0;
+        $pendingBills = [];
+
+        foreach ($query->result_array() as $row) {
+            // Penalty calculation
+            if ($currentDate > $row['due_date']) {
+                if ($penaltiesConfig['type'] === 'percentage') {
+                    $computedPenalty += ($penaltiesConfig['amount'] / 100) * $row['total_charges'];
+                } else {
+                    $computedPenalty += $penaltiesConfig['amount'];
+                }
+            }
+
+            // Accumulate pending bills (last call assumed correct behavior)
+            $pendingBills = $this->getAccumulatedPendingAmount(
+                $row['id'],
+                $row['customer_id'],
+                $row['billing_to']
+            );
+        }
+
+        // Other adjustments
+        $overpayment = (float) $this->computeOverPayment($accountId);
+        $firstUnpaidPenalty = (float) $this->first_unpaid_penalty($accountId);
+
+        // Reconnection fee
+        $reconnectionFee = (float) $this->getReconnectionFee()['amount'];
+        $isDisconnected = (int) $this->check_customer_if_disconnect($accountId);
+
+        $reconnection = ($isDisconnected === 1) ? $reconnectionFee : 0;
+
+        // Final calculations
+        $netPenalty = max(0, $computedPenalty - $firstUnpaidPenalty);
+        $totalPenalty = $netPenalty + $reconnection;
+
+        $pendingAmount = (float) ($pendingBills['pending_amount'] ?? 0);
+
+        $totalCharges = $pendingAmount - $totalPenalty;
+        $totalBalance = $totalCharges + $totalPenalty;
+
+        // Response data
+        $data['pending_bills'] = $pendingBills;
+        $data['reconnection'] = $reconnection;
+        $data['total_penalty'] = number_format($totalPenalty, 2, '.', '');
+        $data['total_charges'] = number_format($totalCharges, 2, '.', '');
+        $data['overpayment'] = number_format($overpayment, 2, '.', '');
+        $data['total_balance'] = number_format($totalBalance, 2, '.', '');
+
+        return $data;
+    }
+
+    function check_customer_if_disconnect($account_id) {
+        return $this->db->select('is_disconnected')->from('hydra_billing.accounts')->where('id', $account_id)->get()->row_array()['is_disconnected'];
+    }
+
+    function get_total_balance_etc_old(){
+        $post = $this->input->post();
         $data = array();
         $total_balance_data = $this->getTotalBalanceCustomer_soa_ledger($post);
         $total_balance = isset($total_balance_data['balance']) ? $total_balance_data['balance'] : 0;
@@ -5310,7 +5389,8 @@ class Billing_m extends CI_Model {
                 ) AS first_payments ON b.id = first_payments.bill_id
                 LEFT JOIN hydra_billing.payments AS p ON p.id = first_payments.min_id
                 WHERE b.account_id = ?
-                AND b.status = 1";
+                AND b.status = 1
+                AND b.is_paid = 0";
 
         if (is_numeric($selectedDate)) {
             // Example: 2024
@@ -5955,6 +6035,87 @@ class Billing_m extends CI_Model {
     }
 
     function print_reports_soa(){
+        $post = $this->input->post();
+        $accountId = $post['id'];
+        $currentDate = date('Y-m-d');
+
+        $data = [];
+
+        // Fetch penalties config
+        $penaltiesConfig = $this->getPenalties();
+
+        // Fetch unpaid bills
+        $this->db->select("b.id, a.id AS customer_id, b.billing_to, b.due_date, b.total_charges, a.is_disconnected");
+        $this->db->from("hydra_billing.bills b");
+        $this->db->join("hydra_billing.accounts a", "a.id = b.account_id", "LEFT");
+        $this->db->where([
+            "b.status" => 1,
+            "b.is_paid" => 0,
+            "b.account_id" => $accountId
+        ]);
+        $this->db->group_by("b.id");
+
+        $query = $this->db->get();
+
+        // Compute penalties & pending bills
+        $computedPenalty = 0;
+        $pendingBills = [];
+
+        foreach ($query->result_array() as $row) {
+            // Penalty calculation
+            if ($currentDate > $row['due_date']) {
+                if ($penaltiesConfig['type'] === 'percentage') {
+                    $computedPenalty += ($penaltiesConfig['amount'] / 100) * $row['total_charges'];
+                } else {
+                    $computedPenalty += $penaltiesConfig['amount'];
+                }
+            }
+
+            // Accumulate pending bills (last call assumed correct behavior)
+            $pendingBills = $this->getAccumulatedPendingAmount(
+                $row['id'],
+                $row['customer_id'],
+                $row['billing_to']
+            );
+        }
+
+        // Other adjustments
+        $overpayment = (float) $this->computeOverPayment($accountId);
+        $firstUnpaidPenalty = (float) $this->first_unpaid_penalty($accountId);
+
+        // Reconnection fee
+        $reconnectionFee = (float) $this->getReconnectionFee()['amount'];
+        $isDisconnected = (int) $this->check_customer_if_disconnect($accountId);
+
+        $reconnection = ($isDisconnected === 1) ? $reconnectionFee : 0;
+
+        // Final calculations
+        $netPenalty = max(0, $computedPenalty - $firstUnpaidPenalty);
+        $totalPenalty = $netPenalty + $reconnection;
+
+        $pendingAmount = (float) ($pendingBills['pending_amount'] ?? 0);
+
+        $totalCharges = $pendingAmount - $totalPenalty;
+        $totalBalance = $totalCharges + $totalPenalty;
+
+        // Response data
+        $data['pending_bills'] = $pendingBills;
+        $data['reconnection'] = $reconnection;
+        $data['total_penalty'] = number_format($totalPenalty, 2, '.', '');
+        $data['overdue_charges'] = number_format($totalCharges, 2, '.', '');
+        $data['overpayment'] = number_format($overpayment, 2, '.', '');
+        $data['total_balance'] = number_format($totalBalance, 2, '.', '');
+
+        if(!isset($post['endDate'])){
+            $post['endDate'] = null;
+        }
+
+        $this->core_layout->setEventLog("Reposrts SOA - print account statement of ".$post["account_name"],"print", "success", "hydra_billing", "user");
+        $data["data"] = $this->getReportsSOADetails($post["id"], $post["selectedDate"], $post['startDate'], $post['endDate'], $post['report_type']);
+        return $this->load->view("eforms/billing/reports_soa/print", $data, true);
+    }
+
+    function print_reports_soa_old(){
         $post = $this->input->post();
         $reconnectionFee = $this->getReconnectionFee()['amount'];
         $balance = $this->computeBalanceLastBill_soa_ledger($post);
