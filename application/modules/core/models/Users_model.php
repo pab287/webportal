@@ -142,7 +142,7 @@ class Users_model extends CI_Model{
             CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
                 UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
                 emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
-            END) as employee_name, emp.employee_status, user.is_important, user.telegram_chat_id";
+            END) as employee_name, emp.employee_status, user.is_important, user.telegram_chat_id, emp.email as emp_email";
 		$this->db->select($sqlSelect);
 		$this->db->from($this->usersTable . " as user");
 		$this->db->join($this->employeesTable . " as emp", "emp.id = user.emp_id", "INNER");
