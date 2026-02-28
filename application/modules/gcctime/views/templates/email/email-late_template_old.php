@@ -65,15 +65,6 @@ table { font-size: 14px; border: 0; }
 }
 </style>
 </head>
-
-<?php 
-	// echo "<pre>";
-	// var_dump($data);
-	// echo "</pre>";
-
-	$station_title = (isset($station_title) && $station_title) ? $station_title : "";
-?>
-
 <body class="respond" leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
     <table border="0" width="100%" cellpadding="0" cellspacing="0" bgcolor="ffffff">
         <tr>
@@ -90,10 +81,7 @@ table { font-size: 14px; border: 0; }
                                     <td align="center" height="70" style="height:70px;">
 										<h1 style="font-family: Quicksand, Calibri, sans-serif; color:#343434;">GC&amp;C - GCCTIME</h1>
 										<?php if($state): ?>
-										<h2 style="font-family: Quicksand, Calibri, sans-serif; color:#343434; margin-top: 15px; text-transform: uppercase;">
-											<!-- <?php //echo ($station_title != "OTHERS") ? $station_title . " | " : ""; ?> Late Report - <?php //echo ($state == "AM")? $state: $state; ?> -->
-											<?php echo $station_title; ?> Late Report - <?php echo ($state == "AM")? $state: $state; ?>
-										</h2>
+										<h2 style="font-family: Quicksand, Calibri, sans-serif; color:#343434; margin-top: 15px; text-transform: uppercase;">Late Report - <?php echo ($state == "AM")? $state: $state; ?></h2>
 										<?php else: ?>
 										<h2 style="font-family: Quicksand, Calibri, sans-serif; color:#343434; margin-top: 15px; text-transform: uppercase;">Late Report</h2>
 										<?php endif; ?>
@@ -130,11 +118,7 @@ table { font-size: 14px; border: 0; }
 					<tr>
 						<td align="left" style="color: #888888; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 24px;">
 						<?php if(isset($data) && $data): ?>
-							<?php if ($station_title === "NO STATION"): ?>
-									<div style="line-height: 24px;">The following employees are tagged as <strong style="font-size: 18px; color: #ff0000;">LATE</strong> as of <?php echo $dateToday; ?></div>
-							<?php else: ?>
-									<div style="line-height: 24px;">The following employees are tagged as <strong style="font-size: 18px; color: #ff0000;">LATE</strong> that are stationed at <strong style="font-size: 18px;"><?php echo $station_title; ?></strong> today as of <?php echo $dateToday; ?></div>
-							<?php endif; ?>
+							<div style="line-height: 24px;">The following employees are tagged as <strong style="font-size: 18px; color: #ff0000;">LATE</strong> today as of <?php echo $dateToday; ?></div>
 						<?php else: ?>
 							<?php $_nstate = ($state && $state == "AM")? "morning":"afternoon"; ?>
 							<div style="line-height: 24px;">There are no <strong style="font-size: 18px; color: #ff0000;">LATE</strong> employees this <?php echo $_nstate; ?> as of <?php echo $dateToday; ?></div>
@@ -153,82 +137,44 @@ table { font-size: 14px; border: 0; }
 		<?php if(isset($data) && $data): ?>
 		<tr>
             <td align="center">
-				<!-- 1st foreach start -->
-				<?php foreach($data as $station => $employees) : ?> 
-					<table border="0" align="center" width="980" cellpadding="0" cellspacing="0" class="container980 table table-striped" style="width: 980px; border-spacing: 0px 15px;">
-						<col width="106">
-						<col width="320">
-						<col width="230">
-						<col width="100">
-						<col width="100">
-						<col width="100">
-
-						<thead>
-							<tr>
-								<th align="center" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; text-align: center; line-height: 1.4;">BIO#</th>
-								<th align="left" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; text-align: left; line-height: 1.4;">EMPLOYEE NAME</th>
-								<th align="left" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; text-align: left; line-height: 1.4;">DEPARTMENT</th>
-								<th align="center" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; text-align: center; line-height: 1.4;">DATE</th>
-								<th align="center" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; text-align: center; line-height: 1.4;">TIME</th>
-								<th align="center" style="color: #333333; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; text-align: center; line-height: 1.4;">DURATION</th>
-							</tr>
-						</thead>
-
-						<tbody>
-						<!-- 2nd foreach start -->
-						<?php
-							foreach ($employees as $biometric_id => $emp_info) :
-								$state = (isset($emp_info["state"]) && $emp_info["state"] == "normal")? "normal":"exceed";
-						?>
-									<tr>
-										<td align="center" style="vertical-align: top;">
-											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000;"; ?> font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-												<?php echo (isset($emp_info["biometric_id"]) && $emp_info["biometric_id"])? $emp_info["biometric_id"]:"---"; ?>
-											</span>
-										</td>
-
-										<td align="left" style="vertical-align: top;">
-											<p style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600; font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1.4;">
-												<?php echo (isset($emp_info["name"]) && $emp_info["name"])? strtoupper($emp_info["name"]): strtoupper("No Name"); ?> 
-											</p>
-
-											<p style="font-size: 10px; color: #888888; font-weight:400; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1.4;">
-												<?php echo (isset($emp_info["position"]) && $emp_info["position"])? strtoupper($emp_info["position"]): strtoupper("No Position"); ?>
-											</p>
-										</td>
-
-										<td align="left" style="vertical-align: top;">
-											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600;font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-												<?php echo (isset($emp_info["department"]) && $emp_info["department"])? strtoupper($emp_info["department"]): strtoupper("No Department"); ?>
-											</span>
-										</td>
-
-										<td align="center" style="vertical-align: top;">
-											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600;font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-												<?php echo (isset($emp_info["date"]) && $emp_info["date"])? $emp_info["date"]:"No Date"; ?>
-											</span>
-										</td>
-
-										<td align="center" style="vertical-align: top;">
-											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600;font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-												<?php echo (isset($emp_info["time"]) && $emp_info["time"])? $emp_info["time"]:"No Time"; ?>
-											</span>
-										</td>
-
-										<td align="center" style="vertical-align: top;">
-											<span style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; "; ?>font-weight:600;font-size: 12px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 1;">
-												<?php echo (isset($emp_info["minlate"]) && $emp_info["minlate"])? $emp_info["minlate"]:"---"; ?>
-											</span>
-										</td>
-									</tr>
-
-						<?php endforeach; ?>
-						<!-- 2nd foreach end -->
-						</tbody>
-					</table>
-
-				<?php endforeach; ?>
-				<!-- 1st foreach end -->
+				<table border="0" align="center" width="980" cellpadding="0" cellspacing="0" class="container980 table table-striped" style="width: 980px;">
+					<col width="106">
+					<col width="371">
+					<col width="131">
+					<col width="131">
+					<col width="116">
+					<thead>
+						<tr>
+							<th align="center" style="color: #333333; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: center; padding: 5px 12.5px;">BIOMETRIC NO</th>
+							<th align="left" style="color: #333333; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: left; padding: 5px 12.5px;">EMPLOYEE NAME</th>
+							<th align="center" style="color: #333333; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: center; padding: 5px 12.5px;">DATE</th>
+							<th align="center" style="color: #333333; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: center; padding: 5px 12.5px;">TIME</th>
+							<th align="center" style="color: #333333; font-size: 16px; font-family: 'Work Sans', Calibri, sans-serif; font-weight: 600; mso-line-height-rule: exactly; line-height: 23px; text-align: center;  padding: 5px 12.5px;">LATE (DURATION)</th>
+						</tr>
+					</thead>
+				   <tbody>
+				   <?php foreach($data as $dd): ?>
+				   <?php $state = (isset($dd["state"]) && $dd["state"] == "normal")? "normal":"exceed"; ?>
+					<tr>
+						<td align="center" style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; font-weight:bold; "; ?>font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 18px; padding: 5px 12.5px;">
+							<?php echo (isset($dd["biometric_id"]) && $dd["biometric_id"])? $dd["biometric_id"]:"---"; ?>
+						</td>
+						<td align="left" style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; font-weight:bold; "; ?>font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 18px; padding: 5px 12.5px;">
+							<?php echo (isset($dd["name"]) && $dd["name"])? strtoupper($dd["name"]): strtoupper("No Name"); ?>
+						</td>
+						<td align="center" style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; font-weight:bold; "; ?>font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 18px; padding: 5px 12.5px;">
+							<?php echo (isset($dd["date"]) && $dd["date"])? $dd["date"]:"No Date"; ?>
+						</td>
+						<td align="center" style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; font-weight:bold; "; ?>font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 18px; padding: 5px 12.5px;">
+							<?php echo (isset($dd["time"]) && $dd["time"])? $dd["time"]:"No Time"; ?>
+						</td>
+						<td align="center" style="<?php echo ($state == "normal")? "color: #888888;":"color: #ff0000; font-weight:bold; "; ?>font-size: 14px; font-family: 'Work Sans', Calibri, sans-serif; line-height: 18px; padding: 5px 12.5px;">
+							<?php echo (isset($dd["minlate"]) && $dd["minlate"])? $dd["minlate"]:"---"; ?>
+						</td>
+					</tr>
+					<?php endforeach; ?>
+                   </tbody>
+                </table>
 			</td>
         </tr>
 		<?php endif; ?>
