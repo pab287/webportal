@@ -5742,7 +5742,8 @@ const undoRestDay = function (e, date, has_shift, id, tsId, dtRowIndex) {
                     date,
                     has_shift,
                     id,
-                    timesheetId: tsId
+                    timesheetId: tsId,
+                    reason: result.value
                 },
                 dataType: 'json',
                 success: function(response) {
