@@ -96,7 +96,7 @@ if(tableTransferApproval.length === 1){
         Swal.fire({
             icon: "question",
             title: "Employee Transfer?",
-            text: "Are you sure you want to approve this employee group transfer!",
+            text: "Are you sure you want to approve this employee group transfer?",
             type: "warning",
             showCancelButton: true,
             confirmButtonColor: "#3085d6",
