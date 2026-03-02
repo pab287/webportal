@@ -12,6 +12,11 @@ let departments = null;
 let employee_selection = null;
 let sched_id = null;
 
+const classRecent = "btn btn-primary btn-sm m-btn m-btn--pill btnAward btnSave ";
+const classNotRecent = "btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnAward btnSave";
+const openCertNormalClass = "btn btn-secondary btn-sm m-btn m-btn--pill text-dark btnOpenCert btnSave";
+const openCertLoadingClass = "btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnOpenCert btnSave";
+
 const maxFileSize = 50 * 1024 * 1024; // 50MB
 const allowedTypes = [
     'application/pdf',
@@ -198,7 +203,6 @@ let eventVue = new Vue({
     },
     methods:{
         viewCertificate(id) {
-            const rowData = participantsTable.row(`#${id}`).data();
             openCertificate(id);
         },
         eventsStatus(date_from, date_to) {
@@ -927,9 +931,9 @@ function itemDatatableActions(id, status, awarded) {
                 </a>`;
             }else{
                 _actionButton += `
-                <button class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" title="View Certificate" onclick="openCertificate(${id})">
+                <a class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnOpenCert btnSave" title="View Certificate" onclick="openCertificate(this,${id},0)">
                     <i class="la la-certificate"></i>
-                </button>`;
+                </a>`;
             }
         }
     }
@@ -946,9 +950,9 @@ function itemDatatableActions(id, status, awarded) {
                     </a>`;
             } else {
                 _actionButton += `
-                    <button class="btn btn-secondary btn-sm m-btn m-btn--pill text-dark btnSave" onclick="openCertificate(${id})">
+                    <a class="btn btn-secondary btn-sm m-btn m-btn--pill text-dark btnOpenCert btnSave" onclick="openCertificate(this,${id},1)">
                         <i class="la la-certificate"></i> View Certificate
-                    </button>`;
+                    </a>`;
             }
         } else {
             _actionButton += `
@@ -989,52 +993,52 @@ function awardCertificate(rowId,recent) {
             toastr.error("An error occurred while checking attendance.", "Error");
         },
         complete: function () {
-            btn.prop("disabled", false)
-               .removeClass("m-btn--icon m-btn--icon-only")
-               .addClass("btn-sm");
+            btn.prop("disabled", false);
             if (recent == 1) {
-                btn.html('<i class="la la-clipboard"></i> Verify Attendance');
+                btn.attr("class", classRecent).html('<i class="la la-clipboard"></i> Verify Attendance');
             } else {
-                btn.html('<i class="la la-clipboard"></i>');
+                btn.attr("class", classNotRecent).html('<i class="la la-clipboard"></i>');
             }
         }
     });
 }
 
 
-function openCertificate(id) {
-    const btn = $(`.btnSave[onclick="openCertificate(${id})"]`);
-    btn.prop("disabled", true);
-    btn.find("i").removeClass().addClass("m-loader");
+function openCertificate(el, id, recent) {
+    const btn = $(el);
+    btn.prop("disabled", true).attr("class", openCertLoadingClass).html('<i class="m-loader"></i>');
     const rowData = participantsTable.row(`#${id}`).data();
     eventVue.emp_attendance_selected = rowData;
-    let fileUrl = "";
-    if (rowData.is_employee == 1) {
-        fileUrl = baseUrl(`/uploads/files/documents/employee_files/empcode_${rowData.emp_id}/trainings/${rowData.cert_attachment}`);
-    } else {
-        fileUrl = baseUrl(`/uploads/files/documents/applicant_files/appcode_${rowData.id}/trainings/${rowData.cert_attachment}`);
-    }
+
+    let fileUrl = rowData.is_employee == 1
+        ? baseUrl(`/uploads/files/documents/employee_files/empcode_${rowData.emp_id}/trainings/${rowData.cert_attachment}`)
+        : baseUrl(`/uploads/files/documents/applicant_files/appcode_${rowData.id}/trainings/${rowData.cert_attachment}`);
+
+
     checkFileExists(fileUrl, function (exists, mimeType) {
+
         const $modalBody = $('#pdfViewerModal .modal-body');
+
         if (!exists) {
             $modalBody.html('<p class="text-danger">Error: File not found.</p>');
             $('#pdfViewerModal').modal('show');
+            restoreOpenCert(btn);
             return;
         }
         if (mimeType && mimeType.startsWith('application/pdf')) {
-            $modalBody.html('<iframe id="pdfFrame" style="width:100%;height:600px;" frameborder="0"></iframe>');
+            $modalBody.html(
+                '<iframe id="pdfFrame" style="width:100%;height:600px;" frameborder="0"></iframe>'
+            );
             $('#pdfViewerModal').modal('show');
             $('#pdfFrame').attr('src', fileUrl);
-            $('#pdfViewerModal').on('shown.bs.modal', function () {
-                btn.prop("disabled", false)
-                   .html('<i class="la la-certificate"></i>');
-            });
+
+            $('#pdfViewerModal').off('shown.bs.modal.restoreCert').on('shown.bs.modal.restoreCert', function () {
+                    restoreOpenCert(btn);
+                });
+
         } else {
             window.open(fileUrl, '_blank');
-            window.onload = function () {
-                btn.prop("disabled", false)
-                   .html('<i class="la la-certificate"></i>');
-            };
+            restoreOpenCert(btn);
         }
     });
 }
@@ -1845,3 +1849,9 @@ $('#nonEmployeeToggle').on('change', function () {
         $('#multipleBtn').hide();
     }
 });
+
+function restoreOpenCert(btn) {
+    btn.prop("disabled", false)
+       .attr("class", openCertNormalClass)
+       .html('<i class="la la-certificate"></i> View Certificate');
+}
