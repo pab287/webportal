@@ -139,9 +139,11 @@ if(tableTransferApproval.length === 1){
         Swal.fire({
             icon: "question",
             title: "Employee Transfer?",
-            text: "Are you sure you want to disapprove this employee group transfer!",
+            text: "Are you sure you want to disapprove this employee group transfer?",
             input: "textarea",
-            inputLabel: "Reason for disapproval",
+            inputPlaceholder: "Reason is Required *",
+            inputLabel: "Reason for Disapproval",
+            customClass: { inputLabel: 'm--font-bolder required' },
             inputValidator: (result) => { return !result && "Reason for disapproval is required!"; },
             showCancelButton: true,
             confirmButtonColor: "#3085d6",
