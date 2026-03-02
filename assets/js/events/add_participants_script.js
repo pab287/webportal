@@ -920,8 +920,8 @@ function itemDatatableActions(id, status, awarded) {
             if(!awarded || awarded == 0){
                 _actionButton += `
                 <a href="javascript:void(0)" 
-                    class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
-                    onclick="awardCertificate(${id})" 
+                    class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnAward btnSave" 
+                    onclick="awardCertificate(${id},0)" 
                     title="Verify Attendance">
                     <i class="la la-clipboard"></i>
                 </a>`;
@@ -939,8 +939,8 @@ function itemDatatableActions(id, status, awarded) {
             if (!awarded || awarded == 0) {
                 _actionButton += `
                     <a href="javascript:void(0)" 
-                        class="btn btn-primary btn-sm m-btn m-btn--pill btnSave" 
-                        onclick="awardCertificate(${id})" 
+                        class="btn btn-primary btn-sm m-btn m-btn--pill btnAward btnSave" 
+                        onclick="awardCertificate(${id},1)" 
                         title="Verify Attendance">
                         <i class="la la-clipboard"></i> Verify Attendance
                     </a>`;
@@ -961,10 +961,12 @@ function itemDatatableActions(id, status, awarded) {
     return _actionButton;
 }
 
-function awardCertificate(rowId) {
-    const btn = $(`.btnSave[onclick="awardCertificate(${rowId})"]`);
+function awardCertificate(rowId,recent) {
+    const btn = $(`.btnAward[onclick*="awardCertificate(${rowId},"]`);
     btn.prop("disabled", true);
-    btn.find("i").removeClass().addClass("m-loader");
+    btn.removeClass("btn-sm")
+       .addClass("m-btn--icon m-btn--icon-only");
+    btn.html('<i class="m-loader"></i>');
     $.ajax({
         url: baseUrl("events/check_attendance"),
         type: "post",
@@ -987,7 +989,14 @@ function awardCertificate(rowId) {
             toastr.error("An error occurred while checking attendance.", "Error");
         },
         complete: function () {
-            btn.prop("disabled", false).html('<i class="la la-clipboard"></i>');
+            btn.prop("disabled", false)
+               .removeClass("m-btn--icon m-btn--icon-only")
+               .addClass("btn-sm");
+            if (recent == 1) {
+                btn.html('<i class="la la-clipboard"></i> Verify Attendance');
+            } else {
+                btn.html('<i class="la la-clipboard"></i>');
+            }
         }
     });
 }
