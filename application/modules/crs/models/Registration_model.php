@@ -2362,6 +2362,11 @@ class Registration_model extends CI_Model{
         return $results;
     }
 
+    public function submitAppilication(){
+        $post = $this->input->post('payload');
+        var_dump($post);
+    }
+
 
 
 }

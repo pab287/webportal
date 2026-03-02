@@ -429,4 +429,10 @@
             ->set_content_type('json')
             ->set_output(json_encode($data));
         }
+
+        public function submit_application(){
+            $data = $this->registration->submitAppilication();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
     }

@@ -36,16 +36,16 @@ const genderOptions = [
 const maxFileSize = 50 * 1024 * 1024; // 50MB
 const allowedTypes = [
     'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'image/jpeg'
+    // 'application/msword',
+    // 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    // 'image/jpeg'
   ];
 
 const mimeMap = {
     "application/pdf": "pdf",
-    "application/msword": "doc",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
-    "image/jpeg": "jpg"
+    // "application/msword": "doc",
+    // "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    // "image/jpeg": "jpg"
 };
 
 
@@ -155,17 +155,17 @@ let application_vue = new Vue({
         className: "",
         count: 0,
         uploadedFiles: [],
+        workExperiences: [
+            { company: '', position: '', from: '', to: '', status: '', reason: '' }
+        ],
+        educInfo:[
+            { level: '', school: '', degree:'', honor: '', from: '', to: ''}
+        ],
         currentStep:"#personal_information",
         steps: [
             {
                 tab: "#personal_information",
                 form: "personal_information_form",
-                valid: false,
-                data: {}
-            },
-            {
-                tab: "#additional_information",
-                form: "additional_information_form",
                 valid: false,
                 data: {}
             },
@@ -179,7 +179,13 @@ let application_vue = new Vue({
                 tab: "#work_experience",
                 form: "work_experience_form",
                 valid: false,
-                data: {}
+                data: this.workExperiences
+            },
+            {
+                tab: "#educational_information",
+                form: "educational_information_form",
+                valid: false,
+                data: this.educInfo
             },
             {
                 tab: "#application_information",
@@ -210,10 +216,28 @@ let application_vue = new Vue({
             ) < this.steps.length - 1;
         },
         canSubmit() {
-            return this.steps.every(step => step.valid);
+            const stepsValid = this.steps.every(step => step.valid);
+            const resumeValid = this.uploadedFiles.length > 0;
+            return stepsValid && resumeValid;
         }
     },
     methods: {
+        removeEducInfo: function(index) {
+            this.educInfo.splice(index, 1);
+        },
+        addEducInfo: function() {
+            this.educInfo.push(
+                { level: '', school: '', degree:'', honor: '', from: '', to: ''}
+            );
+        },
+        addWork: function() {
+            this.workExperiences.push(
+                { company: '', position: '', from: '', to: '', status: '', reason: '' }
+            );
+        },
+        removeWork: function(index) {
+            this.workExperiences.splice(index, 1);
+        },
         getExtension: function(type) {
             let extension = mimeMap[type] || (type.includes('/') ? type.split('/').pop() : type);
             extension = extension.toLowerCase();
@@ -232,21 +256,21 @@ let application_vue = new Vue({
             let extension = mimeMap[type] || (type.includes('/') ? type.split('/').pop() : type);
             extension = extension.toLowerCase();
             const classMap = {
-                "doc": "m-widget4 m-widget2__item m-widget2__item--primary col-lg-4 col-md-4 col-sm-12",
-                "docx": "m-widget4 m-widget2__item m-widget2__item--primary col-lg-4 col-md-4 col-sm-12",
-                "pdf": "m-widget4 m-widget2__item m-widget2__item--danger col-lg-4 col-md-4 col-sm-12",
-                "jpg": "m-widget4 m-widget2__item m-widget2__item--success col-lg-4 col-md-4 col-sm-12",
-                "jpeg": "m-widget4 m-widget2__item m-widget2__item--success col-lg-4 col-md-4 col-sm-12"
+                "doc": "m-widget4 m-widget2__item m-widget2__item--primary col-12",
+                "docx": "m-widget4 m-widget2__item m-widget2__item--primary col-12",
+                "pdf": "m-widget4 m-widget2__item m-widget2__item--danger col-12",
+                "jpg": "m-widget4 m-widget2__item m-widget2__item--success col-12",
+                "jpeg": "m-widget4 m-widget2__item m-widget2__item--success col-12"
             };
         
-            return classMap[extension] || "m-widget4 m-widget2__item m-widget2__item--default col-lg-4 col-md-4 col-sm-12";
+            return classMap[extension] || "m-widget4 m-widget2__item m-widget2__item--default col-12";
         },
-        fileDelete: function(id) {
-            const index = this.uploadedFiles.findIndex(file => file.id === id);
-            if (index !== -1) {
-                this.uploadedFiles.splice(index, 1);
-            }
+        fileDelete: function(index) {
+            this.uploadedFiles.splice(index, 1);
             this.count = this.uploadedFiles.length;
+            if(this.count == 0){
+                this.steps.find(s => s.tab === "#resume_upload").valid = false;
+            }
             this.steps.find(s => s.tab === "#resume_upload").data = this.uploadedFiles;
         },
         goBack() {
@@ -275,7 +299,33 @@ let application_vue = new Vue({
             console.log(nextStep);
         },
         submitAll() {
-            console.log(this.steps);
+            let payload = {};
+            this.steps.forEach(step => {
+
+                if (!step.valid) return;
+                if (Array.isArray(step.data)) {
+                    payload[step.form] = [...step.data];
+                }
+                else {
+                    Object.assign(payload, step.data);
+                }
+        
+            });
+            $.ajax({
+                url: baseUrl + "crs/online_registration/submit_application",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    payload: JSON.stringify(payload), // ✅ only this is JSON
+                    csrf_token: _csrf_hash
+                },
+                success: function (res) {
+                    console.log(res);
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+            });
         }
     },
 });
@@ -319,21 +369,59 @@ function addFile(file) {
         name: file.name,
         type: file.type,
         size: file.size,
+        raw: file
     };
-    application_vue.uploadedFiles.push(fileObj);
+    application_vue.uploadedFiles = [fileObj];
     application_vue.steps.find(s => s.tab === "#resume_upload").data = application_vue.uploadedFiles;
+    application_vue.steps.find(s => s.tab === "#resume_upload").valid = true;
 }
+
+// application_vue.steps.forEach(function(step, index) {
+//     $.validate({
+//         form: "#" + step.form,
+//         onSuccess: function () {
+//             application_vue.steps[index].valid = true;
+//             const formData = {};
+//             $("#" + step.form).serializeArray().forEach(function(field) {
+//                 formData[field.name] = field.value;
+//             });
+//             application_vue.steps[index].data = formData;
+//             application_vue.$nextTick(function () {
+//                 let nextStep = application_vue.steps[index + 1];
+//                 if (nextStep) {
+//                     $('a[href="' + nextStep.tab + '"]').tab('show');
+//                 }
+//             });
+//             return false;
+//         },
+
+//         onError: function () {
+//             application_vue.steps[index].valid = false;
+//             return false;
+//         }
+//     });
+// });
 
 application_vue.steps.forEach(function(step, index) {
     $.validate({
         form: "#" + step.form,
+        scrollToTopOnError: false,
         onSuccess: function () {
             application_vue.steps[index].valid = true;
-            const formData = {};
-            $("#" + step.form).serializeArray().forEach(function(field) {
-                formData[field.name] = field.value;
-            });
-            application_vue.steps[index].data = formData;
+            if (step.tab === "#work_experience") {
+                application_vue.steps[index].data = application_vue.workExperiences;
+            } 
+            else if(step.tab === "#educational_information"){
+                application_vue.steps[index].data = application_vue.educInfo;
+            }
+            else {
+                const formData = {};
+                $("#" + step.form).serializeArray().forEach(function(field) {
+                    formData[field.name] = field.value;
+                });
+                application_vue.steps[index].data = formData;
+            }
+
             application_vue.$nextTick(function () {
                 let nextStep = application_vue.steps[index + 1];
                 if (nextStep) {
@@ -342,7 +430,6 @@ application_vue.steps.forEach(function(step, index) {
             });
             return false;
         },
-
         onError: function () {
             application_vue.steps[index].valid = false;
             return false;

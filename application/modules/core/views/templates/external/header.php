@@ -25,8 +25,11 @@
     <link href="<?php echo base_url("assets/css/custom.css"); ?>" rel="stylesheet" type="text/css" />
     <link href="<?php echo base_url('assets/global/plugins/uploadui/css/jquery.fileupload.css'); ?>" rel="stylesheet" type="text/css" />
     <link href="<?php echo base_url('assets/global/plugins/uploadui/css/jquery.fileupload-ui.css'); ?>" rel="stylesheet" type="text/css" />
+    <script>
+        let _csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
+    </script>
 </head>
 <body class="m-page--wide m-header--fixed m-header--fixed-mobile m-footer--push m-aside--offcanvas-default m-header--minimize-off">
     <div id="background_motion" class="m-grid m-grid--hor m-grid--root m-page">
-        <div class="m-grid__item m-grid__item--fluid  m-grid m-grid--ver m-container m-container--responsive m-container--xxl m-page__container pt-5">
+        <div class="m-grid__item m-grid__item--fluid  m-grid m-grid--ver m-container m-container--responsive m-container--xxl m-page__container pt-2">
             <div class="m-grid__item m-grid__item--fluid m-wrapper">
