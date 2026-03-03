@@ -294,12 +294,10 @@ class App_users_model extends CI_Model {
         return $this->response(true, $files, "Device log files fetched successfully.");
     }
 
-    private function findEmployeeLogFiles($empId){
+    private function findEmployeeLogFiles($empId, $limit = 10){
         $path  = FCPATH . 'uploads/data/app/';
         $files = glob($path . $empId . '-*.json');
-        if (empty($files)) {
-            return [];
-        }
+        if (empty($files)) { return []; }
         $logs = [];
         foreach ($files as $file) {
             $filename  = basename($file);
@@ -313,16 +311,12 @@ class App_users_model extends CI_Model {
             }
         }
 
-        // Sort latest to oldest
         usort($logs, fn($a, $b) => $b['timestamp'] <=> $a['timestamp']);
-
-        // Remove timestamp before returning
-        return array_map(function ($item) {
-            return [
-                'id'   => $item['id'],
-                'text' => $item['text']
-            ];
-        }, $logs);
+        $logs = array_slice($logs, 0, $limit);
+        return array_map(fn($item) => [
+            'id'   => $item['id'],
+            'text' => $item['text']
+        ], $logs);
     }
 
     private function extractTimestampFromFilename($filename){
