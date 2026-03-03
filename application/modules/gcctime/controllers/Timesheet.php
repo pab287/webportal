@@ -26,8 +26,9 @@ class Timesheet extends MY_Controller {
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
 
+        $version = filemtime(FCPATH.'assets/js/time/timesheet/master.script.js');
         $arrData = array("monthly_employees" => $this->payroll_employee_mod->getMonthlyPaidEmployeeSelect2());
-        $this->core_layout->addJs("js/time/timesheet/master.script.js", TRUE, $arrData);
+        $this->core_layout->addJs("js/time/timesheet/master.script.js", TRUE, $arrData, "?v={$version}");
 
         $data = array(
             "yesterday" => $this->date->modify('-1 day')->format("M. d, Y"),
@@ -325,6 +326,14 @@ class Timesheet extends MY_Controller {
     public function generate_default_timesheet(){
         ini_set('max_execution_time', 7200);
         echo json_encode($this->ts_model->generateDefaultTimesheet());
+    }
+
+    public function tag_date_restday() {
+        echo json_encode($this->ts_model->tag_date_restday());
+    }
+
+    public function undo_restday() {
+        echo json_encode($this->ts_model->undoRestday());
     }
 }
 /* End of file Timesheet.php */
