@@ -7,6 +7,7 @@ let selectedReadingStartDate = moment();
 let selectedReadingEndDate = moment();
 
 let reportGenerated = false;
+let modalReset = false;
 
 
 const tbl_reports = $("#table-reports").DataTable({
@@ -551,16 +552,15 @@ $(".btnPrint").on("click", function(){
             report_type: report_type
         },
         success: function(response){
-            
             var w = window.open("about:blank");
             w.document.open();
             w.document.write(response);
             w.document.close();
 
-            // setTimeout(function(){
-            //     w.print();
-            //     w.close();
-            // }, 250);
+            setTimeout(function(){
+                w.print();
+                w.close();
+            }, 250);
         },
         error: function (request, status, error) {
             toastr.error("Please check your internet connection.", "Connection error");
@@ -573,8 +573,10 @@ $("#report_type").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
 }).on("change", function(){
+    if (modalReset) return; // Stop here to prevent double report generation
+
     const selectedDate = $("#selectedDate").val();
-    
+
     if (selectedDate) {
         generateReport(); // generate report onchange if not custom    
         reportGenerated = true; // mark as generated
@@ -593,6 +595,8 @@ $("#date_filter").select2({
         }
     }
 }).on("change", function(){
+    if (modalReset) return; // Stop here to prevent double report generation
+
     $("#selectedDate").val($(this).val());
 
     if ($(this).val() == "custom") {
@@ -650,6 +654,8 @@ generateDateTimePicker(tempRangeDates.min_date, tempRangeDates.max_date);
 
 
 function generateReport(e){
+    if (modalReset) return; // Stop here to prevent double report generation
+
     const date_filter = $("#date_filter").val();
     const report_type = $("#report_type").val();
 
@@ -703,17 +709,13 @@ function enablePrintButton(reportGenerated){
 }
 
 $("#m_soa").on('hidden.bs.modal', function(){
-    Object.assign(statement_details.$data, {
-        total_charges: 0,
-        total_penalty: 0,
-        overpayment: 0,
-        total_balance: 0
-    });
+    modalReset = true; // reset modal then prevent double report generation of trigger change in report type and date_filter
 
     $("#report_type").val([]).trigger("change");
     $("#date_filter").val([]).trigger("change");
     $("#customer_id").val("");
     $(".report-wrapper").addClass("m--hide");
+    $("#selectedDate").val("");
 
     $("#report-tbl-wrapper table>tbody").empty();
     $("#payment_footer_total").html('₱ 0.00');
@@ -726,6 +728,16 @@ $("#m_soa").on('hidden.bs.modal', function(){
     vm_reports_soa_ledger.totalBalance = 0;
 
     $(".btnPrint").prop("disabled", true);
+
+    Object.assign(statement_details.$data, {
+        total_charges: 0,
+        total_penalty: 0,
+        overpayment: 0,
+        total_balance: 0
+    });
+
+    modalReset = false; 
+    reportGenerated = false;
 });
 
 const statement_details = new Vue({
