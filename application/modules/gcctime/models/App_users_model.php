@@ -200,4 +200,147 @@ class App_users_model extends CI_Model {
         }
         return $resultset;
     }
+
+    public function getDeviceLogJson(){
+        $fileName = $this->input->post('filename');
+        if (!$fileName) {
+            return ["response" => false, "data" => []];
+        }
+
+        if (!preg_match('/^[0-9]+-\d{8}\.json$/', $fileName)) {
+            return ["response" => false, "data" => []];
+        }
+
+        $filePath = FCPATH . 'uploads/data/app/' . $fileName;
+        if (!file_exists($filePath)) {
+            return ["response" => false, "data" => []];
+        }
+
+        $content = file_get_contents($filePath);
+        $logs    = json_decode($content, true);
+
+        if (!is_array($logs)) { return ["response" => false, "data" => []]; }
+
+        usort($logs, function ($a, $b) {
+            return strtotime($b['app_time']) <=> strtotime($a['app_time']);
+        });
+
+        return [ "response" => true, "data" => $logs ];
+    }
+
+    public function getActiveAppUsers(){
+        $resultset = array();
+        $post = $this->input->post();
+        $this->db->select("app.id, UPPER(TRIM(CONCAT(emp.firstname, ' ',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+            END,' ', emp.lastname,
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''
+            END))) as app_user, emp.id as emp_id, emp.pic_filename, app.last_logged_in, IFNULL(comp.code, '') as company_code");
+        $this->db->from("gcctimeutility.app_users AS app");
+        $this->db->join("gccmaster.tblemployees AS emp","emp.id = app.emp_id", "INNER");
+        $this->db->join("gcchris.tblcompanies AS comp","comp.id = emp.company_id", "LEFT");
+        if(isset($post["search"]) && $post["search"]){
+            if(is_numeric($post["search"])){ $this->db->where("emp.id", $post["search"]); }
+            else{
+                $this->db->group_start();
+                $this->db->like("emp.firstname", $post["search"], "both");
+                $this->db->or_like("emp.lastname", $post["search"], "both");
+                $this->db->or_like("CONCAT(emp.firstname, ' ', emp.lastname)", $post["search"], "both");
+                $this->db->or_like("CONCAT(emp.firstname, ' ', CONCAT(SUBSTR(emp.middlename, 1, 1), '.'), ' ', emp.lastname)", $post["search"], "both");
+                $this->db->or_like("CONCAT(emp.firstname, ' ', CONCAT(SUBSTR(emp.middlename, 1, 1), '.'), ' ', emp.lastname, ' ', emp.suffix)", $post["search"], "both");
+                $this->db->group_end();
+            }
+        }
+        $this->db->where("app.is_active", 1);
+        $this->db->where("app.allow_app_user", 1);
+        $this->db->where("emp.employee_status", "active");
+        $this->db->group_by("app.emp_id");
+        $this->db->order_by('emp.firstname', 'ASC');
+        $query = $this->db->get();
+
+        if($query->num_rows() > 0){
+            $data = $query->result();
+            foreach ($data as $row) {
+                $filePath = FCPATH . 'uploads/files/images/employee_files/empcode_' . $row->emp_id . '/thumbnails/' . $row->pic_filename;
+                if(file_exists($filePath)){
+                    $row->pic_filename = base_url() . 'uploads/files/images/employee_files/empcode_' . $row->emp_id . '/thumbnails/' . $row->pic_filename;
+                }else{
+                    $row->pic_filename = base_url() . 'assets/images/profile/no_image.jpg';
+                }
+            }
+
+            $resultset["response"] = true;
+            $resultset["data"] = $data;
+        }else{
+            $resultset["response"] = false;
+            $resultset["data"] = array();
+        }
+        return $resultset;
+    }
+
+    public function getDeviceLogFiles(){
+        $empId = (int) $this->input->post('emp_id');
+        if (!$empId) {
+            return $this->response(false, [], "No employee ID provided.");
+        }
+        $files = $this->findEmployeeLogFiles($empId);
+        if (empty($files)) {
+            return $this->response(false, [], "No device log files found.");
+        }
+        return $this->response(true, $files, "Device log files fetched successfully.");
+    }
+
+    private function findEmployeeLogFiles($empId){
+        $path  = FCPATH . 'uploads/data/app/';
+        $files = glob($path . $empId . '-*.json');
+        if (empty($files)) {
+            return [];
+        }
+        $logs = [];
+        foreach ($files as $file) {
+            $filename  = basename($file);
+            $timestamp = $this->extractTimestampFromFilename($filename);
+            if ($timestamp) {
+                $logs[] = [
+                    'id'        => $filename,
+                    'timestamp' => $timestamp,
+                    'text'      => date('F d, Y', $timestamp) . ' Device Logs'
+                ];
+            }
+        }
+
+        // Sort latest to oldest
+        usort($logs, fn($a, $b) => $b['timestamp'] <=> $a['timestamp']);
+
+        // Remove timestamp before returning
+        return array_map(function ($item) {
+            return [
+                'id'   => $item['id'],
+                'text' => $item['text']
+            ];
+        }, $logs);
+    }
+
+    private function extractTimestampFromFilename($filename){
+        $parts = explode('-', $filename);
+        if (!isset($parts[1])) {
+            return null;
+        }
+
+        $datePart = str_replace('.json', '', $parts[1]);
+        $dateObj = DateTime::createFromFormat('mYd', $datePart);
+        return $dateObj ? $dateObj->getTimestamp() : null;
+    }
+
+    private function response($status, $data = [], $message = ''){
+        return [
+            "response"   => $status,
+            "data"       => $data,
+            "toastr_msg" => $message
+        ];
+    }
 }
