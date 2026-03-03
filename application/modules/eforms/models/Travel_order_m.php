@@ -78,10 +78,10 @@
 
             $this->db->select($sql);
             $this->db->from("gcceforms.travel_order a");
-            $this->db->join("gcceforms.travel_personnel tp","tp.travel_order_id = a.id");
+            $this->db->join("gcceforms.travel_personnel tp","tp.travel_order_id = a.id", 'left');
             $this->db->join("gccmaster.tblemployees te", "te.id = tp.employee_id", "left");
-            $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id");
-            $this->db->join("gcceforms.travel_destination tod","tod.travel_order_id = a.id");
+            $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id", 'left');
+            $this->db->join("gcceforms.travel_destination tod","tod.travel_order_id = a.id", 'left');
             $this->db->join('gcceforms.travel_personnel top', 'top.travel_order_id = a.id', 'left');
             $this->db->join('gccmaster.tblemployees toe', 'toe.id = top.employee_id', 'left');
 
@@ -315,10 +315,10 @@
 
             $this->db->select($sql);
             $this->db->from("gcceforms.travel_order a");
-            $this->db->join("gcceforms.travel_personnel tp","tp.travel_order_id = a.id");
+            $this->db->join("gcceforms.travel_personnel tp","tp.travel_order_id = a.id", 'left');
             $this->db->join("gccmaster.tblemployees te", "te.id = tp.employee_id", "left");
-            $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id");
-            $this->db->join("gcceforms.travel_destination tod","tod.travel_order_id = a.id");
+            $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id", 'left');
+            $this->db->join("gcceforms.travel_destination tod","tod.travel_order_id = a.id", 'left');
             $this->db->join('gcceforms.travel_personnel top', 'top.travel_order_id = a.id', 'left');
             $this->db->join('gccmaster.tblemployees toe', 'toe.id = top.employee_id', 'left');
 
