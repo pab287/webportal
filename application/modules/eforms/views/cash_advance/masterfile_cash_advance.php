@@ -157,14 +157,14 @@
 										<li class="dropdown-item pt-1 pb-1">
 											<label class="m-checkbox mb-0">
 												<input type="checkbox" checked="checked" oninput="showOrHideColumn(3, this)">
-												Amount Applied
+												COMPANY
 												<span></span>
 											</label>
 										</li>
 										<li class="dropdown-item pt-1 pb-1">
 											<label class="m-checkbox mb-0">
 												<input type="checkbox" checked="checked" oninput="showOrHideColumn(4, this)">
-												COMPANY
+												Amount Applied
 												<span></span>
 											</label>
 										</li>
