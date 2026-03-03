@@ -124,34 +124,111 @@
 									</span>
 								</span>
 							</div>
-							<div class="m-btn-group btn-group" role="group">
-								<button id="tbl-btn-share" title="Export" type="button"
-										class="btn btnExport btn-success m-btn dropdown-toggle"
-										data-toggle="dropdown" aria-haspopup="true"
-										aria-expanded="false">
-									<i class="la la-external-link"></i>
-								</button>
-								<div class="dropdown-menu" aria-labelledby="btnGroupDrop1"
-										x-placement="bottom-start"
-										style="position: absolute; transform: translate3d(0px, 40px, 0px); top: 0px; left: 0px; will-change: transform;">
-									<a href="" class="dropdown-item datatable-csv" id="ExportCSV">
-										<i class="m-nav__link-icon la la-file-o"></i>
-										<span class="m-nav__link-text">
-											CSV
-										</span>
-									</a>
-									<a href="" class="dropdown-item datatable-pdf" id="ExportPDF">
-										<i class="m-nav__link-icon la la-file-pdf-o"></i>
-										<span class="m-nav__link-text">
-											PDF
-										</span>
-									</a>
-									<a href="" class="dropdown-item datatable-excel" id="ExportExcel">
-										<i class="m-nav__link-icon la la-file-excel-o"></i>
-										<span class="m-nav__link-text">
-											EXCEL
-										</span>
-									</a>   
+
+							<div class="btn-group ml-3" role="group" aria-label="Button group with nested dropdown">
+								<div class="m-btn-group btn-group" role="group">
+									<span data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<button type="button" data-toggle="m-tooltip" data-original-title="Show/Hide Columns" data-skin="dark" data-delay='{"show": 300}' class="m-btn btn btn-success dropdown-toggle btnAdvance_search" style="padding-top: 9px;">
+											<i class="fa fa-th"></i>
+										</button>
+									</span>
+									<ul class="dropdown-menu dropdown-menu-right" style="text-transform: uppercase;" id="column-options" aria-labelledby="btnGroupDrop1" x-placement="bottom-start">
+										<li class="dropdown-item pt-1 pb-1">
+											<label class="m-checkbox mb-0">
+												<input type="checkbox" checked="checked" oninput="showOrHideColumn(2, this)">
+												Status
+												<span></span>
+											</label>
+										</li>
+										<li class="dropdown-item pt-1 pb-1">
+											<label class="m-checkbox mb-0">
+												<input type="checkbox" checked="checked" oninput="showOrHideColumn(3, this)">
+												CA #
+												<span></span>
+											</label>
+										</li>
+										<li class="dropdown-item pt-1 pb-1">
+											<label class="m-checkbox mb-0">
+												<input type="checkbox" checked="checked" oninput="showOrHideColumn(4, this)">
+												Employee
+												<span></span>
+											</label>
+										</li>
+										<li class="dropdown-item pt-1 pb-1">
+											<label class="m-checkbox mb-0">
+												<input type="checkbox" checked="checked" oninput="showOrHideColumn(5, this)">
+												Amount Applied
+												<span></span>
+											</label>
+										</li>
+										<li class="dropdown-item pt-1 pb-1">
+											<label class="m-checkbox mb-0">
+												<input type="checkbox" oninput="showOrHideColumn(6, this)">
+												COMPANY
+												<span></span>
+											</label>
+										</li>
+										<li class="dropdown-item pt-1 pb-1">
+											<label class="m-checkbox mb-0">
+												<input type="checkbox" checked="checked" oninput="showOrHideColumn(7, this)">
+												Purpose
+												<span></span>
+											</label>
+										</li>
+										<li class="dropdown-item pt-1 pb-1">
+											<label class="m-checkbox mb-0">
+												<input type="checkbox" oninput="showOrHideColumn(8, this)">
+												Amount Approved
+												<span></span>
+											</label>
+										</li>
+										<li class="dropdown-item pt-1 pb-1">
+											<label class="m-checkbox mb-0">
+												<input type="checkbox" oninput="showOrHideColumn(9, this)">
+												Date Applied
+												<span></span>
+											</label>
+										</li>
+										<li class="dropdown-item pt-1 pb-1">
+											<label class="m-checkbox mb-0">
+												<input type="checkbox" oninput="showOrHideColumn(10, this)">
+												Date Approved
+												<span></span>
+											</label>
+										</li>
+									</ul>
+								</div>
+								<div class="m-btn-group btn-group ml-1" role="group">
+									<span data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+										<button id="tbl-btn-share" title="Export" type="button"
+												class="btn btnExport btn-success m-btn dropdown-toggle"
+												data-toggle="dropdown" aria-haspopup="true"
+												aria-expanded="false">
+											<i class="la la-external-link"></i>
+										</button>
+									</span>
+									<div class="dropdown-menu" aria-labelledby="btnGroupDrop1"
+											x-placement="bottom-start"
+											style="position: absolute; transform: translate3d(0px, 40px, 0px); top: 0px; left: 0px; will-change: transform;">
+										<a href="" class="dropdown-item datatable-csv" id="ExportCSV">
+											<i class="m-nav__link-icon la la-file-o"></i>
+											<span class="m-nav__link-text">
+												CSV
+											</span>
+										</a>
+										<a href="" class="dropdown-item datatable-pdf" id="ExportPDF">
+											<i class="m-nav__link-icon la la-file-pdf-o"></i>
+											<span class="m-nav__link-text">
+												PDF
+											</span>
+										</a>
+										<a href="" class="dropdown-item datatable-excel" id="ExportExcel">
+											<i class="m-nav__link-icon la la-file-excel-o"></i>
+											<span class="m-nav__link-text">
+												EXCEL
+											</span>
+										</a>   
+									</div>
 								</div>
 							</div>
                             <div class="m-separator m-separator--dashed d-xl-none"></div>
@@ -169,6 +246,7 @@
 										<th>Status</th>
 										<th>CA #</th>
 										<th>Employee</th>
+										<th>Company</th>
 										<th>Amount Applied</th>
 										<th>Purpose</th>
 										<th>Amount Approved</th>
