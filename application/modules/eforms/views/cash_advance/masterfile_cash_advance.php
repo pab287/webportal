@@ -135,63 +135,63 @@
 									<ul class="dropdown-menu dropdown-menu-right" style="text-transform: uppercase;" id="column-options" aria-labelledby="btnGroupDrop1" x-placement="bottom-start">
 										<li class="dropdown-item pt-1 pb-1">
 											<label class="m-checkbox mb-0">
-												<input type="checkbox" checked="checked" oninput="showOrHideColumn(2, this)">
+												<input type="checkbox" checked="checked" oninput="showOrHideColumn(0, this)">
 												Status
 												<span></span>
 											</label>
 										</li>
 										<li class="dropdown-item pt-1 pb-1">
 											<label class="m-checkbox mb-0">
-												<input type="checkbox" checked="checked" oninput="showOrHideColumn(3, this)">
+												<input type="checkbox" checked="checked" oninput="showOrHideColumn(1, this)">
 												CA #
 												<span></span>
 											</label>
 										</li>
 										<li class="dropdown-item pt-1 pb-1">
 											<label class="m-checkbox mb-0">
-												<input type="checkbox" checked="checked" oninput="showOrHideColumn(4, this)">
+												<input type="checkbox" checked="checked" oninput="showOrHideColumn(2, this)">
 												Employee
 												<span></span>
 											</label>
 										</li>
 										<li class="dropdown-item pt-1 pb-1">
 											<label class="m-checkbox mb-0">
-												<input type="checkbox" checked="checked" oninput="showOrHideColumn(5, this)">
+												<input type="checkbox" checked="checked" oninput="showOrHideColumn(3, this)">
 												Amount Applied
 												<span></span>
 											</label>
 										</li>
 										<li class="dropdown-item pt-1 pb-1">
 											<label class="m-checkbox mb-0">
-												<input type="checkbox" oninput="showOrHideColumn(6, this)">
+												<input type="checkbox" checked="checked" oninput="showOrHideColumn(4, this)">
 												COMPANY
 												<span></span>
 											</label>
 										</li>
 										<li class="dropdown-item pt-1 pb-1">
 											<label class="m-checkbox mb-0">
-												<input type="checkbox" checked="checked" oninput="showOrHideColumn(7, this)">
+												<input type="checkbox" checked="checked" oninput="showOrHideColumn(5, this)">
 												Purpose
 												<span></span>
 											</label>
 										</li>
 										<li class="dropdown-item pt-1 pb-1">
 											<label class="m-checkbox mb-0">
-												<input type="checkbox" oninput="showOrHideColumn(8, this)">
+												<input type="checkbox" checked="checked" oninput="showOrHideColumn(6, this)">
 												Amount Approved
 												<span></span>
 											</label>
 										</li>
 										<li class="dropdown-item pt-1 pb-1">
 											<label class="m-checkbox mb-0">
-												<input type="checkbox" oninput="showOrHideColumn(9, this)">
+												<input type="checkbox" checked="checked" oninput="showOrHideColumn(7, this)">
 												Date Applied
 												<span></span>
 											</label>
 										</li>
 										<li class="dropdown-item pt-1 pb-1">
 											<label class="m-checkbox mb-0">
-												<input type="checkbox" oninput="showOrHideColumn(10, this)">
+												<input type="checkbox" checked="checked" oninput="showOrHideColumn(9, this)">
 												Date Approved
 												<span></span>
 											</label>

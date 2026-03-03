@@ -52,7 +52,7 @@ var tblCashAdvance = $("#table-cash-advance").DataTable({
         { data: null, width: "8%", className: "text-center" },
     ],
     columnDefs: [
-        { targets: [3, 6], className: "columnAlign" },
+        { targets: [4, 6], className: "columnAlign" },
         { targets: [0], className: "statusAlign" },
         { targets: [2], width: "15%" },
         { targets: [1], width: "10%" },
@@ -234,6 +234,7 @@ $(document).ready(function () {
                 },
                 operators: ['equal', 'not_equal']
             },
+            { id: 'company', label: 'Company', type: 'string' },
             { id: 'purpose', label: 'Purpose', type: 'string' },
             {
                 id: 'created_dt',
@@ -468,4 +469,13 @@ function removeBLacklist(id, emp){
             return false;
         }
     })
+}
+
+$("#column-options.dropdown-menu").click(function (e) {
+    e.stopPropagation();
+});
+
+function showOrHideColumn(index, el) {
+    const column = tblCashAdvance.column(index);
+    column.visible($(el)[0].checked);
 }
