@@ -43,6 +43,7 @@ var tblCashAdvance = $("#table-cash-advance").DataTable({
         { data: "status", render: function (data) { return renderStatusHtml(data) } },
         { data: "reference_no" },
         { data: "firstname", render: function (data, type, row, meta) { return displayName(row.display_name, row.position) } },
+        { data: "company" },
         { data: "amt_applied" },
         { data: "purpose" },
         { data: "amt_approved" },
@@ -51,12 +52,12 @@ var tblCashAdvance = $("#table-cash-advance").DataTable({
         { data: null, width: "8%", className: "text-center" },
     ],
     columnDefs: [
-        { targets: [3, 5], className: "columnAlign" },
+        { targets: [3, 6], className: "columnAlign" },
         { targets: [0], className: "statusAlign" },
         { targets: [2], width: "15%" },
         { targets: [1], width: "10%" },
-        { targets: [6, 7], width: "5%" },
-        { targets: [4], width: "25%" },
+        { targets: [7, 8], width: "5%" },
+        { targets: [5], width: "25%" },
         {
             data: null,
             defaultContent: "",
