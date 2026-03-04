@@ -1012,6 +1012,7 @@ class Payroll_m extends CI_Model{
                 $arrTempSchedule = array();
                 $monthCounter = array();
                 $tempShiftRecords = array();
+                $customShiftTaggedRestDay = array();
                 foreach ($period as $dt) {
                     $day = strtolower($dt->format("l"));
                     $tempDate = $dt->format("Y-m-d");
@@ -1052,7 +1053,11 @@ class Payroll_m extends CI_Model{
                             $tempAlteredDates->$md5Date->altered_shift = $isAlteredShift;
                             /*** $schedule->altered_shift_schedule->$md5Date = $altered_shift_schedule; ***/
                         }
-                        if(isset($shiftSchedule->has_shift) && intval($shiftSchedule->has_shift) == 0){ $_hasShiftSchedule = false; };
+                        if(isset($shiftSchedule->has_shift) && intval($shiftSchedule->has_shift) == 0){
+                            $customShiftTaggedRestDay[$md5Date]["is_rest_day"] = true;
+                            $_hasShiftSchedule = false;
+                        }
+
                         if($_hasShiftSchedule){
                             if (($schedule->am_start !== null && $schedule->am_end !== null)
                                 || ($schedule->pm_start !== null && $schedule->pm_end !== null)) {
@@ -1256,6 +1261,12 @@ class Payroll_m extends CI_Model{
                                     $ts->is_rest_day = 1;
                                 }
                             }
+
+                            if(isset($customShiftTaggedRestDay[$md5Date]) && $customShiftTaggedRestDay[$md5Date]["is_rest_day"] === true){
+                                $payrate_setting = $this->getPayrateSetting("rest day");
+                                $ts->is_rest_day = 1;
+                            }
+                            
                             $ts->schedule = $_temp_ploted_schedule;
     
                             $minutesDaily = $this->getTotalMunitesDaily($ts);
