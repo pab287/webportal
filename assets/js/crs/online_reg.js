@@ -125,12 +125,11 @@ $(document).ready(function () {
         data: recruitmentSources,
     }).on('select2:select', function (e) {
         const selectedValue = e.params.data.id;
-    
         if (selectedValue == 'referral') {
             $('.referral').removeClass('d-none');
         } else {
             $('.referral').addClass('d-none');
-            $('#referral').val(null).trigger('change'); // Optional: clear selection
+            $('#referral').val(null).trigger('change');
         }
     });
 
@@ -316,7 +315,7 @@ let application_vue = new Vue({
                 type: "POST",
                 dataType: "json",
                 data: {
-                    payload: JSON.stringify(payload), // ✅ only this is JSON
+                    payload: JSON.stringify(payload),
                     csrf_token: _csrf_hash
                 },
                 success: function (res) {
@@ -417,7 +416,14 @@ application_vue.steps.forEach(function(step, index) {
             else {
                 const formData = {};
                 $("#" + step.form).serializeArray().forEach(function(field) {
-                    formData[field.name] = field.value;
+                    if (field.name === "schools[]" || field.name === "courses[]" || field.name === "positions[]") {
+                        if (!formData[field.name]) {
+                            formData[field.name] = [];
+                        }
+                        formData[field.name].push(field.value);
+                    } else {
+                        formData[field.name] = field.value;
+                    }
                 });
                 application_vue.steps[index].data = formData;
             }

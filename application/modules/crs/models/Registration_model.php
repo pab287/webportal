@@ -2364,7 +2364,16 @@ class Registration_model extends CI_Model{
 
     public function submitAppilication(){
         $post = $this->input->post('payload');
-        var_dump($post);
+        $personal_info= array(
+            "firstname" => $post['firstname'],
+            "middlename" => $post['middlename'],
+            "lastname" => $post['lastname'],
+            "suffix" => $post['suffix'],
+            "contact_no" => $post['contact_no'],
+            "email" => $post['email'],
+            "position" => $post['position'],
+            "status" => 1
+        );
     }
 
 

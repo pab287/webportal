@@ -110,14 +110,14 @@
                                     <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                                         <div class="form-group">
                                             <label for="school_id" class="form-control-label">School</label>
-                                            <select id="school_id" name="schools[]" multiple="multiple" class="form-control"></select>
+                                            <select id="school_id" name="schools" multiple="multiple" class="form-control"></select>
                                             <span class="m-form__help mb-0 pt-1 text-muted m--regular-font-size-sm1" style="text-transform: none;">YOU CAN SELECT MULTIPLE SCHOOL</span>
                                         </div>
                                     </div>
                                     <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                                         <div class="form-group">
                                             <label for="course_id" class="form-control-label">Course</label>
-                                            <select id="course_id" name="courses[]" multiple="multiple" class="form-control"></select>
+                                            <select id="course_id" name="courses" multiple="multiple" class="form-control"></select>
                                             <span class="m-form__help mb-0 pt-1 text-muted m--regular-font-size-sm1" style="text-transform: none;">YOU CAN SELECT MULTIPLE COURSE</span>
                                         </div>
                                     </div>
@@ -250,19 +250,19 @@
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="full_name_1" class="form-control-label required">Full Name</label>
-                                            <input id="full_name_1" name="reference_full_name[]" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="full_name_1" name="reference_full_name_1" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="contact_no_1" class="form-control-label required">Contact Number</label>
-                                            <input id="contact_no_1" name="reference_contact_no[]" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="20" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="contact_no_1" name="reference_contact_no_1" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="20" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="address_1" class="form-control-label required">Address</label>
-                                            <input id="address_1" name="reference_address[]" placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="address_1" name="reference_address_1" placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                 </div>
@@ -270,19 +270,19 @@
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="full_name_2" class="form-control-label required">Full Name</label>
-                                            <input id="full_name_2" name="reference_full_name[]" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="full_name_2" name="reference_full_name_2" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="contact_no_2" class="form-control-label required">Contact Number</label>
-                                            <input id="contact_no_2" name="reference_contact_no[]" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="20" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="contact_no_2" name="reference_contact_no_2" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="20" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="address_2" class="form-control-label required">Address</label>
-                                            <input id="address_2" name="reference_address[]" placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="address_2" name="reference_address_2" placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                 </div>
@@ -290,19 +290,19 @@
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="full_name_3" class="form-control-label required">Full Name</label>
-                                            <input id="full_name_3" name="reference_full_name[]" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="full_name_3" name="reference_full_name_3" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="contact_no_3" class="form-control-label required">Contact Number</label>
-                                            <input id="contact_no_3" name="reference_contact_no[]" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="20" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="contact_no_3" name="reference_contact_no_3" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="20" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="address_3" class="form-control-label required">Address</label>
-                                            <input id="address_3" name="reference_address[]"  placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="address_3" name="reference_address_3"  placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                 </div>
@@ -474,7 +474,7 @@
                                     <div class="col-xl-8 col-lg-8 col-md-8 col-sm-12">
                                         <div class="form-group">
                                             <label for="position_id" class="form-control-label required">Position Applied FOR</label>
-                                            <select id="position_id" name="positions[]" multiple="multiple" class="form-control" data-validation="required">
+                                            <select id="position_id" name="positions" multiple="multiple" class="form-control" data-validation="required">
                                             </select>
                                             <span class="m-form__help mb-0 pt-1 text-muted m--regular-font-size-sm1" style="text-transform: none;">You can select multiple position.</span>
                                         </div>
