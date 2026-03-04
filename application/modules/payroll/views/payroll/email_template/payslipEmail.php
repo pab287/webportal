@@ -120,20 +120,36 @@
                 <td><h1 style='font-family: Quicksand, Calibri, sans-serif; color:#343434; font-size: 12px;' >REG DAYS: <?php echo $result->data->ewd_decimal; ?></h1></td>
                 <td><h1 style='font-family: Quicksand, Calibri, sans-serif; color:#343434; font-size: 12px;'>REG HOURS: <?php echo $result->data->target_hours; ?></h1></td>
               </tr>
+              <?php if(floatval($result->data->total_unrendered_amount) > 0): ?>
               <tr><td colspan="2" style="background-color: #ccc; height: 1px;"></td></tr>
               <tr>
                 <td style='text-align: left;'><h1 style="font-family: Quicksand, Calibri, sans-serif; color:#343434; font-size: 12px;">Lates/Absences</h1></td>
-                <td style='text-align: right;'><h1 style="font-family: Quicksand, Calibri, sans-serif; color:#343434; font-size: 12px;"> (<?php echo $result->data->total_unrendered_amount?>)</h1></td>
+                <td style='text-align: right;'><h1 style="font-family: Quicksand, Calibri, sans-serif; color:#343434; font-size: 12px;"> (<?php echo $result->data->total_unrendered_amount; ?>)</h1></td>
               </tr>
               <tr style='text-align: center;'>
                 <td><h1 style='font-family: Quicksand, Calibri, sans-serif; color:#343434; font-size: 12px;'>Absent Hrs: <?php echo $result->data->absent_hours; ?></h1></td>
-                <td><h1 style='font-family: Quicksand, Calibri, sans-serif; color:#343434; font-size: 12px;'>UTS hrs: <?php echo $result->data->undertime_hours ?></h1></td>
+                <td><h1 style='font-family: Quicksand, Calibri, sans-serif; color:#343434; font-size: 12px;'>UT Hrs: <?php echo $result->data->undertime_hours; ?></h1></td>
               </tr>
+              <?php endif; ?>
+              <?php if(floatval($result->data->unpaid_holiday_amount) > 0): ?>
+              <tr><td colspan="2" style="background-color: #ccc; height: 1px;"></td></tr>
+              <tr>
+                <td style='text-align: left;'><h1 style="font-family: Quicksand, Calibri, sans-serif; color:#343434; font-size: 12px;">Unpaid Holiday</h1></td>
+                <td style='text-align: right;'><h1 style="font-family: Quicksand, Calibri, sans-serif; color:#343434; font-size: 12px;"> (<?php echo $result->data->unpaid_holiday_amount; ?>)</h1></td>
+              </tr>
+              <tr style='text-align: center;'>
+                <td><h1 style='font-family: Quicksand, Calibri, sans-serif; color:#343434; font-size: 12px;'>Days: <?php echo floatval($result->data->unpaid_holiday_hours) / 8; ?></h1></td>
+                <td><h1 style='font-family: Quicksand, Calibri, sans-serif; color:#343434; font-size: 12px;'>Hrs: <?php echo $result->data->unpaid_holiday_hours; ?></h1></td>
+              </tr>
+              <?php endif; ?>
+              <?php if(floatval($result->data->total_allowances) > 0): ?>
               <tr><td colspan="2" style="background-color: #ccc; height: 1px;"></td></tr>
               <tr>
                 <td style='text-align: left;'><h1 style="font-family: Quicksand, Calibri, sans-serif; color:#343434; font-size: 12px;">Allowances</h1></td>
                 <td style='text-align: right;'><h1 style="font-family: Quicksand, Calibri, sans-serif; color:#343434; font-size: 12px;"> <?php echo $result->data->total_allowances?></h1></td>
               </tr>
+              <?php endif; ?>
+
               <tr><td colspan="2" style="background-color: #000; height: 2px;"></td></tr>
               <?php if ($result->data->ot_amount > 0) : ?>
               <tr>

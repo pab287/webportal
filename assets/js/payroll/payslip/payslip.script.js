@@ -5,7 +5,7 @@ const viewTimesheetModal = $("#view-timesheet-modal");
 const viewPayrollPayslipModal = $("#view-payroll-payslip-modal");
 
 const exportOptions = {
-    columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+    columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
 };
 
 let dtEmployeeTimesheet;
@@ -31,11 +31,11 @@ const vmPayslip = new Vue({
 const vmPayslipContent = new Vue({
     el: "#temp-payslip_content",
     data: { row: {}, ot_computation: {}, 
-    total_ot_hrs: 0, ot_hrs: 0, ot_ndiff_hrs: 0, ot_ndiff_computation: 0,
+    total_ot_hrs: 0, ot_hrs: 0, ot_ndiff_hrs: 0, ot_ndiff_computation: 0, regndiff_hrs: 0, regndiff_computation: 0,
     total_ndiff_hrs: 0, total_ndiff_computation: 0, raw_tl: 0, raw_tod: 0, raw_tli: 0 },
     methods: {
         printCurrentPayslip: function (id) {
-            if (parseInt(id) > 0) {
+            if (Number.parseInt(id) > 0) {
                 let tempId = [];
                 tempId.push(id);
                 return triggerPrintable(tempId);
@@ -65,9 +65,11 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
 
         if (jQuery.inArray("view_by_company", _currentActions) !== -1) {
             if (_company) {
-                let option = new Option(_company.text, _company.id, true, true);
-                modalGeneratePayslip.find("#company").append(option).trigger('change');
-                modalGeneratePayslip.find("#company").next().prop("hidden", true);
+                const companySelect2 = modalGeneratePayslip.find("#company");
+                if(typeof companySelect2 !== "undefined" && companySelect2.length == 1) {
+                    companySelect2.val(_company.id).trigger("change");
+                    companySelect2.next().prop("hidden", true);
+                }
                 modalGeneratePayslip.find("#has_privi_company-text").text(_company.text);
             }
         } else {
@@ -350,7 +352,7 @@ if (typeof modalGeneratePayslip !== "undefined" && modalGeneratePayslip.length =
                         if (typeof modalGeneratePayslip !== "undefined") {
                             modalGeneratePayslip.modal("hide");
                         }
-                        if (parseInt(json.count) > 0) {
+                        if (Number.parseInt(json.count) > 0) {
                             dtPayrollIds = json.ps_id;
                             dtPayslipTable.ajax.reload();
                         }
@@ -384,22 +386,22 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
         buttons: [{
             text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT REPORT</span>',
             className: "pull-right printPayslipAction btn-warning btnPrint m--margin-left-25",
-            action: function (e, dt, node, conf) {
-                var temp = vmPayslip.request;
-                var tempData = dt.data();
+            action: function (_e, dt, _node, _conf) {
+                const temp = vmPayslip.request;
+                const tempData = dt.data();
                 if (typeof tempData !== "undefined" && tempData.length > 0) {
-                    var ids = [];
+                    let ids = [];
                     $.each(tempData, function (i, v) { ids.push(v.id); });
                     triggerPrintableNetPay(ids, temp);
                 }
             }
         }, {
-            text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT ACKNOWLEDGeMENT</span>',
+            text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT ACKNOWLEDGEMENT</span>',
             className: "pull-right printPayslipAction btnPrint",
-            action: function (e, dt, node, conf) {
-                var tempData = dt.data();
+            action: function (_e, dt, _node, _conf) {
+                const tempData = dt.data();
                 if (typeof tempData !== "undefined" && tempData.length > 0) {
-                    var ids = [];
+                    let ids = [];
                     $.each(tempData, function (i, v) { ids.push(v.id); });
                     triggerPrintableAknowledgement(ids);
                 }
@@ -407,10 +409,10 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
         }, {
             text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT ALL</span>',
             className: "pull-right printPayslipAction btnPrint",
-            action: function (e, dt, node, conf) {
-                var tempData = dt.data();
+            action: function (_e, dt, _node, _conf) {
+                const tempData = dt.data();
                 if (typeof tempData !== "undefined" && tempData.length > 0) {
-                    var ids = [];
+                    let ids = [];
                     $.each(tempData, function (i, v) { ids.push(v.id); });
                     triggerPrintable(ids);
                 }
@@ -418,12 +420,12 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
         }, {
             text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT SELECTED</span>',
             className: "pull-right printPayslipSelectedAction btnPrint",
-            action: function (e, dt, node, conf) {
-                var tempCheckbox = $(dt.body()).find("input[type='checkbox']:checked");
+            action: function (_e, dt, _node, _conf) {
+                const tempCheckbox = $(dt.body()).find("input[type='checkbox']:checked");
                 if (typeof tempCheckbox !== "undefined" && tempCheckbox.length > 0) {
-                    var ids = [];
+                    let ids = [];
                     $.each(tempCheckbox, function (i, v) {
-                        var checkedValue = $(v).val();
+                        const checkedValue = $(v).val();
                         ids.push(checkedValue);
                     });
                     triggerPrintable(ids);
@@ -433,12 +435,12 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
             text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT OPTION</span>',
             titleAttr: 'Print Option for Retiree, Local Hires and Pavers',
             className: "pull-right printPayslipOptionAction btnPrint",
-            action: function (e, dt, node, conf) {
-                var tempCheckbox = $(dt.body()).find("input[type='checkbox']:checked");
+            action: function (_e, dt, _node, _conf) {
+                const tempCheckbox = $(dt.body()).find("input[type='checkbox']:checked");
                 if (typeof tempCheckbox !== "undefined" && tempCheckbox.length > 0) {
-                    var ids = [];
+                    let ids = [];
                     $.each(tempCheckbox, function (i, v) {
-                        var checkedValue = $(v).val();
+                        const checkedValue = $(v).val();
                         ids.push(checkedValue);
                     });
                     triggerPrintableOption(ids);
@@ -559,13 +561,13 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                         const custom_adjustment = row.split("||");
                         const marginClass = i > 0 ? "mt-1" : "";
                         const dividerClass = custom_adjustments.length === (i + 1) ? "custom-adjustment-total-divider" : "";
-                        const adj_type = parseInt(custom_adjustment[2]);
+                        const adj_type = Number.parseInt(custom_adjustment[2]);
                         const adjTypeClass = adj_type === 0 ? "m--font-danger" : "";
 
                         template += `<div class="mb-0 m--regular-font-size-sm1 m--font-bolder ${marginClass}">
                                         <span>${custom_adjustment[0]}</span>
                                         <span> - </span>                                        
-                                        <span class="m--font-boldest ${adjTypeClass}">${parseFloat(custom_adjustment[1]).toLocaleString('en-US', { maximumFractionDigits: 2 })}</span>
+                                        <span class="m--font-boldest ${adjTypeClass}">${Number.parseFloat(custom_adjustment[1]).toLocaleString('en-US', { maximumFractionDigits: 2 })}</span>
                                      </div>`;
                     });
 
@@ -584,13 +586,13 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
-                            const adj_type = parseInt(temp_adjustment[2]);
-                            const temp_status = parseInt(temp_adjustment[3]);
-                            let temp_amount = parseFloat(data);
+                            const adj_type = Number.parseInt(temp_adjustment[2]);
+                            const temp_status = Number.parseInt(temp_adjustment[3]);
+                            let temp_amount = Number.parseFloat(data);
                             if (adj_type == 1) {
-                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
+                                temp_amount = Number.parseFloat(data) + Number.parseFloat(temp_adjustment[1]);
                             } else {
-                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
+                                temp_amount = Number.parseFloat(data) - Number.parseFloat(temp_adjustment[1]);
                             }
                             temp_amount = numberFormat(temp_amount);
 
@@ -612,6 +614,13 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                 }
             },
             {
+                data: "ot_allowance_amount", // gross pay
+                className: "text-right",
+                render: function (data) {
+                    return numberFormat(data);
+                }
+            },
+            {
                 data: "gross_pay", // gross pay
                 className: "text-right",
                 render: function (data) {
@@ -630,13 +639,13 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
-                            const adj_type = parseInt(temp_adjustment[2]);
-                            const temp_status = parseInt(temp_adjustment[3]);
-                            let temp_amount = parseFloat(data);
+                            const adj_type = Number.parseInt(temp_adjustment[2]);
+                            const temp_status = Number.parseInt(temp_adjustment[3]);
+                            let temp_amount = Number.parseFloat(data);
                             if (adj_type == 1) {
-                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
+                                temp_amount = Number.parseFloat(data) + Number.parseFloat(temp_adjustment[1]);
                             } else {
-                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
+                                temp_amount = Number.parseFloat(data) - Number.parseFloat(temp_adjustment[1]);
                             }
                             temp_amount = numberFormat(temp_amount);
 
@@ -669,13 +678,13 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
-                            const adj_type = parseInt(temp_adjustment[2]);
-                            const temp_status = parseInt(temp_adjustment[3]);
-                            let temp_amount = parseFloat(data);
+                            const adj_type = Number.parseInt(temp_adjustment[2]);
+                            const temp_status = Number.parseInt(temp_adjustment[3]);
+                            let temp_amount = Number.parseFloat(data);
                             if (adj_type == 1) {
-                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
+                                temp_amount = Number.parseFloat(data) + Number.parseFloat(temp_adjustment[1]);
                             } else {
-                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
+                                temp_amount = Number.parseFloat(data) - Number.parseFloat(temp_adjustment[1]);
                             }
                             temp_amount = numberFormat(temp_amount);
 
@@ -708,13 +717,13 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
-                            const adj_type = parseInt(temp_adjustment[2]);
-                            const temp_status = parseInt(temp_adjustment[3]);
-                            let temp_amount = parseFloat(data);
+                            const adj_type = Number.parseInt(temp_adjustment[2]);
+                            const temp_status = Number.parseInt(temp_adjustment[3]);
+                            let temp_amount = Number.parseFloat(data);
                             if (adj_type == 1) {
-                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
+                                temp_amount = Number.parseFloat(data) + Number.parseFloat(temp_adjustment[1]);
                             } else {
-                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
+                                temp_amount = Number.parseFloat(data) - Number.parseFloat(temp_adjustment[1]);
                             }
                             temp_amount = numberFormat(temp_amount);
 
@@ -747,13 +756,13 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
-                            const adj_type = parseInt(temp_adjustment[2]);
-                            const temp_status = parseInt(temp_adjustment[3]);
-                            let temp_amount = parseFloat(data);
+                            const adj_type = Number.parseInt(temp_adjustment[2]);
+                            const temp_status = Number.parseInt(temp_adjustment[3]);
+                            let temp_amount = Number.parseFloat(data);
                             if (adj_type == 1) {
-                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
+                                temp_amount = Number.parseFloat(data) + Number.parseFloat(temp_adjustment[1]);
                             } else {
-                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
+                                temp_amount = Number.parseFloat(data) - Number.parseFloat(temp_adjustment[1]);
                             }
                             temp_amount = numberFormat(temp_amount);
 
@@ -786,13 +795,13 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                         const created_adjustments = tempCreatedAdjustments.split(",");
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
-                            const adj_type = parseInt(temp_adjustment[2]);
-                            const temp_status = parseInt(temp_adjustment[3]);
-                            let temp_amount = parseFloat(data);
+                            const adj_type = Number.parseInt(temp_adjustment[2]);
+                            const temp_status = Number.parseInt(temp_adjustment[3]);
+                            let temp_amount = Number.parseFloat(data);
                             if (adj_type == 1) {
-                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
+                                temp_amount = Number.parseFloat(data) + Number.parseFloat(temp_adjustment[1]);
                             } else {
-                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
+                                temp_amount = Number.parseFloat(data) - Number.parseFloat(temp_adjustment[1]);
                             }
                             temp_amount = numberFormat(temp_amount);
 
@@ -820,12 +829,12 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                     const tempData = numberFormat(data);
                     let template = ``;
                     template = tempData;
-                    let approvedAmount = parseFloat(data);
+                    let approvedAmount = Number.parseFloat(data);
 
                     // added deduction of loan interest
                     const intDeduction = row.total_loans_interest;
-                    if(typeof intDeduction !== "undefined" && parseFloat(intDeduction) > 0){
-                        let tempAmountCAInt = parseFloat(intDeduction);
+                    if(typeof intDeduction !== "undefined" && Number.parseFloat(intDeduction) > 0){
+                        let tempAmountCAInt = Number.parseFloat(intDeduction);
 
                         approvedAmount = approvedAmount + tempAmountCAInt;
                     }
@@ -837,13 +846,13 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                         var tempAdj = 0;
                         created_adjustments.forEach((row, i) => {
                             const temp_adjustment = row.split("||");
-                            const adj_type = parseInt(temp_adjustment[2]);
-                            const temp_status = parseInt(temp_adjustment[3]);
-                            let temp_amount = parseFloat(data);
+                            const adj_type = Number.parseInt(temp_adjustment[2]);
+                            const temp_status = Number.parseInt(temp_adjustment[3]);
+                            let temp_amount = Number.parseFloat(data);
                             if (adj_type == 1) {
-                                temp_amount = parseFloat(data) + parseFloat(temp_adjustment[1]);
+                                temp_amount = Number.parseFloat(data) + Number.parseFloat(temp_adjustment[1]);
                             } else {
-                                temp_amount = parseFloat(data) - parseFloat(temp_adjustment[1]);
+                                temp_amount = Number.parseFloat(data) - Number.parseFloat(temp_adjustment[1]);
                             }
                             tempAdj = temp_amount;
                             temp_amount = numberFormat(temp_amount);
@@ -870,7 +879,7 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                         deductions.forEach((row, i) => {
                             const custom_deduction = row.split("||");
                             const marginClass = i > 0 ? "mt-1" : "";
-                            const _adj_type = parseInt(custom_deduction[2]);
+                            const _adj_type = Number.parseInt(custom_deduction[2]);
                             const _adj_details = custom_deduction[0];
 
                             if ((_adj_type === 0 && _adj_details.toLowerCase() == 'chrge') || (_adj_type === 0 && _adj_details.toLowerCase() == 'ud')) {
@@ -895,11 +904,11 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                         const deductions = tempDeduction.split(",");
                         deductions.forEach((row, i) => {
                             const custom_deduction = row.split("||");
-                            const adj_type = parseInt(custom_deduction[2]);
+                            const adj_type = Number.parseInt(custom_deduction[2]);
                             const _adj_details = custom_deduction[0];
                             if ((adj_type === 0 && _adj_details.toLowerCase() == 'chrge') || (adj_type === 0 && _adj_details.toLowerCase() == 'ud')) {
                                 const deductionDetails = custom_deduction[0].toUpperCase();
-                                charge = parseFloat(charge) + parseFloat(custom_deduction[1]);
+                                charge = Number.parseFloat(charge) + Number.parseFloat(custom_deduction[1]);
                             }
                         });
                     }
@@ -938,10 +947,10 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
                     const suffix = row.suffix.toLowerCase() !== "n/a" && row.suffix !== "" && row.suffix.toLowerCase() !== "none" ? row.suffix : "";
                     const complete_name = row.firstname + " " + mi + " " + " " + row.lastname + " " + suffix;
                     const dateRange = row.date_start + "_" + row.date_end;
-                    const isBonus = parseInt(row.is_bonus) == 1;
+                    const isBonus = Number.parseInt(row.is_bonus) == 1;
 
                     let viewTimesheet = ``;
-                    if (parseInt(row.is_bonus) == 0) {
+                    if (Number.parseInt(row.is_bonus) == 0) {
                         viewTimesheet = `<li class="m-nav__item">
                             <a href="javascript:void(0)" class="m-nav__link"
                                 onclick="viewTimesheet(${row.emp_id}, '${complete_name}', '${dateRange}')">
@@ -1039,13 +1048,13 @@ if (typeof dtPayrollPayslip !== "undefined" && dtPayrollPayslip.length == 1) {
             };
 
             let totalNet = api
-                .column(22)
+                .column(23)
                 .data()
                 .reduce(function (a, b) {
                     return intVal(a) + intVal(b);
                 }, 0);
             $(api.column(1).footer()).html("<span class='m--font-boldest'>&nbsp;&nbsp;GRANDTOTAL</span>");
-            $(api.column(22).footer()).html("<span class='m--font-boldest'>&#8369;&nbsp;&nbsp;" + numberFormat(totalNet) + "</span>");
+            $(api.column(23).footer()).html("<span class='m--font-boldest'>&#8369;&nbsp;&nbsp;" + numberFormat(totalNet) + "</span>");
         }
     });
 
@@ -1068,49 +1077,53 @@ function viewPayslip(rowId) {
                 if (json.response) {
                     vmPayslipContent.row = Object.assign({}, json.data);
                     var data = json.data;
-                    var totalOT = parseFloat(vmPayslipContent.row.ot_amount) + parseFloat(vmPayslipContent.row.ot_ndiff_amount);
-                    var totalOTHrs = (parseFloat(vmPayslipContent.row.ot_minutes) + parseFloat(vmPayslipContent.row.ot_ndiff_minutes)) / 60;
+                    var totalOT = Number.parseFloat(vmPayslipContent.row.ot_amount) + Number.parseFloat(vmPayslipContent.row.ot_ndiff_amount);
+                    var totalOTHrs = (Number.parseFloat(vmPayslipContent.row.ot_minutes) + Number.parseFloat(vmPayslipContent.row.ot_ndiff_minutes)) / 60;
 
                     vmPayslipContent.total_ot_hrs = numberFormat(totalOTHrs);
-                    vmPayslipContent.ot_hrs = numberFormat(parseFloat(vmPayslipContent.row.ot_minutes)/60);
+                    vmPayslipContent.ot_hrs = numberFormat(Number.parseFloat(vmPayslipContent.row.ot_minutes)/60);
                     vmPayslipContent.ot_computation = numberFormat(totalOT);
-                    vmPayslipContent.ot_ndiff_hrs = numberFormat(parseFloat(vmPayslipContent.row.ot_ndiff_minutes) / 60);
-                    vmPayslipContent.ot_ndiff_computation = numberFormat(parseFloat(vmPayslipContent.row.ot_ndiff_amount));
+                    vmPayslipContent.ot_ndiff_hrs = numberFormat(Number.parseFloat(vmPayslipContent.row.ot_ndiff_minutes) / 60);
+                    vmPayslipContent.ot_ndiff_computation = numberFormat(Number.parseFloat(vmPayslipContent.row.ot_ndiff_amount));
+
+                    vmPayslipContent.regndiff_hrs = numberFormat(Number.parseFloat(vmPayslipContent.row.total_ndiff_minutes) / 60);
+                    vmPayslipContent.regndiff_computation = numberFormat(Number.parseFloat(vmPayslipContent.row.total_ndiff_amount));
                     
-                    vmPayslipContent.total_ndiff_hrs = numberFormat(parseFloat(vmPayslipContent.row.total_ndiff_minutes) / 60);
-                    vmPayslipContent.total_ndiff_computation = numberFormat(parseFloat(vmPayslipContent.row.total_ndiff_amount));
+                    vmPayslipContent.total_ndiff_hrs = numberFormat(Number.parseFloat(vmPayslipContent.row.total_ndiff_minutes) / 60);
+                    vmPayslipContent.total_ndiff_computation = numberFormat(Number.parseFloat(vmPayslipContent.row.total_ndiff_amount));
 
                     let tempLoan = [];
-                    let totalLoan = parseFloat(vmPayslipContent.row.totalLoan.replace(/,/g, ''));
+                    let totalLoan = Number.parseFloat(vmPayslipContent.row.totalLoan.replace(/,/g, ''));
                     let totalDeduction = 0;
                     let totalOthersDeductions = 0;
                     let overAllTotal = 0;
+                    let overAllTotalLoansPayable = 0;
                     const tempCreatedAdjustments = data.created_adjustments;
 
-                    if (data.sss && parseFloat(data.sss) > 0) {
-                        totalDeduction = totalDeduction + parseFloat(data.sss.replace(/,/g, ''));
+                    if (data.sss && Number.parseFloat(data.sss) > 0) {
+                        totalDeduction = totalDeduction + Number.parseFloat(data.sss.replace(/,/g, ''));
                     }
 
-                    if (data.sss_prov && parseFloat(data.sss_prov) > 0) {
-                        totalDeduction = totalDeduction + parseFloat(data.sss_prov.replace(/,/g, ''));
+                    if (data.sss_prov && Number.parseFloat(data.sss_prov) > 0) {
+                        totalDeduction = totalDeduction + Number.parseFloat(data.sss_prov.replace(/,/g, ''));
                     }
                     
-                    if (data.ph && parseFloat(data.ph) > 0) {
-                        totalDeduction = totalDeduction + parseFloat(data.ph.replace(/,/g, ''));
+                    if (data.ph && Number.parseFloat(data.ph) > 0) {
+                        totalDeduction = totalDeduction + Number.parseFloat(data.ph.replace(/,/g, ''));
                     }
                     
-                    if (data.hdmf && parseFloat(data.hdmf) > 0) {
-                        totalDeduction = totalDeduction + parseFloat(data.hdmf.replace(/,/g, ''));
+                    if (data.hdmf && Number.parseFloat(data.hdmf) > 0) {
+                        totalDeduction = totalDeduction + Number.parseFloat(data.hdmf.replace(/,/g, ''));
                     }
                     
-                    if (data.tax && parseFloat(data.tax) > 0) {
-                        totalDeduction = totalDeduction + parseFloat(data.tax.replace(/,/g, ''));
+                    if (data.tax && Number.parseFloat(data.tax) > 0) {
+                        totalDeduction = totalDeduction + Number.parseFloat(data.tax.replace(/,/g, ''));
                     }
 
                     if (json.data.loans.length > 0) {
                         $.each(json.data.loans, function (index, item) {
                             if (item.loan_name.toLowerCase() != 'charges' && item.loan_name.toLowerCase() != 'under deduction' && item.loan_name.toLowerCase() != 'medical loan') {
-                                var temp_amount = parseFloat(item.amount_due.replace(/,/g, ''));
+                                var temp_amount = Number.parseFloat(item.amount_due.replace(/,/g, ''));
     
                                 // for adding cash advance with loan adjustments
                                 if (typeof tempCreatedAdjustments !== "undefined" && tempCreatedAdjustments) {
@@ -1118,13 +1131,13 @@ function viewPayslip(rowId) {
                                     var tempAdj = 0;
                                     created_adjustments.forEach((row, i) => {
                                         const temp_adjustment = row.split("||");
-                                        const adj_type = parseInt(temp_adjustment[2]);
-                                        const temp_status = parseInt(temp_adjustment[3]);
-                                        let _temp = parseFloat(item.amount_due);
+                                        const adj_type = Number.parseInt(temp_adjustment[2]);
+                                        const temp_status = Number.parseInt(temp_adjustment[3]);
+                                        let _temp = Number.parseFloat(item.amount_due);
                                         if (adj_type == 1) {
-                                            _temp = parseFloat(temp_amount) + parseFloat(temp_adjustment[1]);
+                                            _temp = Number.parseFloat(temp_amount) + Number.parseFloat(temp_adjustment[1]);
                                         } else {
-                                            _temp = parseFloat(temp_amount) - parseFloat(temp_adjustment[1]);
+                                            _temp = Number.parseFloat(temp_amount) - Number.parseFloat(temp_adjustment[1]);
                                         }
 
                                         tempAdj = _temp;
@@ -1165,7 +1178,7 @@ function viewPayslip(rowId) {
                                     'adj_type' : 0
                                 });
     
-                                totalLoan = totalLoan - parseFloat(item.amount_due.replace(/,/g, ''));
+                                totalLoan = totalLoan - Number.parseFloat(item.amount_due.replace(/,/g, ''));
                             }
                         });
                     } else {
@@ -1174,9 +1187,9 @@ function viewPayslip(rowId) {
                             var tempAdj = 0;
                             created_adjustments.forEach((row, i) => {
                                 const temp_adjustment = row.split("||");
-                                const adj_type = parseInt(temp_adjustment[2]);
-                                const temp_status = parseInt(temp_adjustment[3]);
-                                let _temp = parseFloat(temp_adjustment[1]);
+                                const adj_type = Number.parseInt(temp_adjustment[2]);
+                                const temp_status = Number.parseInt(temp_adjustment[3]);
+                                let _temp = Number.parseFloat(temp_adjustment[1]);
     
                                 tempAdj = _temp;
                                 _temp = formatNumber(_temp);
@@ -1193,22 +1206,24 @@ function viewPayslip(rowId) {
                     }
 
                     $.each(vmPayslipContent.row.adjustment_deductions, function (index, item) {
-                        totalOthersDeductions = totalOthersDeductions + parseFloat(item.display_value.replace(/,/g, ''));
+                        totalOthersDeductions = totalOthersDeductions + Number.parseFloat(item.display_value.replace(/,/g, ''));
                     });
 
-                    overAllTotal = parseFloat(totalDeduction) + parseFloat(totalLoan) + parseFloat(totalOthersDeductions) + parseFloat(vmPayslipContent.row.total_loans_interest);
+                    overAllTotal = Number.parseFloat(totalDeduction) + Number.parseFloat(totalLoan) + Number.parseFloat(totalOthersDeductions) + Number.parseFloat(vmPayslipContent.row.total_loans_interest);
+                    overAllTotalLoansPayable = Number.parseFloat(totalLoan) + Number.parseFloat(totalOthersDeductions);
 
                     vmPayslipContent.row.loans = tempLoan;
                     vmPayslipContent.row.totalLoan = numberFormat(totalLoan);
+                    vmPayslipContent.row.totalLoanPayable = numberFormat(overAllTotalLoansPayable);
                     vmPayslipContent.row.total_allowances = numberFormat(vmPayslipContent.row.total_allowances);
                     vmPayslipContent.row.deductions = numberFormat(totalDeduction);
                     vmPayslipContent.row.total_others_deductions = numberFormat(totalOthersDeductions);
                     vmPayslipContent.row.overall_total_deductions = numberFormat(overAllTotal);
                     vmPayslipContent.row.adjustment_d_count = vmPayslipContent.row.adjustment_deductions.length;
 
-                    vmPayslipContent.raw_tl = parseFloat(totalLoan);
-                    vmPayslipContent.raw_tod = parseFloat(totalOthersDeductions);
-                    vmPayslipContent.raw_tli = parseFloat(vmPayslipContent.row.total_loans_interest);
+                    vmPayslipContent.raw_tl = Number.parseFloat(totalLoan);
+                    vmPayslipContent.raw_tod = Number.parseFloat(totalOthersDeductions);
+                    vmPayslipContent.raw_tli = Number.parseFloat(vmPayslipContent.row.total_loans_interest);
                     viewPayrollPayslipModal.modal("show");
                 }
             }
@@ -1347,11 +1362,11 @@ viewTimesheetModal.on("show.bs.modal", function () {
                 className: "text-center",
                 width: "10%",
                 render: function (data, type, row) {
-                    if (parseFloat(row.total_time_rendered) <= 0) {
+                    if (Number.parseFloat(row.total_time_rendered) <= 0) {
                         return 0;
                     }
 
-                    if (parseInt(data) > 0) {
+                    if (Number.parseInt(data) > 0) {
                         return `<span class="m--font-danger m--font-boldest">${data}</span>`;
                     }
 
@@ -1363,11 +1378,11 @@ viewTimesheetModal.on("show.bs.modal", function () {
                 className: "text-center",
                 width: "10%",
                 render: function (data, type, row) {
-                    if (parseFloat(row.total_time_rendered) <= 0) {
+                    if (Number.parseFloat(row.total_time_rendered) <= 0) {
                         return 0;
                     }
 
-                    if (parseInt(data) > 0) {
+                    if (Number.parseInt(data) > 0) {
                         return `<span class="m--font-danger m--font-boldest">${data}</span>`;
                     }
 
@@ -1379,8 +1394,8 @@ viewTimesheetModal.on("show.bs.modal", function () {
                 className: "text-center",
                 width: "12%",
                 render: function (data, type, row) {
-                    if (data && parseFloat(data) > 0) {
-                        const hrs = parseFloat(data) / 60;
+                    if (data && Number.parseFloat(data) > 0) {
+                        const hrs = Number.parseFloat(data) / 60;
                         return hrs.toLocaleString("en-US", { maximumFractionDigits: 2 });
                     }
 
@@ -1403,7 +1418,7 @@ viewTimesheetModal.on("show.bs.modal", function () {
 });
 
 function formatNumber(value, decimals = 2) {
-    return parseFloat(value).toLocaleString("en-US", { maximumFractionDigits: decimals });
+    return Number.parseFloat(value).toLocaleString("en-US", { maximumFractionDigits: decimals });
 }
 
 function printTimesheet(el) {
@@ -1427,14 +1442,22 @@ function triggerPrintableNetPay(ids = [], temp = {}) {
             data: { csrf_token: _csrf_hash, ids: ids, paramaters: temp },
             success: function (json) {
                 if (json.response) {
-                    var w = window.open("about:blank");
-                    w.document.open();
-                    w.document.write(json.html);
-                    w.document.close();
-                    setTimeout(function () {
-                        w.print();
-                        w.close();
-                    }, 150);
+                    const tempHtml = json.html;
+                    const printWindow = window.open(siteUrl('payroll/reports/printable_form'), '_blank');
+                    printWindow.focus();
+                    printWindow.onload = function(){
+                        const printableContainer = printWindow.document.getElementById('append_printable-container');
+                        if (printableContainer) {
+                            printableContainer.innerHTML = tempHtml;
+                            setTimeout(() => {
+                                printWindow.print();
+                                printWindow.close();
+                            }, 250);
+                        } else {
+                            toastr.info('Print detail(s) is still in progress!', 'Payroll / Payslip Neypay');
+                            printWindow.close();
+                        }
+                    }
                 }
             }
         });
@@ -1452,14 +1475,22 @@ function triggerPrintableAknowledgement(ids = []) {
             data: { csrf_token: _csrf_hash, ids: ids },
             success: function (json) {
                 if (json.response) {
-                    var w = window.open("about:blank");
-                    w.document.open();
-                    w.document.write(json.html);
-                    w.document.close();
-                    setTimeout(function () {
-                        w.print();
-                        w.close();
-                    }, 150);
+                    const tempHtml = json.html;
+                    const printWindow = window.open(siteUrl('payroll/reports/printable_form'), '_blank');
+                    printWindow.focus();
+                    printWindow.onload = function(){
+                        const printableContainer = printWindow.document.getElementById('append_printable-container');
+                        if (printableContainer) {
+                            printableContainer.innerHTML = tempHtml;
+                            setTimeout(() => {
+                                printWindow.print();
+                                printWindow.close();
+                            }, 250);
+                        } else {
+                            toastr.info('Print detail(s) is still in progress!', 'Payroll / Payslip Aknowledgement');
+                            printWindow.close();
+                        }
+                    }
                 }
             }
         });
@@ -1476,20 +1507,27 @@ function triggerPrintable(ids = []) {
             dataType: "json",
             data: { csrf_token: _csrf_hash, ids: ids },
             success: function (json) {
+                let setPrintIds = [];
                 if (json.response) {
-                    var w = window.open("about:blank");
-                    w.document.open();
-                    w.document.write(json.html);
-                    w.document.close();
-                    setTimeout(function () {
-                        w.print();
-                        w.close();
-                    }, 150);
-
-                    w.onbeforeprint = function (e) {
-                        setPrintIds = ids;
+                    const tempHtml = json.html;
+                    const printWindow = window.open(siteUrl('payroll/reports/printable_form'), '_blank');
+                    printWindow.focus();
+                    printWindow.onload = function(){
+                        const printableContainer = printWindow.document.getElementById('append_printable-container');
+                        if (printableContainer) {
+                            printableContainer.innerHTML = tempHtml;
+                            setTimeout(() => {
+                                printWindow.print();
+                                printWindow.close();
+                            }, 250);
+                        } else {
+                            toastr.info('Print detail(s) is still in progress!', 'Payroll / Payslip');
+                            printWindow.close();
+                        }
                     }
-                    w.onafterprint = function () {
+
+                   printWindow.onbeforeprint = function (e) { setPrintIds = ids; }
+                    printWindow.onafterprint = function () {
                         $.ajax({ 
                             url: siteUrl("payroll/update_payrollsheet_printed_status"),
                             type: "post",
@@ -1497,52 +1535,10 @@ function triggerPrintable(ids = []) {
                             data: { csrf_token: _csrf_hash, printed_id: setPrintIds },
                             success: function (json) {
                               if (json.response) {
-                                  Swal.fire({
-                                      title: 'Send Payslip via Telegram/Email?',
-                                      text: 'Do you want to send the payslip via Telegram/Email?',
-                                      icon: 'question',
-                                      showCancelButton: true,
-                                      confirmButtonText: 'Yes, send it!',
-                                      cancelButtonText: 'No, cancel',
-                                  }).then((result) => {
-                                    if (result.isConfirmed) {
-                                      $.when(
-                                          $.ajax({
-                                              url: siteUrl("payroll/send_telegram"),
-                                              type: 'post',
-                                              data: {
-                                                  csrf_token: _csrf_hash,
-                                                  payslipId: json.data.printed_id,
-                                              }
-                                          }),
-                                          $.ajax({
-                                              url: siteUrl("payroll/send_email"),
-                                              type: 'post',
-                                              data: {
-                                                  csrf_token: _csrf_hash,
-                                                  payslipId: json.data.printed_id,
-                                              }
-                                          })
-                                      ).done(function(responseTelegram, responseEmail) {
-                                  
-                                          Swal.fire(
-                                              'Sent!',
-                                              'Payslip has been sent via Telegram and Email.',
-                                              'success'
-                                          );
-                                      });
-                                  }
-                                   else if (result.dismiss === Swal.DismissReason.cancel) {
-                                          Swal.fire(
-                                              'Cancelled',
-                                              'Payslip sending via Telegram and Email was cancelled.',
-                                              'error'
-                                          );
-                                      }
-                                  });
-                              }
-                          }
-                          
+                                    const { printed_id } = json.data;
+                                    swalAlertNotification(printed_id);
+                                }
+                            }
                         });
                     }
                 }
@@ -1553,9 +1549,55 @@ function triggerPrintable(ids = []) {
     }
 }
 
+
+const swalAlertNotification = function (printIds = []) {
+    if(printIds.length > 0){
+        Swal.fire({
+            title: 'Send Payslip via Telegram/Email?',
+            text: 'Do you want to send the payslip via Telegram/Email?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, send it!',
+            cancelButtonText: 'No, cancel',
+        }).then((result) => {
+        if (result.isConfirmed) {
+            $.when(
+                $.ajax({
+                    url: siteUrl("payroll/send_telegram"),
+                    type: 'post',
+                    data: {
+                        csrf_token: _csrf_hash,
+                        payslipId: printIds,
+                    }
+                }),
+                $.ajax({
+                    url: siteUrl("payroll/send_email"),
+                    type: 'post',
+                    data: {
+                        csrf_token: _csrf_hash,
+                        payslipId: printIds,
+                    }
+                })
+            ).done(function() {
+                Swal.fire(
+                    'Sent!',
+                    'Payslip has been sent via Telegram and Email.',
+                    'success'
+                );
+            });
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                Swal.fire(
+                    'Cancelled',
+                    'Payslip sending via Telegram and Email was cancelled.',
+                    'error'
+                );
+            }
+        });
+    }
+}
+
 function triggerPrintableOption(ids = []) {
     if (ids.length > 0) {
-
         Swal.fire({
             title: 'Print Payslip?',
             html: 'You are about to print a different payslip layout for <strong>Retirees</strong>, <strong>Local Hires</strong> and <strong>Pavers</strong>. Would you like to proceed?',
@@ -1571,74 +1613,42 @@ function triggerPrintableOption(ids = []) {
                     dataType: "json",
                     data: { csrf_token: _csrf_hash, ids: ids },
                     success: function (json) {
+                        let setPrintIds = [];
                         if (json.response) {
-                            var w = window.open("about:blank");
-                            w.document.open();
-                            w.document.write(json.html);
-                            w.document.close();
-                            setTimeout(function () {
-                                w.print();
-                                w.close();
-                            }, 150);
-                        }
+                            const tempHtml = json.html;
+                            const printWindow = window.open(siteUrl('payroll/reports/printable_form'), '_blank');
+                            printWindow.focus();
+                            printWindow.onload = function(){
+                                const printableContainer = printWindow.document.getElementById('append_printable-container');
+                                if (printableContainer) {
+                                    printableContainer.innerHTML = tempHtml;
+                                    setTimeout(() => {
+                                        printWindow.print();
+                                        printWindow.close();
+                                    }, 200);
+                                } else {
+                                    toastr.info('Print detail(s) is still in progress!', 'Payroll / Payslip Option');
+                                    printWindow.close();
+                                }
+                            }
 
-                        w.onbeforeprint = function (e) {
-                            setPrintIds = ids;
-                        }
-                        w.onafterprint = function () {
-                            $.ajax({ 
-                                url: siteUrl("payroll/update_payrollsheet_printed_status"),
-                                type: "post",
-                                dataType: "json",
-                                data: { csrf_token: _csrf_hash, printed_id: setPrintIds },
-                                success: function (json) {
-                                  if (json.response) {
-                                      Swal.fire({
-                                          title: 'Send Payslip via Telegram/Email?',
-                                          text: 'Do you want to send the payslip via Telegram/Email?',
-                                          icon: 'question',
-                                          showCancelButton: true,
-                                          confirmButtonText: 'Yes, send it!',
-                                          cancelButtonText: 'No, cancel',
-                                      }).then((result) => {
-                                        if (result.isConfirmed) {
-                                          $.when(
-                                              $.ajax({
-                                                  url: siteUrl("payroll/send_telegram"),
-                                                  type: 'post',
-                                                  data: {
-                                                      csrf_token: _csrf_hash,
-                                                      payslipId: json.data.printed_id,
-                                                  }
-                                              }),
-                                              $.ajax({
-                                                  url: siteUrl("payroll/send_email"),
-                                                  type: 'post',
-                                                  data: {
-                                                      csrf_token: _csrf_hash,
-                                                      payslipId: json.data.printed_id,
-                                                  }
-                                              })
-                                          ).done(function(responseTelegram, responseEmail) {
-                                              Swal.fire(
-                                                  'Sent!',
-                                                  'Payslip has been sent via Telegram and Email.',
-                                                  'success'
-                                              );
-                                          });
-                                      }
-                                       else if (result.dismiss === Swal.DismissReason.cancel) {
-                                              Swal.fire(
-                                                  'Cancelled',
-                                                  'Payslip sending via Telegram and Email was cancelled.',
-                                                  'error'
-                                              );
-                                          }
-                                      });
-                                  }
-                              }
-                              
-                            });
+                            printWindow.onbeforeprint = function (e) { setPrintIds = ids; }
+                            printWindow.onafterprint = function () {
+                                $.ajax({ 
+                                    url: siteUrl("payroll/update_payrollsheet_printed_status"),
+                                    type: "post",
+                                    dataType: "json",
+                                    data: { csrf_token: _csrf_hash, printed_id: setPrintIds },
+                                    success: function (json) {
+                                        if (json.response) {
+                                            const { printed_id } = json.data;
+                                            swalAlertNotification(printed_id);
+                                        }else{
+                                            toastr.warning(json.toastr_msg, 'Payroll / Payslip Option');
+                                        }
+                                    }
+                                });
+                            }
                         }
                     }
                 });

@@ -2577,7 +2577,9 @@ class Reports_m extends CI_Model{
 
                 $adjustmentsTotal = 0;
                 $otAmountTotal = 0;
+                $otAllowanceAmountTotal = 0;
                 $otNdiffAmountTotal = 0;
+                $regNdiffAmountTotal = 0;
                 $holidayAmountTotal = 0;
                 $regularNightDiffTotal = 0;
                 
@@ -2587,7 +2589,7 @@ class Reports_m extends CI_Model{
                 $netPayTotal = 0;
 
                 $arrFields = array("sss", "sss_prov", "ph", "hdmf", "tax");
-                $sqlSelect = "ps.id, ps.emp_id, emp.idno, ps.basic_rate, ps.total_allowances, ps.ot_amount, ps.ot_ndiff_amount, ps.total_ndiff_amount, ps.total_holiday_amount, ps.gross_pay, ps.net_pay, ps.sss, ps.sss_prov, ps.ph, ps.hdmf, ps.tax,
+                $sqlSelect = "ps.id, ps.emp_id, emp.idno, ps.basic_rate, ps.total_allowances, ps.ot_amount, ps.ot_ndiff_amount, ps.total_ndiff_amount, ps.total_holiday_amount, ps.ot_allowance_amount, ps.gross_pay, ps.net_pay, ps.sss, ps.sss_prov, ps.ph, ps.hdmf, ps.tax,
                 GROUP_CONCAT(DISTINCT(CONCAT(ps_custom_adj.particulars,'||',ps_custom_adj.amount, '||', ps_custom_adj.cadj_type))) custom_adjustments,
                 GROUP_CONCAT(DISTINCT(CONCAT(ps_created_adj.particulars,'||', ps_created_adj.amount, '||', ps_created_adj.adj_type, '||', ps_created_adj.description))) created_adjustments,
                 GROUP_CONCAT(DISTINCT(CONCAT(ps_loans.code,'||',ps_loan_payment.amount_due, '||', ps_loans.loan_class,'||',ps_loan_payment.id))) sss_hdmf_loan_deduction";
@@ -2721,9 +2723,11 @@ class Reports_m extends CI_Model{
                         $allowancesTotal = floatval($allowancesTotal) + floatval($value->total_allowances);
                         $otAmountTotal = floatval($otAmountTotal) + floatval($value->ot_amount);
                         $otNdiffAmountTotal = floatval($otNdiffAmountTotal) + floatval($value->ot_ndiff_amount);
+                        $regNdiffAmountTotal = floatval($regNdiffAmountTotal) + floatval($value->total_ndiff_amount);
                         $holidayAmountTotal = floatval($holidayAmountTotal) + floatval($value->total_holiday_amount);
                         $regularNightDiffTotal = floatval($regularNightDiffTotal) + floatval($value->total_ndiff_amount);
 
+                        $otAllowanceAmountTotal = floatval($otAllowanceAmountTotal) + floatval($value->ot_allowance_amount);
                         $basicRateTotal = floatval($basicRateTotal) + floatval($value->basic_rate);
                         $grossPayTotal = floatval($grossPayTotal) + floatval($value->gross_pay);
                         $netPayTotal = floatval($netPayTotal) + floatval($value->net_pay);
@@ -2739,8 +2743,10 @@ class Reports_m extends CI_Model{
                 "allowances"=>round($allowancesTotal, 2),
                 "ot_amount"=>round($otAmountTotal, 2),
                 "ot_ndiff_amount"=>round($otNdiffAmountTotal, 2),
+                "regular_ndiff_amount"=>round($regNdiffAmountTotal, 2),
                 "holiday_amount"=>round($holidayAmountTotal, 2),
                 "total_ndiff_amount"=>round($regularNightDiffTotal, 2),
+                "ot_allowance_amount"=>round($otAllowanceAmountTotal, 2),
                 "adjustments"=>round($adjustmentsTotal, 2),
                 "gross_pay"=>round($grossPayTotal, 2),
                 "net_pay"=>round($netPayTotal, 2),
@@ -2778,7 +2784,7 @@ class Reports_m extends CI_Model{
                         elseif (in_array($vvx, $tempHeaderColumns)){ $insertFlag = true; }
                         if ($insertFlag){
                             $tempValueData = $value[$vvx];
-                            if (isset($grandTotalFooter[$vvx]) && $grandTotalFooter[$vvx]){ 
+                            if (isset($grandTotalFooter[$vvx]) && $grandTotalFooter[$vvx]){
                                 $nTotalValue = floatval($grandTotalFooter[$vvx]) + $tempValueData;
                                 $grandTotalFooter[$vvx] = round($nTotalValue, 2);
                             }
