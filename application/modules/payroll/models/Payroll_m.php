@@ -43,6 +43,7 @@ class Payroll_m extends CI_Model{
 
     protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
     protected $tbl_ps_employee_regular_ndiff = "payroll.employee_regular_ndiff";
+    protected $tbl_payroll_group_transfer = "payroll.payroll_group_transfer";
 
     public function __construct(){
         parent::__construct();
@@ -1807,7 +1808,7 @@ class Payroll_m extends CI_Model{
 
                 $employee->gross_pay = number_format($gross_pay, 2, '.', '');
 
-                $loans = $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
+                $loans =  $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
                 $employee->loans = $loans;
 
                 $postedPayrollSheetRecord = isset($payroll_sheet_row) && !empty($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1;
@@ -1816,7 +1817,7 @@ class Payroll_m extends CI_Model{
                 $employee->sss_loan = $postedPayrollSheetRecord ? $payroll_sheet_row->sss_loan : 0;
                 $employee->hdmf_loan = $postedPayrollSheetRecord ? $payroll_sheet_row->hdmf_loan : 0;
 
-                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false){
+                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false && (floatval($_gross_pay) > 0)){ // added additional checker that for $_gross_pay to prevent deduction to no earners employees
                     foreach ($loans as $loan) {
                         if($loan->active == 1 && $loan->loan_type == 0){
                             /*** loan internal ***/
@@ -2234,8 +2235,14 @@ class Payroll_m extends CI_Model{
                 }
 
                 // suspends employee active loans when the gross pay is 0 when the generated payrollsheet is not posted
-                if (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0 && intval($payroll_sheet_row->posted) === 0) {
-                    $this->suspendNoEarnersLoans($employee->id);
+                // commented source code to disable suspending no earners loan
+                // if (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0 && intval($payroll_sheet_row->posted) === 0) {
+                //     $this->suspendNoEarnersLoans($employee->id);
+                // }
+                // commented source code to disable suspending no earners loan
+
+                if (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0 && (!isset($payroll_sheet_row) || intval($payroll_sheet_row->posted) === 0)) {
+                    $this->notifSuspended($employee->id);
                 }
 
                 $loans = (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0)
@@ -2249,7 +2256,7 @@ class Payroll_m extends CI_Model{
                 $updatedHDMFLoans = $postedPayrollSheetRecord ? $payroll_sheet_row->hdmf_loan : 0;
 
                 $loanId = array();
-                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false){
+                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false && floatval($_gross_pay) > 0){ //added checker for gross pay to prevent running the loans foreach
                     foreach ($loans as $loan) {
                         if($loan->active == 1 && $loan->loan_type == 0){
                             /*** loan internal ***/
@@ -2266,7 +2273,7 @@ class Payroll_m extends CI_Model{
                             if(floatval($loan->interest_amount) > 0 && round($_gross_pay, 2) >= round($loan->interest_amount, 2)){
                                 $updatedTotalLoansInterest += $loan->interest_amount;
                                 $_gross_pay = $_gross_pay - $loan->interest_amount;
-                                 $loanId[] = $loan->id;
+                                $loanId[] = $loan->id;
                             }
                             /*** loan interest ***/
                         }
@@ -2281,7 +2288,7 @@ class Payroll_m extends CI_Model{
                         (floatval($loan->amount_due) > 0 && round($_gross_pay, 2) >= round($loan->amount_due, 2))){
                             $updatedSSSLoans += $loan->amount_due;
                             $_gross_pay = $_gross_pay - $loan->amount_due;
-                             $loanId[] = $loan->id;
+                            $loanId[] = $loan->id;
                         }
                     }
                     /*** loans sss ***/
@@ -2293,7 +2300,7 @@ class Payroll_m extends CI_Model{
                         (floatval($loan->amount_due) > 0 && round($_gross_pay, 2) >= round($loan->amount_due, 2))){
                             $updatedHDMFLoans += $loan->amount_due;
                             $_gross_pay = $_gross_pay - $loan->amount_due;
-                             $loanId[] = $loan->id;
+                            $loanId[] = $loan->id;
                         }
                     }
                     /*** loans hdmf
@@ -2303,6 +2310,10 @@ class Payroll_m extends CI_Model{
                 $updatedToDeductLoans = 0;
                 $updatedToDeductLoans = ($updatedTotalLoans + $updatedTotalLoansInterest) + $updatedSSSLoans + $updatedHDMFLoans;
                 /*** updated loans section ***/
+
+                if (floatval($_gross_pay) > 0 && floatval($gross_pay) > 0 && (!isset($payroll_sheet_row) || intval($payroll_sheet_row->posted) === 0)) {
+                    $this->notifSuspended($employee->id, $loanId);
+                }
 
                 if (!isset($payroll_sheet_row) || intval($payroll_sheet_row->posted) === 0) {
                     $tempDeductions = $employee->total_govt_remittances + ($tempDeductions);
@@ -8526,7 +8537,7 @@ class Payroll_m extends CI_Model{
                         }
 
                         if ($status == 'All' || $status == 'Active') {
-                            $this->db->where_not_in('work_status', ['NO CONTRACT', 'RETIRED', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']);  //added to generate only the regular and probi work status
+                            $this->db->where_not_in('work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME']);  //added to generate only the regular and probi work status
                         }
                     }
                     // added to filtered out by employee status
@@ -8592,7 +8603,7 @@ class Payroll_m extends CI_Model{
                     }
 
                     if ($status == 'All' || $status == 'Active') {
-                        $this->db->where_not_in('work_status', ['NO CONTRACT', 'RETIRED', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']);  //added to generate only the regular and probi work status
+                        $this->db->where_not_in('work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME']);  //added to generate only the regular and probi work status
                     }
                 }
                 // added to filtered out by employee status
@@ -8647,7 +8658,7 @@ class Payroll_m extends CI_Model{
             }
 
             if ($status == 'All' || $status == 'Active') {
-                $this->db->where_not_in('a.work_status', ['NO CONTRACT', 'RETIRED', 'CONSULTANT', 'PART-TIME', 'PROJECT BASED']); //added to generate only the regular and probi work status
+                $this->db->where_not_in('a.work_status', ['NO CONTRACT', 'CONSULTANT', 'PART-TIME']); //added to generate only the regular and probi work status
             }
         }
         // added to filtered out by employee status
@@ -8671,5 +8682,304 @@ class Payroll_m extends CI_Model{
             $resultarray = $query->result();
         }
         return array("results" => $resultarray);
+    }
+
+    function selectEmployeeByCompany($type=null)
+    {
+        $get = $this->input->get();
+        $resultarray = array();
+        $companyIds = (isset($get["company_ids"]) && $get["company_ids"])? $get["company_ids"]: array();
+        //$this->db->select("a.id, trim(a.firstname) as firstname, a.lastname, a.middlename, a.suffix");
+
+        $this->db->select("a.id, UPPER(TRIM(CONCAT(a.firstname, ' ',
+                CASE WHEN UPPER(TRIM(a.middlename)) != 'N/A' AND UPPER(TRIM(a.middlename)) != 'NONE' AND
+                        TRIM(a.middlename) !='' AND a.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(a.middlename, 1, 1), '.') ELSE ''
+                END,' ', a.lastname,
+                CASE WHEN UPPER(TRIM(a.suffix)) != 'N/A' AND
+                    UPPER(TRIM(a.suffix !='NONE')) AND a.suffix !='' AND
+                        a.suffix IS NOT NULL THEN CONCAT(' ', a.suffix) ELSE ''
+                END))) as text");
+        $this->db->from("gccmaster.tblemployees a");
+        $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
+        
+        if($type !== 'all' && $type === null){
+            $this->db->where("a.employee_status", "Active");
+        } elseif ($type !== 'all' && $type !== null) {
+            $this->db->where("a.employee_status", $type);
+        }
+
+        $this->db->where_in("b.id", $companyIds);
+
+        $tempLimit = 10;
+        if (isset($get['q']) && $get['q']) {
+            $this->db->group_start();
+            $this->db->like("a.firstname", $get['q'], "both");
+            $this->db->or_like("a.lastname", $get['q'], "both");
+            $this->db->or_like("CONCAT(a.firstname, ' ', a.lastname)", $get['q'], "both");
+            $this->db->or_like("CONCAT(a.firstname, ' ', CONCAT(SUBSTR(a.middlename, 1, 1), '.'), ' ', a.lastname)", $get['q'], "both");
+            $this->db->group_end();
+            $tempLimit = 20;
+        }
+        $this->db->limit($tempLimit);
+        $this->db->order_by("trim(a.firstname)", "ASC");
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            /*** foreach ($query->result_array() as $_query) {
+                $data = array();
+                $display_employee = $this->format_name($_query);
+
+                $data["id"] = $_query["id"];
+                $data["text"] = $display_employee;
+                $resultarray[] = $data;
+            } ***/
+            $resultarray = $query->result();
+        }
+        return array("results" => $resultarray);
+    }
+
+    public function getTransferEmployeeGroupApproval(){
+        $arrResult = array();
+        $this->db->select("pgt.id, pgt.group_id, pgt.reason, pgt.status, pgt.employee_id, UPPER(pg.description) as payroll_group, comp.code as company_code");
+        $this->db->join($this->tbl_payroll_group." pg", " pg.id = pgt.group_id", "inner");
+        $this->db->join($this->tbl_tblcompanies." comp", "comp.id = pgt.company_id", "left");
+        $qpgt = $this->db->get_where($this->tbl_payroll_group_transfer." pgt", array("pgt.status" => 0));
+        if($qpgt->num_rows() > 0){
+            foreach ($qpgt->result() as $row) {
+                $row->employee_id = @unserialize($row->employee_id);
+                if(is_array($row->employee_id) && !empty($row->employee_id)){
+                    $this->db->select("TRIM(CONCAT(UPPER(emp.firstname), ' ',
+                        CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                                TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                            THEN CONCAT(SUBSTR(UPPER(emp.middlename), 1, 1), '.') ELSE ''
+                        END,' ', UPPER(emp.lastname),
+                        CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                            UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                            emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(emp.suffix)) ELSE ''
+                        END)) as employee_name");
+                    $this->db->from($this->tbl_employees." emp");
+                    $this->db->where_in("emp.id", $row->employee_id);
+                    $this->db->order_by("emp.firstname", "ASC");
+                    $employees = $this->db->get();
+                    if($employees->num_rows() > 0){
+                        $row->employees = $employees->result();
+                    }
+                    $this->db->reset_query();
+                }
+            }
+            $arrResult = $qpgt->result();
+        }
+        $this->db->reset_query();
+        return $arrResult;
+    }
+
+    public function getTransferEmployeeGroupHistory(){
+        $arrResult = array();
+        $this->db->select("
+            pgt.id,
+            pgt.group_id,
+            pgt.reason,
+            pgt.status,
+            pgt.employee_id,
+            pg.description as payroll_group,
+            comp.code as company_code,
+            CASE
+                WHEN pgt.status = 1 THEN 'Approved'
+                WHEN pgt.status = 2 THEN 'Disapproved'
+                ELSE 'Pending'
+            END as status_name,
+            TRIM(CONCAT(
+                UPPER(e_act.firstname), ' ',
+                IF(
+                    e_act.middlename IS NOT NULL
+                    AND TRIM(e_act.middlename) NOT IN ('', 'N/A', 'NONE'),
+                    CONCAT(SUBSTR(UPPER(e_act.middlename),1,1), '.'),
+                    ''
+                ),
+                ' ',
+                UPPER(e_act.lastname)
+            )) as action_by,
+
+            IF(pgt.updated_by > 0, pgt.updated_at, pgt.created_at) as action_at,
+            TRIM(CONCAT(
+                UPPER(e_stat.firstname), ' ',
+                IF(
+                    e_stat.middlename IS NOT NULL
+                    AND TRIM(e_stat.middlename) NOT IN ('', 'N/A', 'NONE'),
+                    CONCAT(SUBSTR(UPPER(e_stat.middlename),1,1), '.'),
+                    ''
+                ),
+                ' ',
+                UPPER(e_stat.lastname)
+            )) as action_status_by,
+
+            CASE
+                WHEN pgt.status = 1 THEN pgt.approved_at
+                WHEN pgt.status = 2 THEN pgt.disapproved_at
+                ELSE NULL
+            END as action_status_at
+        ", false);
+
+        $this->db->join($this->tbl_payroll_group." pg", "pg.id = pgt.group_id", "inner");
+        $this->db->join($this->tbl_tblcompanies." comp", "comp.id = pgt.company_id", "left");
+        $this->db->join($this->tbl_employees." e_act", "e_act.id = COALESCE(NULLIF(pgt.updated_by,0), pgt.created_by)", "left");
+        $this->db->join($this->tbl_employees." e_stat", "e_stat.id = CASE
+        WHEN pgt.status = 1 THEN pgt.approved_by
+        WHEN pgt.status = 2 THEN pgt.disapproved_by
+        ELSE NULL END", "left", false);
+        $this->db->order_by("pgt.id", "DESC");
+        $qpgt = $this->db->get_where($this->tbl_payroll_group_transfer." pgt", array("pgt.status !=" => 0));
+        if($qpgt->num_rows() > 0){
+            foreach ($qpgt->result() as $row) {
+                $row->employee_id = @unserialize($row->employee_id);
+                if(is_array($row->employee_id) && !empty($row->employee_id)){
+                    $this->db->select("TRIM(CONCAT(UPPER(emp.firstname), ' ',
+                        CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                                TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                            THEN CONCAT(SUBSTR(UPPER(emp.middlename), 1, 1), '.') ELSE ''
+                        END,' ', UPPER(emp.lastname),
+                        CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                            UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                            emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(emp.suffix)) ELSE ''
+                        END)) as employee_name");
+                    $this->db->from($this->tbl_employees." emp");
+                    $this->db->where_in("emp.id", $row->employee_id);
+                    $this->db->order_by("emp.firstname", "ASC");
+                    $employees = $this->db->get();
+                    if($employees->num_rows() > 0){
+                        $row->employees = $employees->result();
+                    }
+                    $this->db->reset_query();
+                }
+            }
+            $arrResult = $qpgt->result();
+        }
+        $this->db->reset_query();
+        return $arrResult;
+    }
+    
+    protected function getNoEarnerEmployeeNameById($id=0){
+        $this->db->select("UPPER(CONCAT(lastname, ', ', firstname,
+            CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND
+                    TRIM(middlename) !='' AND middlename IS NOT NULL
+                THEN CONCAT(' ', SUBSTR(middlename, 1, 1), '.') ELSE ''
+            END,'',
+            CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND
+                UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND
+                suffix IS NOT NULL THEN CONCAT(' ', suffix) ELSE ''
+            END)) as employee_name");
+        $qTemp = $this->db->get_where($this->tbl_employees, array('id' => $id));
+        return $qTemp->num_rows() === 1 ? $qTemp->row()->employee_name : $id;
+    }
+
+    public function notifSuspended($id, $loanIds = array()) {
+        $userId = $this->core_layout->getCurrentEmployeeId();
+        $employeeName = $this->getNoEarnerEmployeeNameById($id);
+        $userLoggedName = $this->getNoEarnerEmployeeNameById($userId);
+
+        $this->db->select("
+            hrl.id,
+            CASE
+                WHEN hrl.debit_note IS NOT NULL AND hrl.debit_note != ''
+                    THEN CONCAT(UPPER(psl.loan_name), ' | ', UPPER(hrl.debit_note))
+                WHEN hrl.reference IS NOT NULL AND hrl.reference != ''
+                    THEN CONCAT(UPPER(psl.loan_name), ' | ', UPPER(hrl.reference))
+                ELSE UPPER(psl.loan_name)
+            END AS loan_name
+        ", false);
+
+        $this->db->from($this->tbl_hris_loans." hrl");
+        $this->db->join($this->tbl_ps_loans." psl", "psl.id = hrl.loan_id", "left");
+
+        if (!empty($loanIds) && count($loanIds) > 0) {
+            $this->db->where_not_in('hrl.id', $loanIds);
+        }
+
+        $this->db->where('hrl.emp_id', $id);
+        $this->db->where('hrl.active', 1);
+        $this->db->where('hrl.paid', 0);
+        $this->db->where("hrl.is_archived", 0);
+        $empLoans = $this->db->get();
+        if($empLoans->num_rows() > 0){
+            $loanDescriptions = array();
+            foreach($empLoans->result() as $loan){
+                $this->db->where('id', $loan->id);
+                $loanDescriptions[] = $loan->loan_name;
+            }
+
+            if(!empty($loanDescriptions)){
+                $suspendedLoans = array_unique($loanDescriptions);
+                $loanDescriptions = implode(', ', array_unique($loanDescriptions));
+                $rawMessage = "Active loan(s) of employee `$employeeName` for the loan(s) `$loanDescriptions` has been automatically suspended due to insufficient gross pay amount.";
+                $msg = "System Generated: " . $rawMessage;
+                $this->core_layout->setEventLog($msg, "update", "success", "payroll");
+                
+                $tempLoans = explode(", ", $loanDescriptions);
+                $listLoans = "Loan Descriptions: \n";
+                foreach($tempLoans as $lnx){
+                    $listLoans .= "- " . trim($lnx) . "\n";
+                }
+
+                $telegramMessage = "Employee `$employeeName` has active loan(s) with no payroll deductions due to insufficient gross pay.\n\n";
+                $telegramMessage .= $listLoans;
+                $telegramMessage .= "\nLast Updated By: $userLoggedName";
+                $telegramMessage .= "\nDate and Time: " . date("D, F j, Y, g:i a");
+                $telegramResponse = $this->sendTelegramPayrollNotificationNoEarners($telegramMessage);
+                $logState = $telegramResponse['ok'] ? "success" : "error";
+                $message = "Employee `$employeeName` has active loan(s)  `<b>$loanDescriptions</b>` with no payroll deductions due to insufficient gross pay. Last Updated by: `$userLoggedName` at ".date("D, F j, Y, g:i a");
+            }
+        }
+
+        return true;
+    }
+
+    protected function sendTelegramPayrollNotificationNoEarners($message=null){
+        if (empty($message)) {
+            return [ 'ok' => false, 'error' => 'Message is empty' ];
+        }
+
+        $config = $this->telegram_config_if_exist('payroll_notification', null);
+        if(!$config){
+            return [ 'ok' => false, 'error' => 'Telegram config not found' ];
+        }
+
+        $botToken = $config->telegram_bot_token;
+        $chatId   = $config->chat_id;
+
+        $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
+        $payload = [ 'chat_id' => $chatId, 'text' => $message, 'parse_mode' => 'HTML' ];
+
+        $context = stream_context_create([
+            'http' => [
+                'method'  => 'POST',
+                'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
+                'content' => http_build_query($payload),
+                'timeout' => 5,
+                'ignore_errors' => true
+            ]
+        ]);
+
+        set_error_handler(function ($severity, $msg) {
+            throw new Exception($msg);
+        });
+
+        try {
+            $response = file_get_contents($url, false, $context);
+            restore_error_handler();
+            if ($response === false) {
+                throw new Exception('Telegram API unreachable');
+            }
+
+            $decoded = json_decode($response, true);
+            if (isset($decoded['ok']) && $decoded['ok'] === true) {
+                return [ 'ok' => true, 'error' => null ];
+            }else{
+                return [ 'ok' => false, 'error' => $decoded['description'] ];
+            }
+        } catch (Exception $e) {
+            restore_error_handler();
+            return [ 'ok' => false, 'error' => "Error sending telegram notification: " . $e->getMessage() ];
+        }
     }
 }

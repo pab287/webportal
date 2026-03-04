@@ -1056,4 +1056,54 @@ class Reports extends MY_Controller {
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
     }
+
+    public function nightdiff_summary() {
+        $this->load->model("payroll/payroll_m", "payroll");
+        $tempData = array(); 
+        $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
+        $tempData["company"] = $this->payroll->select2CompanyData();
+        $tempData["payout_schedule"] = $this->payroll->select2PayoutScheduleData();
+        
+        $this->core_layout->setPageTitle("Payroll - Night Differential Summary Report");
+        $this->core_layout->setPrivilegeName("payroll_nightdiff_summary");
+        $this->core_layout->addJs("js/buttons.print.min.js", true);
+        $this->core_layout->addJs("js/payroll/reports/nightdiff_summary.js", true, $tempData);
+
+        $this->load->view("core/templates/header");
+        $this->load->view("payroll/reports/nightdiff_summary");
+        $this->load->view("core/templates/footer");
+    }
+
+    function generate_nightdiff_summary(){
+        $data = $this->reports->generateNightDiffSummary();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+    }
+
+    public function payrollsheet_summary() {
+        $this->load->model("payroll/payroll_m", "payroll");
+        $tempData = array(); 
+        $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
+        $tempData["company"] = $this->payroll->select2CompanyData();
+        $tempData["payout_schedule"] = $this->payroll->select2PayoutScheduleData();
+
+        $version = filemtime(FCPATH.'assets/js/payroll/reports/payrollsheet_summary.js');
+        
+        $this->core_layout->setPageTitle("Payroll - Payroll Sheet Summary Report");
+        $this->core_layout->setPrivilegeName("payroll_payrollsheet_summary");
+        $this->core_layout->addJs("js/buttons.print.min.js", true);
+        $this->core_layout->addJs("js/payroll/reports/payrollsheet_summary.js", true, $tempData,"?v={$version}");
+
+        $this->load->view("core/templates/header");
+        $this->load->view("payroll/reports/payrollsheet_summary");
+        $this->load->view("core/templates/footer");
+    }
+
+    function generate_payrollsheet_summary(){
+        $data = $this->reports->generate_payrollsheet_summary();
+            $this->output
+                ->set_content_type('json')
+                ->set_output(json_encode($data));
+    }
 }

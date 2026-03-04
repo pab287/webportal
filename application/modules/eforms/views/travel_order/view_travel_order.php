@@ -109,7 +109,7 @@
                                         <b v-text="vm_tab1.approved_recommend_by"></b>
                                     </div>   
                                     <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                       
+                                        
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="remark">
                                         Remarks: <b v-text="vm_tab1.approved_recommend_remarks"></b>
@@ -165,7 +165,7 @@
                                         <b v-text="vm_tab1.hr_noted_by"></b>
                                     </div>   
                                     <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                       
+
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="remark">
                                         Remarks: <b v-text="vm_tab1.hr_noted_remarks"></b>
@@ -175,18 +175,14 @@
                                 <div class="form-group m-form__group row" id="noted_remark"></div>
                                 <div class="form-group m-form__group row" id="accomplish_dt">
                                     <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                        <!-- Official Date Return --> Date Accomplished
+                                        Date Accomplished
                                     </label>
                                     <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="recieved">
                                         <b v-text="vm_tab1.accomplished_by"></b>
-                                        <!-- <b v-text="moment(vm_tab1.accomplishment_dt).format('LLL')"></b> -->
                                     </div>  
                                     <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                       
+
                                     </label>
-                                    <!-- <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="remark">
-                                        Remarks: <b v-text="vm_tab1.accomplishment_remarks"></b>
-                                    </div> -->
                                 </div>
                             </div>
                         </div>
@@ -201,21 +197,11 @@
                                         <b v-text="vm_tab1.station"></b>
                                     </div>
                                 </div>
-                                <!-- <div class="form-group m-form__group row">
-                                    <label class="col-md-3 col-lg-3 col-sm-3 col-xs-12">
-                                    Origin
-                                    </label>
-                                    <div class="col-md-9 col-lg-9 col-sm-9 col-xs-12" id="ref_no">
-                                        <b v-text="vm_tab1.origin"></b>
-                                    </div>
-                                </div>     -->
                                 <div class="form-group m-form__group row">
                                     <label class="col-3">
                                     Status
                                     </label>
-                                    <div class="col-9"  id="status">
-                                    
-                                    </div>
+                                    <div class="col-9"  id="status"></div>
                                 </div>  
                             </div> 
                             <div class="col-md-6 col-sm-12">
@@ -318,55 +304,61 @@
 
 <div class="modal fade" id="modal_recommend_approve" role="dialog">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title"></h3>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-            <div class="modal-body form">
-                <input type="hidden" value="" name="id"/>
-                <div class="form-group">
-                    <label class="control-label col-md-2 col-sm-2 col-xs-12">Remarks</label>
-                    <div class="col-md-12">
-                        <textarea name="approved_recommend_remarks"  class="form-control" rows="5" data-validation="required"></textarea> 
+        <form id="recommend-approve">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title"></h3>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                <div class="modal-body form">
+                    <input type="hidden" value="" name="id"/>
+                    <div class="row">
+                        <div class="col-md-12 col-lg-12 col-sm-12">
+                            <label for="approved_recommend_remarks" class="required">Remarks</label>
+                            <textarea name="approved_recommend_remarks" id="approved_recommend_remarks" class="form-control" rows="5" data-validation="required"></textarea> 
+                        </div>
                     </div>
                 </div>
+                <div class="modal-footer">    
+                    <button type="submit" id="btnSave" class="btn btn-primary m-btn m-btn--custom m-btn--icon btnSave">Save</button>
+                    <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon btnCancel" data-dismiss="modal">Cancel</button>
+                </div>
             </div>
-            <div class="modal-footer">    
-                <button type="submit" id="btnSave" onclick="approve_recommend()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
-                <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon btnCancel" data-dismiss="modal">Cancel</button>
-            </div>
-        </div>
+        </form>
     </div>
 </div>
 
 <div class="modal fade" id="modal_form_approve" role="dialog">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title"></h3>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-            <div class="modal-body form">
-                <input type="hidden" value="" name="id"/> 
-                <div class="form-group">
-                    <label class="control-label col-md-2 col-sm-2 col-xs-12">Remarks</label>
-                    <div class="col-md-12">
-                        <textarea name="approved_remarks"  class="form-control" rows="5" data-validation="required"></textarea> 
+        <form id="approve-form">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title"></h3>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                <div class="modal-body form">
+                    <input type="hidden" value="" name="id"/>
+                    <div class="row">
+                        <div class="col-md-12 col-lg-12 col-sm-12">
+                            <div class="form-group">
+                                <label class="control-label required">Remarks</label>
+                                <textarea name="approved_remarks" class="form-control" rows="5" data-validation="required"></textarea> 
+                            </div>
+                        </div>
                     </div>
                 </div>
+                <div class="modal-footer">    
+                    <button type="submit" id="btnSave" class="btn btn-primary m-btn m-btn--custom m-btn--icon btnSave">Save</button>
+                    <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon btnCancel" data-dismiss="modal">Cancel</button>
+                </div>
             </div>
-            <div class="modal-footer">    
-                <button type="submit" id="btnSave" onclick="approve()" class="btn btn-primary m-btn m-btn--custom m-btn--icon  btnSave">Save</button>
-                <button type="button" class="btn btn-metal text-white m-btn m-btn--custom m-btn--icon btnCancel" data-dismiss="modal">Cancel</button>
-            </div>
-        </div>
+        </form>
     </div>
 </div>
 
@@ -704,7 +696,16 @@
             <table style="font-size:small;" width="100%" border="0" id="table_to_data">
                 <tr>
                 <td width="35%" style="font: 23px arial, sans-serif;"><p id="company" style="text-transform: uppercase;">{{vm_to_data.company}}</p></td>
-                <td style="text-align: right;  font: 20px arial, sans-serif;"  width="30%"><p><small>TRAVEL ORDER</small><p></td>
+                <td style="text-align: right;  font: 20px arial, sans-serif;"  width="30%">
+                    <p>
+                        <small>
+                            TRAVEL ORDER
+                            <template v-if="vm_to_data.is_emergency == 1">
+                                <span style="font-weight: 700"> [ Emergency ]</span> 
+                            </template>
+                        </small>
+                    <p>
+                </td>
                 <td style="text-align: right; font: 23px arial, sans-serif;"  width="35%"><p id="reference_no">{{vm_to_data.reference_no}}</p></td>
                 <td id="qr_code"></td>
                 </tr>

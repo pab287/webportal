@@ -123,6 +123,11 @@ $.ajax({
       radiobtn.checked = true;
     }
 
+    if (parseInt(data.data.is_emergency) === 1) {
+      const _switch = document.getElementById("is_emergency");
+      _switch.checked = true;
+    }
+
     $("[name='station']").val(data.data.station);
     $("[name='remark']").val(data.data.others_remarks);
 
@@ -1808,3 +1813,16 @@ function getStatus(status){
 
     return action;
 }
+
+$.formUtils.addValidator({
+    name: 'custom_remarks',
+    validatorFunction: function (value) {
+        let cleaned = value
+            .replace(/\s+/g, ' ')
+            .replace(/^\s+|\s+$/g, '');
+
+        return cleaned.length >= 30;
+    },
+    errorMessage: 'Remarks must be at least 30 characters',
+    errorMessageKey: 'badRemarks'
+});

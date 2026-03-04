@@ -58,11 +58,11 @@ function toggleAccomplishDisable(checked){
     // $("#btnaccomplish").removeClass('btn-metal');
     // $("#btnaccomplish").addClass('btn-success');
     if(checked){
-      $("#btnaccomplish").removeAttr('disabled');
+      // $("#btnaccomplish").removeAttr('disabled');
       $("#btnaccomplish").removeClass('btn-metal');
       $("#btnaccomplish").addClass('btn-success');
     }else{
-      $("#btnaccomplish").attr('disabled',"disabled");
+      // $("#btnaccomplish").attr('disabled',"disabled");
       $("#btnaccomplish").removeClass('btn-success');
       $("#btnaccomplish").addClass('btn-metal');
     }
@@ -289,14 +289,14 @@ $.ajax({
 
     switch(data.data.status){
       case "Pending":
-          $('#status').append('<div class="m-badge text-white m-badge--warning m-badge--wide m--margin-top-5" role="alert"><strong>For Recommendation</strong></div>');
+          $('#status').append('<div class="m-badge text-white m-badge--warning m-badge--wide" role="alert"><strong>For Recommendation</strong></div>');
           $("#btnrecommentapprove").show();
           $("#btndisapprove").show();
           $("#btnedit").show();
           $("#btncancel").show();
         break;
       case "Recommend_Approved":
-          $('#status').append('<div class="m-badge text-white m-badge--info m-badge--wide m--margin-top-5" role="alert"><strong>Pending Approval</strong></div>');
+          $('#status').append('<div class="m-badge text-white m-badge--info m-badge--wide" role="alert"><strong>Pending Approval</strong></div>');
           if(date1>=date2){
             $("#btnapprove").show();
             $("#btndisapprove").show();
@@ -307,6 +307,15 @@ $.ajax({
             $("#btnback").hide();
             $("#btnback2").show();
         }  
+
+        const now = moment().format('YYYY-MM-DD');
+        const dateFromArray = data.destination.map(item => moment(item.date_from).format('YYYY-MM-DD'));
+
+        // if (jQuery.inArray(now, dateFromArray) !== -1 && data.data.is_emergency == 0 && now <= moment(data.data.created_dt).format('YYYY-MM-DD')) {
+        if (jQuery.inArray(now, dateFromArray) !== -1 && data.data.is_emergency == 0) {
+          $("#btnapprove").attr('onclick', 'unable_approve()');
+        }
+
         break;
       case "Approved":
           if(data.data.accomplishment_dt=="0000-00-00 00:00:00" || data.data.accomplished == 0){
@@ -321,24 +330,15 @@ $.ajax({
             $("#btnnote").show();
             //$("#btnaccomplish").show();
             document.getElementById('recommend_by').style.removeProperty( 'display' );
-            
-            // if(data.data.accomplishment_dt=="0000-00-00 00:00:00"){
-            //   $("#btnaccomplish").show();
-            //   $("#btnundoaccomplish").hide();
-            //   $("#btnundoapprove").show();
-            // }else{
-            //   $("#btnaccomplish").hide();
-            //   $("#btnundoaccomplish").show();
-            // }
           }else{
             $("#btnback").hide();
             $("#btnback2").show();
           }
           if(data.data.accomplishment_dt=="0000-00-00 00:00:00" || data.data.accomplished == 0){
-            $('#status').append('<div class="m-badge m-badge--success m-badge--wide m--margin-top-5" role="alert"><strong>Approved</strong></div>');
+            $('#status').append('<div class="m-badge m-badge--success m-badge--wide" role="alert"><strong>Approved</strong></div>');
             $("#accomplish_dt").hide();
           }else{
-            $('#status').append('<div class="m-badge m-badge--success m-badge--wide m--margin-top-5" role="alert"><strong>Accomplished</strong></div>');
+            $('#status').append('<div class="m-badge m-badge--success m-badge--wide" role="alert"><strong>Accomplished</strong></div>');
             $("#accomplish_dt").show();
           }
           $("#approve").show();
@@ -347,13 +347,12 @@ $.ajax({
 
           var dateDiff = dateDifference(moment(data.data.approved_dt).format("YYYY-MM-DD"), getCurrentDate());
           if(dateDiff > 7){
-            //$("#btnaccomplish").hide();
             $("#btnapprove").hide();
           }
 
         break;
         case "Disapproved":
-            $('#status').append('<div class="m-badge m-badge--danger m-badge--wide m--margin-top-5" role="alert"><strong>Disapproved</strong></div>');
+            $('#status').append('<div class="m-badge m-badge--danger m-badge--wide" role="alert"><strong>Disapproved</strong></div>');
             if(date1>=date2){
               $("#btnundodisapprove").show();
             }else{
@@ -363,7 +362,7 @@ $.ajax({
             $("#disapprove").hide();
         break;
         case "HR Noted":
-            $('#status').append('<div class="m-badge m-badge--accent m-badge--wide m--margin-top-5" role="alert"><strong>HR Noted</strong></div>');
+            $('#status').append('<div class="m-badge m-badge--accent m-badge--wide" role="alert"><strong>HR Noted</strong></div>');
             if(date1>=date2){
             document.getElementById('btnundonote').style.removeProperty( 'display' );
           }else{
@@ -377,7 +376,7 @@ $.ajax({
             document.getElementById('btnprint2').style.removeProperty( 'display' );
         break;
         default:
-            $('#status').append('<div class="m-badge m-badge--metal text-white m-badge--wide m--margin-top-5" role="alert"><strong>Cancelled</strong></div>');
+            $('#status').append('<div class="m-badge m-badge--metal text-white m-badge--wide" role="alert"><strong>Cancelled</strong></div>');
             if(date1>=date2){
               document.getElementById('btnundocancel').style.removeProperty( 'display' );
             }
@@ -387,6 +386,11 @@ $.ajax({
               document.getElementById('cancel_remark').style.removeProperty( 'display' );
         break;
     }
+
+      if (data.data.is_emergency == 1) {
+        $('#status').append('<span class="m-badge m-badge--info m-badge--wide ml-2" style="font-weight: 700"><strong>Emergency</strong></span>');
+      }
+
       if (data.data.is_service == 1) {
         data.data.ref_yr = data.plateno;
         document.getElementById('driver').style.removeProperty( 'display' );           
@@ -424,7 +428,7 @@ $.ajax({
         $('#vehicle_label').text('Remarks');
         $('#vehicle_print').text(data.data.others_remarks.toUpperCase());
       }
-     
+    
     vmTab1.vm_tab1 = Object.assign({}, data.data);
     vmPrintArea.vm_to_data = Object.assign({}, data.data);
     vmPrintArea.vm_destination = Object.assign({}, data.destination);
@@ -519,62 +523,74 @@ function open_recommend_approve(){
   $('.modal-title').text('Recommendation'); // Set Title to Bootstrap modal title
 }
 
-function approve_recommend(){
-  $.ajax({
-    url : baseUrl("eforms/travel_order/approve_recommend_travel_v2/"),
-    type: "POST",
-    dataType: "JSON",
-    data: { csrf_token: _csrf_hash, id: param_id, approved_recommend_remarks: $('[name="approved_recommend_remarks"]').val() },
-    beforeSend: function(){
-      $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-    },
-    success: function(data){
-      
-      if(data.status == 'success'){
-        location.reload();
-        toastr.success("Travel order has been approved recommend!");
-        $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-      } else {
-        toastr.error(data.msg, "Error");
+$.validate({
+  form : '#recommend-approve',
+  lang: 'en',
+  onSuccess: function( form ){
+    $.ajax({
+      url : baseUrl("eforms/travel_order/approve_recommend_travel_v2/"),
+      type: "POST",
+      dataType: "JSON",
+      data: { csrf_token: _csrf_hash, id: param_id, approved_recommend_remarks: $('[name="approved_recommend_remarks"]').val() },
+      beforeSend: function(){
+        $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+      },
+      success: function(data){
+        
+        if(data.status == 'success'){
+          location.reload();
+          toastr.success("Travel order has been approved recommend!");
+          $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+        } else {
+          toastr.error(data.msg, "Error");
+        }
+      },
+      error: function (jqXHR, textStatus, errorThrown){
+        alert('Error: "ajax_approve"');
       }
-    },
-    error: function (jqXHR, textStatus, errorThrown){
-      alert('Error: "ajax_approve"');
-    }
-  });
-}
+    });
+
+    return false;
+  }
+});
 
 function open_approve(){
   $('#modal_form_approve').modal('show'); // show bootstrap modal
   $('.modal-title').text('Approve Travel Order'); // Set Title to Bootstrap modal title
 }
 
-function approve(){
-  $.ajax({
-    url : baseUrl("eforms/travel_order/approve_travel_v2/"),
-    type: "POST",
-    dataType: "JSON",
-    data: { csrf_token: _csrf_hash, approve_remarks : $('[name="approved_remarks"]').val(), id: param_id },
-    beforeSend: function(){
-      $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-    },
-    success: function(data){
-      
-      if(data.status == 'success'){
-        location.reload();
-        toastr.success("Travel order has been approved!");
-        $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
-      } else if(data.status == 'no_vehicle'){
-        toastr.warning(data.msg, "No assigned vehicle or driver");
-      } else {
-        toastr.error(data.msg, "Error");
+$.validate({
+  form : '#approve-form',
+  lang: 'en',
+  onSuccess: function( form ){
+    $.ajax({
+      url : baseUrl("eforms/travel_order/approve_travel_v2/"),
+      type: "POST",
+      dataType: "JSON",
+      data: { csrf_token: _csrf_hash, approve_remarks : $('[name="approved_remarks"]').val(), id: param_id },
+      beforeSend: function(){
+        $(".btn-submit").addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+      },
+      success: function(data){
+        
+        if(data.status == 'success'){
+          location.reload();
+          toastr.success("Travel order has been approved!");
+          $(".btn-submit").removeClass("m-btn--custom m-loader m-loader--light m-loader--right");
+        } else if(data.status == 'no_vehicle'){
+          toastr.warning(data.msg, "No assigned vehicle or driver");
+        } else {
+          toastr.error(data.msg, "Error");
+        }
+      },
+      error: function (jqXHR, textStatus, errorThrown){
+        alert('Error: "ajax_approve"');
       }
-    },
-    error: function (jqXHR, textStatus, errorThrown){
-      alert('Error: "ajax_approve"');
-    }
-  });
-}
+    });
+
+    return false;
+  }
+});
 
 function open_disapprove(){
   $('#modal_form_disapprove').modal('show'); // show bootstrap modal
@@ -873,6 +889,16 @@ function open_accomplish(){
     $("#modal_form_accomplish #remarks").hide();
   }
 
+  if (dates.length == 0) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Accomplish Travel Order',
+      text: 'Please select atleast one (1) Destination to Accomplish.'
+    });
+
+    return;
+  }
+
   const uniqueArray = unique(dates);
   var _date = "";
   var _time = "";
@@ -985,7 +1011,7 @@ $.validate({
     return false;
     },
 });
-       
+
 function restore(){
   $('#restore_modal').modal('show'); // show bootstrap modal
   $('.modal-title').text('Restore'); 
@@ -1252,7 +1278,7 @@ function printArea2(){
         $('#plate_no_print2').text(data.data.vehicle.toUpperCase());
         $('#driver_print2').text(data.data.driver.toUpperCase());
       }
-       if (data.data.is_commute == 1) {
+      if (data.data.is_commute == 1) {
         $('#vehicle_print2').text('COMMUTE');
       } if (data.data.is_personal == 1) {
         $('#vehicle_print2').text('PERSONAL VEHICLE');
@@ -1405,3 +1431,40 @@ function printArea2(){
   });
 }
 
+function unable_approve(){
+  const result = getByDate(vmPrintArea.vm_destination, moment().format('YYYY-MM-DD'));
+
+  let html = ``;
+  html += '<div>';
+    html += `<p class="m-0">Travel orders must be approved at least one day before the travel date. Approval for today’s travel is not allowed.</p>`;
+
+    if (result.length > 0) {
+      html += `<ul style="text-align: left; margin-top: 10px">`;
+        $.each(result, function(index, item){
+          html += `<li>`;
+            html += `<p class="mb-1"><b>${item.destination}</b></p>`;
+            html += moment(item.date_from).format('lll') + ' - ' + moment(item.date_to).format('lll');
+          html += `</li>`;
+        });
+      html += `</ul>`;
+    }
+  html += '</div>';
+
+
+  Swal.fire({
+    icon: 'warning',
+    title: 'Approve Travel Order',
+    html: html
+  })
+}
+
+function getByDate(dataObj, targetDate) {
+  targetDate = new Date(targetDate).toISOString().split('T')[0];
+  return Object.values(dataObj).filter(item => {
+    const dateOnly = new Date(item.date_from)
+      .toISOString()
+      .split('T')[0];
+
+    return dateOnly == targetDate;
+  });
+}

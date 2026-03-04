@@ -99,8 +99,11 @@
             
             $tempData = array();
             $tempData["company"] = $this->payroll->select2CompanyData();
+            $this->core_layout->addJs("js/buttons.html5.min.js", true);
             $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+            $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
+            $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
             $this->core_layout->addJs("js/payroll/employee/auto_overtime.js", true, $tempData);
 
             $this->load->view('core/templates/header');
@@ -345,11 +348,18 @@
 
         function payroll_group(){
             $this->load->model("payroll/payroll_m", "payroll");
-            $tempData = array(); 
+            $tempData = array();
             $tempData["company"] = $this->payroll->select2CompanyData();
+            $tempData["for_approval"] = $this->payroll->getTransferEmployeeGroupApproval();
+            $tempData["transfer_history"] = $this->payroll->getTransferEmployeeGroupHistory();
             
             $this->core_layout->setPageTitle("Payroll - Employee Group");
             $this->core_layout->setPrivilegeName("payroll_employee_group");
+
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+            $this->core_layout->addJs('plugins/export_plugins/xlsx.full.min.js', true);
+
             $this->core_layout->addJs("js/payroll/employee/payroll.group.js", true, $tempData);
 
             $this->load->view('core/templates/header');
@@ -540,4 +550,60 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
+        public function get_transferable_employee_groups(){
+            $data = $this->employee->getTransferableEmployeeGroups();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_payroll_groups(){
+            $data = $this->employee->getPayrollGroups();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function transfer_employee_group(){
+            $data = $this->employee->transferEmployeeGroup();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function approve_employee_group_transfer(){
+            $data = $this->employee->approveEmployeeGroupTransfer();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function disapprove_employee_group_transfer(){
+            $data = $this->employee->disapproveEmployeeGroupTransfer();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_employee_transfer_state(){
+            $this->load->model("payroll/payroll_m", "payroll");
+            $tempData = array();
+            $tempData["for_approval"] = $this->payroll->getTransferEmployeeGroupApproval();
+            $tempData["transfer_history"] = $this->payroll->getTransferEmployeeGroupHistory();
+            $this->output->set_content_type('json')->set_output(json_encode($tempData));
+        }
+        
+        public function approve_auto_overtime(){
+            $data = $this->employee->approveAutoOvertime();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        function get_employees_without_payroll_group() {
+            $data = $this->employee->getEmployeesWithoutPayrollGroup();
+            $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+        }
+
+        function get_archived_employee_group() {
+            $data = $this->employee->get_archived_employee_group();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        function restore_payroll_employee_group() {
+            $data = $this->employee->restorePayrollEmployeeGroup();
+            $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+        }
     }

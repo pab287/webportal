@@ -3238,6 +3238,7 @@ class Timesheet_model extends CI_Model{
             $tempToRecord = $this->getToRecordByDateRange($start);
             $tempLoaRecord = $this->getLoaRecordByDateRange($start);
             $tempOvertimeRecord = $this->getOvertimeRecordByDateRange($start, $empIds);
+
             $alteredShiftRecords = $this->getAlteredShiftRecordByDateRange($start, $end);
             
             foreach ($employees->result() as $employee) {
@@ -3587,6 +3588,7 @@ class Timesheet_model extends CI_Model{
                     $hasShift = intval($vvvx->has_shift) == 1;
                     $_currentxDate = $vvvx->scheduled_date;
                     $_md5Date = md5($_currentxDate);
+                    $_tag = $vvvx->set_in;
     
                     $weekDay = date("l", strtotime($_currentxDate));
                     $shiftIndexes = array("shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end");
@@ -3637,6 +3639,7 @@ class Timesheet_model extends CI_Model{
                                             $results[$vxxa->id][$_md5Date]["schedule"] = $nRowData;
                                             $results[$vxxa->id][$_md5Date]["has_shift"] = intval($vvvx->has_shift);
                                             $results[$vxxa->id][$_md5Date]["altered_date"] = $_currentxDate;
+                                            $results[$vxxa->id][$_md5Date]["tag"] = $_tag;
                                         }
                                     }
                                 }
@@ -10250,5 +10253,191 @@ class Timesheet_model extends CI_Model{
         if ($last >= $pmEnd) { $result['pm_out'] = date('H:i', $last); }
 
         return $result;
+    }
+    // here
+    public function tag_date_restday() {
+        $result = array();
+        $post = $this->input->post();
+        $date = isset($post['date']) && $post['date'] ? date('Y-m-d', strtotime($post['date'])) : date('Y-m-d');
+        $id = isset($post['id']) && $post['id'] ? $post['id'] : 0;
+        $has_shift = isset($post['has_shift']) ? $post['has_shift'] : 0;
+        $reason = isset($post['reason']) && $post['reason'] ? trim($post['reason']) : null;
+        $timesheetId = isset($post['timesheetId']) && $post['timesheetId'] ? $post['timesheetId'] : 0;
+        $weekDay = date('l', strtotime($date));
+        $empName = $this->getEmployeeNameById($id);
+        $_date = date('F d, Y', strtotime($date));
+
+        if ($id) {
+            $shiftId = $this->get_shift_id($post['id']);
+
+            $data = array(
+                'shift_id' => serialize(array()),
+                'employee_id' => serialize(array($id)),
+                'scheduled_date' => $date,
+                'shift_am_start' => '',
+                'shift_am_end' => '',
+                'shift_pm_start' => '',
+                'shift_pm_end' => '',
+                'remarks' => $reason,
+                'has_shift' => 0,
+                'set_in' => 'timesheet',
+                'created_by' => $this->core_layout->getCurrentEmployeeId(),
+                'created_at' => date('Y-m-d')
+            );
+
+            $this->db->select('employee_id, shift_id');
+            $this->db->where('DATE(scheduled_date)', $date);
+            $this->db->from($this->tbl_timesheet_customized_shift_schedule);
+            $_query = $this->db->get();
+
+            $isExist = false;
+            if ($_query->num_rows() > 0) {
+                $row = $_query->row();
+                $shift = @unserialize($row->shift_id);
+                $meta = @unserialize($row->employee_id);
+
+                if (!empty($shift) && $shift) {
+                    if (in_array($shiftId, $shift)) {
+                        $isExist = true;
+                    } else {
+                        if (!empty($meta) && $meta) {
+                            if (in_array($id, $meta)) {
+                                $isExist = true;
+                            }
+                        }
+                    }
+                } else {
+                    if (!empty($meta) && $meta) {
+                        if (in_array($id, $meta)) {
+                            $isExist = true;
+                        }
+                    }
+                }
+
+            }
+
+            if (!$isExist) {
+                $query = $this->db->insert($this->tbl_timesheet_customized_shift_schedule, $data);
+
+                if ($query) {
+                    if ($timesheetId && $timesheetId > 0) {
+                        $this->db->where('id', $timesheetId);
+                        $this->db->update($this->tbl_timesheet, array('has_shift' => 0));
+                    }
+
+                    $result['state'] = true;
+                    $result['msg'] = 'Successfully added rest day.';
+
+                    $logMessage = "User added tagged rest day for employee `<b>{$empName}</b>` on date <b>{$_date}</b>. Reason: {$reason}";
+                    $this->core_layout->setEventLog($logMessage, "create", "success", "gcctimeutility", "user");
+                } else {
+                    $result['state'] = false;
+                    $result['msg'] = 'Failed to add rest day.';
+
+                    $logMessage = "User failed to add tagged rest day for employee `<b>{$empName}</b>` on date <b>{$_date}</b>. Reason: {$reason}";
+                    $this->core_layout->setEventLog($logMessage, "create", "failed", "gcctimeutility", "system");
+                }
+            } else {
+                $result['state'] = false;
+                $result['msg'] = 'Employee already exists in custom shift schedule';
+            }
+
+        }
+
+        if ($timesheetId && $timesheetId > 0) {
+            $result["row"] = $this->getTimesheetRow($timesheetId, $id);
+        }
+
+        return $result;
+    }
+
+    public function get_shift_id ($id = null) {
+        $shiftId = 0;
+        if ($id) {
+            $shift_id = $this->db->select("resource.shift_id")
+                ->join($this->tbl_personnel . " personnel", "personnel.shift_id = resource.shift_id", "INNER")
+                ->join($this->tbl_employees . " emp", "emp.biometricno = personnel.biometricno", "INNER")
+                ->where("emp.id", $id)
+                ->get($this->tbl_shift_schedule_resource . " resource")
+                ->row("shift_id");
+            
+            if ($shift_id) {
+                $shiftId = $shift_id;
+            }
+        }
+
+        return $shiftId;
+    }
+
+    public function undoRestday() {
+        $post = $this->input->post();
+        $date = isset($post['date']) && $post['date'] ? date('Y-m-d', strtotime($post['date'])) : date('Y-m-d');
+        $id = isset($post['id']) && $post['id'] ? $post['id'] : 0;
+        $has_shift = isset($post['has_shift']) ? $post['has_shift'] : 0;
+        $reason = isset($post['reason']) && $post['reason'] ? trim($post['reason']) : null;
+        $timesheetId = isset($post['timesheetId']) && $post['timesheetId'] ? $post['timesheetId'] : 0;
+        $weekDay = date('l', strtotime($date));
+        $empName = $this->getEmployeeNameById($id);
+        $_date = date('F d, Y', strtotime($date));
+
+        $result = array();
+        if ($id) {
+            $this->db->select('id, employee_id, shift_id');
+            $this->db->where('DATE(scheduled_date)', $date);
+            $this->db->where('set_in', 'timesheet');
+            $this->db->from($this->tbl_timesheet_customized_shift_schedule);
+            $_query = $this->db->get();
+
+            if ($_query->num_rows() > 0) {
+                $row = $_query->row();
+
+                $query = $this->db->delete($this->tbl_timesheet_customized_shift_schedule, array('id' => $row->id));
+
+                if ($query) {
+                    if ($timesheetId && $timesheetId > 0) {
+                        $this->db->where('id', $timesheetId);
+                        $this->db->update($this->tbl_timesheet, array('has_shift' => 1));
+                    }
+
+                    $result['state'] = true;
+                    $result['msg'] = 'Successfully removed rest day.';
+
+                    $logMessage = "User removed tagged rest day for employee `<b>{$empName}</b>` on date <b>{$_date}</b>. Reason: {$reason}";
+                    $this->core_layout->setEventLog($logMessage, "delete", "success", "gcctimeutility", "user");
+                } else {
+                    $result['state'] = false;
+                    $result['msg'] = 'Failed to remove rest day.';
+
+                    $logMessage = "User failed to remove tagged rest day for employee `<b>{$empName}</b>` on date <b>{$_date}</b>. Reason: {$reason}";
+                    $this->core_layout->setEventLog($logMessage, "delete", "failed", "gcctimeutility", "system");
+                }
+            } else {
+                $result['state'] = false;
+                $result['msg'] = 'No tagged rest day found for the employee on the specified date.';
+            }
+        } else {
+            $result['state'] = false;
+            $result['msg'] = 'Invalid employee ID.';
+        }
+
+        if ($timesheetId && $timesheetId > 0) {
+            $result["row"] = $this->getTimesheetRow($timesheetId, $id);
+        }
+
+        return $result;
+    }
+
+    protected function getEmployeeNameById($id=0){
+        $this->db->select("UPPER(CONCAT(lastname, ', ', firstname,
+            CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND
+                    TRIM(middlename) !='' AND middlename IS NOT NULL
+                THEN CONCAT(' ', SUBSTR(middlename, 1, 1), '.') ELSE ''
+            END,'',
+            CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND
+                UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND
+                suffix IS NOT NULL THEN CONCAT(' ', suffix) ELSE ''
+            END)) as employee_name");
+        $qTemp = $this->db->get_where($this->tbl_employees, array('id' => $id));
+        return $qTemp->num_rows() === 1 ? $qTemp->row()->employee_name : $id;
     }
 }

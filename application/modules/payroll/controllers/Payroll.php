@@ -841,4 +841,11 @@ class Payroll extends MY_Controller {
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
+
+    public function select_employee_by_company() {
+        $data = $this->payroll->selectEmployeeByCompany();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 }

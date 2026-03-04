@@ -9,12 +9,15 @@
         protected $personnelTable = "gcctimeutility.personnel";
         protected $payrollGroupTable = "payroll.payroll_group";
         protected $employeeSalaryTable = "gcchris.tblsalaries";
-
+        protected $tbl_payroll_sheet = "payroll.payroll_sheet";
         protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
         protected $tbl_payroll_fixed_taxable = "payroll.fixed_taxable_deduction";
         protected $tbl_ps_regular_ndiff = "payroll.employee_regular_ndiff";
         protected $tbl_ps_auto_overtime = "payroll.employee_auto_overtime";
+        protected $payrollGroupTransferTable = "payroll.payroll_group_transfer";
+        protected $tbl_overtime = "gcceforms.overtime";
 
+        private $user_data;
         private $db_debug;
 
         function __construct() {
@@ -1033,15 +1036,17 @@
                 foreach($query->result() as $kk => $vv){
                     $employees = array();
                     $tempIds = @unserialize($vv->employee_id);
-                    $this->db->from($this->employeeTable);
-                    $this->db->where_in("id", $tempIds);
-                    $qTempEmp = $this->db->get();
-                    if($qTempEmp->num_rows() > 0){
-                        foreach($qTempEmp->result() as $rs){
-                            $tempRs = (array) $rs;
-                            $tempName = $this->core_layout->getDisplayName($tempRs);
-                            $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
-                            $employees[] = $tempName;
+                    if(is_array($tempIds) && !empty($tempIds)){
+                        $this->db->from($this->employeeTable);
+                        $this->db->where_in("id", $tempIds);
+                        $qTempEmp = $this->db->get();
+                        if($qTempEmp->num_rows() > 0){
+                            foreach($qTempEmp->result() as $rs){
+                                $tempRs = (array) $rs;
+                                $tempName = $this->core_layout->getDisplayName($tempRs);
+                                $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                                $employees[] = $tempName;
+                            }
                         }
                     }
                     $vv->employees = $employees;
@@ -1119,13 +1124,20 @@
         function getEmployeeGroupData($type="edit", $id=null){
             $resultset = array();
             if($type && $id){
-                $this->db->select("a.*, IFNULL(b.description, '') as company, IFNULL(b.code, '') as company_code");
-                $this->db->from($this->payrollGroupTable." a");
-                $this->db->join($this->companyTable." b", "b.id = a.company_id", "LEFT");
-                $this->db->where(array(
-                    "a.id"=>$id,
-                    "a.is_archived"=>0
-                    ));
+                $this->db->select("
+                    a.*,
+                    IFNULL(b.description, '') as company,
+                    IFNULL(b.code, '') as company_code,
+                    IF(TIMESTAMPDIFF(DAY, a.created_at, NOW()) <= 3, 1, 0) as allow_transfer
+                ", false);
+
+                $this->db->from($this->payrollGroupTable . " a");
+                $this->db->join($this->companyTable . " b", "b.id = a.company_id", "LEFT");
+                $this->db->where("a.id", $id);
+                if ($type !== "restore") {
+                    $this->db->where("a.is_archived", 0);
+                }
+
                 $qTemp = $this->db->get();
                 if($qTemp->num_rows() == 1){
                     $employees = array();
@@ -1181,6 +1193,9 @@
                         break;
                         case "archive":
                             $html = $this->load->view("payroll/payroll/modals/archive_employee_group_modal", $arrData, true);
+                        break;
+                        case "restore":
+                            $html = $this->load->view("payroll/payroll/modals/restore_employee_group_modal", $arrData, true);
                         break;
                         default:
                             $html = $this->load->view("payroll/payroll/modals/edit_employee_group_modal", $arrData, true);
@@ -1359,31 +1374,44 @@
             return $resultset;
         }
 
-        function setNewPayrollEmployeeGroup(){
+        public function setNewPayrollEmployeeGroup(){
             $resultset = array();
             $post = $this->input->post();
+            $logInfo = null;
             if($post){
                 $post["employee_id"] = serialize($post["employee_id"]);
                 $post["created_by"] = $this->core_layout->getCurrentEmployeeId();
                 $post["created_at"] = date("Y-m-d H:i:s");
                 $post['is_allow_view'] = isset($post['is_allow_view']) && $post['is_allow_view'] ? 1: 0;
                 $post['assigned_employee_id'] = isset($post['is_allow_view']) && $post['is_allow_view'] == 1 ? serialize($post['assigned_employee_id']) : serialize(array());
-
+                
+                $logDescription = strtoupper($post['description']);
                 $added = $this->db->insert($this->payrollGroupTable, $post);
                 if($added){
                     $resultset["response"] = true;
+                    $logInfo = "New payroll employee group has been added with payroll group description of `{$logDescription}`.";
                 }else{
                     $resultset["response"] = false;
+                    $logInfo = "Failed to add new payroll employee group with payroll group description of `{$logDescription}`.";
                 }
             }else{
                 $resultset["response"] = false;
+                $logInfo = "Failed to add new payroll employee group, required parameters missing.";
             }
+
+            if($logInfo){
+                $type = $resultset["response"] ? "success" : "failed";
+                $logType = $resultset["response"] ? "user": "system";
+                $this->core_layout->setEventLog($logInfo, "insert", $type, "payroll", $logType);
+            }
+
             return $resultset;
         }
 
-        function updatePayrollEmployeeGroup(){
+        public function updatePayrollEmployeeGroup(){
             $resultset = array();
             $post = $this->input->post();
+            $logInfo = null;
             if($post){
                 $tempWhere = array();
                 $tempWhere["id"] = $post["id"];
@@ -1394,22 +1422,35 @@
                 $post["updated_at"] = date("Y-m-d H:i:s");
                 $post['is_allow_view'] = isset($post['is_allow_view']) && $post['is_allow_view'] ? 1: 0;
                 $post['assigned_employee_id'] = isset($post['is_allow_view']) && $post['is_allow_view'] == 1 ? serialize($post['assigned_employee_id']) : serialize(array());
-
+                
+                $logDescription = strtoupper($post['description']);
                 $updated = $this->db->update($this->payrollGroupTable, $post, $tempWhere);
                 if($updated && $this->db->affected_rows() > 0){
                     $resultset["response"] = true;
+                    $logInfo = "Payroll employee group with payroll group description of `{$logDescription}` has been updated.";
                 }else{
                     $resultset["response"] = false;
+                    $logInfo = "Failed to update payroll employee group with payroll group description of `{$logDescription}`.";
                 }
             }else{
                 $resultset["response"] = false;
+                $logInfo = "Failed to update payroll employee group, required parameters missing.";
             }
+
+            if($logInfo){
+                $type = $resultset["response"] ? "success" : "failed";
+                $logType = $resultset["response"] ? "user": "system";
+                $this->core_layout->setEventLog($logInfo, "update", $type, "payroll", $logType);
+            }
+
             return $resultset;
         }
 
         function archivePayrollEmployeeGroup(){
             $resultset = array();
             $post = $this->input->post();
+            $logged_id = $this->core_layout->getCurrentEmployeeId(); // get current logged in employee id
+
             if($post){
                 $arrData = array();
                 $arrData["updated_by"] = $this->core_layout->getCurrentEmployeeId();
@@ -1419,8 +1460,16 @@
                 $updated = $this->db->update($this->payrollGroupTable, $arrData, $post);
                 if($updated && $this->db->affected_rows() > 0){
                     $resultset["response"] = true;
+
+                    // log event
+                    $msg = "Payroll Employee Group has been archived by " . $this->getCurrentEmployeeName($logged_id) . " at " . date("Y-m-d H:i:s");
+                    $this->core_layout->setEventLog("Payroll Group - " . $msg, "archive", "success", "payroll", "user");
                 }else{
                     $resultset["response"] = false;
+
+                    // log event
+                    $msg = "Failed to archive Payroll Employee Group attempted by " . $this->getCurrentEmployeeName($logged_id) . " at " . date("Y-m-d H:i:s");
+                    $this->core_layout->setEventLog("Payroll Group - " . $msg, "archive", "error", "payroll", "user");
                 }
             }else{
                 $resultset["response"] = false;
@@ -2383,13 +2432,29 @@ public function getEmployeeNightDiffList(){
         $this->db->join($this->employeeTable." as cemp", "cemp.id = auto.created_by", "left");
         $this->db->join($this->employeeTable." as uemp", "uemp.id = auto.last_updated_by", "left");
         $this->db->where("emp.employee_status", "Active");
-        if(isset($filters["company"]) && intval($filters["company"]) > 0) { $this->db->where("cmp.id", $filters["company"]); }
+        
+        if(isset($filters["company"]) && intval($filters["company"]) > 0) { 
+            $this->db->where("cmp.id", $filters["company"]); 
+        }
+
         if(isset($filters["serialized_employees"]) && $filters["serialized_employees"]) {
             $arrIds = explode(",", $filters["serialized_employees"]);
             $this->db->where_in("emp.id", $arrIds);
         } elseif (isset($filters["employees"]) && is_array($filters["employees"]) && !empty($filters["employees"])) {
             $this->db->where_in("emp.id", $filters["employees"]);
         }
+
+        if(isset($filters['status']) && $filters['status'] != ' '){
+            if(intval($filters['status']) === 1){
+                $this->db->where("auto.allow_auto_overtime", 1);
+            }elseif(intval($filters['status']) === 0){
+                $this->db->group_start();
+                $this->db->where("auto.allow_auto_overtime", 0);
+                $this->db->or_where("auto.allow_auto_overtime IS NULL", null, false);
+                $this->db->group_end();
+            }
+        }
+
         if (isset($search) && $search) {
             $this->db->group_start();
             foreach ($filterFields as $key => $field) {
@@ -2526,6 +2591,720 @@ public function getEmployeeNightDiffList(){
         }
 
     }
-    
 
+    public function approveAutoOvertime(){
+        $responseArray = array();
+        $post = $this->input->post();
+        $date = $post['date'];
+        $currentUser = $this->core_layout->getCurrentEmployeeId();
+        $ids = $this->automated_approve_ot($date);
+
+        if (count($ids) > 0 && $ids) {
+            $data = $this->ts_model->get_automated_approved_ot($ids);
+            $message = $this->load->view("eforms/email_templates/email-overtime_approval_template", array('data' => $data), true);
+
+            $tempTitle = "EFORMS - AUTOMATE APPROVED OT by " . $this->getCurrentEmployeeName($currentUser);
+            $today = date("Y-m-d");
+            $module = 'eforms_overtime_approve';
+            $email_title = $tempTitle;
+            $content_title = $tempTitle;
+            $content = $message;
+
+            if ($content) {
+                $sent = $this->core_layout->send_email($module, $email_title, $content_title, $content);
+                if ($sent) {
+                    $responseArray['overtime_ids'] = $ids;
+                    $responseArray['message'] = 'Email Sent Successfully';
+                    $responseArray['status'] = true;
+                } else {
+                    $responseArray['message'] = 'Failed Sending Email';
+                    $responseArray['status'] = true;
+                }
+            }
+
+        } else {
+            $responseArray['message'] = 'No Overtime Found for Approval';
+            $responseArray['status'] = false;
+        }
+        return $responseArray;
+    }
+
+    private function automated_approve_ot($date) {
+        $overtimeIds = array();
+        [$start, $end] = array_map('trim', explode('-', $date));
+        $startDate = date('Y-m-d', strtotime($start));
+        $endDate   = date('Y-m-d', strtotime($end));
+        $this->db->select('employee_id');
+        $this->db->where('allow_auto_overtime', 1);
+        $this->db->from($this->tbl_ps_auto_overtime);
+        $query = $this->db->get();
+
+        $this->db->reset_query();
+
+        if ($query->num_rows() > 0) {
+            $ids = array_column($query->result(), 'employee_id');
+            if (is_array($ids) && !empty($ids)) {
+                $this->db->select('id, employee, date_from, date_to');
+                $this->db->where_in('employee', $ids);
+                $this->db->where('TIMESTAMPDIFF(MINUTE, date_from, date_to) <=', 180); //only gets the record 3hrs and under; 3 hrs = 180mins
+                $this->db->where('status', 'Pending');
+    
+                $this->db->group_start();
+                    $this->db->where('DATE(date_from) >=', $startDate);
+                    $this->db->where('DATE(date_to) <=', $endDate);
+                $this->db->group_end();
+    
+                $this->db->from($this->tbl_overtime);
+                $q = $this->db->get();
+
+                $this->db->reset_query();
+    
+                if ($q->num_rows() > 0) {
+                    foreach ($q->result() as $key => $rs) {
+                        $maxPayrollDate = $this->getPayrollMaxDate_OT($rs->employee);
+                        $isValidDate = $maxPayrollDate !== false ? strtotime($startDate) > strtotime($maxPayrollDate) : false; //blocks approving of OT when the date approved is greater than the last payroll end date
+                        if ($isValidDate) {
+                            $data = array('status' => 'Approved', 'approved_by' => $this->core_layout->getCurrentEmployeeId(), 'approved_at' => date("Y-m-d H:i:s"));
+                            $this->db->where('id', $rs->id);
+                            $_q = $this->db->update($this->tbl_overtime, $data);
+                        if ($_q) {
+                                array_push($overtimeIds, $rs->id);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $overtimeIds;
+    }
+    
+    public function getTransferableEmployeeGroups() {
+        $resultset = array("results" => array());
+        $get = $this->input->get();
+        $all_filter = isset($get["all_filter"]) && $get["all_filter"] == "true" ?? false;
+        $this->db->select("employee_id");
+        $group = $this->db->get_where($this->payrollGroupTable, array("status" => 1, "is_archived" => 0));
+        if($group->num_rows() > 0){
+            $employeeIds = array();
+            foreach ($group->result() as $value) {
+                $tempIds = @unserialize($value->employee_id);
+                if(is_array($tempIds) && count($tempIds) > 0){
+                    $employeeIds = array_unique(array_merge($employeeIds, $tempIds));
+                }
+            }
+            
+            $allowSearch = isset($get["company_id"]) && $get["company_id"] && $all_filter === false;
+            $allowSearch = $all_filter || $allowSearch;
+            if(is_array($employeeIds) && !empty($employeeIds) && $allowSearch){
+                $this->db->select("emp.id, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
+                CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                        TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+                END,' ', UPPER(TRIM(emp.lastname)),
+                CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                    UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                    emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
+                END) as text");
+                    $this->db->from($this->employeeTable." emp");
+                    $this->db->where_in("emp.id", $employeeIds);
+                    if(isset($get["company_id"]) && $get["company_id"] && $all_filter === false){
+                        $this->db->where("company_id", $get["company_id"]);
+                    }
+                    if(isset($get["term"]) && $get["term"]){
+                    $this->db->group_start();
+                    $this->db->like("emp.lastname", $get["term"], "both");
+                    $this->db->or_like("emp.firstname", $get["term"], "both");
+                    $this->db->or_like("emp.middlename", $get["term"], "both");
+                    $this->db->or_like("CONCAT(emp.firstname, ' ', emp.lastname, ' ', emp.suffix)", $get["term"], "both");
+                    $this->db->group_end();
+                    $qEmployee = $this->db->get();
+                    if($qEmployee->num_rows() > 0){
+                        $resultset["results"] = $qEmployee->result();
+                    }
+                }
+            }
+        }
+        return $resultset;
+    }
+    
+    public function getPayrollGroups(){
+        $resultset = array("results" => array());
+        $tempLimit = 10;
+        $get = $this->input->get();
+        $this->db->select("id, UPPER(description) as text");
+        $allFilter = isset($get["all_filter"]) && $get["all_filter"] == "true" ?? false;
+        if(isset($get["company_id"]) && $get["company_id"] && $allFilter === false){
+            $this->db->where("company_id", $get["company_id"]);
+        }
+        if(isset($get["term"]) && $get["term"]){
+            $this->db->group_start();
+            $this->db->like("description", $get["term"], "both");
+            $this->db->group_end();
+            $tempLimit = 20;
+        }
+        $this->db->limit($tempLimit);
+        $this->db->order_by("description", "ASC");
+        $qGroup = $this->db->get_where($this->payrollGroupTable, array("status" => 1, "is_archived" => 0));
+        if($qGroup->num_rows() > 0){
+            $resultset["results"] = $qGroup->result();
+        }
+        return $resultset;
+    }
+
+    public function ___transferEmployeeGroup() {
+        $post = $this->input->post();
+        $resultset = array();
+        if (isset($post) && $post) {
+            $payrollGroupId = $this->searchPayrollGroupIdByEmployeeIds($post["employee_id"]);
+            $allFilter = isset($post["company_id"]) && $post["company_id"] ? false : true;
+            $post["company_id"] = $allFilter ? "0" : $post["company_id"];
+            $post["employee_id"] = isset($post["employee_id"]) && $post["employee_id"] ? serialize($post["employee_id"]) : serialize(array());
+            $post["from_group_id"] = is_array($payrollGroupId) && !empty($payrollGroupId) ? serialize($payrollGroupId) : serialize(array());
+            $post["created_by"] = $this->core_layout->getCurrentEmployeeId();
+            $post["created_at"] = date("Y-m-d H:i:s");
+            $post["status"] = 0;
+
+            $added = $this->db->insert($this->payrollGroupTransferTable, $post);
+            if($added && $this->db->affected_rows() > 0){
+                $resultset["response"] = true;
+                $resultset["message"] = "Transfer Employee Group Successfully.";
+            }else{
+                $resultset["response"] = false;
+                $resultset["message"] = "Transfer Employee Group Failed.";
+            }
+        }
+
+        return $resultset;
+    }
+
+    public function transferEmployeeGroup(){
+        $post = $this->input->post();
+        $result = ["response" => false, "message" => "Transfer Employee Group Failed."];
+        if (empty($post) || empty($post['employee_id'])) { return $result; }
+        $insertData = $this->prepareTransferPayload($post);
+        $inserted = $this->db->insert($this->payrollGroupTransferTable, $insertData);
+        if ($inserted && $this->db->affected_rows() > 0) {
+            if(isset($post["approving_authority"]) && intval($post["approving_authority"]) == 1){
+                $this->db->select("id, employee_id, group_id");
+                $arrData = $this->db->get_where($this->payrollGroupTransferTable, array("id" => $this->db->insert_id()))->row_array();
+                $arrData["employee_id"] = unserialize($arrData["employee_id"]);
+                $result = $this->approveEmployeeGroupTransfer($arrData);
+            }else{
+                $group = $this->db
+                    ->select("description")
+                    ->where("id", $post['group_id'])
+                    ->get($this->payrollGroupTable)
+                    ->row();
+    
+                $groupDescription = $group ? strtoupper($group->description) : "Unknown Group";
+                $this->logEmployeeGroupTransfer((array) $post['employee_id'], 'pending_transfer', $groupDescription);
+                return ["response" => true, "message" => "Transfer Employee Group Successfully."];
+            }
+        }
+        return $result;
+    }
+
+    private function prepareTransferPayload($post){
+    $currentEmployeeId = $this->core_layout->getCurrentEmployeeId();
+    $now = date("Y-m-d H:i:s");
+    $employeeIds = (array) $post['employee_id'];
+    $fromGroupIds = $this->searchPayrollGroupIdByEmployeeIds($employeeIds);
+    return [
+        "company_id"    => !empty($post['company_id']) ? $post['company_id'] : "0",
+        "employee_id"   => serialize($employeeIds),
+        "group_id"      => $post['group_id'] ?? 0,
+        "from_group_id" => !empty($fromGroupIds) ? serialize($fromGroupIds) : serialize([]),
+        "reason"        => $post['reason'] ?? "",
+        "created_by"    => $currentEmployeeId,
+        "created_at"    => $now,
+        "status"        => 0
+    ];
+}
+
+    protected function searchPayrollGroupIdByEmployeeIds($employeeIds=array()){
+        $arrIds = array();
+        if(is_array($employeeIds) && !empty($employeeIds)){
+            $this->db->select("GROUP_CONCAT(DISTINCT id) as id");
+            $this->db->group_start();
+            foreach ($employeeIds as $empId) {
+                $serializedId = serialize((string)$empId);
+                $this->db->or_like("employee_id", $serializedId, "both");
+            }
+            $this->db->group_end();
+            $q = $this->db->get_where($this->payrollGroupTable, array("status" => 1, "is_archived" => 0));
+            if($q->num_rows() > 0){
+                $arrIds = explode(",", $q->row()->id);
+            }
+        }
+        return $arrIds;
+    }
+
+    public function __approveEmployeeGroupTransfer(){
+        $post = $this->input->post();
+        $resultset = array();
+        if(isset($post["id"]) && $post["id"]){
+            $this->db->where("id", $post["id"]);
+            $data = array(
+                "status" => 1,
+                "approved_by" => $this->core_layout->getCurrentEmployeeId(),
+                "approved_at" => date("Y-m-d H:i:s"),
+                "updated_by" => $this->core_layout->getCurrentEmployeeId(),
+                "updated_at" => date("Y-m-d H:i:s")
+            );
+
+            $this->db->update($this->payrollGroupTransferTable, $data);
+            if($this->db->affected_rows() > 0){
+
+                $payrollGroupIds = $this->searchPayrollGroupIdByEmployeeIds($post["employee_id"]);
+                if(is_array($payrollGroupIds) && !empty($payrollGroupIds)){
+                    $this->db->select("id, employee_id");
+                    $this->db->from($this->payrollGroupTable);
+                    $this->db->where_in("id", $payrollGroupIds);
+                    $removeToGroup = $this->db->get();
+                    if($removeToGroup->num_rows() > 0){
+                        foreach ($removeToGroup->result() as $row) {
+                            $employeeIds = @unserialize($row->employee_id);
+                            foreach ($post["employee_id"] as $idx) {
+                                if(in_array($idx, $employeeIds)){
+                                    $employeeIds = array_diff($employeeIds, array($idx));
+                                    $data = array(
+                                        "employee_id" => serialize($employeeIds),
+                                        "updated_by" => $this->core_layout->getCurrentEmployeeId(),
+                                        "updated_at" => date("Y-m-d H:i:s")
+                                    );
+                                    $this->db->where("id", $row->id);
+                                    $this->db->update($this->payrollGroupTable, $data);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                $qPayrollGroup = $this->db->get_where($this->payrollGroupTable, array("id" => $post["group_id"]));
+                if($qPayrollGroup->num_rows() == 1){
+                    $payrollGroupDescription = strtoupper($qPayrollGroup->row()->description);
+                    $rowEmployeeIds = @unserialize($qPayrollGroup->row()->employee_id);
+                    if(is_array($rowEmployeeIds) && !empty($rowEmployeeIds)){
+                        $rowEmployeeIds = array_unique(array_merge($rowEmployeeIds, $post["employee_id"]));
+                        $data = array(
+                            "employee_id" => serialize($rowEmployeeIds),
+                            "updated_by" => $this->core_layout->getCurrentEmployeeId(),
+                            "updated_at" => date("Y-m-d H:i:s")
+                        );
+                        $this->db->where("id", $post["group_id"]);
+                        $updatedPayrollGroup = $this->db->update($this->payrollGroupTable, $data);
+                        if($updatedPayrollGroup && $this->db->affected_rows() > 0){
+                            $this->db->select("SELECT UPPER(TRIM(CONCAT(emp.firstname, ' ',
+                                CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                                        TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                                    THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+                                END,' ', emp.lastname,
+                                CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                                    UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                                    emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''
+                                END))) as employee_name");
+                            $this->db->from($this->employeeTable." as emp");
+                            $this->db->where_in("emp.id", $post["employee_id"]);
+                            $qEmployee =$this->db->get();
+                            if($qEmployee->num_rows() > 0){
+                                foreach (qEmployee as $row) {
+                                    $row->employee_name;
+                                    $logMessage = `Payroll Employee Group Transfer for employee named '$row->employee_name' has been Approved as was moved to Payroll Group named '$payrollGroupDescription'.`;
+                                    $this->core_layout->setEventLog($logMessage, "update", "success", "payroll", "user");
+                                }
+                            }
+                        }else{
+                            $logMessage = `Failed to move employees to Payroll Group named '$payrollGroupDescription'.`;
+                            $this->core_layout->setEventLog($logMessage, "update", "failed", "payroll", "system");
+                        }
+                    }
+                }
+
+                $resultset["response"] = true;
+                $resultset["message"] = "Approve Employee Group Transfer Successfully.";
+            }else{
+                $resultset["response"] = false;
+                $resultset["message"] = "Approve Employee Group Transfer Failed.";
+            }
+        }
+        return $resultset;
+    }
+
+    protected function getPayrollMaxDate_OT($id=null){
+        if($id){
+            $this->db->select("MAX(ps.date_end) as max_date");
+            $this->db->from($this->employeeTable." emp");
+            $this->db->join($this->tbl_payroll_sheet." ps", "ps.emp_id = emp.id AND ps.posted = 1", "LEFT");
+            $this->db->where("emp.id", $id);
+            $this->db->group_by("emp.id");
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() == 1){ return $qTemp->row()->max_date; }
+            else{ return false; }
+        }else{ return false; }
+        
+    }
+
+    protected function getCurrentEmployeeName($empId=null){
+        $tempId = $empId ? $empId : $this->core_layout->getCurrentEmployeeId();
+        if ($tempId === null) return "";
+        
+        $this->db->select("UPPER(
+            CONCAT(
+                firstname,
+                ' ',
+                CASE
+                WHEN UPPER(TRIM(middlename)) NOT IN ('N/A', 'NONE')
+                    AND TRIM(middlename) != ''
+                    AND middlename IS NOT NULL
+                THEN CONCAT(SUBSTRING(middlename, 1, 1), '. ')
+                ELSE ''
+                END,
+                lastname,
+                CASE
+                WHEN UPPER(TRIM(suffix)) NOT IN ('N/A', 'NONE')
+                    AND TRIM(suffix) != ''
+                    AND suffix IS NOT NULL
+                THEN CONCAT(' ', suffix)
+                ELSE ''
+                END
+            )
+        ) AS employee_name", false);
+        $this->db->from("gccmaster.tblemployees");
+        $this->db->where("id", $tempId);
+        $query = $this->db->get();
+        if($query->num_rows() === 1){ return $query->row()->employee_name; }
+        else{ return ""; }
+    }
+
+    public function getEmployeesWithoutPayrollGroup() {
+        $resultset = array();
+        $resultset["response"] = false;
+        $resultset["data"] = array();
+
+        $empId = $this->core_layout->getCurrentEmployeeId();
+        $tempTableName = "empcode_" . (int)$empId . "_temporary";
+        $isTemporary = $this->createTemporaryTable($tempTableName);
+        if($isTemporary){
+            $pgEmplyeeIds = array();
+            $this->db->select("employee_id");
+            $this->db->from($this->payrollGroupTable);
+            $this->db->where("status", 1);
+            $this->db->where("is_archived", 0);
+            $pGroup = $this->db->get();
+            if($pGroup->num_rows() > 0){
+                foreach($pGroup->result() as $row){
+                    $employeeIds = @unserialize($row->employee_id);
+                    if(is_array($employeeIds) && !empty($employeeIds)){
+                        $pgEmplyeeIds = array_merge($pgEmplyeeIds, $employeeIds);
+                        $pgEmplyeeIds = array_unique($pgEmplyeeIds);
+                    }
+                }
+            }
+
+            if(is_array($pgEmplyeeIds) && !empty($pgEmplyeeIds)){
+                $data = array_map(fn($id) => ['temp_id' => $id], $pgEmplyeeIds);
+                $chunks = array_chunk($data, 1000);
+                foreach($chunks as $chunk){
+                    $this->db->insert_batch($tempTableName, $chunk);
+                }
+            }
+
+            $this->db->select("UPPER(TRIM(CONCAT(emp.firstname, ' ', CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                        TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+                END, ' ', `emp`.`lastname`, CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                    UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                    emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''
+                END))) as employee_name, UPPER(comp.code) as company_code, emp.employee_status");
+            $this->db->from($this->employeeTable.' emp');
+            $this->db->join($tempTableName.' temp', 'temp.temp_id = emp.id', 'left');
+            $this->db->join($this->companyTable.' comp', 'comp.id = emp.company_id', 'left');
+            $this->db->where('temp.temp_id IS NULL', null, false);
+            $this->db->where('emp.employee_status', 'Active');
+            $this->db->order_by('comp.code', 'ASC');
+            $this->db->order_by('emp.firstname', 'ASC');
+            $query = $this->db->get();
+
+            if($query->num_rows() > 0){
+                $resultset["response"] = true;
+                $resultset["data"] = $query->result();
+            }
+        }
+        return $resultset;
+    }
+
+    public function approveEmployeeGroupTransfer($data = array()){
+        $post = is_array($data) && !empty($data) ? $data : $this->input->post();
+        $result = ["response" => false, "message"  => "Approve Employee Group Transfer Failed."];
+        if (empty($post['id']) || empty($post['employee_id']) || empty($post['group_id'])) { return $result; }
+
+        $currentEmployeeId = $this->core_layout->getCurrentEmployeeId();
+        $now = date("Y-m-d H:i:s");
+        $this->db->where("id", $post['id']);
+        $this->db->update($this->payrollGroupTransferTable, [
+            "status"      => 1,
+            "approved_by" => $currentEmployeeId,
+            "approved_at" => $now,
+            "updated_by"  => $currentEmployeeId,
+            "updated_at"  => $now
+        ]);
+
+        if ($this->db->affected_rows() <= 0) { return $result; }
+
+        $employeeIds = (array) $post['employee_id'];
+        $this->removeEmployeesFromOldGroups($employeeIds, $currentEmployeeId, $now);
+        $updateSuccess = $this->addEmployeesToNewGroup($post['group_id'], $employeeIds, $currentEmployeeId, $now);
+
+        if ($updateSuccess) {
+            $result = ["response" => true, "message" => "Approve Employee Group Transfer Successfully."];
+        }
+
+        return $result;
+    }
+
+    private function removeEmployeesFromOldGroups($employeeIds, $currentEmployeeId, $now){
+        $payrollGroupIds = $this->searchPayrollGroupIdByEmployeeIds($employeeIds);
+        if (empty($payrollGroupIds)) { return; }
+
+        $groups = $this->db
+            ->select("id, employee_id")
+            ->where_in("id", $payrollGroupIds)
+            ->get($this->payrollGroupTable)
+            ->result();
+
+        foreach ($groups as $group) {
+            $existingEmployees = unserialize($group->employee_id);
+            if (!is_array($existingEmployees)) { continue; }
+            $updatedEmployees = array_diff($existingEmployees, $employeeIds);
+            if ($existingEmployees !== $updatedEmployees) {
+                $this->db->where("id", $group->id);
+                $this->db->update($this->payrollGroupTable, [
+                    "employee_id" => serialize($updatedEmployees),
+                    "updated_by"  => $currentEmployeeId,
+                    "updated_at"  => $now
+                ]);
+            }
+        }
+    }
+
+    private function addEmployeesToNewGroup($groupId, $employeeIds, $currentEmployeeId, $now){
+        $group = $this->db
+            ->where("id", $groupId)
+            ->get($this->payrollGroupTable)
+            ->row();
+
+        if (!$group) { return false; }
+        $existingEmployees = unserialize($group->employee_id);
+        if (!is_array($existingEmployees)) {
+            $existingEmployees = [];
+        }
+
+        $mergedEmployees = array_unique(array_merge($existingEmployees, $employeeIds));
+
+        $this->db->where("id", $groupId);
+        $updated = $this->db->update($this->payrollGroupTable, [
+            "employee_id" => serialize($mergedEmployees),
+            "updated_by"  => $currentEmployeeId,
+            "updated_at"  => $now
+        ]);
+
+        if ($updated && $this->db->affected_rows() > 0) {
+            $this->logEmployeeGroupTransfer($employeeIds, 'approved', $group->description);
+            return true;
+        }
+
+        $this->core_layout->setEventLog("Failed to move employees to Payroll Group named '{$group->description}'.", "update", "failed", "payroll", "system");
+
+        return false;
+    }
+
+    public function disapproveEmployeeGroupTransfer(){
+        $post = $this->input->post();
+        $result = ["response" => false, "message" => "Failed to disapprove Employee Group Transfer."];
+
+        if (empty($post['id'])) {
+            $result['message'] = "Failed to disapprove Employee Group Transfer, no post data found.";
+            return $result;
+        }
+
+        $currentEmployeeId = $this->core_layout->getCurrentEmployeeId();
+        $now    = date("Y-m-d H:i:s");
+        $reason = !empty($post['reason']) ? $post['reason'] : "No disapproved remarks";
+        $this->db->where("id", $post['id']);
+        $updated = $this->db->update($this->payrollGroupTransferTable, [
+            "status"               => 2,
+            "disapproved_by"       => $currentEmployeeId,
+            "disapproved_at"       => $now,
+            "disapproved_remarks"  => $reason,
+            "updated_by"           => $currentEmployeeId,
+            "updated_at"           => $now
+        ]);
+
+        if (!$updated || $this->db->affected_rows() <= 0) {
+            $this->core_layout->setEventLog("Failed to disapprove Employee Group Transfer.", "update", "failed", "payroll", "system");
+            return $result;
+        }
+        $employeeIds = $this->getTransferEmployeeIds($post['id']);
+        if (!empty($employeeIds)) {
+            $this->logEmployeeGroupTransfer($employeeIds, 'disapproved', $reason);
+        }
+
+        return ["response" => true, "message" => "Employee Group Transfer has been disapproved."];
+    }
+
+    private function getTransferEmployeeIds($transferId){
+        $row = $this->db
+            ->select("employee_id")
+            ->where("id", $transferId)
+            ->get($this->payrollGroupTransferTable)
+            ->row();
+
+        if (!$row) { return []; }
+        $employeeIds = unserialize($row->employee_id);
+        return is_array($employeeIds) ? $employeeIds : [];
+    }
+
+    private function getEmployeeNames($employeeIds){
+        if (empty($employeeIds)) { return []; }
+
+        return $this->db->select("
+                UPPER(TRIM(CONCAT(
+                    emp.firstname, ' ',
+                    CASE
+                        WHEN emp.middlename IS NOT NULL
+                            AND TRIM(emp.middlename) NOT IN ('', 'N/A', 'NONE')
+                        THEN CONCAT(LEFT(emp.middlename,1),'. ')
+                        ELSE ''
+                    END,
+                    emp.lastname,
+                    CASE
+                        WHEN emp.suffix IS NOT NULL
+                            AND TRIM(emp.suffix) NOT IN ('', 'N/A', 'NONE')
+                        THEN CONCAT(' ', emp.suffix)
+                        ELSE ''
+                    END
+                ))) as employee_name
+            ")
+            ->from($this->employeeTable . " as emp")
+            ->where_in("emp.id", $employeeIds)
+            ->get()
+            ->result();
+    }
+
+    private function logEmployeeGroupTransfer($employeeIds, $type, $extraData = null){
+        $employees = $this->getEmployeeNames($employeeIds);
+        if (empty($employees)) { return; }
+        foreach ($employees as $emp) {
+            switch ($type) {
+                case 'approved':
+                    $message = "The payroll group transfer for employee '{$emp->employee_name}' has been approved. The employee has been moved to the payroll group '{$extraData}'.";
+                break;
+                case 'disapproved':
+                    $reason  = $extraData ?? "No disapproval remarks provided.";
+                    $message = "The payroll group transfer for employee '{$emp->employee_name}' has been disapproved. Reason: '{$reason}'.";
+                break;
+                case 'pending_transfer':
+                    $groupName = $extraData ?? "Unknown Group";
+                    $message = "A payroll group transfer request has been created for employee '{$emp->employee_name}'. The employee will be transferred to the payroll group '{$groupName}'.";
+                break;
+                default: continue 2;
+            }
+            $this->core_layout->setEventLog($message, "insert", "success", "payroll", "user");
+        }
+    }
+    protected function createTemporaryTable($tableName) {
+        $tableName = $this->db->escape_str($tableName);
+        $this->db->query("DROP TEMPORARY TABLE IF EXISTS `{$tableName}`");
+        $sql = "CREATE TEMPORARY TABLE IF NOT EXISTS `" . $tableName . "` (
+            `temp_id` int(11) NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+        return $this->db->query($sql);
+    }
+
+    public function get_archived_employee_group() {
+        $arrData = array();
+        $this->db->select("a.*, IFNULL(b.description, 'ALL') as company");
+        $this->db->from($this->payrollGroupTable." a");
+        $this->db->join($this->companyTable." b", "b.id = a.company_id", "LEFT");
+        $this->db->where("a.is_archived", 1);
+        $query = $this->db->get();
+
+        if($query->num_rows() > 0){
+            foreach($query->result() as $kk => $vv){
+                $employees = array();
+                $tempIds = @unserialize($vv->employee_id);
+                $this->db->from($this->employeeTable);
+                $this->db->where_in("id", $tempIds);
+                $qTempEmp = $this->db->get();
+                if($qTempEmp->num_rows() > 0){
+                    foreach($qTempEmp->result() as $rs){
+                        $tempRs = (array) $rs;
+                        $tempName = $this->core_layout->getDisplayName($tempRs);
+                        $tempName = isset($tempName["display_name_1"]) && $tempName["display_name_1"] ? $tempName["display_name_1"]: "No assigned name";
+                        $employees[] = $tempName;
+                    }
+                }
+                $vv->employees = $employees;
+
+                // get assigned employees when have a privilege of view by company
+                $allowed = array();
+                $tempAssigned = @unserialize($vv->assigned_employee_id);
+
+                if (!empty($tempAssigned)) {
+                    $this->db->select('id, firstname, lastname, middlename, suffix');
+                    $this->db->from($this->employeeTable);
+                    $this->db->where_in("id", $tempAssigned);
+                    $_qTempEmp = $this->db->get();
+                    if($_qTempEmp->num_rows() > 0){
+                        foreach($_qTempEmp->result() as $rs){
+                            $tempRs = (array) $rs;
+                            $_tempName = $this->core_layout->getDisplayName($tempRs);
+                            $_tempName = isset($_tempName["display_name_1"]) && $_tempName["display_name_1"] ? $_tempName["display_name_1"]: "No assigned name";
+                            $allowed[] = $_tempName;
+                        }
+                    }
+                }
+                $vv->assigned_employees = $allowed;
+                // get assigned employees when have a privilege of view by company
+
+                $vv->restore_url = site_url("payroll/employee/get_employee_group_data/restore/{$vv->id}");
+                unset($vv->employee_id, $vv->assigned_employee_id, $vv->is_allow_view);
+                $arrData[$kk] = $vv;
+            }
+        }
+
+        return $arrData;
+    }
+
+    function restorePayrollEmployeeGroup(){
+        $resultset = array();
+        $post = $this->input->post();
+        $logged_id = $this->core_layout->getCurrentEmployeeId(); // get current logged in employee id
+
+        if ($post) {
+            $arrData = array();
+            $arrData["updated_by"] = $this->core_layout->getCurrentEmployeeId();
+            $arrData["updated_at"] = date("Y-m-d H:i:s");
+            $arrData["is_archived"] = 0;
+
+            $updated = $this->db->update($this->payrollGroupTable, $arrData, $post);
+
+            if($updated && $this->db->affected_rows() > 0) {
+                $resultset["response"] = true;
+
+                // log event
+                $msg = "Payroll Employee Group has been restored by " . $this->getCurrentEmployeeName($logged_id) . " at " . date("Y-m-d H:i:s");
+                $this->core_layout->setEventLog("Payroll Group - " . $msg, "restore", "success", "payroll", "user");
+            } else {
+
+                $resultset["response"] = false;
+                // log event
+                $msg = "Failed to restore Payroll Employee Group attempted by " . $this->getCurrentEmployeeName($logged_id) . " at " . date("Y-m-d H:i:s");
+                $this->core_layout->setEventLog("Payroll Group - " . $msg, "restore", "error", "payroll", "user");
+            }
+        } else {
+            $resultset["response"] = false;
+        }
+        return $resultset;
+    }
 }

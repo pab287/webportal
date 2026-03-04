@@ -484,6 +484,10 @@ function renderStatusHtml(data, row) {
             break;
     }
 
+    if (row.is_emergency == 1) {
+        action += '<div><span class="m-badge m-badge--info text-white m-badge--wide mt-1"><small><strong>Emergency</strong></small></span></div>';
+    }
+
     action += '<div style="line-height: 1.1"><p class="mt-2 mb-0 m-font-3"><small><b>Reference no: '+row.reference_no+'</b></small></p>\n';
     action += '<p class="mb-0 m-font-3"><small><b>File Under:</b> '+row.company+'</small></p>';
     /*** action += '<p class="mb-0 m-font-3"><small><b>Date Created:</b> '+row.created_dt+'</small></p></div>';    ***/

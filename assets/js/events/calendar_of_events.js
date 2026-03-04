@@ -5,9 +5,13 @@ let selectedCompanies = null;
 let selectedDepartments = null;
 let selectedCompaniesEdit = null;
 let selectedDepartmentsEdit = null;
+let select2Training = null;
+let select2InitType = null;
+let Select2Category = null;
 if (_currentActions.includes("view_own_request")) {
     $(".btnNew").hide();
 }
+
 let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
     .DataTable({
         dom: 'frtlip',
@@ -40,7 +44,7 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
                     `;
                 }
             },
-            { data: 'description' },
+            // { data: 'description' },
             { 
                 data: "event_venue", 
                 name: 'event_venue',
@@ -138,6 +142,7 @@ $('#addNewEvent').on('shown.bs.modal', function () {
     $('#event_date').daterangepicker({
         showDropdowns: true,
         autoUpdateInput: false,
+        maxDate: moment().add(365, 'days'),
         locale: {
             format: 'MMM DD, YYYY',
             cancelLabel: 'Clear'
@@ -169,7 +174,6 @@ let eventVue = new Vue({
             });
         },
         removeSpeaker(speakerId) {
-            console.log(speakerId, this.speakers);
             if (this.speakers.length > 1) {
                 const index = this.speakers.findIndex(speaker => speaker.id === speakerId);
                 if (index > -1) {
@@ -224,8 +228,6 @@ $.validate({
                 if(res.success){
                     $(form).trigger("reset");
                     $("#addNewEvent").modal('hide');
-                    $("#company").val(null).trigger("change");
-                    $("#department").val(null).trigger("change");
                     selectedCompanies = null;
                     selectedDepartments = null;
                     toastr.success(res.message, 'Success', 5000);
@@ -288,7 +290,7 @@ function itemDatatableActions(id, status, from, to) {
         <a 
             href="${baseUrl('events/add_participants/') + id}" 
             class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnNew" 
-            data-toggle="m-tooltip" data-placement="bottom" title="Manage Participants" 
+            data-toggle="m-tooltip" data-placement="bottom" title="Manage Event" 
             data-skin="dark">
             <i class="la la-user"></i>
         </a>
@@ -298,7 +300,6 @@ function itemDatatableActions(id, status, from, to) {
 
     return _actionButton;
 }
-
 
 
 let editEventVue = new Vue({
@@ -370,6 +371,43 @@ let editEventVue = new Vue({
                 editEventVue.eventsData.department_array = JSON.parse(JSON.stringify(data.map(item => item.text)));
                 selectedDepartmentsEdit = JSON.parse(JSON.stringify(data.map(item => item.text)));
             });
+
+            $('#edit_training_type').select2({
+                placeholder: "Select an Option",
+                dropdownParent: $('#edit_event_form'),
+                allowClear: false,
+                width: '100%',
+                data: _tempContentData.options.training_type
+            }).on('change', function () {
+                let selectedId = $(this).val();
+                editEventVue.eventsData.training_type = selectedId;
+                select2Training = selectedId;
+            });
+            
+            // $('#edit_init_type').select2({
+            //     placeholder: "Select an Option",
+            //     dropdownParent: $('#edit_event_form'),
+            //     allowClear: false,
+            //     width: '100%',
+            //     data: _tempContentData.options.initiation_type
+            // }).on('change', function () {
+            //     let selectedId = $(this).val();
+            //     editEventVue.eventsData.init_type = selectedId;
+            //     select2Init = selectedId;   
+            // });
+            
+            $('#edit_training_category').select2({
+                placeholder: "Select an Option",
+                dropdownParent: $('#edit_event_form'),
+                allowClear: false,
+                width: '100%',
+                data: _tempContentData.options.training_category
+            }).on('change', function () {
+                let selectedId = $(this).val();
+                editEventVue.eventsData.training_category = selectedId;
+                select2Category = selectedId;
+            })
+
         }
     },
 });
@@ -383,6 +421,9 @@ function onEditEvent(id) {
     $("#btnEdit").show();
     $("#company_edit").val(rowData.company_ids).trigger('change');
     $("#department_edit").val(rowData.department_ids).trigger('change');
+    $("#edit_training_type").val(rowData.training_type).trigger('change');
+    // $("#edit_init_type").val(rowData.init_type).trigger('change');
+    $("#edit_training_category").val(rowData.training_category).trigger('change');
     $("#edit-events-modal").modal("show");
 }
 
@@ -412,6 +453,9 @@ $.validate({
                     $(form).trigger("reset");
                     $("#company_edit").val(null).trigger("change");
                     $("#department_edit").val(null).trigger("change");
+                    $("#edit_training_type").val(null).trigger('change');
+                    // $("#edit_init_type").val(null).trigger('change');
+                    $("#edit_training_category").val(null).trigger('change');
                     selectedCompaniesEdit = null;
                     selectedDepartmentsEdit = null;
                     $("#edit-events-modal").modal('hide');
@@ -454,6 +498,7 @@ $('#edit-events-modal').on('shown.bs.modal', function () {
     $('#edit_event_date').daterangepicker({
         showDropdowns: true,
         autoUpdateInput: false,
+        maxDate: moment().add(365, 'days'),
         locale: {
             format: 'MMM DD, YYYY',
             cancelLabel: 'Clear'
@@ -543,17 +588,17 @@ const CalendarBasic = function () {
                         const speakerNames = speakers.map(speaker => speaker.speaker_name).join(', ');
                         const customContent = `
                             <div class="m-widget4__item-wrapper">
-                                <div class="m-widget4__item-title m--font-boldest mb-1" style="color: white; font-size: 1.2em;">
+                                <div class="m-widget4__item-title m--font-boldest mb-1" style="color: black; font-size: 1.2em;">
                                     ${event.title}
                                 </div>
-                                <div class="m-widget4__item-desc mb-1" style="color: rgba(255,255,255,0.8); font-size: 1em;">
+                                <div class="m-widget4__item-desc mb-1" style="color: black; font-size: 1em;">
                                     <span class=" m--margin-right-5">
                                         <i class="la la-map-marker"></i> ${event.venue}
                                     </span>
                                    
                                 </div>
                                 ${speakers.length > 0 ? `
-                                <div class="m-widget4__item-desc mb-1" style="color: rgba(255,255,255,0.7); font-size: 1em;">
+                                <div class="m-widget4__item-desc mb-1" style="color: black; font-size: 1em;">
                                     <span class="m--margin-right-5">
                                         <i class="la la-user"></i> ${speakerNames}
                                     </span>
@@ -576,14 +621,11 @@ const CalendarBasic = function () {
                             'border-radius': '4px',
                             'border': 'none'
                         });
-                        
-                        if (speakers.length > 0) {
-                            element.css('background', 'linear-gradient(135deg, #6c7ae0 0%, #9baaf3 100%)');
-                            element.addClass('m-badge--brand');
-                        } else {
-                            element.css('background', 'linear-gradient(135deg, #fd397a 0%, #fb5581 100%)');
-                            element.addClass('m-badge--danger');
-                        }
+                        let background = event.hex_code && event.hex_code.trim() !== '' ? event.hex_code: '#c4c4c4';
+                        element.css({
+                            'background-color': background,
+                            'border-color': background
+                        });
                     },
                 });
             calendarInitialized = true;
@@ -617,11 +659,17 @@ function openEditHolidayModal(event) {
         description: event.description || "",
         event_venue: event.venue || "",
         speakers: event.speakers || [],
+        training_type: event.training_type || null,
+        init_type: event.init_type || null,
+        training_category: event.training_category || null
     };
 
     editEventVue.eventsData = JSON.parse(JSON.stringify(data));
     $("#company_edit").val(data.company_ids).trigger('change');
     $("#department_edit").val(data.department_ids).trigger('change');
+    $("#edit_training_type").val(data.training_type).trigger('change');
+    // $("#edit_init_type").val(data.init_type).trigger('change');
+    $("#edit_training_category").val(data.training_category).trigger('change');
     $("#edit-events-modal").modal("show");
     $("#btnEdit").hide();
 }
@@ -708,6 +756,33 @@ function declineParticipant(id) {
 $('#addNewEvent').on('hidden.bs.modal', function () {
     $("#new_event_form").trigger("reset");
     eventVue.speakers = [{id: Date.now(), name: '', position: '', company: '' }];
-    $("#company").val(null).trigger("change");
-    $("#department").val(null).trigger("change");
+    $("#company").val([]).trigger("change");
+    $("#department").val([]).trigger("change");
+    $("#training_type").val(null).trigger("change");
+    $("#init_type").val(null).trigger("change");
+    $("#training_category").val(null).trigger("change");
+});
+
+$('#training_type').select2({
+    placeholder: "Select an Option",
+    dropdownParent: $('#addNewEvent'),
+    allowClear: true,
+    width: '100%',
+    data: _tempContentData.options.training_type
+});
+
+$('#init_type').select2({
+    placeholder: "Select an Option",
+    dropdownParent: $('#addNewEvent'),
+    allowClear: true,
+    width: '100%',
+    data: _tempContentData.options.initiation_type
+});
+
+$('#training_category').select2({
+    placeholder: "Select an Option",
+    dropdownParent: $('#addNewEvent'),
+    allowClear: true,
+    width: '100%',
+    data: _tempContentData.options.training_category
 });

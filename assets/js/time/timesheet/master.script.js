@@ -979,6 +979,7 @@ $(document)
                             const pendingAdjustment = row.has_pending_adjustment;
                             const widthAdjustment = parseInt(row.with_adjustment);
                             const id = row.id ? parseInt(row.id) : null;
+                            const hasShift = parseInt(row.has_shift) === 1;
 
                             const isMonthlyPaid = typeof row.is_monthly_paid !== "undefined" && row.is_monthly_paid ? row.is_monthly_paid : false;
 
@@ -994,6 +995,7 @@ $(document)
                                 createTimeAdjustment = ``,
                                 regenerateRecord = ``,
                                 timeAdjustmentDetails = ``;
+                                restDay = ``;
 
                             let isHolidayAction = ``;
                             /*** if (allowPaidHoliday && hasOvertime == false) { ***/
@@ -1072,9 +1074,33 @@ $(document)
                                     <li class="m-nav__item time-adjustment-details">
                                         <a href="javascript:void(0)" class="m-nav__link"
                                         data-id="${row.id}"
-                                        onclick="openTimeAdjustmentListModal(this, ${row._emp_id})">
+                                        onclick="openTimeAdjustmentListModal(this, ${row._date}, ${row._emp_id})">
                                             <i class="m-nav__link-icon fa fa-clock-o"></i>
                                             <span class="m-nav__link-text">TIME ADJUSTMENT DETAILS</span>
+                                        </a>
+                                    </li>`;
+                                }
+
+                                if (hasShift && (row.custom_shift_id == 0 || row.custom_shift_id == 1 || row.custom_shift_id == null) && (row.verified == 0 || row.verified == null)) {
+                                    restDay = `
+                                    <li class="m-nav__item restday-button">
+                                        <a href="javascript:void(0)" class="m-nav__link"
+                                        data-id="${row.id}"
+                                        onclick="confirmRestDay(this, '${row._date}', ${row.has_shift }, ${row._emp_id}, ${row.tsID}, ${meta.row})">
+                                            <i class="m-nav__link-icon fa fa-clock-o"></i>
+                                            <span class="m-nav__link-text">REST DAY</span>
+                                        </a>
+                                    </li>`;
+                                }
+
+                                if (hasShift == 0 && (row.custom_shift_id == 0 || row.custom_shift_id > 0 || row.custom_shift_id == null) && (row.verified == 0 || row.verified == null) && row.altered_shift && row.altered_shift.has_shift == 0 && row.altered_shift.tag == 'timesheet'){
+                                    restDay = `
+                                    <li class="m-nav__item restday-button">
+                                        <a href="javascript:void(0)" class="m-nav__link"
+                                        data-id="${row.id}"
+                                        onclick="undoRestDay(this, '${row._date}', ${row.has_shift }, ${row._emp_id}, ${row.tsID}, ${meta.row})">
+                                            <i class="m-nav__link-icon fa fa-undo"></i>
+                                            <span class="m-nav__link-text">UNDO REST DAY</span>
                                         </a>
                                     </li>`;
                                 }
@@ -1106,6 +1132,7 @@ $(document)
                                                                 </a>
                                                             </li>
                                                             ${undoVerification}
+                                                            ${restDay}
                                                             ${regenerateRecord}
                                                             ${timeAdjustmentDetails}
                                                         </ul>
@@ -5596,4 +5623,197 @@ const resetFilter = function (event) {
             });
         }
     }
+}
+
+const confirmRestDay = function (e, date, has_shift, id, tsId, dtRowIndex) {
+    Swal.fire({
+        icon : 'question',
+        title : 'Rest Day',
+        html: 'Are you sure you want to tag this date as `<b>Rest Day</b>`?',
+        input: "textarea",
+        inputLabel: "Reason for tagging the day as rest day.",
+        inputValidator: (result) => {
+            return !result && "Reason is required!";
+        },
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        allowOutsideClick: false,
+        showLoaderOnConfirm: true,
+    }).then((result) => {
+        if (result.isConfirmed && typeof result.value != undefined && result.value) {
+            $.ajax({
+                url: baseUrl('gcctime/timesheet/tag_date_restday'),
+                type: 'post',
+                data: {
+                    csrf_token: _csrf_hash,
+                    date,
+                    has_shift,
+                    id,
+                    timesheetId: tsId,
+                    reason : result.value
+                },
+                dataType: 'json',
+                success: function(response) {
+                    const rowData = response.row;
+                    if (typeof tsId != "undefined" && tsId) {
+                        const scrub_status = parseInt(rowData.scrub_status);
+                        const verified = parseInt(rowData.verified);
+                        const hasTO = parseInt(rowData.has_TO);
+                        const hasLOA = parseInt(rowData.has_LOA);
+                        const hasWholeDayLoa = parseInt(rowData.has_whole_day_LOA);
+    
+                        dtTimesheet.row(dtRowIndex).data(rowData).draw();
+                        const rowEl = dtTimesheet.row(dtRowIndex).node();
+                        let oddEvenClass = $(rowEl).hasClass("odd") ? "odd" : "even";
+                        $(rowEl)
+                            .removeClass()
+                            .addClass(oddEvenClass);
+    
+                        let currentRowClass = null;
+    
+                        if (scrub_status === 1 && verified === 0) {
+                            currentRowClass = "lacking lacking--contrast";
+                        } else if (scrub_status === 2 && verified === 0) {
+                            currentRowClass = "multiple";
+                        } else {
+                            $(rowEl).hasClass("lacking lacking--contrast") && $(rowEl).removeClass("lacking lacking--contrast");
+                            $(rowEl).hasClass("multiple") && $(rowEl).removeClass("multiple");
+                        }
+    
+                        if ((parseInt(rowData.has_shift) === 0 && (verified === 0 || !verified))) {
+                            currentRowClass = "no-shift";
+                        } else {
+                            $(rowEl).hasClass("no-shift") && $(rowEl).removeClass("no-shift");
+                        }
+    
+                        if (!rowData.id && parseInt(rowData.has_shift) === 1) {
+                            if ((hasLOA >= 1 && hasWholeDayLoa === 1)) { currentRowClass = "absent absent--contrast"; }
+                            else if (hasLOA >= 1 && hasWholeDayLoa <= 0) { currentRowClass = "lacking lacking--contrast"; }
+                            else { currentRowClass = "absent absent--contrast"; }
+    
+                            if (hasTO >= 1) { currentRowClass = "lacking lacking--contrast"; }
+                        }
+    
+                        if (currentRowClass) { $(rowEl).addClass(currentRowClass); }
+                    } else {
+                        dtTimesheet.ajax.reload(null, false);
+                    }
+
+                    if (response.state) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Rest Day',
+                            html: 'Successfully tagged the day as `<b>Rest Day</b>`!'
+                        })
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Rest Day',
+                            html: 'Failed to tag the day as `<b>Rest Day</b>`!'
+                        })
+                    }
+                }
+            })
+        }
+    })
+}
+
+const undoRestDay = function (e, date, has_shift, id, tsId, dtRowIndex) {
+    Swal.fire({
+        icon : 'question',
+        title : 'Undo Rest Day',
+        html: 'Are you sure you want to `<b>UNDO</b>` rest day for this date?',
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        allowOutsideClick: false,
+        input: "textarea",
+        inputLabel: "Reason for undo rest day.",
+        inputValidator: (result) => {
+            return !result && "Reason is required!";
+        },
+        showLoaderOnConfirm: true,
+    }).then((result) => {
+        if (result.isConfirmed && typeof result.value != undefined && result.value) {
+            $.ajax({
+                url: baseUrl('gcctime/timesheet/undo_restday'),
+                type: 'post',
+                data: {
+                    csrf_token: _csrf_hash,
+                    date,
+                    has_shift,
+                    id,
+                    timesheetId: tsId,
+                    reason: result.value
+                },
+                dataType: 'json',
+                success: function(response) {
+                    const rowData = response.row;
+
+                    if (typeof tsId != "undefined" && tsId) {
+                        const scrub_status = parseInt(rowData.scrub_status);
+                        const verified = parseInt(rowData.verified);
+                        const hasTO = parseInt(rowData.has_TO);
+                        const hasLOA = parseInt(rowData.has_LOA);
+                        const hasWholeDayLoa = parseInt(rowData.has_whole_day_LOA);
+    
+                        dtTimesheet.row(dtRowIndex).data(rowData).draw();
+                        const rowEl = dtTimesheet.row(dtRowIndex).node();
+                        let oddEvenClass = $(rowEl).hasClass("odd") ? "odd" : "even";
+                        $(rowEl)
+                            .removeClass()
+                            .addClass(oddEvenClass);
+    
+                        let currentRowClass = null;
+    
+                        if (scrub_status === 1 && verified === 0) {
+                            currentRowClass = "lacking lacking--contrast";
+                        } else if (scrub_status === 2 && verified === 0) {
+                            currentRowClass = "multiple";
+                        } else {
+                            $(rowEl).hasClass("lacking lacking--contrast") && $(rowEl).removeClass("lacking lacking--contrast");
+                            $(rowEl).hasClass("multiple") && $(rowEl).removeClass("multiple");
+                        }
+    
+                        if ((parseInt(rowData.has_shift) === 0 && (verified === 0 || !verified))) {
+                            currentRowClass = "no-shift";
+                        } else {
+                            $(rowEl).hasClass("no-shift") && $(rowEl).removeClass("no-shift");
+                        }
+    
+                        if (!rowData.id && parseInt(rowData.has_shift) === 1) {
+                            if ((hasLOA >= 1 && hasWholeDayLoa === 1)) { currentRowClass = "absent absent--contrast"; }
+                            else if (hasLOA >= 1 && hasWholeDayLoa <= 0) { currentRowClass = "lacking lacking--contrast"; }
+                            else { currentRowClass = "absent absent--contrast"; }
+    
+                            if (hasTO >= 1) { currentRowClass = "lacking lacking--contrast"; }
+                        }
+    
+                        if (currentRowClass) { $(rowEl).addClass(currentRowClass); }
+                    } else {
+                        dtTimesheet.ajax.reload(null, false);
+                    }
+
+                    if (response.state) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Undo Rest Day',
+                            html: 'Successfully `<b>UNDO</b>` rest day for this date!'
+                        })
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Undo Rest Day',
+                            html: 'Failed to `<b>UNDO</b>` rest day for this date!'
+                        })
+                    }
+                }
+            })
+        }
+    })
 }
