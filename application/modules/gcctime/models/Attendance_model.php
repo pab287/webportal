@@ -1740,13 +1740,17 @@ class Attendance_model extends CI_Model {
 
     public function appHookAttendanceData()
     {
-
-        $emp_id = $this->input->post('emp_id', true);
+        $emp_id  = $this->input->post('emp_id', true);
         $dataStr = $this->input->post('data');
-        $timeStamp = date("mYd");
+
+        $uploadPath = FCPATH . "uploads/data/app";
+        if (!is_dir($uploadPath)) {
+            mkdir($uploadPath, 0755, true);
+        }
+
         $result = [
             "response" => false,
-            "message" => "",
+            "message"  => "",
         ];
 
         if (!$emp_id) {
@@ -1766,11 +1770,7 @@ class Attendance_model extends CI_Model {
         $newArr = json_decode($dataStr, true);
         if (!is_array($newArr)) $newArr = [];
 
-        $uploadPath = FCPATH . "uploads/data/app";
-        if (!is_dir($uploadPath)) {
-            mkdir($uploadPath, 0755, true);
-        }
-                    
+        $timeStamp = date("mYd");
         $fileUpload = $uploadPath . "/{$emp_id}-{$timeStamp}.json";
 
         $oldArr = [];
@@ -1781,7 +1781,6 @@ class Attendance_model extends CI_Model {
         }
 
         $merged = array_merge($oldArr, $newArr);
-
         $writeOk = file_put_contents($fileUpload, json_encode($merged));
 
         if ($writeOk === false) {
@@ -1791,6 +1790,7 @@ class Attendance_model extends CI_Model {
             $result["message"] = "Logs appended successfully.";
             $result["count_added"] = count($newArr);
             $result["count_total"] = count($merged);
+            $result["file"] = basename($fileUpload);
         }
 
         return $this->output

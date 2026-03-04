@@ -2310,7 +2310,7 @@ class Gcctime_app_m extends Dbase{
         $latitude = null;
         $longitude = null;
 
-        preg_match('/lattitude:([\d\.\-]+),\s*longitude:([\d\.\-]+)/', $location, $matches);
+        preg_match('/latitude:([\d\.\-]+),\s*longitude:([\d\.\-]+)/', $location, $matches);
 
         if (!empty($matches)) {
             $latitude  = $matches[1];
