@@ -82,63 +82,65 @@ function getTicketDetails(){
                 const filename = fileArr[fileArr.length - 1];
                 const ext = filename.split(".");
     
-                var avatarImage = baseUrl("uploads/files/images/employee_files/empcode_"+ created_by +"/ticketing/" + filename);
-                var renderImage = vmData.picture;
-                images.push(filename);
-                const filename1 = filename;
-                const shortenedName = filename1.length <= 20 ? filename1 : `${filename1.slice(0, 20)}...`;
-                $("#picture").attr("src", renderImage);
-                $("#pic").val(images);
-                let icon = '';
-                let color = '';
-                test = ext[ext.length - 1];
-                allowedFileTypes.forEach((item, i) => {
-                    if (item._type.includes(test)) {
-                        icon = item.icon;
-                        color = item.color;
-                    }
-                    
-                });
-                const icon_path = baseUrl('assets/images/file_icons/' + icon);
-                let viewButton = '';
-                    if (ext == 'docx') {
-                        viewButton = '';
-                    } else{
-                        if(filename){
-                        viewButton = '' +
-                            ' <button '+
-                                ' title="Preview" ' +
-                                ' onclick="previewDocument(\'' + avatarImage + '\', \'' + icon + '\', \'' + filename + '\')"' +
-                                ' class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnRemove" type="button" id="previewFile"> '+
-                                ' <i class="la la-eye"></i>' +
-                            ' </button>';
-                        }else{
-                            viewButton = '';
+                if (filename) {
+                    var avatarImage = baseUrl("uploads/files/images/employee_files/empcode_"+ created_by +"/ticketing/" + filename);
+                    var renderImage = vmData.picture;
+                    images.push(filename);
+                    const filename1 = filename;
+                    const shortenedName = filename1.length <= 20 ? filename1 : `${filename1.slice(0, 20)}...`;
+                    $("#picture").attr("src", renderImage);
+                    $("#pic").val(images);
+                    let icon = '';
+                    let color = '';
+                    test = ext[ext.length - 1];
+                    allowedFileTypes.forEach((item, i) => {
+                        if (item._type.includes(test)) {
+                            icon = item.icon;
+                            color = item.color;
                         }
-                    }
-                var fileList = '<div class="m-widget2">'+
-                    '<div class="m-widget2__item m-widget2__item--'+color+'">' +
-                        '<div class="m-widget2__checkbox">'+
-                            '<div class="m-widget2__img m-widget2__img--icon">'+
-                            '<img src="'+icon_path+'" width="35" alt>' +
+                        
+                    });
+                    const icon_path = baseUrl('assets/images/file_icons/' + icon);
+                    let viewButton = '';
+                        if (ext == 'docx') {
+                            viewButton = '';
+                        } else{
+                            if(filename){
+                            viewButton = '' +
+                                ' <button '+
+                                    ' title="Preview" ' +
+                                    ' onclick="previewDocument(\'' + avatarImage + '\', \'' + icon + '\', \'' + filename + '\')"' +
+                                    ' class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnRemove" type="button" id="previewFile"> '+
+                                    ' <i class="la la-eye"></i>' +
+                                ' </button>';
+                            }else{
+                                viewButton = '';
+                            }
+                        }
+                    var fileList = '<div class="m-widget2">'+
+                        '<div class="m-widget2__item m-widget2__item--'+color+'">' +
+                            '<div class="m-widget2__checkbox">'+
+                                '<div class="m-widget2__img m-widget2__img--icon">'+
+                                '<img src="'+icon_path+'" width="35" alt>' +
+                                '</div>'+
+                            '</div>'+
+                            '<div class="m-widget2__desc">'+
+                                '<span class="m-widget2__user-text">'+
+                                ''+
+                                '</span><br>'+
+                                '<span class="m-widget2__user-name">'+
+                                shortenedName +
+                                '</span>'+
+                                '<span class="m-widget2__user-name">'+
+                                '</span><br><br>'+
+                            '</div>' +
+                            '<div class="m-widget2__actions">' +
+                            '' + viewButton +
                             '</div>'+
                         '</div>'+
-                        '<div class="m-widget2__desc">'+
-                            '<span class="m-widget2__user-text">'+
-                            ''+
-                            '</span><br>'+
-                            '<span class="m-widget2__user-name">'+
-                            shortenedName +
-                            '</span>'+
-                            '<span class="m-widget2__user-name">'+
-                            '</span><br><br>'+
-                        '</div>' +
-                        '<div class="m-widget2__actions">' +
-                        '' + viewButton +
-                        '</div>'+
-                    '</div>'+
-                    '</div>';
-                    $("#uploaded_files").append(fileList);
+                        '</div>';
+                        $("#uploaded_files").append(fileList);
+                }
             });
     
             if (vmData.emp_id) {
@@ -416,3 +418,7 @@ function highlightStars(rating) {
         }
     });
 }
+
+$("#view-ticket-modal").on("hidden.bs.modal", function() {
+    $("#uploaded_files").empty();
+});

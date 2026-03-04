@@ -1757,7 +1757,7 @@ class Payroll_m extends CI_Model{
 
                 $employee->gross_pay = number_format($gross_pay, 2, '.', '');
 
-                $loans = $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
+                $loans =  $this->getEmployeeLoans($employee->id, $gross_pay, 0, $_gross_pay, true);
                 $employee->loans = $loans;
 
                 $postedPayrollSheetRecord = isset($payroll_sheet_row) && !empty($payroll_sheet_row) && intval($payroll_sheet_row->posted) === 1;
@@ -1766,7 +1766,7 @@ class Payroll_m extends CI_Model{
                 $employee->sss_loan = $postedPayrollSheetRecord ? $payroll_sheet_row->sss_loan : 0;
                 $employee->hdmf_loan = $postedPayrollSheetRecord ? $payroll_sheet_row->hdmf_loan : 0;
 
-                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false){
+                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false && (floatval($_gross_pay) > 0)){ // added additional checker that for $_gross_pay to prevent deduction to no earners employees
                     foreach ($loans as $loan) {
                         if($loan->active == 1 && $loan->loan_type == 0){
                             /*** loan internal ***/
@@ -2178,8 +2178,14 @@ class Payroll_m extends CI_Model{
                 }
 
                 // suspends employee active loans when the gross pay is 0 when the generated payrollsheet is not posted
-                if (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0 && intval($payroll_sheet_row->posted) === 0) {
-                    $this->suspendNoEarnersLoans($employee->id);
+                // commented source code to disable suspending no earners loan
+                // if (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0 && intval($payroll_sheet_row->posted) === 0) {
+                //     $this->suspendNoEarnersLoans($employee->id);
+                // }
+                // commented source code to disable suspending no earners loan
+
+                if (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0 && (!isset($payroll_sheet_row) || intval($payroll_sheet_row->posted) === 0)) {
+                    $this->notifSuspended($employee->id);
                 }
 
                 $loans = (floatval($_gross_pay) <= 0 && floatval($gross_pay) <= 0)
@@ -2193,7 +2199,7 @@ class Payroll_m extends CI_Model{
                 $updatedHDMFLoans = $postedPayrollSheetRecord ? $payroll_sheet_row->hdmf_loan : 0;
 
                 $loanId = array();
-                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false){
+                if(is_array($loans) && count($loans) > 0 && $postedPayrollSheetRecord === false && floatval($_gross_pay) > 0){ //added checker for gross pay to prevent running the loans foreach
                     foreach ($loans as $loan) {
                         if($loan->active == 1 && $loan->loan_type == 0){
                             /*** loan internal ***/
@@ -2210,7 +2216,7 @@ class Payroll_m extends CI_Model{
                             if(floatval($loan->interest_amount) > 0 && round($_gross_pay, 2) >= round($loan->interest_amount, 2)){
                                 $updatedTotalLoansInterest += $loan->interest_amount;
                                 $_gross_pay = $_gross_pay - $loan->interest_amount;
-                                 $loanId[] = $loan->id;
+                                $loanId[] = $loan->id;
                             }
                             /*** loan interest ***/
                         }
@@ -2225,7 +2231,7 @@ class Payroll_m extends CI_Model{
                         (floatval($loan->amount_due) > 0 && round($_gross_pay, 2) >= round($loan->amount_due, 2))){
                             $updatedSSSLoans += $loan->amount_due;
                             $_gross_pay = $_gross_pay - $loan->amount_due;
-                             $loanId[] = $loan->id;
+                            $loanId[] = $loan->id;
                         }
                     }
                     /*** loans sss ***/
@@ -2237,7 +2243,7 @@ class Payroll_m extends CI_Model{
                         (floatval($loan->amount_due) > 0 && round($_gross_pay, 2) >= round($loan->amount_due, 2))){
                             $updatedHDMFLoans += $loan->amount_due;
                             $_gross_pay = $_gross_pay - $loan->amount_due;
-                             $loanId[] = $loan->id;
+                            $loanId[] = $loan->id;
                         }
                     }
                     /*** loans hdmf
@@ -2247,6 +2253,10 @@ class Payroll_m extends CI_Model{
                 $updatedToDeductLoans = 0;
                 $updatedToDeductLoans = ($updatedTotalLoans + $updatedTotalLoansInterest) + $updatedSSSLoans + $updatedHDMFLoans;
                 /*** updated loans section ***/
+
+                if (floatval($_gross_pay) > 0 && floatval($gross_pay) > 0 && (!isset($payroll_sheet_row) || intval($payroll_sheet_row->posted) === 0)) {
+                    $this->notifSuspended($employee->id, $loanId);
+                }
 
                 if (!isset($payroll_sheet_row) || intval($payroll_sheet_row->posted) === 0) {
                     $tempDeductions = $employee->total_govt_remittances + ($tempDeductions);
@@ -8737,5 +8747,129 @@ class Payroll_m extends CI_Model{
         }
         $this->db->reset_query();
         return $arrResult;
+    }
+    
+    protected function getNoEarnerEmployeeNameById($id=0){
+        $this->db->select("UPPER(CONCAT(lastname, ', ', firstname,
+            CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND
+                    TRIM(middlename) !='' AND middlename IS NOT NULL
+                THEN CONCAT(' ', SUBSTR(middlename, 1, 1), '.') ELSE ''
+            END,'',
+            CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND
+                UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND
+                suffix IS NOT NULL THEN CONCAT(' ', suffix) ELSE ''
+            END)) as employee_name");
+        $qTemp = $this->db->get_where($this->tbl_employees, array('id' => $id));
+        return $qTemp->num_rows() === 1 ? $qTemp->row()->employee_name : $id;
+    }
+
+    public function notifSuspended($id, $loanIds = array()) {
+        $userId = $this->core_layout->getCurrentEmployeeId();
+        $employeeName = $this->getNoEarnerEmployeeNameById($id);
+        $userLoggedName = $this->getNoEarnerEmployeeNameById($userId);
+
+        $this->db->select("
+            hrl.id,
+            CASE
+                WHEN hrl.debit_note IS NOT NULL AND hrl.debit_note != ''
+                    THEN CONCAT(UPPER(psl.loan_name), ' | ', UPPER(hrl.debit_note))
+                WHEN hrl.reference IS NOT NULL AND hrl.reference != ''
+                    THEN CONCAT(UPPER(psl.loan_name), ' | ', UPPER(hrl.reference))
+                ELSE UPPER(psl.loan_name)
+            END AS loan_name
+        ", false);
+
+        $this->db->from($this->tbl_hris_loans." hrl");
+        $this->db->join($this->tbl_ps_loans." psl", "psl.id = hrl.loan_id", "left");
+
+        if (!empty($loanIds) && count($loanIds) > 0) {
+            $this->db->where_not_in('hrl.id', $loanIds);
+        }
+
+        $this->db->where('hrl.emp_id', $id);
+        $this->db->where('hrl.active', 1);
+        $this->db->where('hrl.paid', 0);
+        $this->db->where("hrl.is_archived", 0);
+        $empLoans = $this->db->get();
+        if($empLoans->num_rows() > 0){
+            $loanDescriptions = array();
+            foreach($empLoans->result() as $loan){
+                $this->db->where('id', $loan->id);
+                $loanDescriptions[] = $loan->loan_name;
+            }
+
+            if(!empty($loanDescriptions)){
+                $suspendedLoans = array_unique($loanDescriptions);
+                $loanDescriptions = implode(', ', array_unique($loanDescriptions));
+                $rawMessage = "Active loan(s) of employee `$employeeName` for the loan(s) `$loanDescriptions` has been automatically suspended due to insufficient gross pay amount.";
+                $msg = "System Generated: " . $rawMessage;
+                $this->core_layout->setEventLog($msg, "update", "success", "payroll");
+                
+                $tempLoans = explode(", ", $loanDescriptions);
+                $listLoans = "Loan Descriptions: \n";
+                foreach($tempLoans as $lnx){
+                    $listLoans .= "- " . trim($lnx) . "\n";
+                }
+
+                $telegramMessage = "Employee `$employeeName` has active loan(s) with no payroll deductions due to insufficient gross pay.\n\n";
+                $telegramMessage .= $listLoans;
+                $telegramMessage .= "\nLast Updated By: $userLoggedName";
+                $telegramMessage .= "\nDate and Time: " . date("D, F j, Y, g:i a");
+                $telegramResponse = $this->sendTelegramPayrollNotificationNoEarners($telegramMessage);
+                $logState = $telegramResponse['ok'] ? "success" : "error";
+                $message = "Employee `$employeeName` has active loan(s)  `<b>$loanDescriptions</b>` with no payroll deductions due to insufficient gross pay. Last Updated by: `$userLoggedName` at ".date("D, F j, Y, g:i a");
+            }
+        }
+
+        return true;
+    }
+
+    protected function sendTelegramPayrollNotificationNoEarners($message=null){
+        if (empty($message)) {
+            return [ 'ok' => false, 'error' => 'Message is empty' ];
+        }
+
+        $config = $this->telegram_config_if_exist('payroll_notification', null);
+        if(!$config){
+            return [ 'ok' => false, 'error' => 'Telegram config not found' ];
+        }
+
+        $botToken = $config->telegram_bot_token;
+        $chatId   = $config->chat_id;
+
+        $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
+        $payload = [ 'chat_id' => $chatId, 'text' => $message, 'parse_mode' => 'HTML' ];
+
+        $context = stream_context_create([
+            'http' => [
+                'method'  => 'POST',
+                'header'  => "Content-Type: application/x-www-form-urlencoded\r\n",
+                'content' => http_build_query($payload),
+                'timeout' => 5,
+                'ignore_errors' => true
+            ]
+        ]);
+
+        set_error_handler(function ($severity, $msg) {
+            throw new Exception($msg);
+        });
+
+        try {
+            $response = file_get_contents($url, false, $context);
+            restore_error_handler();
+            if ($response === false) {
+                throw new Exception('Telegram API unreachable');
+            }
+
+            $decoded = json_decode($response, true);
+            if (isset($decoded['ok']) && $decoded['ok'] === true) {
+                return [ 'ok' => true, 'error' => null ];
+            }else{
+                return [ 'ok' => false, 'error' => $decoded['description'] ];
+            }
+        } catch (Exception $e) {
+            restore_error_handler();
+            return [ 'ok' => false, 'error' => "Error sending telegram notification: " . $e->getMessage() ];
+        }
     }
 }

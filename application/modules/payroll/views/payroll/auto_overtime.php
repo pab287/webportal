@@ -28,8 +28,15 @@
                     <div class="m-portlet__body">
                         <div class="row">
                             <div class="form-group m-form-group col-xl-12 col-lg-12 col-md-12 col-sm-12">
-                                <label for="company" class="required">COMPANY</label>
-                                <select name="company" id="company" class="form-control" data-validation="required">
+                                <label for="company" class="m--font-bolder">STATUS</label>
+                                <select name="status" id="status" class="form-control">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group m-form-group col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                                <label for="company" class="m--font-bolder">COMPANY</label>
+                                <select name="company" id="company" class="form-control">
                                     <option></option>
                                 </select>
                             </div>
@@ -72,11 +79,43 @@
 							</h3>
 						</div>
 					</div>
-					<div class="m-portlet__head-tools"></div>
+                    <div class="m-portlet__head-tools">
+	<ul class="m-portlet__nav">
+		<li class="m-portlet__nav-item m-dropdown m-dropdown--inline m-dropdown--arrow m-dropdown--align-right m-dropdown--align-push" data-dropdown-toggle="click" aria-expanded="false">
+			<a href="#" class="m-portlet__nav-link m-portlet__nav-link--icon m-portlet__nav-link--icon-xl m-dropdown__toggle">
+				<i class="la la-ellipsis-h m--font-brand"></i>
+			</a>
+			<div class="m-dropdown__wrapper">
+				<span class="m-dropdown__arrow m-dropdown__arrow--right m-dropdown__arrow--adjust" style="left: auto; right: 22.5px;"></span>
+				<div class="m-dropdown__inner">
+					<div class="m-dropdown__body">
+						<div class="m-dropdown__content">
+							<ul class="m-nav">
+								<li class="m-nav__section m-nav__section--first">
+													<span class="m-nav__section-text">
+														Quick Action
+													</span>
+												</li>
+												<li class="m-nav__item">
+													<a href="javascript:void(0)" class="m-nav__link btnQuick_action" data-toggle="modal" data-target="#approve_overtime">
+														<i class="m-nav__link-icon flaticon-open-box"></i>
+														<span class="m-nav__link-text">
+															Approve Overtime
+														</span>
+													</a>
+												</li>
+											</ul>
+										</div>
+									</div>
+								</div>
+							</div>
+						</li>
+					</ul>
+				</div>
 				</div>
 				<div class="m-portlet__body">
-                    <div class="row align-items-center">
-                        <div class="col-xl-8 order-2 order-xl-1">&nbsp;</div>
+                    <!-- <div class="row align-items-center">
+                        <div class="col-xl-8 order-2 order-xl-1 exportDropdown">&nbsp;</div>
                         <div class="col-xl-4 order-1 order-xl-2 m--align-right d-flex flex-row">
                             <div class="m-input-icon m-input-icon--left" style="border: 1px solid #c3c3c3;">
                                 <input type="text" class="form-control m-input m-input--solid" placeholder="Search..." id="generalSearch">
@@ -87,7 +126,7 @@
                                 </span>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                     <div class="table-responsive-sm">
                         <table class="table table-bordered"
                                id="tbl-employee-auto-overtime"
@@ -96,9 +135,12 @@
                             <tr>
                                 <th scope="col">Id Number</th>
                                 <th scope="col">Employee Name</th>
+                                <th></th>
+                                <th></th>
                                 <th scope="col">Company</th>
                                 <th scope="col">Auto Overtime</th>
                                 <th scope="col">Last Updated By</th>
+                                <th></th>
                                 <th scope="col">Action</th>
                             </tr>
                             </thead>
@@ -107,6 +149,39 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="approve_overtime" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div id="modalTempContainer" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Approve Overtime Request</h5>
+                <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form id="approve_overtime_form">
+                <div class="modal-body">
+                    <div class="alert alert-warning text-dark" role="alert">
+                        <strong>Important:</strong><br/>
+                        This action will <b>approve all pending overtime requests</b> for employees with 
+                        <b>Auto Overtime enabled</b> within the selected date range.  
+                        This process cannot be undone.
+                    </div>
+                    <div class="form-group">
+                        <label for="approve_overtime_daterange" class="font-weight-bold required">
+                            Select Date Range
+                        </label>
+                        <input type="text" class="form-control" id="approve_overtime_daterange" placeholder="Select date range" data-validation="required" autocomplete="off" readonly>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-success btnSave">Approve</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

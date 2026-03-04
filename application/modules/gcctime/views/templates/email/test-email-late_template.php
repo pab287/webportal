@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <?php
-$dateToday = date("h:i:s A, F d, Y");
+$dateToday = date("h:i:s A, F d, Y", strtotime($date_late));
 ?>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
