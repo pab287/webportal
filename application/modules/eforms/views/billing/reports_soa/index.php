@@ -318,6 +318,8 @@
 
 				<div id="report-tbl-wrapper" class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll mt-5">
 					<div class="report-wrapper m--hide" data-type="payment">
+						<h4 class="text-center mb-3" style="font-weight: 600;">Payment</h4>
+
 						<table class="table table-striped table-bordered table-responsive" id="table-reports_soa" width="100%" style="display: table; width: 100%;">
 							<col width="13%" />
 							<col width="13%" />
@@ -328,10 +330,6 @@
 							<col width="13%" />
 							<col width="12%" />
 							<thead>
-								<tr>
-									<th class="text-center" colspan="8"><h6>PAYMENT</h6></th>
-								</tr>
-
 								<tr>
 									<th>Reference no.</th>
 									<th>Bill</th>
@@ -360,11 +358,10 @@
 					</div>
 
 					<div class="report-wrapper m--hide" data-type="billing">
+						<h4 class="text-center mb-3" style="font-weight: 600;">BILLING</h4>
+
 						<table class="table table-striped table-bordered table-responsive" id="table-reports_billing" width="100%" style="display: table; width: 100%;">
 							<thead>
-								<tr>
-									<th class="text-center" colspan="6">BILLING</th>
-								</tr>
 								<tr>
 									<th>Reference no.</th>
 									<th>From</th>
@@ -389,11 +386,10 @@
 					</div>
 
 					<div class="report-wrapper m--hide" data-type="reading">
+						<h4 class="text-center mb-3" style="font-weight: 600;">READING</h4>
+
 						<table class="table table-striped table-bordered table-responsive" id="table-reports_reading" width="100%" style="display: table; width: 100%;">
 							<thead>
-								<tr rowspan="3">
-									<th class="text-center">READING</th>
-								</tr>
 								<tr>
 									<th>Reference no.</th>
 									<th>Reading Date</th>
@@ -412,7 +408,7 @@
 					</div>
 
 					<div class="report-wrapper m--hide" data-type="ledger">
-						<h4 class="text-center mb-4" style="font-weight: 600;">Ledger</h4>
+						<h4 class="text-center mb-3" style="font-weight: 600;">Ledger</h4>
 
 						<div id="soa_ledger_vue_wrap">
 							<div class="table-header">

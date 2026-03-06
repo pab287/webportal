@@ -5071,12 +5071,23 @@ class Billing_m extends CI_Model {
         $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
         $query_builder = (isset($post["query_builder"]['sql']) && $post["query_builder"]['sql'])? $post["query_builder"]['sql']: array();
         
-        $filterFields = array("a.firstname","a.lastname", "a.accountno", "a.meterno","b.name");
+        $filterFields = [
+            "a.firstname",
+            "a.middlename",
+            "a.lastname",
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))",  
+            "a.accountno", 
+            "a.meterno",
+            "b.name"
+        ];
 
         $this->db->select("a.id, CONCAT(a.firstname,' ',a.lastname) as customer_name, a.accountno, a.meterno, b.name as subdivision_name, a.is_disconnected");
         $this->db->from("hydra_billing.accounts a");
         $this->db->join("hydra_billing.subdivision b", "b.id = a.subdivision_id", "LEFT");
-        $this->db->where("a.is_archive","0");
+        $this->db->where("a.is_archive", 0);
         
         if($search != ""){
             $this->db->group_start();
@@ -5125,9 +5136,12 @@ class Billing_m extends CI_Model {
                 $resultarray[] = $data;
             }
         }
-
-        $total = $this->getReportsSOACount();
-        return array("data"=>$resultarray, "recordsTotal"=>$total, "recordsFiltered"=>$total);
+        
+        return array(
+            "data" => $resultarray,
+            "recordsTotal" => $this->getReportsSOACount_no_filter(),
+            "recordsFiltered" => $this->getReportsSOACount($post, $search)
+        );
     }
     
     function getTotalBalanceCustomer($account_id){
@@ -5440,9 +5454,11 @@ class Billing_m extends CI_Model {
         return $data;
     }
 
-    function getReportsSOACount(){
-        $this->db->select("id");
-        $this->db->from("hydra_billing.accounts");
+    function getReportsSOACount_no_filter(){
+        $this->db->select("a.id, CONCAT(a.firstname,' ',a.lastname) as customer_name, a.accountno, a.meterno, b.name as subdivision_name, a.is_disconnected");
+        $this->db->from("hydra_billing.accounts a");
+        $this->db->join("hydra_billing.subdivision b", "b.id = a.subdivision_id", "LEFT");
+        $this->db->where("a.is_archive","0");
         $query = $this->db->get();
         return $query->num_rows();
     }
