@@ -106,13 +106,9 @@ $('#generalSearch').donetyping(function(callback) {
 });
 
 function modalSOA(id,customer_name,accountno,meterno){
-    // tbl_reports.ajax.reload();
     $("#m_soa #name").html(customer_name);
     $("#m_soa #account_no").html(accountno);
     $("#m_soa #meter_no").html(meterno);
-    // $("#m_soa #balance").html('₱ '+numberWithCommas(total_balance));
-    // $("#m_soa #total_penalty").html('₱ '+numberWithCommas(total_penalty));
-    // $("#m_soa #overPayment").html('₱ '+numberWithCommas(overPayment));
     $('#customer_id').val(id);
     $('#account_name').val(customer_name);
     $('#m_soa').modal('show');
@@ -132,11 +128,6 @@ function getTotalBalanceEtc(){
             endDate: _endDate
         },
         success: function (result) {
-            // $("#m_soa #balance").html('₱ '+numberWithCommas(result.total_charges));
-            // $("#m_soa #total_penalty").html('₱ '+numberWithCommas(result.total_penalty));
-            // $("#m_soa #overPayment").html('₱ '+numberWithCommas(result.overpayment));
-            // $("#m_soa #total_balance").html('₱ '+ numberWithCommas(result.total_balance));
-
             statement_details.total_charges = result.total_charges;
             statement_details.total_penalty = result.total_penalty;
             statement_details.overpayment = result.overpayment;
@@ -157,8 +148,6 @@ function initTableSOA(selectedDate, startDate = null, endDate = null){
     _selectedDate = selectedDate;
     _startDate = startDate;
     _endDate = endDate;
-    // tbl_reports_dialog.ajax.reload();
-    // tbl_reports_dialog_billing.ajax.reload();
 }
 
 var tbl_reports_dialog = $("#table-reports_soa").DataTable({
@@ -181,7 +170,6 @@ var tbl_reports_dialog = $("#table-reports_soa").DataTable({
             d.endDate = _endDate
         },
         error: function (xhr, error, code){
-            // $('#m_soa').modal('hide');
             console.log(error);
         }
     },
@@ -424,20 +412,20 @@ var tbl_reports_dialog_reading = $("#table-reports_reading").DataTable({
             }
         }
     ],
-    "footerCallback": function ( row, data, start, end, display ) {
-        var api = this.api(), data;
+    // "footerCallback": function ( row, data, start, end, display ) {
+    //     var api = this.api(), data;
 
-        var totalReading = api
-            .column( 2 )
-            .data()
-            .reduce( function (a, b) {
-                return parseFloat(a) + parseFloat(b);
-            }, 0 );
+    //     var totalReading = api
+    //         .column( 2 )
+    //         .data()
+    //         .reduce( function (a, b) {
+    //             return parseFloat(a) + parseFloat(b);
+    //         }, 0 );
 
-        // Update footer by showing the total with the reference of the column index 
-        $( api.column( 1 ).footer() ).html('Total');
-        $( api.column( 2 ).footer() ).html("<span class='text-center'>"+totalReading+"</span>");
-    },
+    //     // Update footer by showing the total with the reference of the column index 
+    //     $( api.column( 1 ).footer() ).html('Total');
+    //     $( api.column( 2 ).footer() ).html("<span class='text-center'>"+totalReading+"</span>");
+    // },
 });
 
 function load_ledger_report() {

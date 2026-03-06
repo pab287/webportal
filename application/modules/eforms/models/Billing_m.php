@@ -642,7 +642,7 @@ class Billing_m extends CI_Model {
                     $data["id"] = $_query["id"];
                     $data["meterno_raw"] = $_query["meterno_raw"];
                     $data["text"] = $_query["accountno"] ." | ". $this->nameFormat($_query["firstname"], $_query["middlename"], $_query["lastname"]);
-                    if($this->computeBalanceLastBill($_query['id'], null) == 0 || $this->computeBalanceLastBill($_query['id'], null) == null){
+                    if($this->computeBalanceLastBill($_query['id'], null, null) == 0 || $this->computeBalanceLastBill($_query['id'], null, null) == null){
                       $resultarray[] = $data;
                     }
                 }
@@ -4842,23 +4842,23 @@ class Billing_m extends CI_Model {
     //     );
     // }
 
-    // function get_distribution_report_per_mos($id, $year, $mos) {
-    //     $this->db->select("MONTH(reading_date) as month, distribute");
-    //     $this->db->from("hydra_billing.distribution");
-    //     $this->db->where('is_archive', 0);
-    //     $this->db->where('subdivision_id', $id);
-    //     $this->db->where('YEAR(reading_date)', $year);
-    //     $query = $this->db->get();
-    //     $result = $query->result_array();
+    function get_distribution_report_per_mos($id, $year, $mos) {
+        $this->db->select("MONTH(reading_date) as month, distribute");
+        $this->db->from("hydra_billing.distribution");
+        $this->db->where('is_archive', 0);
+        $this->db->where('subdivision_id', $id);
+        $this->db->where('YEAR(reading_date)', $year);
+        $query = $this->db->get();
+        $result = $query->result_array();
 
-    //     $report = [];
-    //     foreach ($result as $row) {
-    //         $month = $mos[$row['month'] - 1];
-    //         $report[] = [$month => number_format($row['distribute'], 2, '.', '')];
-    //     }
+        $report = [];
+        foreach ($result as $row) {
+            $month = $mos[$row['month'] - 1];
+            $report[] = [$month => number_format($row['distribute'], 2, '.', '')];
+        }
 
-    //     return $report;
-    // }
+        return $report;
+    }
 
     function get_total_per_mos($year, $mos) {
         $report = [];
@@ -5308,32 +5308,6 @@ class Billing_m extends CI_Model {
 
     function check_customer_if_disconnect($account_id) {
         return $this->db->select('is_disconnected')->from('hydra_billing.accounts')->where('id', $account_id)->get()->row_array()['is_disconnected'];
-    }
-
-    function get_total_balance_etc_old(){
-        $post = $this->input->post();
-        $data = array();
-        $total_balance_data = $this->getTotalBalanceCustomer_soa_ledger($post);
-        $total_balance = isset($total_balance_data['balance']) ? $total_balance_data['balance'] : 0;
-        $balance = $this->computeBalanceLastBill_soa_ledger($post);
-        $overpayment = $this->computeOverPayment($post["id"]);
-
-        // fetch first unpaid bill for this account and its payment.penalties (if any)
-        $first_unpaid_penalty = $this->first_unpaid_penalty($post["id"]);
-
-        $data['lastbill'] = $balance; // Useless but as is
-
-        $penalty = $balance["total_penalty"] - $first_unpaid_penalty;
-        $_penalty = $penalty < 0 ? 0 : $penalty;
-
-        $_total = $total_balance + $_penalty;
-        
-        $data['overdue_charges'] = number_format(($total_balance_data["balance"] < 0) ? 0 : $total_balance_data["balance"], 2, '.', ''); 
-        $data['overpayment'] = $overpayment;
-        $data['total_penalty'] = number_format($_penalty, 2, '.', '');
-        $data["total_balance"] = number_format($_total < 0 ? 0 : $_total, 2, '.', '');
-
-        return $data;
     }
 
     public function first_unpaid_penalty($account_id) {
@@ -6115,26 +6089,6 @@ class Billing_m extends CI_Model {
         return $this->load->view("eforms/billing/reports_soa/print", $data, true);
     }
 
-    function print_reports_soa_old(){
-        $post = $this->input->post();
-        $reconnectionFee = $this->getReconnectionFee()['amount'];
-        $balance = $this->computeBalanceLastBill_soa_ledger($post);
-        $reconnection = $this->printReportsSOAreconnection($post['id'], $reconnectionFee);
-        $overdue_charges = $this->getTotalBalanceCustomer_soa_ledger($post);
-
-        $data["overPayment"] = $this->computeOverPayment($post["id"]);
-        $data["total_penalty"] = number_format(($balance["total_penalty"] + $reconnection),2, '.', '');
-        $data["overdue_charges"] = number_format($overdue_charges['balance'], 2, '.', '');
-
-        if(!isset($post['endDate'])){
-            $post['endDate'] = null;
-        }
-
-        $this->core_layout->setEventLog("Reposrts SOA - print account statement of ".$post["account_name"],"print", "success", "hydra_billing", "user");
-        $data["data"] = $this->getReportsSOADetails($post["id"], $post["selectedDate"], $post['startDate'], $post['endDate'], $post['report_type']);
-        return $this->load->view("eforms/billing/reports_soa/print", $data, true);
-    }
-
     function printReportsSOAreconnection($id, $reconnectionFee){
         $this->db->select('is_disconnected');
         $this->db->where('id', $id);
@@ -6161,7 +6115,7 @@ class Billing_m extends CI_Model {
         $this->db->where("b.is_archive",'0');
         $this->db->where("a.is_archived", "0");
         $this->db->where("YEAR(a.reading_date)",$year);
-        if($id != 'all'){ $this->db->where("b.subdivision_id",$subd_id); }
+        // if($id != 'all'){ $this->db->where("b.subdivision_id",$subd_id); }
         $query = $this->db->get();
         
         if($query->num_rows() > 0){

@@ -798,12 +798,12 @@ class Billing extends MY_Controller {
         ->set_output(json_encode($data));
     }
     
-    function get_distribution_reports(){
-        $data = $this->billing->get_distribution_reports();
-		$this->output
-        ->set_content_type('json')
-        ->set_output(json_encode($data));
-    }
+    // function get_distribution_reports(){
+    //     $data = $this->billing->get_distribution_reports();
+	// 	$this->output
+    //     ->set_content_type('json')
+    //     ->set_output(json_encode($data));
+    // }
 
     function save_distribution(){
         $data = $this->billing->saveDistribution();

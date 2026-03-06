@@ -1,5 +1,24 @@
 <?php
     $r_type = $data['report_type'];
+
+    $tbl_foot_payment = array();
+    $tbl_foot_billing = array();
+    $tbl_reading = array();
+    $tbl_ledger = array();
+
+    // For payment table footer
+    $bill = 0;
+    $tbl_foot_total_penalty = 0;
+    $covered = 0;
+    $net = 0;
+    $received = 0;
+    
+    // tracker to avoid accumulate value with the same bill
+    $processed_bills = array(); 
+
+    // For billing table footer
+    $_total_usage = 0;
+    $_total_charges = 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -67,17 +86,26 @@
                 margin: 1cm;
             }
 
+            .watermark{
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(-40deg);
+                opacity: 0.10!important;
+                font-size: 60px!important;
+            }
+
             .print-divider {
                 border-top: 1px solid #000;
                 margin-bottom: 15px;
             }
 
             * {
-                font-size: 8px;
+                font-size: 8px!important;
             }
 
             h3 {
-                font-size: 10px;
+                font-size: 10px!important;
             }
 
             .tbl-header {
@@ -86,6 +114,10 @@
 
             tbody tr:nth-child(odd) {
                 background-color: rgb(242, 242, 242);
+            }
+
+            .tbl-footer-row p {
+                font-size: 8px!important;
             }
         }
 
@@ -164,9 +196,26 @@
             padding: 8px 0;
         }
 
+        .tbl-footer-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            background: #90e0ef;
+        }
+
+        .tbl-footer-row p {
+            font-family: 'Roboto', sans-serif;
+            letter-spacing: 0.1px;
+            padding: 8px 0;
+            font-weight: 900;
+            font-size: 10px;
+        }
+
         /* Payment Start */
         .tbl-header.tbl-payment p,
-        .tbl-body-row.tbl-body-payment p {
+        .tbl-body-row.tbl-body-payment p,
+        .tbl-footer-row.tbl-footer-payment p {
             flex: 0 0 11.11%;
             max-width: 11.11%;
         }
@@ -174,7 +223,8 @@
 
         /* Billing Start */
         .tbl-header.tbl-billing p,
-        .tbl-body-row.tbl-body-billing p {
+        .tbl-body-row.tbl-body-billing p,
+        .tbl-footer-row.tbl-footer-billing p {
             flex: 0 0 20%;
             max-width: 20%;
         }
@@ -190,13 +240,32 @@
 
         /* Ledger Start */
         .tbl-header.tbl-ledger p,
-        .tbl-body-row.tbl-body-ledger p {
+        .tbl-body-row.tbl-body-ledger p,
+        .tbl-footer-row.tbl-footer-ledger p {
             flex: 0 0 20%;
             max-width: 20%;
         }
 
         tfoot {
             display: table-row-group;
+        }
+
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+
+            transform: translate(-50%, -50%) rotate(-40deg);
+
+            font-family: "Arial Black", Arial, sans-serif;
+            font-size: 80px;
+            font-weight: 900;
+            color: black;
+            opacity: 0.15;
+
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 9999;
         }
     </style>
 </head>
@@ -219,7 +288,7 @@
             <tr><td colspan="2">&nbsp;</td></tr>
 
             <tr>
-                <td align="center" colspan="2"><h3 style="margin-bottom: 15px; font-weight: bold;">STATEMENT OF ACCOUNT</h3></td>
+                <td align="center" colspan="2"><h3 style="margin-bottom: 15px; font-weight: bold;"><?=strtoupper($r_type) . " | "; ?> STATEMENT OF ACCOUNT</h3></td>
             </tr>
 
             <tr>
@@ -331,14 +400,9 @@
         <tbody>
             <?php if ($r_type === 'payment'): ?>
                 <?php
-                    $bill = 0;
-                    $penalty = 0;
-                    $covered = 0;
-                    $net = 0;
-                    $received = 0;
                     $bgcolor = "#efefef";
 
-                    $this->db->select("p.ref_no, b.ref_no as bill_ref_no, b.total_charges, p.created_date, p.payment_date, p.payment_type, p.payment_details, p.received_amount, p.balance_covered, p.sub_total, p.net_payment, p.is_archive, p.penalties");
+                    $this->db->select("p.ref_no, b.ref_no as bill_ref_no, b.id as bill_id, b.total_charges, p.created_date, p.payment_date, p.payment_type, p.payment_details, p.received_amount, p.balance_covered, p.sub_total, p.net_payment, p.is_archive, p.penalties");
                     $this->db->from("hydra_billing.payments as p");
                     $this->db->join("hydra_billing.bills as b", "b.id = p.bill_id", "LEFT");
                     $this->db->where("p.account_id", $data['id']);
@@ -368,11 +432,19 @@
                             $row_penalty = (is_array($penalty_ser) && isset($penalty_ser[0]['overdue'])) ? (float) $penalty_ser[0]['overdue'] : 0;
 
                             // accumulate
-                            $total_penalty += $row_penalty;
-                            $bill += $_query["total_charges"];
                             $covered += $_query["balance_covered"];
                             $net += $_query["net_payment"];
                             $received += $_query["received_amount"];
+
+                            // ONLY accumulate bill related values once per bill
+                            $bill_ref = $_query["bill_id"];
+
+                            if (!isset($processed_bills[$bill_ref])) {
+                                $bill += $_query["total_charges"];
+                                $tbl_foot_total_penalty += $row_penalty;
+
+                                $processed_bills[$bill_ref] = true;
+                            }
 
                             // row color toggle
                             $bgcolor = ($bgcolor == "#efefef") ? "#ffffff" : "#efefef";
@@ -394,6 +466,12 @@
                             </tr>
                 <?php
                         endforeach;
+
+                        $tbl_foot_payment['total_bill'] = $bill;
+                        $tbl_foot_payment['total_penalty'] = $tbl_foot_total_penalty;
+                        $tbl_foot_payment['total_covered'] = $covered;
+                        $tbl_foot_payment['total_net'] = $net;
+                        $tbl_foot_payment['total_received'] = $received;
                     else: 
                 ?>
                     <tr><td align="center" colspan="2" style="padding: 6px; font-size: 12px; font-weight: 900">NO MATCHING RECORDS FOUND</td></tr>
@@ -404,8 +482,6 @@
 
             <?php if ($r_type === 'billing'): ?>
                 <?php
-                    $total_usage = 0;
-                    $total_charges = 0;
                     $bgcolor="#efefef";
                     $this->db->select("created_at, billing_from, billing_to, usage, total_charges, ref_no");
                     $this->db->from("hydra_billing.bills");
@@ -430,8 +506,8 @@
 
                     if($query->num_rows() > 0):
                         foreach($query->result_array() as $_query):
-                            $total_usage += $_query["usage"];
-                            $total_charges += $_query['total_charges'];
+                            $_total_usage += $_query["usage"];
+                            $_total_charges += $_query['total_charges'];
                 ?>
                             <tr>
                                 <td colspan="2">
@@ -440,12 +516,16 @@
                                         <p class="text-center"><?=date('M d, Y', strtotime($_query["billing_from"]));?></p>
                                         <p class="text-center"><?=date('M d, Y', strtotime($_query["billing_to"]));?></p>
                                         <p class="text-center"><?=$_query["usage"];?></p>
-                                        <p class="text-center"><?=number_format($_query['total_charges'], 2);?></p>
+                                        <p class="text-center"><?="₱ " . number_format($_query['total_charges'], 2);?></p>
                                     </div>
                                 </td>
                             </tr>
                 <?php
                         endforeach;
+
+                        $tbl_foot_billing['total_usage'] = $_total_usage;
+                        $tbl_foot_billing['total_charges'] = $_total_charges;
+
                     else:
                 ?>
                     <tr><td align="center" colspan="2" style="padding: 6px; font-size: 12px; font-weight: 900">NO MATCHING RECORDS FOUND</td></tr>
@@ -603,15 +683,59 @@
             <?php endif; ?> <!-- ledger -->    
         </tbody>
 
-        <tfoot style="display: table-row-group">
+        <tfoot>
             <tr>
                 <td colspan="2">
-                    Total
+                    <?php if($r_type === 'payment'): ?>
+
+                        <div class="tbl-footer-row tbl-footer-payment">
+                            <p></p>
+                            <p></p>
+                            <p></p>
+                            <p class="text-center">TOTAL</p>
+                            <p class="text-right"><?='₱ '. number_format($tbl_foot_payment['total_bill'], 2);?></p>
+                            <p class="text-right"><?='₱ '. number_format($tbl_foot_payment['total_penalty'], 2);?></p>
+                            <p class="text-right"><?='₱ '. number_format($tbl_foot_payment['total_covered'], 2);?></p>
+                            <p class="text-right"><?='₱ '. number_format($tbl_foot_payment['total_net'], 2);?></p>
+                            <p class="text-right"><?='₱ '. number_format($tbl_foot_payment['total_received'], 2);?></p>
+                        </div>
+                            
+                    <?php endif; ?><!-- payment -->
+
+                    <?php if($r_type === 'billing'): ?>
+
+                        <div class="tbl-footer-row tbl-footer-billing">
+                            <p></p>
+                            <p></p>
+                            <p class="text-center">TOTAL</p>
+                            <p class="text-center"><?=$tbl_foot_billing['total_usage'];?></p>
+                            <p class="text-center"><?='₱ '. number_format($tbl_foot_billing['total_charges'], 2);?></p>
+                        </div>
+
+                    <?php endif; ?><!-- billing -->
+
+                    <?php if($r_type === 'reading'): ?>
+
+                    <?php endif; ?><!-- reading -->
+
+                    <?php if($r_type === 'ledger'): ?>
+
+                        <div class="tbl-footer-row tbl-footer-ledger">
+                            <p></p>
+                            <p></p>
+                            <p></p>
+                            <p class="text-right">TOTAL</p>
+                            <p class="text-right"><?='₱ '. number_format($overdue_charges, 2);?></p>
+                        </div>
+
+                    <?php endif; ?><!-- ledger -->
                 </td>
             </tr>
         </tfoot>
     </table>
 
-    <!-- <div class="watermark">--FOR DISCONNECTION--</div> -->
+    <?php if($r_type === 'ledger'): ?>
+    <div class="watermark">--FOR DISCONNECTION--</div>
+    <?php endif; ?><!-- Watermark -->
 </body>
 </html>
