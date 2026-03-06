@@ -135,18 +135,17 @@
 									<th class="notExport" title="Reading Reference No.">Read No.</th>
 									<th class="notExport" title="Account No.">Acc No.</th>
 									<th>Name</th>
-									<th>Meter No.</th>
 									<th>Billing Date</th>
-									<th>Due Date</th>
 									<th title="Billing Amount">Amt.</th>
 									<th title="Total Pending Amount">Pen. Amt.</th>
 									<th>Status</th>
+									<th>Due Date</th>
+									<th>Days Overdue</th>
 									<th class="notExport">Print</th>
 									<th class="notExport">Action</th>
 								</tr>
 							</thead>
-							<tbody>	
-							</tbody>
+							<tbody></tbody>
 						</table>
 					</div>
 					<!--end: Datatable -->

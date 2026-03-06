@@ -36,9 +36,8 @@ const tblBillings = $("#table-billing").DataTable({
         { data: "reading_ref_no" },
         { data: "accountno" },
         { data: "name", orderable: false },
-        { data: "meterno" },
         { data: "billing_period", orderable: false, className: "text-center" },
-        { data: "due_date", className: "text-center" },
+        
         { 
             data: "total_charges", className: "text-right", render: function (data) {
                 return "<span class='m--font-boldest'>" + numberWithCommas(data) + "</span>";
@@ -52,6 +51,11 @@ const tblBillings = $("#table-billing").DataTable({
         { 
             data: "status", className: "text-center", render: function (data) {
                 return renderStatusDue(data);
+            }
+        },
+        { data: "due_date", className: "text-center" },
+        { data: "days_overdue", width: "5%", className: "text-center", render: function (data) {
+                return data > 0 ? "<span class='m--font-boldest text-danger'>"+data+"</span>" : "<span class='m--font-boldest'>"+data+"</span>";
             }
         },
         { 
@@ -307,7 +311,9 @@ $("input[name=total_charges]").inputmask({ alias : "pesos", removeMaskOnSubmit: 
 
 $('#generalSearch').donetyping(function(callback) {
     search_val = $(this).val();
-    tblBillings.ajax.reload();
+    if (search_val.length >= 3 || search_val.length === 0) {
+        tblBillings.ajax.reload();
+    }
 });
 
 $("#ExportExcel").on("click", function() {
@@ -612,7 +618,7 @@ function tblprint(bill_id) {
 $(document).ready(function () {
     $('#query-builder').queryBuilder({'bt-tooltip-errors': { delay: 100 },
         filters: [
-            { id: 'b.id', label: 'ID #', type: 'integer' },
+            // { id: 'b.id', label: 'ID #', type: 'integer' },
             { id: 'b.ref_no', label: 'Reference No.', type: 'string' },
             { id: 'a.accountno', label: 'Account No.', type: 'string' },
             { id: 'a.firstname', label: 'First Name', type: 'string' },

@@ -1959,7 +1959,7 @@ class Billing_m extends CI_Model {
                 $data["overdue"] = number_format(($overdue) ,2, ".", ","); 
                 $data["disconnection_fee"] = $disconnectionFee;
                 $data["first_unpaid_bill_id"] = $first_unpaid_bill_id;
-
+                $data["days_overdue"] = $current_date > $_query["due_date"] ? $this->dayDifference($_query["due_date"], $current_date) : 0;
                 $total_charges = $_query['total_charges'] + $disconnectionFee + $data["overdue"];
 
                 $t = [
@@ -2397,7 +2397,7 @@ class Billing_m extends CI_Model {
         $this->db->from("hydra_billing.payments");
         $this->db->where("bill_id", $bill_id);
         $this->db->where("is_archive", 0);
-        $this->db->order_by("payment_date", "ASC");
+        $this->db->order_by("created_date", "ASC");
         $query = $this->db->get();
 
         foreach ($query->result_array() as $row) {
@@ -5104,6 +5104,10 @@ class Billing_m extends CI_Model {
                 $balance = $this->computeBalanceLastBill($_query["id"], null, null);
                 $reconnection = $_query['is_disconnected']==1 ? $reconnectionFee : 0;
 
+                // fetch first unpaid bill for this account and its payment.penalties (if any)
+                $first_unpaid_penalty = $this->first_unpaid_penalty($_query["id"]);
+                $penalty = $balance["total_penalty"] - $first_unpaid_penalty;
+
                 $data = array();
                 $data["id"] = $_query["id"];
                 $data["customer_name"] = $_query['customer_name'];
@@ -5111,10 +5115,13 @@ class Billing_m extends CI_Model {
                 $data["meterno"] = $_query['meterno'];
                 $data["subdivision_name"] = $_query['subdivision_name'];
                 $data["overPayment"] = $this->computeOverPayment($_query["id"]);
-                $data["total_penalty"] = number_format(($balance["total_penalty"]),2, '.', '');
+                $data["total_penalty"] = number_format($penalty,2, '.', '');
                 $total_balance_data = $this->getTotalBalanceCustomer($_query["id"]);
                 $total_balance = isset($total_balance_data['balance']) ? $total_balance_data['balance'] : 0;
-                $data["total_balance"] = number_format($total_balance < 0 ? 0 : $total_balance, 2, '.', '');
+                $data["overdue_charges"] = number_format($total_balance < 0 ? 0 : $total_balance, 2, '.', '');
+                $total = ($total_balance + $penalty);
+                if ($total < 0) { $total = 0;}
+                $data["total_balance"] = number_format($total, 2, '.', '');
                 $resultarray[] = $data;
             }
         }
@@ -5190,17 +5197,235 @@ class Billing_m extends CI_Model {
         return $res;
     }
 
-    function getTotalBalanceEtc(){
+    function get_total_balance_etc(){
         $post = $this->input->post();
         $data = array();
-        $total_balance_data = $this->getTotalBalanceCustomer($post["id"]);
+        $total_balance_data = $this->getTotalBalanceCustomer_soa_ledger($post);
         $total_balance = isset($total_balance_data['balance']) ? $total_balance_data['balance'] : 0;
-        $balance = $this->computeBalanceLastBill($post["id"], null, null);
+        $balance = $this->computeBalanceLastBill_soa_ledger($post);
         $overpayment = $this->computeOverPayment($post["id"]);
+
+        // fetch first unpaid bill for this account and its payment.penalties (if any)
+        $first_unpaid_penalty = $this->first_unpaid_penalty($post["id"]);
+
         $data['lastbill'] = $balance; // Useless but as is
+
+        $penalty = $balance["total_penalty"] - $first_unpaid_penalty;
+        
+        $data['overdue_charges'] = number_format($total_balance_data["balance"], 2, '.', ''); 
         $data['overpayment'] = $overpayment;
-        $data["total_balance"] = $total_balance < 0 ? 0 : $total_balance;
+        $data['total_penalty'] = number_format($penalty, 2, '.', '');
+        $data["total_balance"] = number_format($total_balance + $penalty, 2, '.', '');
+
         return $data;
+    }
+
+    public function first_unpaid_penalty($account_id) {
+        $first_unpaid_penalty = 0;
+        $this->db->select('b.id as bill_id, b.ref_no, b.due_date, p.penalties');
+        $this->db->from('hydra_billing.bills b');
+        $this->db->join('hydra_billing.payments p', 'p.bill_id = b.id AND p.is_archive = 0', 'LEFT');
+        $this->db->where('b.account_id', $account_id);
+        $this->db->where('b.is_paid', 0);
+        $this->db->where("b.status", 1);
+        $this->db->order_by('b.due_date', 'ASC');
+        $this->db->limit(1);
+        $bill_payment_row = $this->db->get()->row_array();
+
+        if ($bill_payment_row && !empty($bill_payment_row['penalties'])) {
+            $penalties = @unserialize($bill_payment_row['penalties']);
+            if (is_array($penalties) && isset($penalties[0]['overdue'])) {
+                $first_unpaid_penalty = (float) $penalties[0]['overdue'];
+            }
+        }
+
+        $data['first_unpaid_bill'] = $bill_payment_row ? $bill_payment_row : array();
+        $data['first_unpaid_penalty'] = number_format($first_unpaid_penalty, 2, '.', '');
+
+        return $first_unpaid_penalty;
+    }
+
+    public function getTotalBalanceCustomer_soa_ledger($post) {
+        $res = array();
+        $temp_penalties = $this->getPenalties();
+
+        // Extract POST data
+        $account_id     = $post['id'];
+        $selectedDate   = strtolower($post['selectedDate']); 
+        $startDate_raw  = $post['startDate'] ?? '';
+        $endDate_raw    = $post['endDate'] ?? '';
+        
+        $final_bal = 0;
+        $params = array($account_id, $account_id); // default params (used twice)
+        
+        $sql = "SELECT p.id as payment_id, b.id AS bill_id, b.ref_no, b.total_charges, b.is_paid, 
+                    b.created_at, b.due_date, 
+                    IFNULL(p.received_amount, 0) AS received_amount, 
+                    IFNULL(p.net_payment, 0) AS net_payment, 
+                    IFNULL(p.balance_covered, 0) AS balance_covered
+                FROM hydra_billing.bills AS b
+                LEFT JOIN (
+                    SELECT MIN(id) AS min_id, bill_id
+                    FROM hydra_billing.payments
+                    WHERE account_id = ?
+                    AND is_archive = 0
+                    GROUP BY bill_id
+                ) AS first_payments ON b.id = first_payments.bill_id
+                LEFT JOIN hydra_billing.payments AS p ON p.id = first_payments.min_id
+                WHERE b.account_id = ?
+                AND b.status = 1";
+
+        if (is_numeric($selectedDate)) {
+            // Example: 2024
+            $sql .= " AND YEAR(b.due_date) = ?";
+            $params[] = $selectedDate;
+
+        } elseif ($selectedDate === "custom") {
+
+            if (!empty($startDate_raw) && !empty($endDate_raw)) {
+
+                $startDate = date("Y-m-d", strtotime($startDate_raw));
+                $endDate   = date("Y-m-d", strtotime($endDate_raw));
+
+                $sql .= " AND b.due_date BETWEEN ? AND ?";
+                $params[] = $startDate;
+                $params[] = $endDate;
+            }
+
+        } // "all" means no date filter
+        
+        $sql .= " ORDER BY b.due_date ASC";
+
+        $query = $this->db->query($sql, $params);
+        
+        if ($query->num_rows() > 0) {
+            foreach($query->result_array() as $row) {
+                $payment_details = $this->getBillPayment($row['bill_id']); 
+        
+                // Check for penalties
+                if ($payment_details['payment_date'] > $row['due_date']) {
+                    $penalties = $row['total_charges'] * ($temp_penalties['amount'] / 100);
+                } else {
+                    $penalties = 0; 
+                }
+        
+                $res['reconnection_fee'] = $payment_details['reconnection_fee'];
+                $res['due_date'] = date("Y-m-d", strtotime($row['due_date']));
+                $res['ref_no'] = $row['ref_no'];
+                $res['total_charges'] = $row['total_charges'];
+                $res['received_amount'] = $payment_details['received_amount'];
+                $res['net_payment'] = $row['net_payment'];
+                $res['balance_covered'] = $row['balance_covered'];
+                $res['penalty'] = $penalties;
+
+                $res['debit'] = $row['total_charges'] + $penalties + $res['reconnection_fee'];
+                $res['credit'] = $payment_details['received_amount'];
+        
+                $balance = ($res["debit"] - $res["credit"]);
+
+                $final_bal += $balance;
+                $res['balance'] = $final_bal;
+            }
+        } else {
+            $res['balance'] = 0;
+            $res['error_msgs'] = "Unable to count data";
+        }
+        
+        return $res;
+    }
+
+    public function computeBalanceLastBill_soa_ledger($post) {
+        $array = array();
+        $current_date = date("Y-m-d");
+        $penalties = $this->getPenalties();
+
+        $total_balance = 0;
+        $total_penalty = 0;
+        $bills_payments = 0;
+        $totalPayments = 0;
+        $totalBalanceCover = 0;
+        $b_id = 0;
+
+        // Extract POST params
+        $account_id     = $post['id'];
+        $selectedDate   = strtolower($post['selectedDate']); 
+        $startDate_raw  = $post['startDate'] ?? '';
+        $endDate_raw    = $post['endDate'] ?? '';
+
+        // Build Query
+        $this->db->select("b.id, b.total_charges, b.due_date");
+        $this->db->from("hydra_billing.bills as b");
+        $this->db->where("b.account_id", $account_id);
+        $this->db->where("b.is_paid", 0);
+        $this->db->where("b.status", 1);
+
+        // -----------------------
+        // 🔍 DATE FILTERING
+        // -----------------------
+        if (is_numeric($selectedDate)) {
+            // Example: 2024
+            $this->db->where("YEAR(b.due_date)", $selectedDate);
+
+        } elseif ($selectedDate === "custom") {
+
+            if (!empty($startDate_raw) && !empty($endDate_raw)) {
+
+                $startDate = date("Y-m-d", strtotime($startDate_raw));
+                $endDate   = date("Y-m-d", strtotime($endDate_raw));
+
+                $this->db->where("b.due_date >=", $startDate);
+                $this->db->where("b.due_date <=", $endDate);
+            }
+        }
+        // "all" → no date filter
+
+        $this->db->order_by("b.due_date", "ASC");
+        $query = $this->db->get();
+
+        // -----------------------
+        // 🔄 COMPUTATION LOOP
+        // -----------------------
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $row) {
+
+                $b_id = $row['id'];
+                $total_charges = $row['total_charges'];
+                $overdue_charges = 0;
+
+                $payment_balanceCover = $this->totalPayments($row['id']);
+
+                // PENALTY COMPUTATION
+                if ($current_date > $row['due_date']) {
+                    if ($penalties['type'] == 'percentage') {
+                        $overdue_charges = ($penalties['amount'] / 100) * $total_charges;
+                    } else {
+                        $overdue_charges = $penalties['amount'];
+                    }
+                }
+
+                $total_penalty += $overdue_charges;
+                $total_balance += $total_charges;
+
+                // Bill payments
+                $bills_payments     = $this->computeBillsPaid($row['id']);
+                $totalPayments      = $payment_balanceCover['received_amount'];
+                $totalBalanceCover  = $payment_balanceCover['balance_covered'];
+            }
+        }
+
+        $array['total_penalty'] = floor(($total_penalty * 100)) / 100;
+        $array['total_bill'] = $total_balance;
+
+        $array['total_balance'] = floor(((($total_balance + $total_penalty) - $totalBalanceCover - $totalPayments) * 100)) / 100;
+
+        $array['total_amount'] = ($array['total_balance'] + $array['total_penalty']) - floor(($bills_payments * 100)) / 100;
+
+        $array['total_balance_cover'] = floor(($totalBalanceCover * 100)) / 100;
+        $array['bills_payment'] = $bills_payments;
+        $array['total_payments'] = $totalPayments;
+        $array['bill_id'] = $b_id;
+
+        return $array;
     }
 
     function getBalanceForDisconnection($id){
@@ -5249,12 +5474,13 @@ class Billing_m extends CI_Model {
                 $payment_balanceCover = $this->totalPayments($row['id']);
 
                 if ($current_date > $row['due_date']) {
-                    if($penalties['type'] == 'percentage'){
+                    if ($penalties['type'] == 'percentage') {
                         $overdue_charges = ($penalties['amount'] / 100) * $total_charges;
                     } else {
                         $overdue_charges = $penalties['amount'];
                     }
                 }
+
                 $total_penalty = $total_penalty + $overdue_charges;
                 $total_balance = $total_balance + $total_charges;
                 $bills_payments = $this->computeBillsPaid($row['id']);
@@ -5441,7 +5667,11 @@ class Billing_m extends CI_Model {
         
         $final_bal = 0;
         $post = $this->input->post();
+
         $account_id = $post['id'];
+        $selectedDate  = strtolower($post['selectedDate']);  // could be all, 2024, custom
+        $startDate_raw = $post['startDate'] ?? '';
+        $endDate_raw   = $post['endDate'] ?? '';
 
         $sql = "SELECT p.id as payment_id, b.id AS bill_id, b.ref_no, b.total_charges, b.is_paid, b.created_at, b.due_date, IFNULL(p.received_amount, 0) AS received_amount, IFNULL(p.net_payment, 0) AS net_payment, IFNULL(p.balance_covered, 0) AS balance_covered
                 FROM hydra_billing.bills AS b
@@ -5456,17 +5686,28 @@ class Billing_m extends CI_Model {
                     hydra_billing.payments AS p ON p.id = first_payments.min_id
                 WHERE
                     b.account_id = ?
-                    AND b.status = 1
-                ORDER BY
-                    b.due_date ASC";
+                    AND b.status = 1";
 
-        /**
-         * Whys there 2 parameters?
-         * This is because the query is using the same table twice
-         * The first parameter is for the first instance of the table
-         * The second parameter is for the second instance of the table
-         */
-        $query = $this->db->query($sql, array($account_id, $account_id));
+         $params = [$account_id, $account_id];
+
+        if (is_numeric($selectedDate)) {
+            $sql .= " AND YEAR(b.due_date) = ?";
+            $params[] = $selectedDate;
+        } elseif ($selectedDate === "custom") {
+
+            if (!empty($startDate_raw) && !empty($endDate_raw)) {
+                $startDate = date("Y-m-d", strtotime($startDate_raw));
+                $endDate   = date("Y-m-d", strtotime($endDate_raw));
+
+                $sql .= " AND b.due_date BETWEEN ? AND ?";
+                $params[] = $startDate;
+                $params[] = $endDate;
+            }
+        }
+
+        $sql .= " ORDER BY b.due_date ASC";
+
+        $query = $this->db->query($sql, $params);
 
         if ($query->num_rows() > 0) {
             foreach($query->result_array() as $row) {
@@ -5489,20 +5730,29 @@ class Billing_m extends CI_Model {
 
                 $data['reconnection_fee'] = $payment_details['reconnection_fee'];
                 $data['due_date'] = date("Y-m-d", strtotime($row['due_date']));
-                $data['ref_no'] = $row['ref_no'];
+                $data['b_ref_no'] = $row['ref_no'];
                 $data['total_charges'] = $row['total_charges'];
                 $data['received_amount'] = $payment_details['received_amount'];
                 $data['net_payment'] = $row['net_payment'];
                 $data['balance_covered'] = $row['balance_covered'];
-                $data['penalty'] = $penalties;
-                $data['debit'] = $row['total_charges'] + $penalties + $data['reconnection_fee'];
-                $data['credit'] = $payment_details['received_amount'];
+                $data['penalty'] = number_format($penalties, 2, '.', '');
+                $data['debit'] = number_format($row['total_charges'] + $penalties + $data['reconnection_fee'], 2, '.', '');
+
+                $received = isset($payment_details['received_amount']) ? (float)$payment_details['received_amount'] : 0.00;
+                $covered  = isset($payment_details['balance_covered']) ? (float)$payment_details['balance_covered'] : 0.00;
+                $credit = 0.00;
+
+                if ($received > 0 || $covered > 0) {
+                    $credit = $received + $covered;
+                }
+
+                $data['credit'] = number_format($credit, 2, '.', '');
                 $data['payment_date'] = $payment_date;
+                $data['payment_history'] = $this->getPaymentHistory_soa($row['bill_id']);
 
                 $balance = ($data["debit"] - $data["credit"]);
-                $final_bal += $balance;
-
-                $data['balance'] = $final_bal;
+                // $final_bal += $balance;
+                $data['balance'] = number_format($balance, 2, '.', '');
 
                 $res[] = $data;
             }
@@ -5510,7 +5760,58 @@ class Billing_m extends CI_Model {
             $res['error_msgs'] = "Unable to count data";
         }
 
-        return array("data"=>$res);
+        $total_balance = number_format($this->getTotalBalanceCustomer_soa_ledger($post)['balance'], 2, '.', '');
+        return array("data" => $res, "total_balance" => $total_balance);
+    }
+
+    public function getPaymentHistory_soa($bill_id){
+        $res = [];
+        $this->db->select("id, payment_date, created_date as payment_date_applied, ref_no, received_amount, balance_covered, net_payment, reconnection_fee, penalties, is_archive");
+        $this->db->from("hydra_billing.payments");
+        $this->db->where("bill_id", $bill_id);
+        $this->db->order_by("payment_date", "ASC");
+        $query = $this->db->get();
+
+        foreach ($query->result_array() as $row) {
+            $net = (float) $row['net_payment'];
+            $rec = isset($row['received_amount']) ? (float) $row['received_amount'] : 0.00;
+            $cov = isset($row['balance_covered']) ? (float) $row['balance_covered'] : 0.00;
+
+            $row['penalties'] = unserialize($row['penalties'])[0]['overdue'] ?? 0.00; // Ensure penalties is set to 0 if not available
+            $row['font_color'] = $row['is_archive'] == 1 ? '#f66e84' : '#737373';
+
+            // received_amount override
+            if ($row['is_archive'] == 1) {
+                $row['received_amount'] = number_format(0, 2, '.', '');
+            } else {
+                $row['received_amount'] = number_format($rec + $cov, 2, '.', '');
+            }
+
+            // net_payment override            
+            if ($net == 0 && $rec == 0 && $cov > 0) {
+                $row['net_payment'] = number_format($cov, 2, '.', '');
+            } else {
+                $row['net_payment'] = number_format($net, 2, '.', '');
+            }
+
+            // Raw received_amount and net_payment for balance calculation
+            $row['raw_received_amount'] = number_format($rec, 2, '.', ''); // This is for showing formula only
+            $row['raw_net_payment'] = number_format($net + $cov, 2, '.', ''); // This is for getting the raw net payment without balance covered
+
+            // balance override
+            $balance_calc = $row['raw_net_payment'] - $row['received_amount'];
+            $row['balance'] = number_format($balance_calc < 0 ? 0 : $balance_calc, 2, '.', '');
+
+            // additional data for debugging
+            $row['test'] = array(
+                'net' => $row['net_payment'],
+                'rec' => $row['received_amount'],
+                'cov' => $cov
+            );
+
+            $res[] = $row;
+        }
+        return $res;
     }
 
     function getBillPayment($bill_id){
@@ -5611,20 +5912,23 @@ class Billing_m extends CI_Model {
         return $data;
     }
 
-    function printReportsSOA(){
+    function print_reports_soa(){
         $post = $this->input->post();
         $reconnectionFee = $this->getReconnectionFee()['amount'];
-        $balance = $this->computeBalanceLastBill($post["customer_id"], null, null);
-        $reconnection = $this->printReportsSOAreconnection($post['customer_id'], $reconnectionFee);
+        $balance = $this->computeBalanceLastBill_soa_ledger($post);
+        $reconnection = $this->printReportsSOAreconnection($post['id'], $reconnectionFee);
+        $overdue_charges = $this->getTotalBalanceCustomer_soa_ledger($post);
 
-        $data["overPayment"] = $this->computeOverPayment($post["customer_id"]);
+        $data["overPayment"] = $this->computeOverPayment($post["id"]);
         $data["total_penalty"] = number_format(($balance["total_penalty"] + $reconnection),2, '.', '');
-        $data["total_balance"] = number_format($balance["total_balance"],2, '.', '');
+        $data["overdue_charges"] = number_format($overdue_charges['balance'], 2, '.', '');
+
         if(!isset($post['endDate'])){
             $post['endDate'] = null;
         }
+
         $this->core_layout->setEventLog("Reposrts SOA - print account statement of ".$post["account_name"],"print", "success", "hydra_billing", "user");
-        $data["data"] = $this->getReportsSOADetails($post["customer_id"], $post["selectedDate"], $post['startDate'], $post['endDate'], $post['report_type']);
+        $data["data"] = $this->getReportsSOADetails($post["id"], $post["selectedDate"], $post['startDate'], $post['endDate'], $post['report_type']);
         return $this->load->view("eforms/billing/reports_soa/print", $data, true);
     }
 
@@ -6861,7 +7165,7 @@ class Billing_m extends CI_Model {
         return array("results" => $resultarray);
     }
 
-    // =================================== Remittance ===================================
+     // =================================== Remittance ===================================
 
     public function remittance_date_payments_selected() {
         $post = $this->input->post();

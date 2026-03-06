@@ -158,6 +158,9 @@ class Billing extends MY_Controller {
         
         $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
         $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
+        $this->core_layout->addJs("plugins/export_plugins/xlsx.full.min.js", true);
+        $this->core_layout->addJs("plugins/export_plugins/jspdf.umd.min.js", true);
+        $this->core_layout->addJs("plugins/export_plugins/jspdf-autotable.js", true);
 
         $this->core_layout->addJs("js/eforms/billing/reports_soa/payment_collection.js", true);
         $this->load->view('core/templates/header');
@@ -831,7 +834,7 @@ class Billing extends MY_Controller {
     }
 
     function get_total_balance_etc(){
-        $data = $this->billing->getTotalBalanceEtc();
+        $data = $this->billing->get_total_balance_etc();
 		$this->output
         ->set_content_type('json')
         ->set_output(json_encode($data));
@@ -894,7 +897,7 @@ class Billing extends MY_Controller {
     }
 
     function print_reports_soa(){
-        $data = $this->billing->printReportsSOA();
+        $data = $this->billing->print_reports_soa();
 		$this->output
         ->set_content_type('json')
         ->set_output(json_encode($data));
