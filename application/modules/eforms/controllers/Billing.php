@@ -866,7 +866,7 @@ class Billing extends MY_Controller {
     }
     
     function get_payment_collection_report(){
-      $data = $this->billing->getPaymentCollectionReport();
+      $data = $this->billing->get_payment_collection_report();
       $this->output
           ->set_content_type('json')
           ->set_output(json_encode($data));

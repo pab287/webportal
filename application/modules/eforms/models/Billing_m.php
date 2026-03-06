@@ -6638,20 +6638,15 @@ class Billing_m extends CI_Model {
         return $query->num_rows();
     }
 
-    function getPaymentCollectionReport(){
-        $resultarray = array();
+    function get_payment_collection_report(){
         $post = $this->input->post();
 
-        $order_val = array(array("column"=>"6", "dir"=>"desc"));
-        $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
-        $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
+        $employees = $post["ids"] ?? "";
+        $dateRange = $post["date"] ?? "";
 
-        if (isset($post['date'])) {
-            $date = explode("-", $post['date']);
-        } else {
-            $date = date("Y-m-d");
-        }
-
+        // ==============================
+        // 1. Build Base Query
+        // ==============================
         $this->db->select("
             payment.acknowledgement_receipt,
             payment.ref_no as payment_ref,
@@ -6672,55 +6667,128 @@ class Billing_m extends CI_Model {
         $this->db->join("hydra_billing.accounts acct", "acct.id=payment.account_id", "LEFT");
         $this->db->join("hydra_billing.bills bill", "bill.id=payment.bill_id", "LEFT");
         $this->db->join("gccmaster.tblemployees emp", "emp.id=payment.created_by", "LEFT");
-        $this->db->where("payment.created_by",$post['id']);
 
-        if ($date[0] == $date[1]) {
-            // Single day filter
-            $this->db->where("DATE(payment.created_date)", date("Y-m-d", strtotime($date[0])));
-        } else {
-            // Range filter
-            $this->db->where("payment.created_date >=", date("Y-m-d 00:00:00", strtotime($date[0])));
-            $this->db->where("payment.created_date <=", date("Y-m-d 23:59:59", strtotime($date[1])));
+        // ==============================
+        // 2. DEFAULT MODE: No employee + no date
+        // ==============================
+        if (empty($employees) && empty($dateRange)) {
+
+            $firstDay = date("Y-m-01");
+            $lastDay  = date("Y-m-t");
+
+            $this->db->where("payment.created_date >=", "$firstDay 00:00:00");
+            $this->db->where("payment.created_date <=", "$lastDay 23:59:59");
         }
-        
-        $i = $sortOrder[0]['column'];
-        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+
+        // ==============================
+        // 3. If employee selected
+        // ==============================
+        if (!empty($employees)) {
+            $this->db->where_in("payment.created_by", $employees);
+        }
+
+        // ==============================
+        // 4. If date range selected
+        // ==============================
+        if (!empty($dateRange)) {
+            $date = explode("-", $dateRange);
+            $start = trim($date[0]);
+            $end = trim($date[1]);
+
+            if ($start == $end) {
+                $this->db->where("DATE(payment.created_date)", date("Y-m-d", strtotime($start)));
+            } else {
+                $this->db->where("payment.created_date >=", date("Y-m-d 00:00:00", strtotime($start)));
+                $this->db->where("payment.created_date <=", date("Y-m-d 23:59:59", strtotime($end)));
+            }
+        } else {
+            // Default to current month if no date range provided
+            $firstDay = date("Y-m-01"); // 2025-12-01
+            $lastDay  = date("Y-m-t"); // 2025-12-31
+
+            $this->db->where("payment.created_date >=", $firstDay . " 00:00:00");
+            $this->db->where("payment.created_date <=", $lastDay . " 23:59:59");
+        }
+
+        // Sort by cashier then date
+        $this->db->order_by("cashier ASC");
+        $this->db->order_by("payment.created_date DESC");
 
         $query = $this->db->get();
-        if ($query->num_rows() > 0) {
-            foreach($query->result_array() as $_query) {
-                $data = array();
 
-                $is_archive = $_query["is_archive"];
+        // ==============================
+        // 5. GROUP BY CASHIER
+        // ==============================
+        $grouped = [];
+        $totalArchived = 0;
+        $totalCash = 0;
+        $totalCount = $query->num_rows();
 
-                if ($is_archive == 0) {
-                    $rec_amount = $_query["received_amount"];
-                    $balance_covered = $_query["balance_covered"];
-                } else {
-                    $rec_amount = 0;
-                    $balance_covered = 0;
+        if ($totalCount > 0) {
+            foreach ($query->result_array() as $row) {
+
+                $cashier = $row["cashier"];
+
+                // Initialize cashier group if not exist
+                if (!isset($grouped[$cashier])) {
+                    $grouped[$cashier] = [
+                        "cashier"  => $cashier,
+                        "payments" => [],
+                        "total_cash" => 0.0,
+                        "archived_count" => 0
+                    ];
                 }
 
-                $data["account"] = $_query["account"];
-                $data["bill_ref"] = $_query["bill_ref"];
-                $data["acknowledgement_receipt"] = $_query["acknowledgement_receipt"];
-                $data["payment_ref"] = $_query["payment_ref"];
-                $data["type"] = strtoupper($_query["payment_type"]);
-                $data["received_amount"] = $rec_amount;
-                $data["balance_covered"] = $balance_covered;
-                $data["payment_date"] = date("Y-m-d", strtotime($_query["payment_date"]));
-                $data["applied_payment_date"] = date("Y-m-d", strtotime($_query["applied_payment_date"]));
-                $data["cashier"] = $_query["cashier"];
-                $data["is_archived"] = $is_archive;
-                $data["total_count"] = $query->num_rows();
-                $resultarray[] = $data;
-            }
+                if ($row["is_archive"] == 1) {
+                    $grouped[$cashier]["archived_count"]++;
+                    $totalArchived++;
+                }
 
-            return array("data" => $resultarray, "recordsTotal" => $query->num_rows(), "recordsFiltered" => $query->num_rows());
-        } else {
-            return array("data" => [], "recordsTotal" => 0, "recordsFiltered" => 0);
+                // Normal payment processing
+                $is_archive = $row["is_archive"];
+
+                $rec_amount       = ($is_archive == 0) ? $row["received_amount"] : 0;
+                $balance_covered  = ($is_archive == 0) ? $row["balance_covered"] : 0;
+
+                // accumulate totals
+                $grouped[$cashier]["total_cash"] += $rec_amount;
+                $totalCash += $rec_amount;
+
+                // Convert to payment item
+                $paymentItem = [
+                    "account"              => $row["account"],
+                    "bill_ref"             => $row["bill_ref"],
+                    "acknowledgement_receipt" => $row["acknowledgement_receipt"],
+                    "payment_ref"          => $row["payment_ref"],
+                    "type"                 => strtoupper($row["payment_type"]),
+                    "received_amount"      => number_format($rec_amount, 2, '.', ''),
+                    "balance_covered"      => number_format($balance_covered, 2, '.', ''),
+                    "payment_date"         => date("Y-m-d", strtotime($row["payment_date"])),
+                    "applied_payment_date" => date("Y-m-d", strtotime($row["applied_payment_date"])),
+                    "is_archived"          => $is_archive,
+                    "cashier"              => $row["cashier"],
+                ];
+
+                // Append to cashier group
+                $grouped[$cashier]["payments"][] = $paymentItem;
+            }
         }
-        
+
+        // Reset indexes (array_values)
+        // $finalData = array_values($grouped);
+
+        // format cashier totals
+        foreach ($grouped as &$g) {
+            $g["total_cash"] = number_format($g["total_cash"], 2, '.', '');
+        }
+        unset($g);
+
+        return [
+            "data"            => array_values($grouped),
+            "recordsTotal"    => $totalCount,
+            "totalArchived"   => $totalArchived,
+            "totalCash"       => number_format($totalCash, 2, '.', '')
+        ];
     }
 
     function getSalesReport(){
