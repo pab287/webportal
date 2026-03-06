@@ -115,6 +115,10 @@
 	.is_archived_text > * {
 		color: #f66e84!important;
 	}
+
+	.v-mid {
+		vertical-align: middle!important;
+	}
 </style>
 
 <div class="m-content">

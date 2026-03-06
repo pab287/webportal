@@ -32,26 +32,26 @@ const tbl_reports = $("#table-reports").DataTable({
                 return "<strong style='color: #525252;'>"+data+"</strong>";
             }
         },
-        { data: "accountno", width: "7%"},
-        { data: "meterno", width: "5%"},
-        { data: "subdivision_name", width: "13%"},
-        { data: "overPayment", className: "text-right", width: "5%", render: function (data) {
+        { data: "accountno", width: "7%", className: "v-mid"},
+        { data: "meterno", width: "5%", className: "v-mid"},
+        { data: "subdivision_name", width: "13%", className: "v-mid"},
+        { data: "overPayment", className: "text-right v-mid", width: "5%", render: function (data) {
                 return "₱ <strong style='color: #525252;'>"+numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
             }
         },
-        { data: "total_penalty", className: "text-right", width: "5%", render: function (data) {
+        { data: "total_penalty", className: "text-right v-mid", width: "5%", render: function (data) {
                 return "₱ <strong style='color: #525252;'>"+numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
             }
         },
-        { data: "overdue_charges", className: "text-right", width: "7%", render: function (data) {
+        { data: "overdue_charges", className: "text-right v-mid", width: "7%", render: function (data) {
                 return "₱ <strong style='color: #525252;'>"+numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
             }
         },
-        { data: "total_balance", className: "text-right", width: "5%", render: function (data) {
+        { data: "total_balance", className: "text-right v-mid", width: "5%", render: function (data) {
                 return "₱ <strong style='color: #525252;'>"+numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
             }
         },
-        { data: null, width: "2%", className: "text-center"},
+        { data: null, width: "2%", className: "text-center v-mid"},
    ],
    columnDefs: [
         {
@@ -60,6 +60,10 @@ const tbl_reports = $("#table-reports").DataTable({
             targets: -1,
             orderable: false,
             render: function ( data, type, row, meta ) { return itemDatatableActions(row); },
+        },
+        {
+            targets: "_all",
+            className: "v-mid"
         }
     ],
     select: {
