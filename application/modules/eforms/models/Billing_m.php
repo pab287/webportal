@@ -7322,6 +7322,46 @@ class Billing_m extends CI_Model {
         return array("results" => $resultarray);
     }
 
+    function getReportsSOACount($post, $search) {
+        $filterFields = [
+            "a.firstname",
+            "a.middlename",
+            "a.lastname",
+            "CONCAT(TRIM(a.firstname), ' ', LEFT(TRIM(a.middlename), 1), '.', ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.lastname))",  
+            "CONCAT(TRIM(a.lastname), ' ', TRIM(a.firstname))",  
+            "CONCAT(TRIM(a.firstname), ' ', TRIM(a.middlename), ' ', TRIM(a.lastname))",  
+            "a.accountno", 
+            "a.meterno",
+            "b.name"
+        ];
+
+        $this->db->select("a.id, CONCAT(a.firstname,' ',a.lastname) as customer_name, a.accountno, a.meterno, b.name as subdivision_name, a.is_disconnected");
+        $this->db->from("hydra_billing.accounts a");
+        $this->db->join("hydra_billing.subdivision b", "b.id = a.subdivision_id", "LEFT");
+        $this->db->where("a.is_archive", 0);
+
+        $has_search = !empty($search);
+
+        if ($has_search) {
+            $search = preg_replace('/\s+/', ' ', trim($search)); // Normalize spaces!
+            $search = preg_replace('/[^a-zA-Z0-9\s\.,-]/', '', $search); // Remove special characters except for comma, dot & dashes
+
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+
      // =================================== Remittance ===================================
 
     public function remittance_date_payments_selected() {
