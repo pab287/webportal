@@ -45,24 +45,27 @@ class Events_model extends MX_Controller {
 
     private function getEventsData($limit, $offset, $sortBy, $sortOrder, $search , $year,$is_archived){
         $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to","b.speaker_name","b.position","b.company","a.company_array","a.department_array","a.events_by");
-        $this->db->select("a.on_hold, a.budget, a.company_source, a.expense, a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array, a.events_by, a.training_type, a.init_type, a.training_category, 
-            GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
-            GROUP_CONCAT(b.id SEPARATOR '||') as speaker_id,
-            GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
-            GROUP_CONCAT(b.company SEPARATOR '||') as speaker_companies,
+        $this->db->select("a.on_hold, a.budget, a.company_source, a.expense, a.id, a.event_title, 
+            a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, 
+            a.company_array, a.department_array, a.events_by, a.training_type, a.init_type, a.training_category, 
+            (SELECT GROUP_CONCAT(s.speaker_name SEPARATOR '||') FROM {$this->eventsSpeakersTable} s WHERE s.event_id = a.id) as speaker_names,
+            (SELECT GROUP_CONCAT(s.id SEPARATOR '||') FROM {$this->eventsSpeakersTable} s WHERE s.event_id = a.id) as speaker_id,
+            (SELECT GROUP_CONCAT(s.position SEPARATOR '||') FROM {$this->eventsSpeakersTable} s WHERE s.event_id = a.id) as speaker_positions,
+            (SELECT GROUP_CONCAT(s.company SEPARATOR '||') FROM {$this->eventsSpeakersTable} s WHERE s.event_id = a.id) as speaker_companies,
+            COUNT(DISTINCT CASE WHEN c.status = 'confirmed' THEN c.id END) as total_attendees,
+            SUM(CASE WHEN c.cert_awarded != 0 AND c.status = 'confirmed'  THEN 1 ELSE 0 END) as total_cert_awarded,
             CONCAT(
                 DATE_FORMAT(a.event_from, '%b %d, %Y'),
                 ' - ',
                 DATE_FORMAT(a.event_to, '%b %d, %Y')
             ) as date
-            ");
+        ");
         $this->db->from($this->eventsCalendarTable . " a");
-        $this->db->join($this->eventsSpeakersTable . " b", "a.id = b.event_id", "left");
-
+        // $this->db->join($this->eventsSpeakersTable . " b", "a.id = b.event_id", "left");
+        $this->db->join($this->eventsParticipantsTable . " c", "a.id = c.event_id", "left");
         // $this->db->where("YEAR(a.event_to)", $year);
         $this->db->where("a.is_archive", $is_archived ? 1 : 0);
         if (in_array("view_own_request", $this->actions)) {
-            $this->db->join($this->eventsParticipantsTable . " c", "a.id = c.event_id", "left");
             $this->db->join($this->employeesTable." d", "c.emp_id = d.id", "left");
             $this->db->select("c.emp_id as employee_id, d.firstname, d.middlename, d.lastname, c.status as participant_status");
             $this->db->where("c.emp_id", $this->user_data['emp_id']);
@@ -94,13 +97,13 @@ class Events_model extends MX_Controller {
             $companies = explode("||", $row['speaker_companies']);
         
             $speakers = [];
-            foreach ($names as $i => $name) {
+            foreach ($names as $idx => $name) {
                 if ($name) {
                     $speakers[] = [
                         "speaker_name" => $name,
-                        "id"           => $id[$i] ?? null,
-                        "position"     => $positions[$i] ?? null,
-                        "company"      => $companies[$i] ?? null,
+                        "id"           => $id[$idx] ?? null,
+                        "position"     => $positions[$idx] ?? null,
+                        "company"      => $companies[$idx] ?? null,
                     ];
                 }
             }

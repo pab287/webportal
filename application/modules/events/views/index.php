@@ -87,7 +87,7 @@
                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                             <button type="button" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#addNewEvent">
                                 <i class="la la-plus"></i>
-                                Add training
+                                Add Training
                             </button>
                         </div>
                         <div class="col-xl-2 col-lg-2 col-md-2 col-sm-12 mb-2">
@@ -120,6 +120,7 @@
                                 <!-- <th>DESCRIPTION</th> -->
                                 <th>VENUE</th>
                                 <th>RESOURCE PERSON</th>
+                                <th>EVENT DETAILS</th>
                                 <th>ACTION ITEMS</th>
                             </tr>
                             </thead>

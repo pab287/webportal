@@ -101,7 +101,28 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
                     }).join(""); // separator between speakers
 
                 }
-            }, 
+            },
+            {
+                data: null,
+                render: function(data, type, row) {
+                    return `
+                        <div class="d-flex flex-column gap-1 mb-2">
+                            <div>
+                                <span class="m-badge m-badge--info m-badge--wide">
+                                    <i class="la la-users mr-1"></i>
+                                    Total Attendees:<span class="ml-2 font-weight-bold">${row.total_attendees}</span>
+                                </span>
+                            </div>
+                            <div>
+                                <span class="m-badge m-badge--success m-badge--wide">
+                                    <i class="la la-certificate mr-1"></i>
+                                    Certificates Awarded:<span class="ml-2 font-weight-bold">${row.total_cert_awarded}</span>
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }
+            },
             {
                 data: null,
                 orderable: false,
@@ -667,59 +688,85 @@ const CalendarBasic = function () {
                     },
 
                     eventRender: function(event, element) {
+                        console.log(event);
+                    
                         element.find('.fc-time').remove();
+                    
                         const speakers = event.speakers || [];
                         let title = event.title.length > 20 ? event.title.slice(0, 20) + '...' : event.title;
+                    
+                        let now = new Date();
+                        let start = new Date(event.start);
+                        let end = new Date(event.end);
+                    
+                        let status = '';
+                        let statusColor = '';
+                        if (parseInt(event.on_hold) === 1) {
+                            status = 'On Hold';
+                            statusColor = '#dc3545';
+                        } 
+                        else if (now < start) {
+                            status = 'Upcoming';
+                            statusColor = '#17a2b8';
+                        } 
+                        else if (now >= start && now <= end) {
+                            status = 'Ongoing';
+                            statusColor = '#28a745';
+                        } 
+                        else {
+                            status = 'Done';
+                            statusColor = '#6c757d'; 
+                        }
+                    
                         const customContent = `
-                            <div class="m-widget4__item-wrapper">
-                                <div class="m-widget4__item-title m--font-boldest mb-1" style="color: black; font-size: 1.2em;">
-                                    ${title}
-                                </div>
+                        <div class="m-widget4__item-wrapper">
+                            <div class="m-widget4__item-title m--font-boldest mb-1" style="color:black;font-size:1.2em;">
+                                ${title}
                             </div>
-                        `;
-                        
+                            <div>
+                                <span style="color:${statusColor}; font-weight:600;">
+                                    ${status}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                    
                         element.find('.fc-content').html(customContent);
                         const totalParticipants = event.total_participants || 0;
-
                         let tooltipText = '';
-
                         if (speakers.length > 0) {
                             tooltipText += '\nResource Person(s):\n';
                             speakers.forEach(speaker => {
-                                tooltipText += `• ${speaker.speaker_name.toUpperCase()}`;
-                                // if (speaker.position) tooltipText += ` - ${speaker.position}`;
-                                // if (speaker.company) tooltipText += `, ${speaker.company}`;
-                                tooltipText += '\n';
+                                tooltipText += `• ${speaker.speaker_name.toUpperCase()}\n`;
                             });
                         }
-
+                    
                         tooltipText += `Venue: ${event.venue.toUpperCase()}\n`;
                         tooltipText += `Number of Trainees: ${totalParticipants}\n`;
-                        
+                    
                         let budget = parseFloat(event.budget) || 0;
-
+                    
                         if (budget > 0) {
                             tooltipText += `Budget: ₱${budget.toLocaleString('en-PH', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2
                             })}`;
                         }
-
-                        
+                    
                         element.attr('title', tooltipText.trim());
                         element.addClass('m-portlet__body m--padding-5');
                         element.css({
                             'border-radius': '4px',
                             'border': 'none'
                         });
-                        let background = event.hex_code && event.hex_code.trim() !== '' ? event.hex_code: '#c4c4c4';
+                        let background = event.hex_code && event.hex_code.trim() !== '' ? event.hex_code : '#c4c4c4';
                         element.css({
                             'background-color': background,
                             'border-color': background
                         });
                         if (parseInt(event.on_hold) === 1) {
                             element.css({
-                                'border': '1.5px solid #dc3545' // bootstrap danger red
+                                'border': '1.5px solid #dc3545'
                             });
                         }
                     },
