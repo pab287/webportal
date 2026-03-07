@@ -5136,9 +5136,12 @@ class Billing_m extends CI_Model {
                 $overdue_charges = number_format($total_balance < 0 ? 0 : $total_balance, 2, '.', '');
 
                 $data["raw_total_balance"] = $total_balance;
-                $data["overdue_charges"] = $overdue_charges - $penalty;
-                $total = $data["overdue_charges"] + $_total_penalties;
-                // $total = $total_balance;
+
+                // substract the reconnection fee in overall total balance because the reconnection fee is already inside the $overdue_charges
+                $data["overdue_charges"] = $overdue_charges - $penalty - $reconnection;
+
+                $total = $data["overdue_charges"] + $_total_penalties; 
+                
                 if ($total < 0) { $total = 0;}
                 $data["total_balance"] = number_format($total, 2, '.', '');
 
@@ -6991,12 +6994,6 @@ class Billing_m extends CI_Model {
                 $this->db->or_like($field, $search, "both");
             }
             $this->db->group_end();
-        }
-        
-        // Add sorting
-        if (isset($sortOrder[0]['column'])) {
-            $columnIndex = $sortOrder[0]['column'];
-            $this->db->order_by($sortColumn[$columnIndex]['data'], $sortOrder[0]['dir']);
         }
         
         $query = $this->db->get();
