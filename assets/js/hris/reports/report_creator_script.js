@@ -103,7 +103,8 @@ const dbFieldEl = '' +
     '<option value="IF(personnel.id IS NULL OR location.location_name IS NULL, \'No Station Assigned\', GROUP_CONCAT(DISTINCT location.location_name)) station">Station</option>' +
     `<option value='supervisor'>Dept. Supervisor</option>` +
     '<option value="manager">Dept. Manager</option>' +
-    '<option value="emp.resignation_effective_date">Resignation Effectivity Date</option>';
+    '<option value="emp.resignation_effective_date">Resignation Effectivity Date</option>' +
+    '<option value="personnel.is_flexi">Work Schedule</option>';
 
 
 const dbSortFieldEl = '' +
@@ -183,7 +184,6 @@ const dbSortFieldEl = '' +
     '<option value="CAST(REPLACE(salaries.sal_rate,TRIM(\',\'),\'\') AS DECIMAL(10,2))">Salary Rate</option>' +
     '<option value="IF(personnel.id IS NULL OR location.location_name IS NULL, \'No Station Assigned\', GROUP_CONCAT(DISTINCT location.location_name))">Station</option>' +
     '<option value="DATE(emp.resignation_effective_date)">Resignation Effectivity Date</option>' +
-    '<option value="personnel.is_flexi">Work Schedule</option>';
     '';
 
 $('#field')
