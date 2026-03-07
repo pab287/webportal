@@ -38,7 +38,8 @@ class Cash_advance extends MY_Controller {
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
 
         if($approving_authority && ($this->user_data['emp_id']!=1)){
-            $this->core_layout->addJs("js/eforms/cash_advance/approval_cash_advance.js", true);
+            $version = filemtime(FCPATH.'assets/js/eforms/cash_advance/approval_cash_advance.js');
+            $this->core_layout->addJs("js/eforms/cash_advance/approval_cash_advance.js", true, array(), "?v=$version");
             $this->core_layout->addJs("js/eforms/cash_advance/inputmask_bundle.js", true);
             $this->core_layout->setPrivilegeName("ca_masterfile");
 
@@ -46,7 +47,8 @@ class Cash_advance extends MY_Controller {
             $this->load->view('eforms/cash_advance/approval_cash_advance');
             $this->load->view('core/templates/footer');
         }else{
-            $this->core_layout->addJs("js/eforms/cash_advance/masterfile_cash_advance.js", true);
+            $version = filemtime(FCPATH.'assets/js/eforms/cash_advance/masterfile_cash_advance.js');
+            $this->core_layout->addJs("js/eforms/cash_advance/masterfile_cash_advance.js", true, array(), "?v=$version");
             $this->core_layout->addJs("js/eforms/cash_advance/inputmask_bundle.js", true);
             $this->core_layout->setPrivilegeName("ca_masterfile");
     
