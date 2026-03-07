@@ -103,7 +103,8 @@ const dbFieldEl = '' +
     '<option value="IF(personnel.id IS NULL OR location.location_name IS NULL, \'No Station Assigned\', GROUP_CONCAT(DISTINCT location.location_name)) station">Station</option>' +
     `<option value='supervisor'>Dept. Supervisor</option>` +
     '<option value="manager">Dept. Manager</option>' +
-    '';
+    '<option value="emp.resignation_effective_date">Resignation Effectivity Date</option>' +
+    '<option value="personnel.is_flexi">Work Schedule</option>';
 
 
 const dbSortFieldEl = '' +
@@ -182,6 +183,8 @@ const dbSortFieldEl = '' +
     '<option value="LOWER(payout_schedule.name)">Payout Schedule</option>' +
     '<option value="CAST(REPLACE(salaries.sal_rate,TRIM(\',\'),\'\') AS DECIMAL(10,2))">Salary Rate</option>' +
     '<option value="IF(personnel.id IS NULL OR location.location_name IS NULL, \'No Station Assigned\', GROUP_CONCAT(DISTINCT location.location_name))">Station</option>' +
+    '<option value="DATE(emp.resignation_effective_date)">Resignation Effectivity Date</option>' +
+    '<option value="personnel.is_flexi">Work Schedule</option>';
     '';
 
 $('#field')
@@ -371,7 +374,15 @@ $(document).ready(function () {
                 },
                 {
                     id: "IF(location.id IS NULL, 'No Location Assigned', location.location_name)", label: "Station", type: "string"
+                },
+                {
+                    id: 'DATE(emp.resignation_effective_date)', 
+                    label: 'Resignation Effectivity Date', 
+                    type: 'date',
+                    plugin: 'datepicker',
+                    plugin_config: { format: 'yyyy-mm-dd' }
                 }
+                //here
             ]
         });
 
