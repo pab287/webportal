@@ -77,6 +77,15 @@
             $this->load->view('crs/for_interview');
             $this->load->view('core/templates/footer');
         }
+
+        public function online_masterfile(){
+            $this->core_layout->setPrivilegeName("crs_masterfile");
+            $this->core_layout->addJs("js/crs/online_masterfile.js", true);
+            
+            $this->load->view('core/templates/header');
+            $this->load->view('crs/registration/online_masterfile');
+            $this->load->view('core/templates/footer');
+        }
         
         function get_school_collection()
         {
