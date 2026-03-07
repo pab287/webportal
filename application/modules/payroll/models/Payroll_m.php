@@ -1557,7 +1557,7 @@ class Payroll_m extends CI_Model{
 
                     $total_ot_allowance_minutes = array_reduce($timesheet, function ($carry, $item) {
                         return $carry + $item->total_allowance_ot_hrs_minutes;
-                    });
+                    }, 0);
                     
                 } // end of is monthly paid FALSE
 
