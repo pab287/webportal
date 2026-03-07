@@ -50,88 +50,8 @@ const mimeMap = {
 
 
 $(document).ready(function () {
-
     
-    $('#applied_dt').datepicker({
-        endDate: new Date(),
-        todayHighlight: true,
-        autoclose: true,
-        todayBtn: 'linked',
-        format: 'mm/dd/yyyy',
-        forceParse: false
-    });
 
-    let today = new Date();
-    let month = ('0' + (today.getMonth() + 1)).slice(-2);
-    let day = ('0' + today.getDate()).slice(-2);
-    let year = today.getFullYear();
-    let formatted = month + '/' + day + '/' + year;
-    $('#applied_dt').val(formatted);
-
-    $("#referral").select2({
-        placeholder: 'SELECT AN OPTION',
-        width: '100%',
-        data: referral,
-        allowClear: true,
-    });
-
-    $("#school_id").select2({
-        placeholder: 'SELECT AN OPTION',
-        width: '100%',
-        data: schools,
-        multiple: true,
-    });
-
-    $("#course_id").select2({
-        placeholder: 'SELECT AN OPTION',
-        width: '100%',
-        data: courses,
-        multiple: true,
-    });
-
-
-    $("#civil_status").select2({
-        placeholder: 'SELECT AN OPTION',
-        width: '100%',
-        data: civilStatusOptions,
-    });
-
-
-    $("#gender").select2({
-        width: '100%',
-        placeholder: 'SELECT GENDER',
-        data: genderOptions,
-    });
-
-    $('#birthdate').datepicker({
-        endDate: new Date(),
-        todayHighlight: true,
-        autoclose: true,
-        pickerPosition: 'bottom left',
-        // todayBtn: 'linked',
-        format: 'mm/dd/yyyy',
-        forceParse: false
-    });
-
-    $("#position_id").select2({
-        placeholder: 'SELECT AN OPTION',
-        width: '100%',
-        data: position,    
-    });
-
-    $("#recruitment").select2({
-        width: '100%',
-        placeholder: 'SELECT SOURCE',
-        data: recruitmentSources,
-    }).on('select2:select', function (e) {
-        const selectedValue = e.params.data.id;
-        if (selectedValue == 'referral') {
-            $('.referral').removeClass('d-none');
-        } else {
-            $('.referral').addClass('d-none');
-            $('#referral').val(null).trigger('change');
-        }
-    });
 
 });
 
@@ -201,7 +121,89 @@ let application_vue = new Vue({
         ]
     },
     mounted: function () {
-        console.log(this.uploadedFiles);
+
+        $('#applied_dt').datepicker({
+            endDate: new Date(),
+            todayHighlight: true,
+            autoclose: true,
+            todayBtn: 'linked',
+            format: 'mm/dd/yyyy',
+            forceParse: false
+        });
+    
+        let today = new Date();
+        let month = ('0' + (today.getMonth() + 1)).slice(-2);
+        let day = ('0' + today.getDate()).slice(-2);
+        let year = today.getFullYear();
+        let formatted = month + '/' + day + '/' + year;
+        $('#applied_dt').val(formatted);
+    
+        $("#referral").select2({
+            placeholder: 'SELECT AN OPTION',
+            width: '100%',
+            data: referral,
+            allowClear: true,
+        });
+    
+        $("#school_id").select2({
+            placeholder: 'SELECT AN OPTION',
+            width: '100%',
+            data: schools,
+            multiple: true,
+        });
+    
+        $("#course_id").select2({
+            placeholder: 'SELECT AN OPTION',
+            width: '100%',
+            data: courses,
+            multiple: true,
+        });
+    
+    
+        $("#civil_status").select2({
+            placeholder: 'SELECT AN OPTION',
+            width: '100%',
+            data: civilStatusOptions,
+        });
+    
+    
+        $("#gender").select2({
+            width: '100%',
+            placeholder: 'SELECT GENDER',
+            data: genderOptions,
+        });
+    
+        $('#birthdate').datepicker({
+            endDate: new Date(),
+            todayHighlight: true,
+            autoclose: true,
+            pickerPosition: 'bottom left',
+            // todayBtn: 'linked',
+            format: 'mm/dd/yyyy',
+            forceParse: false
+        });
+    
+        $("#position_id").select2({
+            placeholder: 'SELECT AN OPTION',
+            width: '100%',
+            data: position,    
+        });
+    
+        $("#recruitment").select2({
+            width: '100%',
+            placeholder: 'SELECT SOURCE',
+            data: recruitmentSources,
+        }).on('select2:select', function (e) {
+            const selectedValue = e.params.data.id;
+            if (selectedValue == 'referral') {
+                $('.referral').removeClass('d-none');
+            } else {
+                $('.referral').addClass('d-none');
+                $('#referral').val(null).trigger('change');
+            }
+        });
+
+        restoreApplicationData(this);
     },
     computed: {
         canGoBack() {
@@ -215,9 +217,7 @@ let application_vue = new Vue({
             ) < this.steps.length - 1;
         },
         canSubmit() {
-            const stepsValid = this.steps.every(step => step.valid);
-            const resumeValid = this.uploadedFiles.length > 0;
-            return stepsValid && resumeValid;
+            return this.currentStep == "#resume_upload" && this.uploadedFiles.length > 0;
         }
     },
     methods: {
@@ -295,7 +295,6 @@ let application_vue = new Vue({
             } else if (!this.steps[currentIndex].valid) {
                 $("#" + this.steps[currentIndex].form).submit();
             }
-            console.log(nextStep);
         },
         submitAll() {
             let payload = {};
@@ -308,21 +307,26 @@ let application_vue = new Vue({
                 else {
                     Object.assign(payload, step.data);
                 }
-        
             });
+            const formData = new FormData();
+            formData.append("payload", JSON.stringify(payload));
+            formData.append("csrf_token", _csrf_hash);
+            const file = $("#fileupload")[0].files[0];
+            formData.append("files", file);
             $.ajax({
                 url: baseUrl + "crs/online_registration/submit_application",
                 type: "POST",
                 dataType: "json",
-                data: {
-                    payload: JSON.stringify(payload),
-                    csrf_token: _csrf_hash
-                },
+                processData: false,
+                contentType: false,
+                data: formData,
                 success: function (res) {
-                    console.log(res);
+                    if(res.success){
+                        toastr.success(res.msg, "Success", 10000);
+                    }
                 },
                 error: function (err) {
-                    console.log(err);
+                    toastr.error("Something went wrong!", "Error", 10000);
                 }
             });
         }
@@ -375,32 +379,6 @@ function addFile(file) {
     application_vue.steps.find(s => s.tab === "#resume_upload").valid = true;
 }
 
-// application_vue.steps.forEach(function(step, index) {
-//     $.validate({
-//         form: "#" + step.form,
-//         onSuccess: function () {
-//             application_vue.steps[index].valid = true;
-//             const formData = {};
-//             $("#" + step.form).serializeArray().forEach(function(field) {
-//                 formData[field.name] = field.value;
-//             });
-//             application_vue.steps[index].data = formData;
-//             application_vue.$nextTick(function () {
-//                 let nextStep = application_vue.steps[index + 1];
-//                 if (nextStep) {
-//                     $('a[href="' + nextStep.tab + '"]').tab('show');
-//                 }
-//             });
-//             return false;
-//         },
-
-//         onError: function () {
-//             application_vue.steps[index].valid = false;
-//             return false;
-//         }
-//     });
-// });
-
 application_vue.steps.forEach(function(step, index) {
     $.validate({
         form: "#" + step.form,
@@ -409,25 +387,40 @@ application_vue.steps.forEach(function(step, index) {
             application_vue.steps[index].valid = true;
             if (step.tab === "#work_experience") {
                 application_vue.steps[index].data = application_vue.workExperiences;
-            } 
-            else if(step.tab === "#educational_information"){
+            }
+            else if (step.tab === "#educational_information") {
                 application_vue.steps[index].data = application_vue.educInfo;
             }
             else {
                 const formData = {};
                 $("#" + step.form).serializeArray().forEach(function(field) {
-                    if (field.name === "schools[]" || field.name === "courses[]" || field.name === "positions[]") {
+                    if (field.name === "schools" || field.name === "courses" || field.name === "positions") {
                         if (!formData[field.name]) {
                             formData[field.name] = [];
                         }
                         formData[field.name].push(field.value);
-                    } else {
-                        formData[field.name] = field.value;
+                        return;
                     }
+                    if (field.name.startsWith("references[")) {
+                        const keys = field.name.match(/[^[\]]+/g);
+                        let current = formData;
+                        keys.forEach((key, i) => {
+                            if (i === keys.length - 1) {
+                                current[key] = field.value;
+                            } else {
+                                if (!current[key]) {
+                                    current[key] = isNaN(keys[i + 1]) ? {} : [];
+                                }
+                                current = current[key];
+                            }
+                        });
+                        return;
+                    }
+                    formData[field.name] = field.value;
                 });
                 application_vue.steps[index].data = formData;
             }
-
+            localStorage.setItem("gcc_job_application",JSON.stringify(application_vue.steps));
             application_vue.$nextTick(function () {
                 let nextStep = application_vue.steps[index + 1];
                 if (nextStep) {
@@ -457,3 +450,38 @@ $('.nav-tabs a').on('shown.bs.tab', function (e) {
         step.valid = false;
     }
 });
+
+function restoreApplicationData(vue_app) {
+    let savedSteps = localStorage.getItem("gcc_job_application");
+    if (!savedSteps) return;
+    savedSteps = JSON.parse(savedSteps);
+    vue_app.steps = savedSteps;
+    vue_app.steps.forEach(function(step){
+        if (step.valid === true) {
+            if (step.tab === "#work_experience") {
+                vue_app.workExperiences = step.data;
+            }
+            else if (step.tab === "#educational_information") {
+                vue_app.educInfo = step.data;
+            }
+            else{
+                Object.keys(step.data).forEach(function(name) {
+                    if(name === "schools" || name === "courses" || name === "positions" || name === "gender" || name === "civil_status" || name === "recruitment") {
+                        $('[name="' + name + '"]').val(step.data[name]).trigger("change");
+                    }
+                    else if (name === "references") {
+                        step.data[name].forEach(function(ref, index) {
+                            Object.keys(ref).forEach(function(field){
+                                $('[name="references[' + index + '][' + field + ']"]').val(ref[field]);
+                            });
+                        });
+                    }
+                    else {
+                        $('[name="' + name + '"]').val(step.data[name]);
+                    }
+                });
+            }
+        }
+    });
+
+}

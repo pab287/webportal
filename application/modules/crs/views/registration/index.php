@@ -250,19 +250,19 @@
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="full_name_1" class="form-control-label required">Full Name</label>
-                                            <input id="full_name_1" name="reference_full_name_1" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="full_name_1" name="references[0][ref_name]" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="contact_no_1" class="form-control-label required">Contact Number</label>
-                                            <input id="contact_no_1" name="reference_contact_no_1" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="20" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="contact_no_1" name="references[0][ref_contact_no]" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="20" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="address_1" class="form-control-label required">Address</label>
-                                            <input id="address_1" name="reference_address_1" placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="address_1" name="references[0][ref_address]" placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                 </div>
@@ -270,19 +270,19 @@
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="full_name_2" class="form-control-label required">Full Name</label>
-                                            <input id="full_name_2" name="reference_full_name_2" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="full_name_2" name="references[1][ref_name]" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="contact_no_2" class="form-control-label required">Contact Number</label>
-                                            <input id="contact_no_2" name="reference_contact_no_2" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="20" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="contact_no_2" name="references[1][ref_contact_no]" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="20" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="address_2" class="form-control-label required">Address</label>
-                                            <input id="address_2" name="reference_address_2" placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="address_2" name="references[1][ref_address]" placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                 </div>
@@ -290,19 +290,19 @@
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="full_name_3" class="form-control-label required">Full Name</label>
-                                            <input id="full_name_3" name="reference_full_name_3" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="full_name_3" name="references[2][ref_name]" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="contact_no_3" class="form-control-label required">Contact Number</label>
-                                            <input id="contact_no_3" name="reference_contact_no_3" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="20" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="contact_no_3" name="references[2][ref_contact_no]" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="20" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="address_3" class="form-control-label required">Address</label>
-                                            <input id="address_3" name="reference_address_3"  placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                            <input id="address_3" name="references[2][ref_address]"  placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input" />
                                         </div>
                                     </div>
                                 </div>
@@ -502,7 +502,7 @@
                             </form>
                         </div>
                         <div id="resume_upload" class="tab-pane">
-                            <form id="resume_upload_form" action="javascript:void(0);">
+                            <form id="resume_upload_form" action="javascript:void(0);" enctype="multipart/form-data">
                                 <div class="row mt-2 mb-2">
                                     <div class="col">
                                         <div class="m-portlet__head-title">
@@ -563,6 +563,24 @@
                             <button id="submit" type="submit" class="btn btn-success" @click="submitAll" v-if="canSubmit">SUBMIT</button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="consent_modal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header"> 
+                    <h5 class="modal-title">Applicant Data Privacy Consent</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p> By submitting this job application, you consent to the collection, processing, and storage of your personal information for recruitment and employment evaluation purposes. </p>
+                    <p> The information you provide will be used solely for assessing your qualifications for employment and may be shared with authorized personnel involved in the recruitment process. Your data will be handled in accordance with applicable data privacy regulations. </p>
+                    <p> If your application is unsuccessful, your information may be retained for future employment opportunities unless you request its removal. </p>
+                    <hr/>
                 </div>
             </div>
         </div>

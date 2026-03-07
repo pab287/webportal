@@ -155,7 +155,6 @@ class Registration_model extends CI_Model{
             if ($insert) {
                 $insert_id = $this->db->insert_id();
                 $this->temp_files($insert_id);
-                
                 $filename = $_FILES['files']['name'];
                 $filepath = "uploads/files/hrd/resume_".$insert_id;
 
@@ -2363,19 +2362,126 @@ class Registration_model extends CI_Model{
     }
 
     public function submitAppilication(){
+        $result = array();
         $post = $this->input->post('payload');
-        $personal_info= array(
-            "firstname" => $post['firstname'],
-            "middlename" => $post['middlename'],
-            "lastname" => $post['lastname'],
-            "suffix" => $post['suffix'],
-            "contact_no" => $post['contact_no'],
-            "email" => $post['email'],
-            "position" => $post['position'],
-            "status" => 1
+        $post = json_decode($post, true);
+        $schools = isset($post['schools']) ? implode(',', $post['schools']): '';
+        $courses = isset($post['courses']) ? implode(',', $post['courses']): '';
+        $positions = isset($post['positions']) ? implode(',', $post['positions']): '';
+        $personal_info = array(
+            "firstname"          => $post['firstname'],
+            "middlename"         => $post['middlename'],
+            "lastname"           => $post['lastname'],
+            "suffix"             => $post['suffix'],
+            "contact_no"         => $post['contact_no'],
+            "status"             => "pooling",
+            "schools"            => $schools,
+            "courses"            => $courses,
+            "positions"          => $positions,
+            "recruitment"        => $post['recruitment'],
+            "applied_dt"         => $post['applied_dt'],
+            "created_by"         => 0,
+            "address"            => $post['address'],
+            "permanent_address"  => $post['permanent_address'],
+            "tel_no"             => $post['tel_no'],
+            "email"              => $post['email'],
+            "referral"           => $post['referral'],
         );
+    
+        $this->db->trans_begin(); // Use trans_begin() for manual transaction control
+    
+        $candidate = $this->db->insert("dbhrd.applicants", $personal_info);
+    
+        if (!$candidate) {
+            $this->db->trans_rollback();
+            $result['insert']  = false;
+            $result['success'] = false;
+            $result['message'] = 'Failed to insert applicant.';
+            return $result;
+        }
+    
+        $candidate_id    = $this->db->insert_id();
+        $result['id']    = $candidate_id;
+        $result['insert'] = true;
+    
+        if (!empty($_FILES['files']['name'])) {
+            $folder = "uploads/files/hrd/new_resume_{$candidate_id}/";
+            if (!is_dir($folder)) {
+                mkdir($folder, 0777, true);
+            }
+            $ext      = pathinfo($_FILES['files']['name'], PATHINFO_EXTENSION);
+            $filename = "new_resume_{$candidate_id}.{$ext}";
+            $config   = [
+                'upload_path'   => realpath($folder) . DIRECTORY_SEPARATOR,
+                'allowed_types' => 'pdf',
+                'file_name'     => $filename,
+                'overwrite'     => true,
+            ];
+            $this->load->library('upload');
+            $this->upload->initialize($config);
+    
+            if ($this->upload->do_upload('files')) {
+                $updated = $this->db->where('id', $candidate_id)
+                                    ->update('dbhrd.applicants', ['resume' => $filename]);
+                if (!$updated) {
+                    $this->db->trans_rollback();
+                    $result['upload']  = false;
+                    $result['success'] = false;
+                    $result['message'] = 'Failed to update resume filename.';
+                    return $result;
+                }
+                $result['upload'] = true;
+                $result['file']   = $filename;
+            } else {
+                $this->db->trans_rollback();
+                $result['upload']  = false;
+                $result['success'] = false;
+                $result['message'] = $this->upload->display_errors();
+                return $result;
+            }
+        }
+    
+        // ── References ──────────────────────────────────────────────────────────────
+        $references = array();
+        foreach ($post['references'] as $ref) {
+            $references[] = array(
+                "applicant_id"   => $candidate_id,
+                "ref_name"       => $ref['ref_name'],
+                "ref_contact_no" => $ref['ref_contact_no'],
+                "ref_address"    => $ref['ref_address'],
+            );
+        }
+        $inserted_references = $this->db->insert_batch("dbhrd.tblreferences", $references);
+    
+        if (!$inserted_references) {
+            $this->db->trans_rollback();
+            $result['success'] = false;
+            $result['message'] = 'Failed to insert references.';
+            return $result;
+        }
+        $educ = array();
+        foreach ($post['educational_information_form'] as $edu) {
+            $educ[] = array(
+                "applicant_id"   => $candidate_id,
+                "educ_level_type" => $edu['level'],
+                "educ_school"    => $edu['school'],
+                "educ_degree"    => $edu['degree'],
+                "educ_honors"    => $edu['honor'],
+                "educ_from"      => $edu['from'],
+                "educ_to"        => $edu['to'],
+            );
+        }
+        $inserted_educ = $this->db->insert_batch("dbhrd.tbleducation", $educ);
+        if (!$inserted_educ) {
+            $this->db->trans_rollback();
+            $result['success'] = false;
+            $result['message'] = 'Failed to insert education records.';
+            return $result;
+        }
+    
+        $this->db->trans_commit();
+        $result['success'] = true;
+        $result['message'] = 'Applicant has been registered.';
+        return $result;
     }
-
-
-
 }
