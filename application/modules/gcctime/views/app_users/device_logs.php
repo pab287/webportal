@@ -323,4 +323,11 @@
             appUsers.loading = false;
         }, 250);
     }
+
+    const resetFilter = () => {
+        appUsers.users = [];
+        selectedAppUsers = [];
+        appUsers.loading = true;
+        getActiveAppUsers();
+    }
 </script>
