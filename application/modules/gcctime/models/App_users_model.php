@@ -282,6 +282,65 @@ class App_users_model extends CI_Model {
         return $resultset;
     }
 
+    public function getSelect2AppUsers(){
+        $resultset = array();
+        $post = $this->input->post();
+
+        $this->db->select("app.id, UPPER(TRIM(CONCAT(emp.firstname, ' ',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+            END,' ', emp.lastname,
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''
+            END))) as text, emp.id as emp_id, emp.pic_filename, app.last_logged_in, IFNULL(comp.code, '') as company_code");
+        $this->db->from("gcctimeutility.app_users AS app");
+        $this->db->join("gccmaster.tblemployees AS emp","emp.id = app.emp_id", "INNER");
+        $this->db->join("gcchris.tblcompanies AS comp","comp.id = emp.company_id", "LEFT");
+        $tempLimit = 20;
+        if(isset($post["search"]) && $post["search"]){
+            if(is_numeric($post["search"])){ $this->db->where("emp.id", $post["search"]); }
+            else{
+                $this->db->group_start();
+                $this->db->like("emp.firstname", $post["search"], "both");
+                $this->db->or_like("emp.lastname", $post["search"], "both");
+                $this->db->or_like("CONCAT(emp.firstname, ' ', emp.lastname)", $post["search"], "both");
+                $this->db->or_like("CONCAT(emp.firstname, ' ', CONCAT(SUBSTR(emp.middlename, 1, 1), '.'), ' ', emp.lastname)", $post["search"], "both");
+                $this->db->or_like("CONCAT(emp.firstname, ' ', CONCAT(SUBSTR(emp.middlename, 1, 1), '.'), ' ', emp.lastname, ' ', emp.suffix)", $post["search"], "both");
+                $this->db->group_end();
+            }
+            $tempLimit = 10;
+        }
+        $this->db->where("app.is_active", 1);
+        $this->db->where("app.allow_app_user", 1);
+        $this->db->where("emp.employee_status", "active");
+        $this->db->group_by("app.emp_id");
+        $this->db->order_by('emp.firstname', 'ASC');
+        $this->db->limit($tempLimit);
+        $query = $this->db->get();
+
+        if($query->num_rows() > 0){
+            $data = $query->result();
+            foreach ($data as $row) {
+                $filePath = FCPATH . 'uploads/files/images/employee_files/empcode_' . $row->emp_id . '/thumbnails/' . $row->pic_filename;
+                if(file_exists($filePath)){
+                    $row->pic_filename = base_url() . 'uploads/files/images/employee_files/empcode_' . $row->emp_id . '/thumbnails/' . $row->pic_filename;
+                }else{
+                    $row->pic_filename = base_url() . 'assets/images/profile/no_image.jpg';
+                }
+            }
+
+            $resultset["response"] = true;
+            $resultset["results"] = $data;
+        }else{
+            $resultset["response"] = false;
+            $resultset["results"] = array();
+        }
+
+        return $resultset;
+    }
+
     public function getDeviceLogFiles(){
         $empId = (int) $this->input->post('emp_id');
         if (!$empId) {

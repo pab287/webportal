@@ -72,6 +72,11 @@ class App_users extends MY_Controller {
         echo json_encode($data);
     }
 
+    public function get_select2_app_users(){
+        $data = $this->app_user->getSelect2AppUsers();
+        echo json_encode($data);
+    }
+
     public function get_device_log_files(){
         $data = $this->app_user->getDeviceLogFiles();
         echo json_encode($data);
