@@ -16,7 +16,6 @@
                     <div class="form-group m-form__group row pt-0 pb-0">
                         <div class="col-12">
                             <select class="form-control m-input" id="appUsers" multiple></select>
-                            <!-- input id="search-app_users" type="text" name="search" class="form-control m-input" placeholder="Search..." / -->
                         </div>
                         <div class="col-12">
                             <div class="d-flex flex-row justify-content-end mt-4">
@@ -57,7 +56,11 @@
                                                 <span class="m-widget4__sub text-uppercase">{{ user.company_code }}</span>
                                             </div>
                                             <div class="m-widget4__ext">
-                                                <a href="javascript:void(0);" class="m-widget4__icon btnView btnViewDeviceLogs" :data-raw="JSON.stringify(user)" @click="previewAppUser(user)">
+                                                <a href="javascript:void(0);"
+                                                    class="m-widget4__icon btnView btnViewDeviceLogs"
+                                                    title="View Device Logs"
+                                                    :data-raw="JSON.stringify(user)"
+                                                    @click="previewAppUser(user)">
                                                     <i class="la la-file-text"></i>
                                                 </a>
                                             </div>
@@ -281,11 +284,6 @@
     jQuery(document).ready(function () {
         appUsers.loading = true;
         getActiveAppUsers();
-    });
-
-    jQuery("#search-app_users").donetyping(function (e) {
-        appUsers.searching = true;
-        getActiveAppUsers($(this).val());
     });
 
     $("#appUsers").select2({
