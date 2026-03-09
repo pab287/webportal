@@ -2386,11 +2386,12 @@ class Registration_model extends CI_Model{
             "tel_no"             => $post['tel_no'],
             "email"              => $post['email'],
             "referral"           => $post['referral'],
+            "is_online"          => 1,
         );
     
-        $this->db->trans_begin(); // Use trans_begin() for manual transaction control
+        $this->db->trans_begin();
     
-        $candidate = $this->db->insert("dbhrd.applicants", $personal_info);
+        $candidate = $this->db->insert("dbhrd.candidates", $personal_info);
     
         if (!$candidate) {
             $this->db->trans_rollback();
@@ -2441,7 +2442,6 @@ class Registration_model extends CI_Model{
             }
         }
     
-        // ── References ──────────────────────────────────────────────────────────────
         $references = array();
         foreach ($post['references'] as $ref) {
             $references[] = array(
