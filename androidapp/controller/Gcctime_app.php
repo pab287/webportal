@@ -82,8 +82,9 @@
             $data = $this->GCCTIME_APP->appVersionv311();
             echo $data;
         }
+
         public function travel_order_data(){
-            $data = $this->GCCTIME_APP->getEmployeeTravelOrder();
+            $data = $this->GCCTIME_APP->getTravelOrderEmployeeDestination();
             echo $data;
         }
 
@@ -91,5 +92,9 @@
             $data = $this->GCCTIME_APP->travelOrderCheck();
             echo $data;
         }
+        // public function has_travel_order_today(){
+        //     $data = $this->GCCTIME_APP->hasTravelOrderToday();
+        //     echo $data;
+        // }
     }
 ?>
