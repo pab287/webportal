@@ -22,22 +22,8 @@ class App_users extends MY_Controller {
         $this->core_layout->setPageTitle("Application Users - Device Logs");
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
-
-        $path = FCPATH . 'uploads/data/app/';
-
-        // Get only .json files
-        $files = glob($path . '*.json');
-
-        $data['files'] = [];
-
-        if (!empty($files)) {
-            foreach ($files as $file) {
-                $data['files'][] = basename($file);
-            }
-        }
-
         $this->load->view('core/templates/header');
-        $this->load->view('gcctime/app_users/device_logs', $data);
+        $this->load->view('gcctime/app_users/device_logs');
         $this->load->view('core/templates/footer');
     }
 
