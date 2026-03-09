@@ -6,7 +6,7 @@
                     <div class="m-portlet__head-caption">
                         <div class="m-portlet__head-title">
                             <h3 class="m-portlet__head-text">
-                              Accomplishment Report
+                                Travel Order Report
                             </h3>
                         </div>
                     </div>
@@ -32,6 +32,24 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-xl-5 col-lg-5 col-md-5 col-sm-12">
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <div class="form-group m-form__group">
+                                        <label> Status <span class="m-form__help p-0" style="text-transform: none;">(Optional)</span></label>
+                                        <select class="form-control" id="statusSelect">
+                                            <option value=""></option>
+                                            <option value="Pending">For Recommendation</option>
+                                            <option value="Approved">Approved</option>
+                                            <option value="Recommend_Approved">Pending Approval</option>
+                                            <option value="Accomplished">Accomplished</option>
+                                            <option value="Disapproved">Disapproved</option>
+                                            <option value="Cancelled">Cancelled</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12" id="filter-buttons">
@@ -53,6 +71,12 @@
                                     <span class="selected-filter pl-3 pr-2">Reset Filter</span>
                                 </span>
                             </button>
+                            <button type="button" class="btn btn-success m-btn m-btn--icon text-white btnAdvance_search" id="export-excel" disabled>
+                                <span>
+                                    <em class="fa fa-download"></em>
+                                    <span class="selected-filter pl-3 pr-2">Export to Excel</span>
+                                </span>
+                            </button>
                         </div>
                         <div class="col-xl-3 col-lg-3 col-md-3 col-sm-12 offset-xl-3 offset-lg-3 offset-md-3 offset-sm-0 d-flex flex-row">
                             <div class="flex-grow-1 flex-shrink-0">
@@ -66,12 +90,21 @@
                             <div class="table-responsive">
                                 <table class="table table-bordered" id="report-table" width="100%">
                                     <thead>
+                                        <th>Status</th>
+                                        <th>Reference No</th>
+                                        <th>File Under</th>
+                                        <th>Department</th>
+                                        <th>Driver</th>
+                                        <th>Vehicle</th>
+                                        <th>Personnel</th>
+                                        <th>Destination</th>
                                         <th>Details</th>
                                         <th>Driver & Vehicle</th>
                                         <th>Personnel</th>
                                         <th>Destination</th>
                                         <th>Date Created</th>
                                         <th>Date and Time</th>
+                                        <th>Accomplished By</th>
                                         <th>Accomplished By</th>
                                     </thead>
                                 </table>

@@ -41,6 +41,12 @@ $("#companySelect").select2({
     }
 });
 
+$("#statusSelect").select2({
+    placeholder: 'Select Status',
+    width: '100%',
+    allowClear: true,
+});
+
 $('#accomplishment-report-date-range-picker').daterangepicker({
     buttonClasses: 'm-btn btn',
     applyClass: 'btn-primary',
@@ -68,7 +74,6 @@ $('#accomplishment-report-date-range-picker').daterangepicker({
     }
 
     $(".selected-filter", $('#accomplishment-report-date-range-picker')).html(_label);
-    // getReport();
 });
 
 $("#search-accomplishments").donetyping( function(){
@@ -94,6 +99,14 @@ function getReport(){
         dom: 'rtlpi',
         serverSide: true,
         destroy: true,
+        buttons: [
+            {
+                extend: 'excel',
+                exportOptions: {
+                    columns: [0,1,2,3,4,5,6,7,12,13,14],
+                }
+            }
+        ],
         ajax: {
             url: baseUrl(`eforms/travel_order/get_accomplishment_report`),
             type: "POST",
@@ -105,6 +118,7 @@ function getReport(){
                 d.search['value'] = $("#search-accomplishments").val();
                 d.department = $("#departmentSelect").val();
                 d.company = $("#companySelect").val();
+                d.status = $("#statusSelect").val();
                 
             },error: function(xhr ,error, code){
                 if(error == "parsererror"){
@@ -113,17 +127,73 @@ function getReport(){
             },
         },
         columns: [
-            { data: "reference_no", width: '13%', 
-                render: function(data, type, row, meta){
-                    var html = '';
+            { data: 'status', visible: false,
+                render: function (data, type, row, meta) {
+                    var html = ``;
 
-                    html += '<div style="line-height: 1.1">';
-                    html += '<p class="mt-2 mb-0 m-font-3"><small><b>Reference No: '+ data +'</b></small></p>';
-                    html += '<p class="mb-0 m-font-3"><small><b>File Under:</b> '+ row.company +'</small></p>';
-                    html += '<p class="mb-0 m-font-3"><small><b>Department:</b> '+ row.department +'</small></p>';
-                    html += '</div>';
+                    html += data.toUpperCase();
+                    html += (row.is_emergency == 1) ? ' [EMERGENCY]' : '';
 
                     return html;
+                }
+            },
+            { data: 'reference_no', visible: false,
+                render: function (data, type, row, meta) {
+                    return data.toUpperCase();
+                }
+            },
+            { data: 'company', visible: false,
+                render: function (data, type, row, meta) {
+                    return data.toUpperCase();
+                }
+            },
+            { data: 'department', visible: false,
+                render: function (data, type, row, meta) {
+                    return data.toUpperCase();
+                }
+            },
+            { data: null, visible: false, 
+                render: function (data, type, row, meta){
+                    var tempHtml = 'No Assigned Driver';
+
+                    if (typeof row.is_service !== "undefined" && row.is_service == "1" && row.driver !== "" || typeof row.is_hitch !== "undefined" && row.is_hitch == "1" && row.driver !== "") {
+                        tempHtml = row.driver.toUpperCase();
+                    }
+
+                    if (typeof row.is_commute !== "undefined" && row.is_commute == "1") { tempHtml = 'COMMUTE'; }
+                    if (typeof row.is_personal !== "undefined" && row.is_personal == "1") { tempHtml = 'PERSONAL VEHICLE';}
+                    if (typeof row.is_others !== "undefined" && row.is_others == "1" && $.trim(row.others_remarks) !== "") { tempHtml = row.others_remarks.toUpperCase(); }
+
+                    return tempHtml.toUpperCase();
+                }
+            },
+            { data: null, visible: false,
+                render: function(data, type, row, meta) {
+                    var tempHtml = ' --- ';
+
+                    if (typeof row.is_service !== "undefined" && row.is_service == "1" && row.driver !== "" || typeof row.is_hitch !== "undefined" && row.is_hitch == "1" && row.driver !== "") {
+                        if (typeof row.vehicle_plate !== "undefined" && row.vehicle_description !== "undefined") {
+                            tempHtml = 'Plate: ' + row.vehicle_plate + '<br>\n';
+                            tempHtml = 'Description: ' + row.vehicle_description + '<br>\n';
+                        }
+                    }
+
+                    return tempHtml.toUpperCase();
+                }
+            },
+            { data: null, visible: false,
+                render: function (data, type, row, meta) {
+                    return typeof row.personnel !== "undefined" && row.personnel.length > 0 ? row.personnel.join(', ').toUpperCase() : 'No Assigned Personnel';
+                }
+            },
+            { data: null, visible: false,
+                render: function (data, type, row, meta) {
+                    return typeof row.destination !== "undefined" && row.destination.length > 0 ? row.destination.join(', ').toUpperCase() : 'No Assigned Destination';
+                }
+            },
+            { data: "reference_no", width: '13%', 
+                render: function(data, type, row, meta){
+                    return renderStatusHtml(row.status, row);
                 }
             },
             { data: null, width: "15%", orderable: false, 
@@ -221,6 +291,18 @@ function getReport(){
                     return "";
                 }
             },
+            { data: 'accomplished_name', visible: false,
+                render: function (data, type, row, meta) {
+                    var html = `---`;
+
+                    if(typeof data != 'undefined' && data){
+                        html += 'Name: ' + data.toUpperCase();
+                        html += 'Date: ' + row.accomplishment_dt.toUpperCase();
+                    }
+
+                    return html.toUpperCase();
+                }
+            },
             { data: 'accomplished_name', 
                 render: function(data, type, row, meta){
                     var html = "";
@@ -237,6 +319,62 @@ function getReport(){
                     return html;
                 }
             }
-        ]
+        ], 
+        drawCallback: function(settings) {
+            if(typeof settings.json != "undefined"){
+                const { recordsTotal } = settings.json;
+
+                if (recordsTotal > 0) {
+                    $("#export-excel").prop('disabled', false);
+                } else {
+                    $("#export-excel").prop('disabled', true);
+                }
+            }
+        }
     });
+}
+
+$('#export-excel').on('click', function() {
+    dtTable.button(".buttons-excel").trigger();
+});
+
+function renderStatusHtml(data, row) {
+    var action= '';
+    switch (data) {
+        case "Pending":
+            action += '<div class="m-badge m-badge--warning text-white m-badge--wide " role="alert"><small><strong>For Recommendation</strong></small></div>\n';
+            break;
+        case "Recommend_Approved":
+            action += '<div class="m-badge m-badge--info text-white m-badge--wide " role="alert"><small><strong>Pending Approval</strong></small></div>\n';
+            break;
+        case "Approved":
+            if (row.accomplishment_dt == "0000-00-00 00:00:00" || (row.accomplished == 0 && row.accomplished)) {
+                action += '<div class="m-badge m-badge--accent m-badge--wide accomplishment_'+row.id+'" role="alert"><small><strong>Approved</strong></small></div>\n';
+            } else {
+                action += '<div class="m-badge m-badge--success m-badge--wide" role="alert"><small><strong>Accomplished</strong></small></div>\n';
+            }
+            break;
+        case "Disapproved":
+            action += '<div class="m-badge m-badge--danger m-badge--wide" role="alert"><small><strong>Disapproved</strong></small></div>\n';
+            break;
+        case "HR Noted":
+            action += '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><small><strong>HR Noted</strong></small></div>\n';
+            break;
+        case "Received":
+            action += '<div class="m-badge m-badge--accent m-badge--wide" role="alert"><small><strong>Received</strong></small></div>\n';
+            break;
+        default:
+            action += '<div class="m-badge m-badge--metal text-white m-badge--wide" role="alert"><small><strong>Cancelled</strong></small></div>\n';
+            break;
+    }
+
+    if (row.is_emergency == 1) {
+        action += '<div><span class="m-badge m-badge--info text-white m-badge--wide mt-1"><small><strong>Emergency</strong></small></span></div>';
+    }
+
+    action += '<div style="line-height: 1.1"><p class="mt-2 mb-0 m-font-3"><small><b>Reference no: '+row.reference_no+'</b></small></p>\n';
+    action += '<p class="mb-0 m-font-3"><small><b>File Under:</b> '+row.company+'</small></p>';
+    action += '<p class="mb-0 m-font-3"><small><b>Department:</b> '+ row.department +'</small></p>';
+
+    return action;
 }
