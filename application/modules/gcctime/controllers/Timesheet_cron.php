@@ -96,13 +96,6 @@ class Timesheet_cron extends MY_Controller {
             ->get("gccmaster.tblemployees emp")
             ->row("biometricno");
 
-        /*$data = $this->db
-            ->select("*, DATE(`date`) header")
-            ->where("biometricno", $biometricno)
-            ->where("DATE(`date`) >=", $start)
-            ->where("DATE(`date`) <=", $end)
-            ->get("zktime_logs.attendance")->result();*/
-
         $this->db
             ->select("attendance.`date`, attendance.biometricno, attendance.device_state, attendance.device_id, 
                         devices.ip_address ip, devices.device_name device, DATE(attendance.`date`) header")
@@ -114,7 +107,7 @@ class Timesheet_cron extends MY_Controller {
         $zktime_attendance_query = $this->db->get_compiled_select("zktime_logs.attendance attendance");
 
         $this->db
-            ->select("attendance.`datetime` `date`, attendance.biometric_id biometricno, 
+            ->select("attendance.`datetime` `date`, attendance.biometric_id biometricno,
                         attendance.state device_state, devices.id device_id,
                         devices.ip_address ip, devices.device_name device,
                         DATE(attendance.`datetime`) header")
@@ -125,7 +118,22 @@ class Timesheet_cron extends MY_Controller {
             ->group_by("attendance.`datetime`");
         $gcctimeutility_attendance_query = $this->db->get_compiled_select("gcctimeutility.`attendance` attendance");
 
-        $union_query = $this->db->query("(" . $zktime_attendance_query . ") UNION (" . $gcctimeutility_attendance_query . ") ORDER BY `date` ASC")->result();
+        $this->db
+            ->select("CASE
+                WHEN app_attendance.time IS NULL OR app_attendance.time = '00:00:00'
+                THEN NULL
+                ELSE CONCAT(app_attendance.`date`, ' ', app_attendance.time)
+                END AS `date`, app_attendance.biometric_id biometricno,
+                app_attendance.state device_state, '0' device_id,
+                '0.0.0.0' ip, 'MOBILE APP' device,
+                DATE(app_attendance.`date`) header")
+            ->where("app_attendance.biometric_id", $biometricno)
+            ->where("DATE(app_attendance.`date`) >=", $start)
+            ->where("DATE(app_attendance.`date`) <=", $end)
+            ->group_by("CONCAT(app_attendance.`date`, app_attendance.time)");
+        $gcctimeapp_attendance_query = $this->db->get_compiled_select("gcctimeutility.`app_attendance` app_attendance");
+
+        $union_query = $this->db->query("(" . $zktime_attendance_query . ") UNION ALL (" . $gcctimeutility_attendance_query . ") UNION ALL (" . $gcctimeapp_attendance_query . ") ORDER BY `date` ASC")->result();
 
         $resultSet = array(
             "data" => $union_query,
