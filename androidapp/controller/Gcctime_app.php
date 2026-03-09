@@ -92,9 +92,5 @@
             $data = $this->GCCTIME_APP->travelOrderCheck();
             echo $data;
         }
-        // public function has_travel_order_today(){
-        //     $data = $this->GCCTIME_APP->hasTravelOrderToday();
-        //     echo $data;
-        // }
     }
 ?>

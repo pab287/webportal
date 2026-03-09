@@ -1616,7 +1616,7 @@ class Gcctime_app_m extends Dbase{
                 $msg = "Re-logged within 1-minute interval";
             }
             if (!$isAllowed) {
-                $status == 3;
+                $status = 3;
                 $msg = "You are not eligible to use the app. Please contact your department head for access.";
             }
             if ($status == 5) {
