@@ -14,6 +14,7 @@
             $this->load->model("document_model", "document");
             $this->load->model("ams/Utilities_model", "utilities");
             $this->load->model("reports_model", "reports");
+            $this->load->model("Registration_model", "registration");
             $this->user_data = $this->session->userdata("logged_in");
         }
 
@@ -78,13 +79,16 @@
             $this->load->view('core/templates/footer');
         }
 
-        public function candidates_masterfile(){
+        public function online_application(){
+            $tempData = array();
+            $tempData['referral'] = $this->registration->select2RefferalData();
+            $tempData['position'] = $this->registration->select2PositionData();
             $this->core_layout->setPrivilegeName("crs_masterfile");
-            $this->core_layout->addJs("js/crs/candidates_masterfile.js", true);
+            $this->core_layout->addJs("js/crs/online_application.js", true, $tempData);
             
             $this->load->view('core/templates/header');
-            $this->load->view('crs/registration/candidates_masterfile');
-            $this->load->view('core/templates/footer');
+            $this->load->view('crs/online_application');
+            $this->load->view('core/templates/footer',);
         }
         
         function get_school_collection()
@@ -932,6 +936,11 @@
 
         public function log_export(){
             $data = $this->document->logExport();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_candidates(){
+            $data = $this->document->getCandidates();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 

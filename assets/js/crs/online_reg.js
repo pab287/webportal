@@ -322,7 +322,8 @@ let application_vue = new Vue({
                 data: formData,
                 success: function (res) {
                     if(res.success){
-                        toastr.success(res.msg, "Success", 10000);
+                        toastr.success(res.message, "Success", 10000);
+                        localStorage.removeItem('online_reg');
                     }
                 },
                 error: function (err) {

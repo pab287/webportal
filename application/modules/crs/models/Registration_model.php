@@ -2375,11 +2375,16 @@ class Registration_model extends CI_Model{
             "suffix"             => $post['suffix'],
             "contact_no"         => $post['contact_no'],
             "status"             => "pooling",
-            "schools"            => $schools,
-            "courses"            => $courses,
+            "gender"             => $post['gender'],
+            "civil_status"       => $post['civil_status'],
+            "religion"           => $post['religion'],
+            "birthdate"          => date('Y-m-d', strtotime($post['birthdate'])),
+            "citizenship"        => $post['citizenship'],
+            // "schools"            => $schools,
+            // "courses"            => $courses,
             "positions"          => $positions,
             "recruitment"        => $post['recruitment'],
-            "applied_dt"         => $post['applied_dt'],
+            "applied_dt"         => date('Y-m-d', strtotime($post['applied_dt'])),
             "created_by"         => 0,
             "address"            => $post['address'],
             "permanent_address"  => $post['permanent_address'],
@@ -2423,7 +2428,7 @@ class Registration_model extends CI_Model{
     
             if ($this->upload->do_upload('files')) {
                 $updated = $this->db->where('id', $candidate_id)
-                                    ->update('dbhrd.applicants', ['resume' => $filename]);
+                ->update('dbhrd.candidates', ['resume' => $filename]);
                 if (!$updated) {
                     $this->db->trans_rollback();
                     $result['upload']  = false;
@@ -2451,7 +2456,7 @@ class Registration_model extends CI_Model{
                 "ref_address"    => $ref['ref_address'],
             );
         }
-        $inserted_references = $this->db->insert_batch("dbhrd.tblreferences", $references);
+        $inserted_references = $this->db->insert_batch("dbhrd.candidate_references", $references);
     
         if (!$inserted_references) {
             $this->db->trans_rollback();
@@ -2471,11 +2476,32 @@ class Registration_model extends CI_Model{
                 "educ_to"        => $edu['to'],
             );
         }
-        $inserted_educ = $this->db->insert_batch("dbhrd.tbleducation", $educ);
+        $inserted_educ = $this->db->insert_batch("dbhrd.candidate_educations", $educ);
         if (!$inserted_educ) {
             $this->db->trans_rollback();
             $result['success'] = false;
             $result['message'] = 'Failed to insert education records.';
+            return $result;
+        }
+
+        $workexp = array();
+        foreach ($post['work_experience_form'] as $work) {
+            $workexp[] = array(
+                "applicant_id"   => $candidate_id,
+                "work_company"   => $work['company'],
+                "work_position"  => $work['position'],
+                "work_from"      => $work['from'],
+                "work_to"        => $work['to'],
+                "work_status"    => $work['status'],
+                "work_reason"    => $work['reason'],
+            );
+        }
+        $inserted_workexp = $this->db->insert_batch("dbhrd.candidate_work_exp", $workexp);
+
+        if (!$inserted_workexp) {
+            $this->db->trans_rollback();
+            $result['success'] = false;
+            $result['message'] = 'Failed to insert work experience records.';
             return $result;
         }
     

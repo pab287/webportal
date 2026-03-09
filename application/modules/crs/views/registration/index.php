@@ -106,7 +106,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-2">
+                                <!-- <div class="row mt-2">
                                     <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                                         <div class="form-group">
                                             <label for="school_id" class="form-control-label">School</label>
@@ -121,7 +121,7 @@
                                             <span class="m-form__help mb-0 pt-1 text-muted m--regular-font-size-sm1" style="text-transform: none;">YOU CAN SELECT MULTIPLE COURSE</span>
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
                                 <div class="m-separator m-separator--dashed d-xl-12"></div>
                                 <div class="row mt-2">
                                     <div class="col">
