@@ -221,9 +221,6 @@ let application_vue = new Vue({
         }
     },
     methods: {
-        toggleOnOff: function() {
-            
-        },
         removeEducInfo: function(index) {
             this.educInfo.splice(index, 1);
         },
