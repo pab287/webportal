@@ -328,7 +328,6 @@ $('#generalSearch').donetyping(function (callback) {
 function onViewApplication(id){
     let rowData = tblCandidates.row('#'+id).data();
     application_vue.selectedApplication = JSON.parse(JSON.stringify(rowData));
-    console.log(application_vue.selectedApplication );
     $("#view-application-modal").modal("show");
 }
 
