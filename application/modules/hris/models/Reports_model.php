@@ -1447,7 +1447,7 @@ class Reports_model extends CI_Model{
                 CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
                     UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
                     emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
-                END) as employee_name, emp.idno, IFNULL(UPPER(pos.name), 'NO ASSIGNED POSITION') as position,
+                END) as employee_name, emp.id as emp_id, emp.idno, IFNULL(UPPER(pos.name), 'NO ASSIGNED POSITION') as position,
                 COALESCE(SUM(IF(ts.date >= emp.date_start && ts.am_late > 0, 1, 0))) + COALESCE(SUM(IF(ts.date >= emp.date_start && ts.pm_late > 0, 1, 0))) as reports_total,
                 CONCAT(
                     GROUP_CONCAT(DISTINCT IF(ts.date >= emp.date_start && ts.am_late > 0, CONCAT(ts.date, ' ', ts.am_in), '')),
@@ -1520,9 +1520,15 @@ class Reports_model extends CI_Model{
             $arrResponse = $this->generateLateReport($post);
             $arrResponse["filters"]["report_type"] = "Attendance Late Report";
         }
-        elseif ($reportType == "absentee"){
+
+        if ($reportType == "absentee"){
             $arrResponse = $this->generateAbsenteeReport($post);
             $arrResponse["filters"]["report_type"] = "Attendance Absentee Report";
+        }
+
+        if ($reportType == "late_absentee") {
+            $arrResponse = $this->generateLate_AbsenteeReport($post);
+            $arrResponse["filters"]["report_type"] = "Attendance Late & Absentee Report";
         }
 
         return $arrResponse;
@@ -3366,5 +3372,96 @@ class Reports_model extends CI_Model{
         }else{
             return false;
         }
+    }
+
+    public function generateLate_AbsenteeReport($post) {
+        $lateResult = $this->generateLateReport($post);
+        $absentResult = $this->generateAbsenteeReport($post);
+
+        $lateData = $lateResult["data"] ?? [];
+        $absentData = $absentResult["data"] ?? [];
+
+        $lateData   = json_decode(json_encode($lateData), true);
+        $absentData = json_decode(json_encode($absentData), true);
+
+        $merged = [];
+
+        // Index late records
+        foreach ($lateData as $row) {
+            $empId = $row["emp_id"];
+
+            $merged[$empId] = [
+                "employee_name" => $row["employee_name"],
+                "idno"          => $row["idno"],
+                "position"      => $row["position"],
+
+                "late" => [
+                    "total_late"  => (float) ($row["reports_total"] ?? 0),
+                    "late_dates"  => $row["attendance_logs"] ?? null
+                ],
+
+                "absent" => [
+                    "total_absent"      => 0,
+                    "absent_dates"      => null,
+                    "attendance_logs"   => null
+                ]
+                
+                // "total_late"    => (float) $row["reports_total"],
+                // "total_absent"  => 0,
+            ];
+        }
+
+        // Merge absent records
+        foreach ($absentData as $row) {
+            $empId = $row["emp_id"];
+
+            if (!isset($merged[$empId])) {
+                $merged[$empId] = [
+                    "employee_name" => $row["employee_name"],
+                    "idno"          => $row["idno"],
+                    "position"      => $row["position"],
+
+                    "late" => [
+                        "total_late"    => 0,
+                        "late_dates"    => null
+                    ],
+
+                    "absent" => [
+                        "total_absent"      => (float) ($row["reports_total"] ?? 0),
+                        "absent_dates"      => $row["attendance_dates"] ?? null,
+                        "attendance_logs"   => $row["attendance_logs"] ?? null
+                    ]
+                        
+                    // "total_late"    => 0,
+                    // "total_absent"  => (float) $row["reports_total"],
+                ];
+            } else {
+                 $merged[$empId]["absent"] = [
+                    "total_absent"      => (float) ($row["reports_total"] ?? 0),
+                    "absent_dates"      => $row["attendance_dates"] ?? null,
+                    "attendance_logs"   => $row["attendance_logs"] ?? null
+                ];
+            }
+        }
+
+        // Remove employees with no violations
+        foreach ($merged as $empId => $row) {
+            if ($row["late"]["total_late"] == 0 && $row["absent"]["total_absent"] == 0) {
+                unset($merged[$empId]);
+            }
+        }
+
+        // Re-index numerically for DataTables
+        $finalData = array_values($merged);
+
+        $totalLate = array_sum(array_map(fn($r) => $r["late"]["total_late"], $finalData));
+        $totalAbsent = array_sum(array_map(fn($r) => $r["absent"]["total_absent"], $finalData));
+
+        return [
+            "data"       => $finalData,
+            "response"   => true,
+            "filters"    => $lateResult["filters"], // reuse filters
+            "toastr_msg" => "Late: {$totalLate}, Absent: {$totalAbsent}"
+        ];
     }
 }

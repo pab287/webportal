@@ -9,6 +9,7 @@ const hrisFilterLateAbsenteeReport = $("#frm-filter-hris-late_absentee_report");
 const dtTableLateAbsentee = $("#table-late_absentee_report");
 const _tblPortletReports = $("#m_portlet_tools-late_absentee_report").mPortlet();
 const modalLateAbsenteePreview = $("#modalLateAbsenteePreview");
+const late_and_absentee_view = $("#late_and_absentee_view");
 
 let dtTableLateAbsenteeReport;
 let filterOptionsLateAbsentee = {};
@@ -71,6 +72,10 @@ const vmLateAbsenteeReport = new Vue({
                     .on('select2:unselect', (e) => $(e.target).validate()); 
                 }, 250);
             }
+        },
+
+        report_type(type) {
+            rebuildLateAbsenteeTable(type);
         }
     }, methods: {
         renderRangeDatePicker(){
@@ -98,6 +103,7 @@ const vmLateAbsenteeReport = new Vue({
     },
     mounted(){
         this.renderRangeDatePicker();
+        late_absentee_column_report(this.report_type);
     }
 });
 
@@ -151,6 +157,102 @@ const vmLateAbsenteePreview = new Vue({
 
             return className;
         }, getLoaReference(employeeId, date) {
+            let referenceNumber = null;
+            const [startDate] = date.split(' - ');
+            const startDateObj = moment(new Date(startDate), 'dddd, MMMM D, YYYY h:m A');
+            let meridian = startDateObj.format('A');
+            const keyDate = startDateObj.format('YYYY-MM-DD');
+
+            if (globalLoaReference[employeeId] && globalLoaReference[employeeId][keyDate]) {
+                const { reference, whole_day, half_day, _meridian, loa_type } = globalLoaReference[employeeId][keyDate];
+                if (reference) {
+                    if ((half_day && _meridian === meridian) ||
+                        (whole_day && half_day === false) ||
+                        (loa_type == 4 && half_day === false)) {
+                        referenceNumber = reference;
+                    }
+                }
+            }
+
+            return referenceNumber;
+        }
+    }
+});
+
+const vm_late_and_absentee = new Vue({
+    el: "#late_and_absentee_container",
+    data: { row: {}, attlogs: [], reference: {}, report_type: "late" },
+    computed: {
+        lateDates() {
+            if (!this.row.late || !this.row.late.late_dates) return [];
+
+            return this.row.late.late_dates
+                .split(',')
+                .filter(Boolean)
+                .map(d => moment(d, "YYYY-MM-DD HH:mm:ss").format("LLL"));
+        },
+
+        absentDates() {
+            if (!this.row.absent || !this.row.absent.absent_dates) return [];
+
+            return this.row.absent.absent_dates
+                .split(',')
+                .filter(Boolean)
+                .map(d => moment(d, "YYYY-MM-DD").format("LL"));
+        },
+
+        attendanceLogs() {
+            if (!this.row.absent || !this.row.absent.attendance_logs) return [];
+
+            return this.row.absent.attendance_logs
+                .split(',')
+                .filter(Boolean)
+                .map(log => {
+                    const parts = log.split('~');
+                    if (parts.length === 2) {
+                        const start = moment(parts[0], "YYYY-MM-DD HH:mm:ss").format("LLL");
+                        const end   = moment(parts[1], "YYYY-MM-DD HH:mm:ss").format("LLL");
+                        return `${start} - ${end}`;
+                    }
+                    return moment(parts[0], "YYYY-MM-DD HH:mm:ss").format("LLL");
+                });
+        },
+
+        lateRecords() {
+            if (!this.row.late) return [];
+
+            const datesRaw   = this.row.late.late_dates || "";
+            const minutesRaw = this.row.late.late_minutes || "";
+
+            const dates = datesRaw.split(',').filter(Boolean);
+            const mins  = minutesRaw.split(',').filter(Boolean);
+
+            return dates.map((d, i) => ({
+                date: moment(d, "YYYY-MM-DD HH:mm:ss").format("LLL"),
+                minutes: mins[i] || 0
+            }));
+        },
+    },
+    methods: {
+        dateFormatted(date){
+            return date ? moment(new Date(date), "YYYY-MM-DD").format("LL"): null;
+        }, 
+
+        backgroundClass(date){
+            let className = '';
+            const nDate = date.split(" - ");
+            if(nDate.length == 2){
+                const meridian = moment(new Date(nDate[0]), "dddd, MMMM D, YYYY h:m A").format("A");
+                if(meridian){ className = meridian == 'AM' ? 'alert-primary':'alert-danger'; }
+            }else{
+                const meridian = moment(new Date(date), "dddd, MMMM D, YYYY h:m A").format("A");
+                if(meridian){ className = meridian == 'AM' ? 'alert-primary':'alert-danger'; }
+            }
+
+            return className;
+        }, 
+        
+        getLoaReference(employeeId, date) {
             let referenceNumber = null;
             const [startDate] = date.split(' - ');
             const startDateObj = moment(new Date(startDate), 'dddd, MMMM D, YYYY h:m A');
@@ -342,11 +444,8 @@ $.validate({
             data: formData,
             success: function(json){
                 if(json.response){
-                    typeReport =  document.querySelector('input[name="report_type"]:checked').value;
-                    console.log(json.data);
-                    dtTableLateAbsenteeReport.clear();
-                    dtTableLateAbsenteeReport.rows.add(json.data);
-                    dtTableLateAbsenteeReport.draw(false);
+                    rebuildLateAbsenteeTable(vmLateAbsenteeReport.report_type, json.data);
+
                     totalEntries = dtTableLateAbsenteeReport.rows().count();
                     filterOptionsLateAbsentee = { ...json.filters };
                     globalLoaReference ={ ...json.loa_reference };
@@ -356,8 +455,7 @@ $.validate({
                         if (rowCount > 0 && isCollapsedPortlet === true) { isCollapsedPortlet = _tblPortletReports.expand(); }
                     }, 500);
                 }else{
-                    dtTableLateAbsenteeReport.clear();
-                    dtTableLateAbsenteeReport.draw(false);
+                    rebuildLateAbsenteeTable(vmLateAbsenteeReport.report_type, []);
                 }
                 const { report_type, company_code, filter_by } = json.filters;
                 let tempHtml = `
@@ -410,6 +508,220 @@ $.validate({
     }
 });
 
+function late_absentee_column_report(type) {
+    const cols = [
+        { title: "ID Number", data: "idno", width: "8%" },
+        { title: "Employee Name", data: "employee_name", width: "30%" },
+        { title: "Position", data: "position", width: "*" },
+    ];
+
+    if (type === "late") {
+        cols.push({
+            title: "Total Late",
+            data: "reports_total",
+            width: "8%",
+            className: "text-right"
+        });
+    }
+
+    if (type === "absentee") {
+        cols.push({
+            title: "Total Absent",
+            data: "reports_total",
+            width: "8%",
+            className: "text-right"
+        });
+    }
+
+    if (type === "late_absentee") {
+        cols.push(
+            {
+                title: "Late",
+                data: null,
+                width: "8%",
+                className: "text-right",
+                render: function (data, type, row) {
+                    return row.late.total_late ? row.late.total_late : 0;
+                }
+            },
+            {
+                title: "Absent",
+                data: null,
+                width: "8%",
+                className: "text-right",
+                render: function (data, type, row) {
+                    return row.absent.total_absent ? row.absent.total_absent : 0;
+                }
+            },
+        );
+    }
+
+    cols.push({
+        title: "",
+        width: "6%",
+        className: "text-center",
+        render: function(_data, _type, row){
+            let classPreview = "btnLateAbsenteePreview";
+
+            // let cleanedRow = {};
+            // for (let key in row) {
+            //     cleanedRow[key] = String(row[key]).replace(/[^a-zA-Z0-9 .,~\-_:\/]/g, '');
+            // }
+
+            let cleanedRow = {};
+            let objResponse;
+            if (type === "late_absentee") {
+                classPreview = "late_and_absentee_preview";
+
+                for (let key in row) {
+                    if (typeof row[key] === "string") {
+                        cleanedRow[key] = row[key].replace(/[^a-zA-Z0-9 .,~\-_:\/]/g, '');
+                    } else {
+                        cleanedRow[key] = row[key]; // keep objects intact
+                    }
+                }
+
+                objResponse = encodeURIComponent(JSON.stringify(row));
+            } else {
+                for (let key in row) {
+                    cleanedRow[key] = String(row[key]).replace(/[^a-zA-Z0-9 .,~\-_:\/]/g, '');
+                }
+
+                objResponse = JSON.stringify(cleanedRow);
+            }
+            
+            return `<button class='btn btn-secondary m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill btnView ${classPreview}' data-raw='${objResponse}'>
+                        <i class='fa fa-hourglass-half'></i>
+                    </button>`;
+        }
+    });
+
+    return cols;
+}
+
+function rebuildLateAbsenteeTable(type, data = []) {
+    const table = $("#table-late_absentee_report");
+
+    if ($.fn.DataTable.isDataTable(table)) {
+        dtTableLateAbsenteeReport.clear().destroy();
+        table.empty(); // remove old auto-generated thead/tbody
+    }
+
+    dtTableLateAbsenteeReport = table.DataTable({
+        dom: "<'row'<'col-md-9 dtDetails'><'col-md-3 dtActions m--hide'B>>rt",
+        ordering: false,
+        paging: false,
+        columns: late_absentee_column_report(type),
+        data: data,
+        autoWidth: false,
+        buttons: [
+            {
+                extend: 'excel',
+                text: '<i class="fa fa-download"></i><span class="m--font-boldest">EXPORT EXCEL</span>',
+                className: "pull-right exportTempReportAction btnExport",
+                messageTop: function(){
+                    const {report_type } = filterOptionsLateAbsentee;
+                    return report_type.toUpperCase();
+                },
+                exportOptions: {
+                    columns: getExportColumnIndexes(type),
+                    stripHtml: true,
+                },
+                customize: function (xlsx) {
+                    export_log(filterExport, `${typeReport} Report`, "excel", totalEntries);
+                }
+            },
+            {
+                extend: 'print',
+                text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT</span>',
+                className: "pull-right printTempReportAction btnPrint",
+                title: function () {
+                    const { filter_by, filter_date, company_code, payroll_group, report_type } = filterOptionsLateAbsentee;
+                    const tempTitle = typeof report_type != "undefined" ? report_type: 'Attendance Report';
+
+                    const filterType = `<div>
+                        <div class="m--regular-font-size-sm1 mt-1">FILTER BY: ${filter_by}</div>
+                        <div class="m--regular-font-size-sm1 mt-1">FILTER DATE: ${filter_date}</div>
+                    </div>`;
+                    const companyCode = typeof company_code != "undefined" ? `<div>
+                        <div class="m--regular-font-size-sm1 mt-1">COMPANY: ${company_code}</div>
+                    </div>`:``;
+                    const payrollGroup = typeof payroll_group != "undefined" ? `<div>
+                        <div class="m--regular-font-size-sm1 mt-1">PAYROLL GROUP: ${payroll_group}</div>
+                    </div>`:``;
+
+                    return `<div class="m--regular-font-size-lg1">${tempTitle.toUpperCase()}</div>
+                        <div class='mb-3'>${companyCode}${filterType}${payrollGroup}</div>`;
+                }, customize: function (win) {
+                    const css = `@page { size: portrait; margin: 0.5cm; }
+                        table { font-size: 12px; }
+                        .print-size-auto{ width: auto }
+                        .print-size-8{ width: 8% }
+                        .print-size-10{ width: 10% }
+                        .print-size-25{ width: 25% }`,
+                        head = win.document.head || win.document.getElementsByTagName('head')[0],
+                        style = win.document.createElement('style');
+
+                    style.type = 'text/css';
+                    style.media = 'print';
+
+                    if (style.styleSheet) { style.styleSheet.cssText = css; } 
+                    else { style.appendChild(win.document.createTextNode(css)); }
+
+                    head.appendChild(style);
+                    win.document.title = "Late/Absentee Report Printable Page";
+                    export_log(filterExport, `${typeReport} Report`, "print", totalEntries);
+                }, exportOptions: {
+                    columns: [0, 1, 2, 3],
+                    stripHtml: true,
+                }
+            }
+        ],
+        drawCallback: function(settings) {
+            $(".btnLateAbsenteePreview").on("click", function(){
+                const { report_type } = filterOptionsLateAbsentee;
+                const tempReportType = report_type.search("Late") > -1 ? "late" : "absentee";
+
+                vmLateAbsenteePreview.report_type = tempReportType;
+                vmLateAbsenteePreview.row = {};
+                const data = $(this).data("raw");
+                
+                Object.assign(vmLateAbsenteePreview.row, data);
+                modalLateAbsenteePreview.modal();
+            });
+
+            $(".late_and_absentee_preview").on("click", function(){
+                const { report_type } = filterOptionsLateAbsentee;
+                const tempReportType = report_type.search("Late") > -1 ? "late" : "absentee";
+
+                vm_late_and_absentee.report_type = tempReportType;
+                const data = JSON.parse(decodeURIComponent($(this).data("raw")));
+
+                vm_late_and_absentee.row = data;
+                late_and_absentee_view.modal();
+            });
+
+            const api = this.api();
+            const tempData = api.data();
+            const btnPrint = $(settings.nTableWrapper).find(".printTempReportAction");
+            const btnExport = $(settings.nTableWrapper).find(".exportTempReportAction");
+            const dtActions = $(settings.nTableWrapper).find(".dtActions");
+
+            drawCallbackRequestAction(btnPrint, dtActions, tempData);
+            drawCallbackRequestAction(btnExport, dtActions, tempData);
+        }
+    });
+}
+
+function getExportColumnIndexes(type){
+    const map = {
+        late_absentee: [0,1,2,3,4],
+        late: [0,1,2,3],
+        absentee: [0,1,2,3]
+    };
+    return map[type] ?? [];
+}
+
 _tblPortletReports.on('afterExpand', function () {
     setTimeout(function () { isCollapsedPortlet = true; }, 500);
 }).on('afterCollapse', function () {
@@ -433,110 +745,6 @@ const drawCallbackRequestAction = function (btnAction, dtActions, tempData) {
 
     if (tempData.length > 0) { showElements(); } 
     else { hideElements(); }       
-}
-
-if(typeof dtTableLateAbsentee !== "undefined" && dtTableLateAbsentee.length > 0){
-    dtTableLateAbsenteeReport = dtTableLateAbsentee.DataTable({
-        dom: "<'row'<'col-md-9 dtDetails'><'col-md-3 dtActions m--hide'B>>rt",
-        ordering: false,
-        paging: false,
-        columns: [
-            { title: "ID Number", data: "idno", width: "8%" },
-            { title: "Employee Name", data: "employee_name", width: "30%" },
-            { title: "Position", data: "position", width: "*" },
-            { title: "Total", data: "reports_total", width: "8%", className: "text-right" },
-            { title: "", width: "6%", className: "text-center", render: function(_data, _type, row){
-                let cleanedRow = {};
-                for (let key in row) { cleanedRow[key] = String(row[key]).replace(/[^a-zA-Z0-9 .,~\-_:\/]/g, ''); }
-                const objResponse = JSON.stringify(cleanedRow);
-                return `<button class='btn btn-secondary m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill btnView btnLateAbsenteePreview' data-raw='${objResponse}'>
-                    <i class='fa fa-hourglass-half'></i>
-                </button>`;
-                }
-            }
-        ], buttons: [{
-            extend: 'excel',
-            text: '<i class="fa fa-download"></i><span class="m--font-boldest">EXPORT EXCEL</span>',
-            className: "pull-right exportTempReportAction btnExport",
-            messageTop: function(){
-                const {report_type } = filterOptionsLateAbsentee;
-                return report_type.toUpperCase();
-            },
-            exportOptions: {
-                columns: [0, 1, 2, 3],
-                stripHtml: true,
-            },
-            customize: function (xlsx) {
-                export_log(filterExport, `${typeReport} Report`, "excel", totalEntries);
-            }
-        }, {
-            extend: 'print',
-            text: '<i class="fa fa-print"></i><span class="m--font-boldest">PRINT</span>',
-            className: "pull-right printTempReportAction btnPrint",
-            title: function () {
-                const { filter_by, filter_date, company_code, payroll_group, report_type } = filterOptionsLateAbsentee;
-                const tempTitle = typeof report_type != "undefined" ? report_type: 'Attendance Report';
-
-                const filterType = `<div>
-                    <div class="m--regular-font-size-sm1 mt-1">FILTER BY: ${filter_by}</div>
-                    <div class="m--regular-font-size-sm1 mt-1">FILTER DATE: ${filter_date}</div>
-                </div>`;
-                const companyCode = typeof company_code != "undefined" ? `<div>
-                    <div class="m--regular-font-size-sm1 mt-1">COMPANY: ${company_code}</div>
-                </div>`:``;
-                const payrollGroup = typeof payroll_group != "undefined" ? `<div>
-                    <div class="m--regular-font-size-sm1 mt-1">PAYROLL GROUP: ${payroll_group}</div>
-                </div>`:``;
-
-                return `<div class="m--regular-font-size-lg1">${tempTitle.toUpperCase()}</div>
-                    <div class='mb-3'>${companyCode}${filterType}${payrollGroup}</div>`;
-            }, customize: function (win) {
-                const css = `@page { size: portrait; margin: 0.5cm; }
-                    table { font-size: 12px; }
-                    .print-size-auto{ width: auto }
-                    .print-size-8{ width: 8% }
-                    .print-size-10{ width: 10% }
-                    .print-size-25{ width: 25% }`,
-                    head = win.document.head || win.document.getElementsByTagName('head')[0],
-                    style = win.document.createElement('style');
-
-                style.type = 'text/css';
-                style.media = 'print';
-
-                if (style.styleSheet) { style.styleSheet.cssText = css; } 
-                else { style.appendChild(win.document.createTextNode(css)); }
-
-                head.appendChild(style);
-                win.document.title = "Late/Absentee Report Printable Page";
-                export_log(filterExport, `${typeReport} Report`, "print", totalEntries);
-            }, exportOptions: {
-                columns: [0, 1, 2, 3],
-                stripHtml: true,
-            }
-        }],
-        drawCallback: function(settings){
-            $(".btnLateAbsenteePreview").on("click", function(){
-                const { report_type } = filterOptionsLateAbsentee;
-                const tempReportType = report_type.search("Late") > -1 ? "late" : "absentee";
-
-                vmLateAbsenteePreview.report_type = tempReportType;
-                vmLateAbsenteePreview.row = {};
-                const data = $(this).data("raw");
-                
-                Object.assign(vmLateAbsenteePreview.row, data);
-                modalLateAbsenteePreview.modal();
-            });
-
-            const api = this.api();
-            const tempData = api.data();
-            const btnPrint = $(settings.nTableWrapper).find(".printTempReportAction");
-            const btnExport = $(settings.nTableWrapper).find(".exportTempReportAction");
-            const dtActions = $(settings.nTableWrapper).find(".dtActions");
-
-            drawCallbackRequestAction(btnPrint, dtActions, tempData);
-            drawCallbackRequestAction(btnExport, dtActions, tempData);
-        }
-    });
 }
 
 const resetFilterLateAbsenteeReport = function(event){
