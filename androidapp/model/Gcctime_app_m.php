@@ -2282,7 +2282,7 @@ class Gcctime_app_m extends Dbase{
         } elseif ($isCheck_type === "check_out") {
             $check_type = 2;
         }
-        $msg = $check_type === 1 
+        $msg = $check_type == 1 
             ? "Successfully Saved Travel Order Check-In Location" 
             : "Successfully Saved and Accomplished Travel Order Check-Out Location";
         $destination_id = isset($_POST['destination_id']) ? $_POST['destination_id'] : null;
@@ -2316,15 +2316,18 @@ class Gcctime_app_m extends Dbase{
                     $employeeId,
                     "[Mobile] $msg - location: $location | destination ID: $destination_id | check type: $check_type"
                 );
-                if ($check_type === 2) {
+                
+                if ($check_type == 2) {
 
                     $update = $conn->prepare("
                         UPDATE gcceforms.travel_destination
                         SET accomplished = 1, accomplished_date = NOW()
-                        WHERE travel_order_id = :destination_id
+                        WHERE id = :destination_id
                     ");
 
-                    $update->execute([':destination_id' => (int)$destination_id]);
+                    $temp_destination_id = (int)$destination_id;
+                    $update->bindParam(':destination_id', $temp_destination_id, PDO::PARAM_INT);
+                    $update->execute();
 
                     if ($update->rowCount() > 0) {
                         $this->saveLogs(
