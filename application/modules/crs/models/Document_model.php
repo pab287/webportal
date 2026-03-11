@@ -3214,10 +3214,11 @@ class Document_model extends CI_Model{
         $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
         $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
         $year = (isset($post["year"]) && $post["year"]) ? $post["year"] : date("Y");
+        $archive = (isset($post["archive"]) && $post["archive"]) ? $post["archive"] : 0;
         $rowCount = 0;
         $rowData = array();
-        $rowData = $this->getCandidatesData($search, $limit, $offset, $sortBy, $sortOrder, $year);
-        $rowCount = $this->getCandidatesDataCount($search,$year);
+        $rowData = $this->getCandidatesData($search, $limit, $offset, $sortBy, $sortOrder, $year, $archive);
+        $rowCount = $this->getCandidatesDataCount($search,$year, $archive);
         $resultset["recordsTotal"] = $rowCount;
         $resultset["recordsFiltered"] = $rowCount;
         $resultset["data"] = $rowData;
@@ -3225,7 +3226,7 @@ class Document_model extends CI_Model{
           return $resultset;
     }
 
-    private function getCandidatesData($search, $limit, $offset, $sortBy, $sortOrder, $year){
+    private function getCandidatesData($search, $limit, $offset, $sortBy, $sortOrder, $year, $archive){
         $data = array();
         $filterFields = array("a.status", "a.firstname", "a.lastname", "a.schools", "a.courses", "a.positions", "a.recruitment", "a.applied_dt", "a.contact_no", "a.remarks");
         $sql = "a.*, a.resume as attachment, 
@@ -3249,6 +3250,7 @@ class Document_model extends CI_Model{
           a.applied_dt, a.remarks, a.contact_no";
           $this->db->select($sql);
           $this->db->from("dbhrd.candidates a");
+          $this->db->where("a.is_archive", $archive);
         //   $this->db->join("dbhrd.candidate_attachment b", "b.candidate_id = a.id", "left");
           $this->db->join("gccmaster.tblemployees c", "a.referral = c.id", "left");
       //   $this->db->where('status != ', 'hired');
@@ -3289,9 +3291,10 @@ class Document_model extends CI_Model{
                         }
                     }
                 }
-
+                $rs->resume = (!empty($rs->resume) && file_exists(FCPATH . "uploads/files/hrd/new_resume_{$rs->id}/{$rs->resume}")) ? base_url("uploads/files/hrd/new_resume_{$rs->id}/{$rs->resume}") : null;
                 $rs->education = $this->getEducationData($rs->id);
                 $rs->work_experience = $this->getWorkExperienceData($rs->id);
+                $rs->reference = $this->getReferenceData($rs->id);
 
                 $arrData[$key] = $rs;
             }
@@ -3304,11 +3307,12 @@ class Document_model extends CI_Model{
         return $data;
       }
 
-      private function getCandidatesDataCount($search,$year){
+      private function getCandidatesDataCount($search,$year,$archive){
         $filterFields = array("a.status", "a.firstname", "a.lastname", "a.schools", "a.courses", "a.positions", "a.recruitment", "a.applied_dt", "a.contact_no", "a.remarks");
     //   $sql = "a.id, a.status, a.vacancy_status, CONCAT(a.firstname,' ',a.lastname) AS name, a.school, a.course, a.position, a.tag1, a.recruitment, a.applied_dt, b.filename, a.remarks, a.contact_no, a.description";
     //   $this->db->select($sql);
       $this->db->from("dbhrd.candidates a");
+      $this->db->where("a.is_archive", $archive);
     //   $this->db->join("dbhrd.file_attachment b", "a.id = b.body_id", "left");
     //   $this->db->where('vacancy_status != ', 'resolved');
     //   $this->db->where('vacancy_status != ', 'archived');
@@ -3352,11 +3356,40 @@ class Document_model extends CI_Model{
 
     private function getWorkExperienceData($id) {
         $query = $this->db->select("id, work_company, work_position, work_from, work_to, work_status, work_reason")
-            ->from("dbhrd.tblworkexperience")
+            ->from("dbhrd.candidate_work_exp")
             ->where('applicant_id', $id)
             ->get();
     
         return $query->result_array(); 
+    }
+
+    private function getReferenceData($id) {
+        $query = $this->db->select("id, ref_name, ref_contact_no, ref_address")
+            ->from("dbhrd.candidate_references")
+            ->where('applicant_id', $id)
+            ->get();
+    
+        return $query->result_array(); 
+    }
+
+    public function deleteApplication(){
+        $resultArray = [];
+        $post = $this->input->post();
+        $id = (int) $post['id'];
+        $updated = $this->db->where('id', $id)->update('dbhrd.candidates', ['is_archive' => 1]);
+        $resultArray['success'] = $updated;
+        $resultArray['msg'] = $updated ? 'Application archived successfully.' : 'Failed to archive application.';
+        return $resultArray;
+    }
+
+    public function restoreApplication(){
+        $resultArray = [];
+        $post = $this->input->post();
+        $id = (int) $post['id'];
+        $updated = $this->db->where('id', $id)->update('dbhrd.candidates', ['is_archive' => 0]);
+        $resultArray['success'] = $updated;
+        $resultArray['msg'] = $updated ? 'Application restored successfully.' : 'Failed to restore application.';
+        return $resultArray;
     }
 
 }

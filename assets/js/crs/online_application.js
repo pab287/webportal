@@ -1,4 +1,5 @@
 let search_val = "";
+let archive = 0;
 let selectedYear = $('#year').val();
 let position,referral, schools, courses;
 
@@ -8,8 +9,6 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     if(typeof _tempContentData.schools != "undefined" && _tempContentData.schools.length > 0){ schools = _tempContentData.schools; }
     if(typeof _tempContentData.courses != "undefined" && _tempContentData.courses.length > 0){ courses = _tempContentData.courses; }
 }
-
-console.log(_tempContentData);
 
 const recruitmentSources = [
     { id: 'mynimo', text: 'MYNIMO' },
@@ -123,7 +122,6 @@ let application_vue = new Vue({
     el: "#m_content",
     data: { 
         selectedApplication: {},
-        workExperiences : [],
         educInfo : [],
         uploadedFiles : [],
     },
@@ -151,6 +149,7 @@ let tblCandidates = $("#candidates_table").DataTable({
             d.csrf_token = _csrf_hash;
             d.search['value'] = search_val;
             d.year = selectedYear;
+            d.archive = archive;
         }
     },
     columns: [
@@ -271,10 +270,10 @@ let tblCandidates = $("#candidates_table").DataTable({
 
 function itemDatatableActions(id, status) {
     let _actionButton = "<span class='action-buttons'>";
-    if (id) {
+    if (!archive) {
         _actionButton += `
                    <a style="text-decoration: none;" 
-                        class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit" 
+                        class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnView" 
                         onclick="onViewApplication(${id})" 
                         data-toggle="m-tooltip" data-placement="bottom" 
                         data-skin="dark" 
@@ -285,12 +284,20 @@ function itemDatatableActions(id, status) {
                         type="button" 
                         class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
                         onclick="deleteApplication(${id})" 
-                        data-toggle="m-tooltip" data-placement="bottom" title="Archive Event" 
+                        data-toggle="m-tooltip" data-placement="bottom" title="Archive Application" 
                         data-skin="dark">
                         <i class="la la-file-archive-o"></i>
                     </button>`
     } else {
-        return "";
+         _actionButton += `                  
+                    <button 
+                        type="button" 
+                        class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnRestore" 
+                        onclick="restoreApplication(${id})" 
+                        data-toggle="m-tooltip" data-placement="bottom" title="Restore Application" 
+                        data-skin="dark">
+                        <i class="la la-undo"></i>
+                    </button>`;
     }
     return _actionButton;
 }
@@ -323,4 +330,102 @@ function onViewApplication(id){
     application_vue.selectedApplication = JSON.parse(JSON.stringify(rowData));
     console.log(application_vue.selectedApplication );
     $("#view-application-modal").modal("show");
+}
+
+function deleteApplication(id) {
+    Swal.fire({
+        title: 'Delete Application?',
+        text: "This action cannot be undone.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete it'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl("crs/delete_application"),
+                type: "POST",
+                global: false,
+                dataType: "json",
+                data: {
+                    csrf_token: _csrf_hash,
+                    id: id
+                },
+
+                beforeSend: function () {
+                    Swal.showLoading();
+                },
+                success: function (res) {
+                    Swal.close();
+                    if (res.success) {
+                        toastr.success(res.msg, 'Success', 3000);
+                        tblCandidates.ajax.reload();
+                    } else {
+                        toastr.error(res.msg, 'Error', 3000);
+                    }
+                },
+                error: function () {
+                    toastr.error("Something went wrong!", 'Error', 3000);
+                }
+            });
+        }
+    });
+}
+
+function restoreApplication(id){
+
+    Swal.fire({
+        title: 'Restore Application?',
+        text: "This action cannot be undone.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, restore it'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl("crs/restore_application"),
+                type: "POST",
+                global: false,
+                dataType: "json",
+                data: {
+                    csrf_token: _csrf_hash,
+                    id: id
+                },
+
+                beforeSend: function () {
+                    Swal.showLoading();
+                },
+                success: function (res) {
+                    Swal.close();
+                    if (res.success) {
+                        toastr.success(res.msg, 'Success', 3000);
+                        tblCandidates.ajax.reload();
+                    } else {
+                        toastr.error(res.msg, 'Error', 3000);
+                    }
+                },
+                error: function () {
+                    toastr.error("Something went wrong!", 'Error', 3000);
+                }
+            });
+        }
+    });
+
+}
+
+function openArchive(){
+    archive = archive === 0 ? 1 : 0;
+    if (archive === 1) {
+        $('#page_title').text('ONLINE APPLICATION ARCHIVE');
+        $('#archive_text').text('Back to Active');
+        $('#newOption').hide();
+    } else {
+        $('#page_title').text('ONLINE APPLICATION MASTERFILE');
+        $('#archive_text').text('Archive');
+        $('#newOption').show();
+    }
+    tblCandidates.ajax.reload();
 }

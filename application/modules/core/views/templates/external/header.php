@@ -27,6 +27,7 @@
     <link href="<?php echo base_url('assets/global/plugins/uploadui/css/jquery.fileupload-ui.css'); ?>" rel="stylesheet" type="text/css" />
     <script>
         let _csrf_hash = '<?php echo $this->security->get_csrf_hash(); ?>';
+        let baseUrl = "<?php echo base_url(); ?>";
     </script>
 </head>
 <body class="m-page--wide m-header--fixed m-header--fixed-mobile m-footer--push m-aside--offcanvas-default m-header--minimize-off">

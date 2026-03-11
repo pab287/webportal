@@ -83,6 +83,8 @@
             $tempData = array();
             $tempData['referral'] = $this->registration->select2RefferalData();
             $tempData['position'] = $this->registration->select2PositionData();
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
             $this->core_layout->setPrivilegeName("crs_masterfile");
             $this->core_layout->addJs("js/crs/online_application.js", true, $tempData);
             
@@ -943,5 +945,16 @@
             $data = $this->document->getCandidates();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
+
+        public function delete_application(){
+            $data = $this->document->deleteApplication();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function restore_application(){
+            $data = $this->document->restoreApplication();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
 
     }

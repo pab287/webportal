@@ -221,6 +221,9 @@ let application_vue = new Vue({
         }
     },
     methods: {
+        toggleOnOff: function() {
+            
+        },
         removeEducInfo: function(index) {
             this.educInfo.splice(index, 1);
         },
@@ -323,8 +326,9 @@ let application_vue = new Vue({
                 success: function (res) {
                     if(res.success){
                         toastr.success(res.message, "Success", 10000);
-                        localStorage.removeItem('online_reg');
+                        localStorage.removeItem('gcc_job_application');
                     }
+                    window.location.reload();
                 },
                 error: function (err) {
                     toastr.error("Something went wrong!", "Error", 10000);
