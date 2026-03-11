@@ -28,9 +28,7 @@
 
         public function thank_you()
         {
-            $this->load->view("core/templates/external/header");
             $this->load->view("crs/registration/thank_you");
-            $this->load->view("core/templates/external/footer");
         }
 
         public function insert_resume(){
@@ -432,6 +430,11 @@
 
         public function submit_application(){
             $data = $this->registration->submitAppilication();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function validate_application(){
+            $data = $this->registration->validateApplication();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 

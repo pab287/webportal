@@ -48,13 +48,6 @@ const mimeMap = {
     // "image/jpeg": "jpg"
 };
 
-
-$(document).ready(function () {
-    
-
-
-});
-
 function formatDate(input) {
     let value = input.value.replace(/\D/g, '');
     if (value.length > 2 && value.length <= 4) {
@@ -70,10 +63,18 @@ function formatDate(input) {
 
 let application_vue = new Vue({
     el: "#m_content",
-    data: { 
+    data: {
+        isSubmitting: false, 
         className: "",
         count: 0,
         uploadedFiles: [],
+        validate:{
+            firstname: "",
+            middlename: "",
+            lastname: "",
+            suffix: "",
+            birthdate: "",
+        },
         workExperiences: [
             { company: '', position: '', from: '', to: '', status: '', reason: '' }
         ],
@@ -121,7 +122,8 @@ let application_vue = new Vue({
         ]
     },
     mounted: function () {
-
+        let vm = this;
+        vm.checksOnloads();
         $('#applied_dt').datepicker({
             endDate: new Date(),
             todayHighlight: true,
@@ -143,51 +145,55 @@ let application_vue = new Vue({
             width: '100%',
             data: referral,
             allowClear: true,
-        });
+        }).val(null).trigger('change');
     
-        $("#school_id").select2({
-            placeholder: 'SELECT AN OPTION',
-            width: '100%',
-            data: schools,
-            multiple: true,
-        });
+        // $("#school_id").select2({
+        //     placeholder: 'SELECT AN OPTION',
+        //     width: '100%',
+        //     data: schools,
+        //     multiple: true,
+        // });
     
-        $("#course_id").select2({
-            placeholder: 'SELECT AN OPTION',
-            width: '100%',
-            data: courses,
-            multiple: true,
-        });
+        // $("#course_id").select2({
+        //     placeholder: 'SELECT AN OPTION',
+        //     width: '100%',
+        //     data: courses,
+        //     multiple: true,
+        // });
     
     
         $("#civil_status").select2({
             placeholder: 'SELECT AN OPTION',
             width: '100%',
             data: civilStatusOptions,
-        });
+        }).val(null).trigger('change');
     
     
         $("#gender").select2({
             width: '100%',
             placeholder: 'SELECT GENDER',
             data: genderOptions,
-        });
+        }).val(null).trigger('change');
     
         $('#birthdate').datepicker({
             endDate: new Date(),
             todayHighlight: true,
             autoclose: true,
             pickerPosition: 'bottom left',
-            // todayBtn: 'linked',
             format: 'mm/dd/yyyy',
             forceParse: false
+        })
+        .on('changeDate', function (e) {
+            vm.validate.birthdate = $(this).val();
         });
+
+        $('#birthdate').datepicker('clearDates');
     
         $("#position_id").select2({
             placeholder: 'SELECT AN OPTION',
             width: '100%',
             data: position,    
-        });
+        }).val(null).trigger('change');
     
         $("#recruitment").select2({
             width: '100%',
@@ -221,6 +227,48 @@ let application_vue = new Vue({
         }
     },
     methods: {
+        checksOnloads() {
+            const consent = localStorage.getItem('gcc_data_consent');
+            if (!consent) {
+                $('#modalConsent').modal('show');
+            }
+        },
+        acceptConsent() {
+            localStorage.clear();
+            localStorage.setItem('gcc_data_consent', '1');
+            document.cookie ="gcc_data_consent=1;path=/;max-age=" + (60 * 60 * 24 * 30);
+            $('#modalConsent').modal('hide');
+        },
+        declineConsent() {
+            localStorage.clear();
+            document.cookie.split(";").forEach(function(c) {
+                document.cookie =
+                    c.replace(/^ +/, "")
+                     .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+            window.location.href = "/";
+        },
+        getCookie(name) {
+            const cookies = document.cookie.split('; ');
+            for (let cookie of cookies) {
+                const [key, value] = cookie.split('=');
+                if (key === name) return value;
+            }
+            return null;
+        },
+        alreadyRegistered() {
+            const _this = this;
+            return $.ajax({
+                url: baseUrl + "crs/online_registration/validate_application",
+                type: "POST",
+                global: false,
+                dataType: "json",
+                data: {
+                    ..._this.validate,
+                    csrf_token: _csrf_hash
+                }
+            });
+        },
         removeEducInfo: function(index) {
             this.educInfo.splice(index, 1);
         },
@@ -266,6 +314,10 @@ let application_vue = new Vue({
         },
         fileDelete: function(index) {
             this.uploadedFiles.splice(index, 1);
+            const fileInput = document.getElementById('fileupload');
+            if (fileInput) {
+                fileInput.value = '';
+            }
             this.count = this.uploadedFiles.length;
             if(this.count == 0){
                 this.steps.find(s => s.tab === "#resume_upload").valid = false;
@@ -283,10 +335,22 @@ let application_vue = new Vue({
                 $('a[href="' + prevStep.tab + '"]').tab('show');
             }
         },
-        goNext() {
+        async goNext() {
             let currentIndex = this.steps.findIndex(
                 step => step.tab === this.currentStep
             );
+
+            if (currentIndex === 0) {
+                try {
+                    const validation = await this.alreadyRegistered();
+                    if (validation) {
+                        $("#modalExisting").modal('show');
+                        return;
+                    }
+                } catch (error) {
+                    return;
+                }
+            }
     
             let nextStep = this.steps[currentIndex + 1];
             if (nextStep && this.steps[currentIndex].valid) {
@@ -297,9 +361,9 @@ let application_vue = new Vue({
             }
         },
         submitAll() {
+            _this = this;
             let payload = {};
             this.steps.forEach(step => {
-
                 if (!step.valid) return;
                 if (Array.isArray(step.data)) {
                     payload[step.form] = [...step.data];
@@ -313,6 +377,7 @@ let application_vue = new Vue({
             formData.append("csrf_token", _csrf_hash);
             const file = $("#fileupload")[0].files[0];
             formData.append("files", file);
+            this.isSubmitting = true;
             $.ajax({
                 url: baseUrl + "crs/online_registration/submit_application",
                 type: "POST",
@@ -323,15 +388,16 @@ let application_vue = new Vue({
                 success: function (res) {
                     if(res.success){
                         toastr.success(res.message, "Success", 10000);
-                        localStorage.removeItem('gcc_job_application');
+                        localStorage.clear();
+                        document.cookie = "gcc_already_submitted=true;path=/;max-age=259200";
+                        window.location.href = "online_registration/thank_you";
                     }
-                    window.location.reload();
                 },
                 error: function (err) {
                     toastr.error("Something went wrong!", "Error", 10000);
                 }
             });
-        }
+        },
     },
 });
 
@@ -460,6 +526,9 @@ function restoreApplicationData(vue_app) {
     vue_app.steps = savedSteps;
     vue_app.steps.forEach(function(step){
         if (step.valid === true) {
+            if(step.tab === "#personal_information") {
+                vue_app.validate = step.data
+            }
             if (step.tab === "#work_experience") {
                 vue_app.workExperiences = step.data;
             }
@@ -485,5 +554,4 @@ function restoreApplicationData(vue_app) {
             }
         }
     });
-
 }

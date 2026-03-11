@@ -84,25 +84,25 @@
                                     <div class="col-xl-4 col-lg-4 col-md-3 col-sm-12">
                                         <div class="form-group">
                                             <label for="firstname" class="form-control-label required">First name</label>
-                                            <input type="text" name="firstname" id="firstname" placeholder="ENTER FIRST NAME" class="form-control" data-validation="required" autocomplete="off">
+                                            <input type="text" name="firstname" id="firstname" placeholder="ENTER FIRST NAME" class="form-control" data-validation="required" autocomplete="off" v-model="validate.firstname">
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="middle" class="form-control-label">Middle name</label>
-                                            <input type="text" name="middlename" id="middle" placeholder="(optional)" class="form-control" autocomplete="off">
+                                            <input type="text" name="middlename" id="middle" placeholder="(optional)" class="form-control" autocomplete="off" v-model="validate.middlename">
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="lastname" class="form-control-label required">Last name</label>
-                                            <input type="text" name="lastname" id="lastname" placeholder="ENTER LAST NAME" class="form-control" data-validation="required" autocomplete="off">
+                                            <input type="text" name="lastname" id="lastname" placeholder="ENTER LAST NAME" class="form-control" data-validation="required" autocomplete="off" v-model="validate.lastname">
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="suffix" class="form-control-label">Suffix</label>
-                                            <input type="text" name="suffix" id="suffix" placeholder="(optional)" class="form-control" autocomplete="off">
+                                            <input type="text" name="suffix" id="suffix" placeholder="(optional)" class="form-control" autocomplete="off" v-model="validate.suffix">
                                         </div>
                                     </div>
                                 </div>
@@ -344,7 +344,7 @@
                                                 <label :for="'work_from_' + index" class="form-control-label required">From Year</label>
                                                 <div class="input-group">
                                                     <span class="input-group-addon"><i class="la la-calendar"></i></span>
-                                                    <input :id="'work_from_' + index" name="work_from_year" type="text" maxlength="4" autocomplete="off" data-validation="required" class="form-control m-input" v-model="work.from"/>
+                                                    <input :id="'work_from_' + index" name="work_from_year" type="text" maxlength="4" autocomplete="off" data-validation="required" class="form-control m-input" @input="work.from = work.from.replace(/\D/g, '')" v-model="work.from"/>
                                                 </div>
                                             </div>
                                         </div>
@@ -367,7 +367,7 @@
                                                 <label :for="'work_to_' + index" class="form-control-label required">To Year</label>
                                                 <div class="input-group">
                                                     <span class="input-group-addon"><i class="la la-calendar"></i></span>
-                                                    <input :id="'work_to_' + index" name="work_to_year" type="text" maxlength="4" autocomplete="off" data-validation="required" class="form-control m-input" v-model="work.to"/>
+                                                    <input :id="'work_to_' + index" name="work_to_year" type="text" maxlength="4" autocomplete="off" data-validation="required" class="form-control m-input" @input="work.to = work.to.replace(/\D/g, '')"  v-model="work.to"/>
                                                 </div>
                                             </div>
                                         </div>
@@ -414,11 +414,13 @@
                                                 <input :id="'educ_school_' + index" name="school" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" v-model="item.school"/>
                                             </div>
                                         </div>
-                                        <div class="form-group">
-                                            <label :for="'educ_from_' + index" class="form-control-label required">From Year</label>
-                                            <div class="input-group">
-                                                <span class="input-group-addon"><i class="la la-calendar"></i></span>
-                                                <input :id="'educ_from_' + index" name="educ_from_year" type="text" maxlength="4" autocomplete="off" data-validation="required" class="form-control m-input" v-model="item.from"/>
+                                        <div class="col-4">
+                                            <div class="form-group">
+                                                <label :for="'educ_from_' + index" class="form-control-label required">From Year</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="la la-calendar"></i></span>
+                                                    <input :id="'educ_from_' + index" name="educ_from_year" type="text" maxlength="4" autocomplete="off" data-validation="required" class="form-control m-input" @input="item.from = item.from.replace(/\D/g, '')" v-model="item.from" />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -435,11 +437,13 @@
                                                 <input :id="'honor_' + index" name="educ_honor" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" v-model="item.honor"/>
                                             </div>
                                         </div>
-                                        <div class="form-group">
-                                            <label :for="'educ_to_' + index" class="form-control-label required">To Year</label>
-                                            <div class="input-group">
-                                                <span class="input-group-addon"><i class="la la-calendar"></i></span>
-                                                <input :id="'educ_to_' + index" name="educ_to_year" type="text" maxlength="4" autocomplete="off" data-validation="required" class="form-control m-input" v-model="item.to"/>
+                                        <div class="col-4">
+                                            <div class="form-group">
+                                                <label :for="'educ_to_' + index" class="form-control-label required">To Year</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="la la-calendar"></i></span>
+                                                    <input :id="'educ_to_' + index" name="educ_to_year" type="text" maxlength="4" autocomplete="off" data-validation="required" class="form-control m-input" @input="item.to = item.to.replace(/\D/g, '')" v-model="item.to"/>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -545,7 +549,7 @@
                                     </template>
                                     <template v-else>
                                         <div class="col-12">
-                                            <strong><h5>NO ATTACHMENTS</h5></strong>
+                                            <strong><h5>PLEASE UPLOAD RESUME AS PDF FORMAT</h5></strong>
                                         </div>
                                     </template>
                                 </div>
@@ -560,31 +564,76 @@
                         </div>
                         <div class="col-6 m--align-right">
                             <button id="next" type="button" class="btn btn-primary" @click="goNext" v-if="canGoNext">NEXT</button>
-                            <button id="submit" type="submit" class="btn btn-success" @click="submitAll" v-if="canSubmit">SUBMIT</button>
+                            <button id="submit" type="submit" class="btn btn-success" @click="submitAll" v-if="canSubmit" :disabled="isSubmitting">
+                                <span v-if="isSubmitting">
+                                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                    Submitting...
+                                </span>
+                                <span v-else>SUBMIT</span>
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="modal fade" id="consent_modal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+
+    <div class="modal fade" id="modalConsent" tabindex="-1" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header"> 
-                    <h5 class="modal-title">Applicant Data Privacy Consent</h5>
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Data Privacy Consent</h5>
                 </div>
                 <div class="modal-body">
-                    <p> By submitting this job application, you consent to the collection, processing, and storage of your personal information for recruitment and employment evaluation purposes. </p>
-                    <p> The information you provide will be used solely for assessing your qualifications for employment and may be shared with authorized personnel involved in the recruitment process. Your data will be handled in accordance with applicable data privacy regulations. </p>
-                    <p> If your application is unsuccessful, your information may be retained for future employment opportunities unless you request its removal. </p>
-                    <hr/>
+                    <p>
+                        By continuing, you agree to the collection and processing of
+                        your personal information for recruitment and application
+                        purposes in accordance with the Data Privacy Act.
+                    </p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button class="btn btn-secondary" @click="declineConsent">
+                        Cancel
+                    </button>
+                    <button class="btn btn-primary" @click="acceptConsent">
+                        I Agree
+                    </button>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="modalExisting" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        Existing Application Detected
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="mb-3">
+                        An application with the same personal information already exists
+                        in our system.
+                    </p>
+                    <p class="text-muted mb-0">
+                        Multiple submissions are not allowed. If you believe this is an
+                        error, please contact the HR office for assistance.
+                    </p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-warning" data-dismiss="modal">
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 

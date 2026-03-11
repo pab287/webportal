@@ -345,7 +345,7 @@
                                                 </div>
                                                 <div class="col-4">
                                                     <div class="form-group">
-                                                        <span :for="'work_reason_' + index" class="form-control-label mb-2">Reason for leaving</span>
+                                                        <span class="form-control-label mb-2">Reason for leaving</span>
                                                         <div class="form-control" v-text="work.work_reason || '-'"></div>
                                                     </div>
                                                 </div>

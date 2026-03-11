@@ -2369,10 +2369,10 @@ class Registration_model extends CI_Model{
         $courses = isset($post['courses']) ? implode(',', $post['courses']): '';
         $positions = isset($post['positions']) ? implode(',', $post['positions']): '';
         $personal_info = array(
-            "firstname"          => $post['firstname'],
-            "middlename"         => $post['middlename'],
-            "lastname"           => $post['lastname'],
-            "suffix"             => $post['suffix'],
+            "firstname"  => trim($post['firstname']),
+            "middlename" => trim($post['middlename']),
+            "lastname"   => trim($post['lastname']),
+            "suffix"     => trim($post['suffix']),
             "contact_no"         => $post['contact_no'],
             "status"             => "pooling",
             "gender"             => $post['gender'],
@@ -2510,4 +2510,26 @@ class Registration_model extends CI_Model{
         $result['message'] = 'Applicant has been registered.';
         return $result;
     }
+
+    public function validateApplication(){
+        $post = $this->input->post();
+        $firstname  = strtolower(trim($post['firstname']  ?? ''));
+        $middlename = strtolower(trim($post['middlename'] ?? ''));
+        $lastname   = strtolower(trim($post['lastname']   ?? ''));
+        $suffix     = strtolower(trim($post['suffix']     ?? ''));
+        $birthdate = '';
+        if (!empty($post['birthdate'])) {
+            $date = DateTime::createFromFormat('m/d/Y', $post['birthdate']);
+            $birthdate = $date ? $date->format('Y-m-d') : '';
+        }
+        $this->db->from('dbhrd.candidates');
+        $this->db->where('is_archive', 0);
+        $this->db->where('LOWER(firstname)', $firstname);
+        $this->db->where('LOWER(middlename)', $middlename);
+        $this->db->where('LOWER(lastname)', $lastname);
+        $this->db->where('LOWER(suffix)', $suffix);
+        $this->db->where('birthdate', $birthdate);
+        return $this->db->count_all_results() > 0;
+    }
+
 }
