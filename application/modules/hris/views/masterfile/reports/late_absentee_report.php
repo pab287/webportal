@@ -264,23 +264,23 @@
                 </div>
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-9 col-md-9 col-lg-9 col-sm-12">
-                            <h4 v-text="row.employee_name">&nbsp;</h4>
-                            <p v-text="row.position">&nbsp;</p>
+                        <div class="col-12">
+                            <h4>{{ row.employee_name }}</h4>
+                            <p>{{ row.department + " • " + row.position }}</p>
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-3 col-md-3 col-lg-3 col-sm-12">
+                        <div class="col-6">
                             <h6>Date Hired</h6>
                             <p v-text="dateFormatted(row.date_start)">&nbsp;</p>
                         </div>
-                        <div class="col-3 col-md-3 col-lg-3 col-sm-12">
+                        <div class="col-6">
                             <h6>Last Verified Date</h6>
                             <p v-text="dateFormatted(row.max_date)">&nbsp;</p>
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-6 col-md-6 col-lg-6 col-sm-12" v-for="log in attlogs">
+                        <div class="col-12" v-for="log in attlogs">
                             <div class="m-alert m-alert--outline alert text-center" :class="backgroundClass(log)" role="alert">
                                 <p v-text="log">&nbsp;</p>
                                 <p class="m--regular-font-size-lg2 m--font-boldest mb-0" v-if="report_type == 'absentee'">{{getLoaReference(row.emp_id, log)}}</p>
@@ -318,18 +318,14 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th style="width:20%">Date</th>
-                                            <th style="width:15%">Minutes Late</th>
+                                            <th class="text-right" style="width:15%">Minutes Late</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <!-- Late Records -->
                                         <tr v-for="(item, i) in lateRecords" :key="i">
                                             <td>{{ item.date }}</td>
-                                            <td>
-                                                <span class="badge badge-warning">
-                                                    {{ item.minutes }} mins
-                                                </span>
-                                            </td>
+                                            <td class="text-right">{{ item.minutes }} mins</td>
                                         </tr>
 
                                         <tr v-if="lateRecords.length === 0">
@@ -346,16 +342,24 @@
                                 <table class="table table-striped table-bordered table-hover">
                                     <thead class="thead-light">
                                         <tr>
-                                            <th style="width:35%">Date</th>
+                                            <th style="width:60%">Date</th>
+                                            <th style="width:40%">LOA Reference</th>
                                         </tr>
                                     </thead>
+
                                     <tbody>
                                         <tr v-for="(date, i) in absentDates" :key="i">
                                             <td>{{ date }}</td>
+                                            <td>
+                                                <span v-if="getLoaByAbsentDate(date)">
+                                                    {{ getLoaByAbsentDate(date) }}
+                                                </span>
+                                                <span v-else class="text-muted">—</span>
+                                            </td>
                                         </tr>
 
                                         <tr v-if="absentDates.length === 0">
-                                            <td colspan="4" class="text-center text-muted">No absent records</td>
+                                            <td colspan="2" class="text-center text-muted">No absent records</td>
                                         </tr>
                                     </tbody>
                                 </table>

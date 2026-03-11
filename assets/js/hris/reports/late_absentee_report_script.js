@@ -219,19 +219,43 @@ const vm_late_and_absentee = new Vue({
         },
 
         lateRecords() {
-            if (!this.row.late) return [];
+            if (!this.row.late || !this.row.late.late_dates) return [];
 
-            const datesRaw   = this.row.late.late_dates || "";
-            const minutesRaw = this.row.late.late_minutes || "";
+            const dates = this.row.late.late_dates
+                .split(',')
+                .filter(Boolean);
 
-            const dates = datesRaw.split(',').filter(Boolean);
-            const mins  = minutesRaw.split(',').filter(Boolean);
+            return dates.map(d => {
+                const mDate = moment(d, "YYYY-MM-DD HH:mm:ss");
 
-            return dates.map((d, i) => ({
-                date: moment(d, "YYYY-MM-DD HH:mm:ss").format("LLL"),
-                minutes: mins[i] || 0
-            }));
+                // Shift start (default 8:00 AM)
+                const expectedHour = this.row.shift_start_hour || 8;
+                const expectedMin  = this.row.shift_start_minute || 0;
+
+                const expected = moment(mDate)
+                    .startOf('day')
+                    .hour(expectedHour)
+                    .minute(expectedMin)
+                    .second(0);
+
+                let minutesLate = mDate.diff(expected, 'minutes');
+                if (minutesLate < 0) minutesLate = 0;
+
+                //  if exceeded 30 mins late → count as 2 hours
+                if (minutesLate > 30) {
+                    minutesLate = 120;
+                }
+
+                return {
+                    date: mDate.format("LLL"),
+                    minutes: minutesLate
+                };
+            });
         },
+
+        loaMap() {
+            return this.row.absent?.loa_reference || {};
+        }
     },
     methods: {
         dateFormatted(date){
@@ -271,6 +295,21 @@ const vm_late_and_absentee = new Vue({
             }
 
             return referenceNumber;
+        },
+
+        getLoaByAbsentDate(dateFormatted) {
+            if (!this.loaMap) return null;
+
+            const key = moment(dateFormatted, "LL").format("YYYY-MM-DD");
+            const loa = this.loaMap[key];
+            if (!loa) return null;
+
+            let label = loa.reference;
+
+            if (loa.whole_day) label += " (Whole Day)";
+            else if (loa.half_day) label += ` (Half Day - ${loa._meridian})`;
+
+            return label;
         }
     }
 });
@@ -512,6 +551,7 @@ function late_absentee_column_report(type) {
     const cols = [
         { title: "ID Number", data: "idno", width: "8%" },
         { title: "Employee Name", data: "employee_name", width: "30%" },
+        { title: "Department", data: "department", width: "*" },
         { title: "Position", data: "position", width: "*" },
     ];
 
@@ -715,7 +755,7 @@ function rebuildLateAbsenteeTable(type, data = []) {
 
 function getExportColumnIndexes(type){
     const map = {
-        late_absentee: [0,1,2,3,4],
+        late_absentee: [0,1,2,3,4,5],
         late: [0,1,2,3],
         absentee: [0,1,2,3]
     };

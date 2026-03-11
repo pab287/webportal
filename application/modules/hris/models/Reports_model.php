@@ -1452,10 +1452,11 @@ class Reports_model extends CI_Model{
                 CONCAT(
                     GROUP_CONCAT(DISTINCT IF(ts.date >= emp.date_start && ts.am_late > 0, CONCAT(ts.date, ' ', ts.am_in), '')),
                     GROUP_CONCAT(DISTINCT IF(ts.date >= emp.date_start && ts.pm_late > 0, CONCAT(ts.date, ' ', ts.pm_in), ''))
-                ) as attendance_logs, MAX(ts.date) as max_date, emp.date_start");
+                ) as attendance_logs, MAX(ts.date) as max_date, emp.date_start, dept.description as department");
                 $this->db->from("gcctimeutility.timesheet as ts");
                 $this->db->join("gccmaster.tblemployees as emp", "emp.id = ts.emp_id", "INNER");
                 $this->db->join("gcchris.tblposition as pos", "pos.id = emp.position OR pos.name = emp.position", "LEFT");
+                $this->db->join("gcchris.tbldepartments as dept", "dept.id = emp.department_id", "LEFT");
                 $this->db->where("ts.has_shift", 1);
                 /*** $this->db->where("ts.verified", 1); ***/
                 $this->db->group_start();
@@ -1856,10 +1857,11 @@ class Reports_model extends CI_Model{
                             ts.date, ''))
                     )
                 ) as attendance_dates,
-                MAX(ts.date) as max_date, emp.date_start");
+                MAX(ts.date) as max_date, emp.date_start, dept.description as department");
                 $this->db->from("gcctimeutility.timesheet as ts");
                 $this->db->join("gccmaster.tblemployees as emp", "emp.id = ts.emp_id", "INNER");
                 $this->db->join("gcchris.tblposition as pos", "pos.id = emp.position OR pos.name = emp.position", "LEFT");
+                $this->db->join("gcchris.tbldepartments as dept", "dept.id = emp.department_id", "LEFT");
                 $this->db->where("ts.is_holiday", 0);
                 $this->db->where("ts.has_shift", 1);
                 /*** $this->db->where("ts.verified", 1); ***/
@@ -3391,9 +3393,13 @@ class Reports_model extends CI_Model{
             $empId = $row["emp_id"];
 
             $merged[$empId] = [
+                "emp_id"        => $row["emp_id"],
                 "employee_name" => $row["employee_name"],
                 "idno"          => $row["idno"],
+                "department"    => $row["department"],
                 "position"      => $row["position"],
+                "date_start"    => $row["date_start"],
+                "max_date"      => $row["max_date"],
 
                 "late" => [
                     "total_late"  => (float) ($row["reports_total"] ?? 0),
@@ -3403,44 +3409,43 @@ class Reports_model extends CI_Model{
                 "absent" => [
                     "total_absent"      => 0,
                     "absent_dates"      => null,
-                    "attendance_logs"   => null
+                    "attendance_logs"   => null,
+                    "loa_reference"     => []
                 ]
-                
-                // "total_late"    => (float) $row["reports_total"],
-                // "total_absent"  => 0,
             ];
         }
+
+        $loaMap = $absentResult["loa_reference"] ?? [];
 
         // Merge absent records
         foreach ($absentData as $row) {
             $empId = $row["emp_id"];
 
+            $absentPayload = [
+                "total_absent"      => (float) ($row["reports_total"] ?? 0),
+                "absent_dates"      => $row["attendance_dates"] ?? null,
+                "attendance_logs"   => $row["attendance_logs"] ?? null,
+                "loa_reference"     => $loaMap[$empId] ?? null
+            ];
+
             if (!isset($merged[$empId])) {
                 $merged[$empId] = [
+                    "emp_id"        => $row["emp_id"],
                     "employee_name" => $row["employee_name"],
                     "idno"          => $row["idno"],
                     "position"      => $row["position"],
+                    "date_start"    => $row["date_start"],
+                    "max_date"      => $row["max_date"],
 
                     "late" => [
                         "total_late"    => 0,
                         "late_dates"    => null
                     ],
 
-                    "absent" => [
-                        "total_absent"      => (float) ($row["reports_total"] ?? 0),
-                        "absent_dates"      => $row["attendance_dates"] ?? null,
-                        "attendance_logs"   => $row["attendance_logs"] ?? null
-                    ]
-                        
-                    // "total_late"    => 0,
-                    // "total_absent"  => (float) $row["reports_total"],
+                    "absent" => $absentPayload
                 ];
             } else {
-                 $merged[$empId]["absent"] = [
-                    "total_absent"      => (float) ($row["reports_total"] ?? 0),
-                    "absent_dates"      => $row["attendance_dates"] ?? null,
-                    "attendance_logs"   => $row["attendance_logs"] ?? null
-                ];
+                 $merged[$empId]["absent"] = $absentPayload;
             }
         }
 
