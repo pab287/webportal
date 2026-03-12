@@ -3347,7 +3347,7 @@ class Document_model extends CI_Model{
 
     private function getEducationData($id) {
         $query = $this->db->select("id,educ_level_type, educ_school, educ_degree, educ_honors, educ_from, educ_to")
-            ->from("dbhrd.tbleducation")
+            ->from("dbhrd.candidate_educations")
             ->where('applicant_id', $id)
             ->get();
     
