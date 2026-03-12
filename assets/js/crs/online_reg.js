@@ -555,3 +555,4 @@ function restoreApplicationData(vue_app) {
         }
     });
 }
+

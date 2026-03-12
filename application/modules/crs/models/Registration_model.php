@@ -2520,7 +2520,7 @@ class Registration_model extends CI_Model{
         $birthdate = '';
         if (!empty($post['birthdate'])) {
             $date = DateTime::createFromFormat('m/d/Y', $post['birthdate']);
-            $birthdate = $date ? $date->format('Y-m-d') : '';
+            $birthdate = $date ? $date->format('Y-m-d') : null;
         }
         $this->db->from('dbhrd.candidates');
         $this->db->where('is_archive', 0);
