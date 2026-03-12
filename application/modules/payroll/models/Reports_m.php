@@ -6623,7 +6623,8 @@ class Reports_m extends CI_Model{
                 $item->daily_rate = $dailyRate;
                 $item->per_minute = $perMinute;
                 $item->ndiff_hrs = $totalHrs;
-                $item->night_diff = $nightDiffPay;
+                $item->night_diff = $ndiffPerMinute * 60; // minutes to hrs
+                // $item->night_diff = $nightDiffPay;
                 $item->per_minute = $night_diff_minutely;
                 $item->posted = $isPosted;
                 $item->amount = $amount;
