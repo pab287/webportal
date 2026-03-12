@@ -84,7 +84,7 @@
                                     <div class="col-xl-4 col-lg-4 col-md-3 col-sm-12">
                                         <div class="form-group">
                                             <label for="firstname" class="form-control-label required">First name</label>
-                                            <input :type="validate.firstname" name="firstname" id="firstname" placeholder="ENTER FIRST NAME" class="form-control" data-validation="required" autocomplete="off" v-model="validate.firstname">
+                                            <input type="text" name="firstname" id="firstname" placeholder="ENTER FIRST NAME" class="form-control" data-validation="required" autocomplete="off" v-model="validate.firstname">
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
