@@ -318,6 +318,7 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th style="width:20%">Date</th>
+                                            <th class="text-center" style="width:15%">Status</th>
                                             <th class="text-right" style="width:15%">Minutes Late</th>
                                         </tr>
                                     </thead>
@@ -325,7 +326,8 @@
                                         <!-- Late Records -->
                                         <tr v-for="(item, i) in lateRecords" :key="i">
                                             <td>{{ item.date }}</td>
-                                            <td class="text-right">{{ item.minutes }} mins</td>
+                                            <td class="text-center">{{ item.status }}</td>
+                                            <td class="text-right">{{ item.minutes }}</td>
                                         </tr>
 
                                         <tr v-if="lateRecords.length === 0">

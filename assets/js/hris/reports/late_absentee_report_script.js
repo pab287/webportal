@@ -228,9 +228,14 @@ const vm_late_and_absentee = new Vue({
             return dates.map(d => {
                 const mDate = moment(d, "YYYY-MM-DD HH:mm:ss");
 
-                // Shift start (default 8:00 AM)
-                const expectedHour = this.row.shift_start_hour || 8;
-                const expectedMin  = this.row.shift_start_minute || 0;
+                let expectedHour = 8;
+                let expectedMin = 0;
+
+                // Detect afternoon shift
+                if (mDate.hour() >= 12) {
+                    expectedHour = 13;
+                    expectedMin = 0;
+                }
 
                 const expected = moment(mDate)
                     .startOf('day')
@@ -241,14 +246,40 @@ const vm_late_and_absentee = new Vue({
                 let minutesLate = mDate.diff(expected, 'minutes');
                 if (minutesLate < 0) minutesLate = 0;
 
-                //  if exceeded 30 mins late → count as 2 hours
-                if (minutesLate > 30) {
-                    minutesLate = 120;
+                const isMorning = expectedHour === 8;
+                const isAfternoon = expectedHour === 13;
+
+                // MORNING: 9:01+ = Half Day Absent
+                if (isMorning && mDate.isAfter(moment(mDate).hour(9).minute(0).second(59))) {
+                    return {
+                        date: mDate.format("LLL"),
+                        minutes: this.formatMinutes(minutesLate),
+                        status: "Absent"
+                    };
+                }
+
+                // MORNING: 8:31–9:00 = 120 mins
+                if (isMorning && minutesLate > 30) {
+                    return {
+                        date: mDate.format("LLL"),
+                        minutes: this.formatMinutes(120),
+                        status: "Late"
+                    };
+                }
+
+                // AFTERNOON: 1:31+ = Half Day Absent
+                if (isAfternoon && minutesLate > 30) {
+                    return {
+                        date: mDate.format("LLL"),
+                        minutes: this.formatMinutes(minutesLate),
+                        status: "Absent"
+                    };
                 }
 
                 return {
                     date: mDate.format("LLL"),
-                    minutes: minutesLate
+                    minutes: minutesLate + " mins",
+                    status: "Late"
                 };
             });
         },
@@ -258,6 +289,28 @@ const vm_late_and_absentee = new Vue({
         }
     },
     methods: {
+        formatMinutes(totalMinutes) {
+            if (typeof totalMinutes !== "number") return totalMinutes;
+
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+
+            let result = "";
+
+            if (hours > 0) {
+                result += hours + " hr" + (hours > 1 ? "s" : "");
+            }
+
+            if (minutes > 0) {
+                if (result) result += " ";
+                result += minutes + " min" + (minutes > 1 ? "s" : "");
+            }
+
+            if (!result) result = "0 mins";
+
+            return result;
+        },
+
         dateFormatted(date){
             return date ? moment(new Date(date), "YYYY-MM-DD").format("LL"): null;
         }, 
@@ -712,7 +765,7 @@ function rebuildLateAbsenteeTable(type, data = []) {
                     win.document.title = "Late/Absentee Report Printable Page";
                     export_log(filterExport, `${typeReport} Report`, "print", totalEntries);
                 }, exportOptions: {
-                    columns: [0, 1, 2, 3],
+                    columns: getExportColumnIndexes(type),
                     stripHtml: true,
                 }
             }
@@ -756,8 +809,8 @@ function rebuildLateAbsenteeTable(type, data = []) {
 function getExportColumnIndexes(type){
     const map = {
         late_absentee: [0,1,2,3,4,5],
-        late: [0,1,2,3],
-        absentee: [0,1,2,3]
+        late: [0, 1, 2, 3, 4],
+        absentee: [0, 1, 2, 3, 4]
     };
     return map[type] ?? [];
 }
