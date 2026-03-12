@@ -2377,7 +2377,7 @@ class Gcctime_app_m extends Dbase{
 
     private function getDestinationName($destination_id) {
         $conn = $this->conn();
-        $sql = "SELECT des_to AS destination FROM gcceforms.travel_destination WHERE travel_order_id = :destination_id";
+        $sql = "SELECT des_to AS destination FROM gcceforms.travel_destination WHERE id = :destination_id";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(':destination_id', $destination_id, PDO::PARAM_INT);
         $stmt->execute();
