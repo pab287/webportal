@@ -2517,7 +2517,7 @@ class Registration_model extends CI_Model{
         $middlename = strtolower(trim($post['middlename'] ?? ''));
         $lastname   = strtolower(trim($post['lastname']   ?? ''));
         $suffix     = strtolower(trim($post['suffix']     ?? ''));
-        $birthdate = '';
+        $birthdate = null;
         if (!empty($post['birthdate'])) {
             $date = DateTime::createFromFormat('m/d/Y', $post['birthdate']);
             $birthdate = $date ? $date->format('Y-m-d') : null;
