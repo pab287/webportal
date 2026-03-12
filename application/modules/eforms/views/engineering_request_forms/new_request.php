@@ -68,7 +68,10 @@
                                 <label for="reply_needed" class="form-control-label required">
                                     Reply Needed
                                 </label>
-                                <input type="text" id="reply_needed" name="reply_needed" class="form-control m-input" data-validation="required" autocomplete="off">
+                                <div class="input-group">
+                                    <span class="input-group-addon"><i class="la la-calendar"></i></span>
+                                    <input id="reply_needed" name="reply_needed" type="text" class="form-control m-input"  data-validation="required" autocomplete="off">
+                                </div>
                             </div>
                         </div>
                     </div>

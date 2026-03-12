@@ -12,40 +12,70 @@
                     </div>
                 </div>
                 <div class="m-portlet__body">
-                    <div class="row">
-                        <div class="m-portlet__head-tools text-align-right">
-                            <ul class="nav nav-tabs m-tabs m-tabs-line m-tabs-line--left m-tabs-line--primary" role="tablist">
-                                <li class="nav-item m-tabs__item">
-                                    <a class="nav-link m-tabs__link active" data-toggle="tab" href="#rfiForm" role="tab">
-                                        <h5 class="m-portlet__head-text">FORM</h5>
-                                    </a>
-                                </li>
-                                <li class="nav-item m-tabs__item">
-                                    <a class="nav-link m-tabs__link" data-toggle="tab" href="#replies" role="tab">
-                                        <h5 class="m-portlet__head-text">REPLY</h5>
-                                    </a>
-                                </li>
-                                <li class="nav-item m-tabs__item">
-                                    <a class="nav-link m-tabs__link" data-toggle="tab" href="#attachment" role="tab">
-                                        <h5 class="m-portlet__head-text">ATTACHMENT</h5>
-                                    </a>
-                                </li>
-                            </ul>
+                    <dvi class="row">
+                        <div class="col-12">
+                            <div class="row">
+                                <div class="col-12 m-portlet__head-tools text-align-right">
+                                    <ul class="nav nav-tabs m-tabs m-tabs-line m-tabs-line--left m-tabs-line--primary" role="tablist">
+                                        <li class="nav-item m-tabs__item">
+                                            <a class="nav-link m-tabs__link active" data-toggle="tab" href="#rfiForm" role="tab">
+                                                <h5 class="m-portlet__head-text">FORM</h5>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item m-tabs__item">
+                                            <a class="nav-link m-tabs__link" data-toggle="tab" href="#replies" role="tab">
+                                                <h5 class="m-portlet__head-text">REPLY</h5>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item m-tabs__item">
+                                            <a class="nav-link m-tabs__link" data-toggle="tab" href="#attachment" role="tab">
+                                                <h5 class="m-portlet__head-text">ATTACHMENT</h5>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 tab-content">
+                                    <div class="tab-pane active" id="rfiForm">
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <label for="project_name" class="form-control-label required">
+                                                                Project Name
+                                                            </label>
+                                                            <select type="text" id="project_name" name="project_name" class="form-control m-input" data-validation="required" autocomplete="off">
+                                                                <option></option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <label for="project_name" class="form-control-label required">
+                                                                Project Location
+                                                            </label>
+                                                            <input type="text" id="project_location" name="project_location" class="form-control m-input" data-validation="required"  autocomplete="off" readonly>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="tab-pane" id="replies">
+
+                                    </div>
+                                    <div class="tab-pane" id="attachment">
+
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="tab-content">
-                            <div class="tab-pane active" id="rfiForm">
-                                HELLO       
-                            </div>
-                            <div class="tab-pane" id="replies">
-                                MY
-                            </div>
-                            <div class="tab-pane" id="attachment">
-Mothere
-                            </div>
-                        </div>
-                    </div>
+                    </dvi>
+
                 </div>
             </div>
         </div>

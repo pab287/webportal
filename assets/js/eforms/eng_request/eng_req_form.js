@@ -42,7 +42,7 @@ $(document).ready(function () {
             { data: null, orderable: false, searchable: false,
                 render: function (data, type, row) {
                     return `
-                        <a href="${baseUrl('eforms/engineering_request_forms/edit_rfi_request/')}${row.id}" 
+                        <a href="${baseUrl('eforms/engineering_request_forms/view_rfi_request/')}${row.id}" 
                            target="_blank" 
                            class="btn btn-sm btn-primary">
                            View

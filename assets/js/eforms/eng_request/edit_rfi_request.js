@@ -10,7 +10,7 @@ let request_type_id = null;
 let request_type_code = null;
 
 let edit_rfi = new Vue ({
-    el: '#edit_rfi',
+    el: '#edit_rfi_content',
     data: {
         activity_logs: {},
         content: {},
