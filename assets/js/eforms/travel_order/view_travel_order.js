@@ -278,10 +278,12 @@ $.ajax({
     
     data.data.created_by = data.data.created_by+' on '+data.data.created_dt;
     data.data.last_edited_by = data.data.last_edited_by+data.data.last_edited_dt;
+    data.data.approved_name_by = data.data.approved_by;
     data.data.approved_by = data.data.approved_by+' on '+data.data.approved_dt;
     data.data.disapproved_by = data.data.disapproved_by+' on '+data.data.disapproved_dt;
     data.data.cancelled_by = data.data.cancelled_by+' on '+data.data.cancelled_dt;
     data.data.hr_noted_by = data.data.hr_noted_by+' on '+data.data.hr_noted_dt;
+    data.data.approved_recommended_by = data.data.approved_recommend_by;
     data.data.approved_recommend_by = data.data.approved_recommend_by+' on '+data.data.approved_recommend_date;
     data.data.accomplished_by = (data.data.accomplished_by > 0) ? data.data.accomplished_by_name + ' on ' + moment(data.data.accomplishment_dt).format('LLL') : moment(data.data.accomplishment_dt).format('LLL'); 
 
