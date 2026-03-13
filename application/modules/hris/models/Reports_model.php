@@ -3458,15 +3458,13 @@ class Reports_model extends CI_Model{
 
         // Re-index numerically for DataTables
         $finalData = array_values($merged);
-
-        $totalLate = array_sum(array_map(fn($r) => $r["late"]["total_late"], $finalData));
-        $totalAbsent = array_sum(array_map(fn($r) => $r["absent"]["total_absent"], $finalData));
+        $count_emp = count($merged);
 
         return [
             "data"       => $finalData,
             "response"   => true,
             "filters"    => $lateResult["filters"], // reuse filters
-            "toastr_msg" => "Late: {$totalLate}, Absent: {$totalAbsent}"
+            "toastr_msg" => "Last verified attendance date on `{$lateResult["data"][0]["max_date"]}`, A total of ({$count_emp}) employee late & absentee attendance record/s found!"
         ];
     }
 }

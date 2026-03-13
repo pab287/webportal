@@ -656,11 +656,6 @@ function late_absentee_column_report(type) {
         render: function(_data, _type, row){
             let classPreview = "btnLateAbsenteePreview";
 
-            // let cleanedRow = {};
-            // for (let key in row) {
-            //     cleanedRow[key] = String(row[key]).replace(/[^a-zA-Z0-9 .,~\-_:\/]/g, '');
-            // }
-
             let cleanedRow = {};
             let objResponse;
             if (type === "late_absentee") {
@@ -668,7 +663,6 @@ function late_absentee_column_report(type) {
 
                 for (let key in row) {
                     if (typeof row[key] === "string") {
-                        // cleanedRow[key] = row[key].replace(/[^a-zA-Z0-9 .,~\-_:\/]/g, '');
                         cleanedRow[key] = row[key].replace(/[^\p{L}0-9 .,~\-_:\/]/gu, '');
                     } else {
                         cleanedRow[key] = row[key]; // keep objects intact
@@ -678,7 +672,6 @@ function late_absentee_column_report(type) {
                 objResponse = encodeURIComponent(JSON.stringify(row));
             } else {
                 for (let key in row) {
-                    // cleanedRow[key] = String(row[key]).replace(/[^a-zA-Z0-9 .,~\-_:\/]/g, '');
                     cleanedRow[key] = String(row[key]).replace(/[^\p{L}0-9 .,~\-_:\/]/gu, '');
                 }
 

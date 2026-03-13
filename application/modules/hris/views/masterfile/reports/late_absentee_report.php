@@ -185,17 +185,7 @@
             <div class="m-portlet m-portlet--bordered m-portlet--rounded">
                 <div id="filteredLateReport" class="m-portlet__body">
                     <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll table-responsive">
-                        <table class="table table-striped table-bordered" id="table-late_absentee_report" style="width: 100%">
-                            <!-- <thead>
-                                <tr>
-                                    <th style="width: 8%">ID Number</th>
-                                    <th style="width: 30%">Employee Name</th>
-                                    <th style="width: *">Position</th>
-                                    <th style="width: 8%">Total</th>
-                                    <th style="width: 6%">&nbsp;</th>
-                                </tr>
-                            </thead> -->
-                        </table>
+                        <table class="table table-striped table-bordered" id="table-late_absentee_report" style="width: 100%"></table>
                     </div>
                     <div class="row">
                         <div class="col-7 col-md-7 col-lg-7 col-sm-12">
