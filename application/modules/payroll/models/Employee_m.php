@@ -1416,6 +1416,15 @@
                 $tempWhere = array();
                 $tempWhere["id"] = $post["id"];
                 unset($post["id"]);
+                $logDescription = strtoupper($post['description']);
+                $reason = isset($post['reason']) && $post['reason'] ? strtoupper($post['reason']): 'No Reason';
+                $createRemoveLogs = [];
+                if(isset($post["reason"], $post["employees"]) && $post["reason"] && is_array($post["employees"]) && !empty($post["employees"])){
+                    foreach ($post["employees"] as $emp) {
+                        $createRemoveLogs[] = "Employee name `{$emp}` has been removed on the payroll employee group with payroll group description of `{$logDescription}` with the reason of `{$reason}`.";
+                    }
+                    unset($post["employees"], $post["reason"]);
+                }
 
                 $post["employee_id"] = serialize($post["employee_id"]);
                 $post["updated_by"] = $this->core_layout->getCurrentEmployeeId();
@@ -1423,7 +1432,6 @@
                 $post['is_allow_view'] = isset($post['is_allow_view']) && $post['is_allow_view'] ? 1: 0;
                 $post['assigned_employee_id'] = isset($post['is_allow_view']) && $post['is_allow_view'] == 1 ? serialize($post['assigned_employee_id']) : serialize(array());
                 
-                $logDescription = strtoupper($post['description']);
                 $updated = $this->db->update($this->payrollGroupTable, $post, $tempWhere);
                 if($updated && $this->db->affected_rows() > 0){
                     $resultset["response"] = true;
@@ -1431,6 +1439,10 @@
                 }else{
                     $resultset["response"] = false;
                     $logInfo = "Failed to update payroll employee group with payroll group description of `{$logDescription}`.";
+                }
+
+                if(is_array($createRemoveLogs) && !empty($createRemoveLogs)){
+                    foreach ($createRemoveLogs as $cLogs) { $this->core_layout->setEventLog($cLogs, "update", "success", "payroll", "user"); }
                 }
             }else{
                 $resultset["response"] = false;

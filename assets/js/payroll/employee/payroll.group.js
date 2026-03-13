@@ -636,12 +636,50 @@ $(document).on("click", "button.btnEditGroup", function () {
                                     title: "Remove Employee(s)",
                                     html: "Unable to remove employee(s) on this payroll group. Employee Transfer is required!<br>" + employeeNames.join("<br>"),
                                     icon: "warning",
+                                    showCancelButton: true,
+                                    confirmButtonColor: "#3085d6",
+                                    cancelButtonColor: "#d33",
+                                    confirmButtonText: "OK",
+                                    cancelButtonText: "Proceed Anyway!",
+                                    allowOutsideClick: false,
+                                    allowEscapeKey: false,
                                 }).then((result) => {
                                     if(result.isConfirmed){
                                         restoreValues.forEach(value => {
                                             employeeSelect2.append(new Option(value.text, value.id, true, true));
                                         });
-                                        console.log(restoreValues);
+                                    }
+
+                                    if (result.dismiss === Swal.DismissReason.cancel) {
+                                        Swal.fire({
+                                            title: "Warning!",
+                                            html: "You are about to remove employee(s) on this payroll group!<br>" + employeeNames.join("<br>"),
+                                            icon: "warning",
+                                            input: "textarea",
+                                            inputPlaceholder: "Reason is Required *",
+                                            inputLabel: "Reason for employee payroll group removal",
+                                            customClass: { inputLabel: 'm--font-bolder required' },
+                                            inputValidator: (result) => { return !result && "Reason for employee payroll group removal is required!"; },
+                                            showCancelButton: true,
+                                            confirmButtonColor: "#3085d6",
+                                            cancelButtonColor: "#d33",
+                                            confirmButtonText: "OK",
+                                            cancelButtonText: "Cancel",
+                                            allowOutsideClick: false,
+                                            allowEscapeKey: false,
+                                            target: document.querySelector('.modal.show') || document.body
+                                        }).then((resultNext) => {
+                                            if(resultNext.dismiss === Swal.DismissReason.cancel){
+                                                restoreValues.forEach(value => {
+                                                    employeeSelect2.append(new Option(value.text, value.id, true, true));
+                                                });
+                                            }
+
+                                            if(resultNext.isConfirmed && resultNext.value){
+                                                let tempNames = restoreValues.map(value => value.text);
+                                                postPayrollGroup(form, { reason: resultNext.value, employees: tempNames });
+                                            }
+                                        });
                                     }
                                 });
                                 tempState = true;
@@ -650,31 +688,7 @@ $(document).on("click", "button.btnEditGroup", function () {
 
                         if(tempState){ return false; }
 
-                        const currentForm = form[0];
-                        const formUrl = currentForm.action;
-                        const formData = $(currentForm).serialize();
-                        $.ajax({
-                            url: formUrl,
-                            type: "POST",
-                            dataType: "json",
-                            data: formData,
-                            beforeSend: function () {
-                                $(form[0])
-                                    .find(".btn-submit")
-                                    .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                            },
-                            success: function (data) {
-                                if (data.response) {
-                                    documentModal.modal("hide");
-                                    dtPayrollGroup.ajax.reload(null, false);
-                                }
-                                $(form[0])
-                                    .find(".btn-submit")
-                                    .removeClass(
-                                        "m-btn--custom m-loader m-loader--light m-loader--right"
-                                    );
-                            }
-                        });
+                        postPayrollGroup(form);
                         return false;
                     }
                 });
@@ -684,6 +698,41 @@ $(document).on("click", "button.btnEditGroup", function () {
         }
     });
 });
+
+const postPayrollGroup = function (form, data) {
+    const currentForm = form[0];
+    const formUrl = currentForm.action;
+    let formData = $(currentForm).serialize();
+    if(data !== undefined && Object.keys(data).length > 0){
+        formData+="&reason="+data.reason;
+        data.employees.forEach(value => {
+            formData+="&employees[]="+encodeURIComponent(value);
+        });
+    }
+
+    $.ajax({
+        url: formUrl,
+        type: "POST",
+        dataType: "json",
+        data: formData,
+        beforeSend: function () {
+            $(form[0])
+                .find(".btn-submit")
+                .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+        },
+        success: function (data) {
+            if (data.response) {
+                documentModal.modal("hide");
+                dtPayrollGroup.ajax.reload(null, false);
+            }
+            $(form[0])
+                .find(".btn-submit")
+                .removeClass(
+                    "m-btn--custom m-loader m-loader--light m-loader--right"
+                );
+        }
+    });
+}
 
 $(document).on("click", "button.btnDeleteGroup", function () {
     const _this = this;
