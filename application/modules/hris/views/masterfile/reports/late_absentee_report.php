@@ -221,8 +221,8 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-9 col-md-9 col-lg-9 col-sm-12">
-                            <h4 v-text="row.employee_name">&nbsp;</h4>
-                            <p v-text="row.position">&nbsp;</p>
+                            <h4>{{ row.employee_name }}</h4>
+                            <p>{{ row.position }}</p>
                         </div>
                     </div>
                     <div class="row">

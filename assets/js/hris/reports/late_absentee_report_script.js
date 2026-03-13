@@ -668,7 +668,8 @@ function late_absentee_column_report(type) {
 
                 for (let key in row) {
                     if (typeof row[key] === "string") {
-                        cleanedRow[key] = row[key].replace(/[^a-zA-Z0-9 .,~\-_:\/]/g, '');
+                        // cleanedRow[key] = row[key].replace(/[^a-zA-Z0-9 .,~\-_:\/]/g, '');
+                        cleanedRow[key] = row[key].replace(/[^\p{L}0-9 .,~\-_:\/]/gu, '');
                     } else {
                         cleanedRow[key] = row[key]; // keep objects intact
                     }
@@ -677,10 +678,11 @@ function late_absentee_column_report(type) {
                 objResponse = encodeURIComponent(JSON.stringify(row));
             } else {
                 for (let key in row) {
-                    cleanedRow[key] = String(row[key]).replace(/[^a-zA-Z0-9 .,~\-_:\/]/g, '');
+                    // cleanedRow[key] = String(row[key]).replace(/[^a-zA-Z0-9 .,~\-_:\/]/g, '');
+                    cleanedRow[key] = String(row[key]).replace(/[^\p{L}0-9 .,~\-_:\/]/gu, '');
                 }
 
-                objResponse = JSON.stringify(cleanedRow);
+                objResponse = encodeURIComponent(JSON.stringify(cleanedRow));
             }
             
             return `<button class='btn btn-secondary m-btn m-btn--icon btn-sm m-btn--icon-only m-btn--pill btnView ${classPreview}' data-raw='${objResponse}'>
@@ -776,10 +778,11 @@ function rebuildLateAbsenteeTable(type, data = []) {
                 const tempReportType = report_type.search("Late") > -1 ? "late" : "absentee";
 
                 vmLateAbsenteePreview.report_type = tempReportType;
-                vmLateAbsenteePreview.row = {};
-                const data = $(this).data("raw");
-                
-                Object.assign(vmLateAbsenteePreview.row, data);
+
+                const raw = $(this).attr("data-raw");
+                const data = JSON.parse(decodeURIComponent(raw));
+
+                vmLateAbsenteePreview.row = data;
                 modalLateAbsenteePreview.modal();
             });
 
