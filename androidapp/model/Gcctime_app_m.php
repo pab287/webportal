@@ -2288,11 +2288,11 @@ class Gcctime_app_m extends Dbase{
         $destination_id = isset($_POST['destination_id']) ? $_POST['destination_id'] : null;
         $conn = $this->conn();
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $validate_token = $this->checkToken($employeeId, $token);
-        if (!$validate_token) {
-            $this->saveLogs("error", "$isCheck_type", $employeeId, "[Mobile] missing token");
-            return json_encode(['status' => false, 'msg'=> "Invalid token to get travel order."]);
-        }
+        // $validate_token = $this->checkToken($employeeId, $token);
+        // if (!$validate_token) {
+        //     $this->saveLogs("error", "$isCheck_type", $employeeId, "[Mobile] missing token");
+        //     return json_encode(['status' => false, 'msg'=> "Invalid token to get travel order."]);
+        // }
 
         try {
 
@@ -2347,7 +2347,16 @@ class Gcctime_app_m extends Dbase{
                     }
                 }
                 $destination = $this->getDestinationName($destination_id);
-                $this->travelOrdercheckGetSupervisor($employeeId, $latitude, $longitude, $destination , $check_type);
+                $toRef = $this->getTravelOrderRef($destination_id);
+                $ref = null;
+                $to_id = null;
+
+                if ($toRef) {
+                    $ref = $toRef['reference_no'];
+                    $to_id = $toRef['travel_order_id'];
+                }
+
+                $this->travelOrdercheckGetSupervisor($employeeId, $latitude, $longitude, $destination , $check_type, $ref, $to_id);
                 return json_encode([
                     'status' => true,
                     'msg'=> $msg,
@@ -2383,6 +2392,25 @@ class Gcctime_app_m extends Dbase{
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result ? $result['destination'] : null;
+    }
+
+    private function getTravelOrderRef($destination_id = null) {
+        $conn = $this->conn();
+        $sql = "
+            SELECT 
+                _to.reference_no AS reference_no,
+                _to.id AS travel_order_id
+            FROM gcceforms.travel_destination td
+            LEFT JOIN gcceforms.travel_order _to 
+                ON _to.id = td.travel_order_id
+            WHERE td.id = :destination_id
+        ";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':destination_id', $destination_id, PDO::PARAM_INT);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ?: null;
     }
 
 public function getTravelOrderEmployeeDestination($id = null) {
@@ -2509,7 +2537,7 @@ public function getTravelOrderEmployeeDestination($id = null) {
         return $arrIds;
     }
 
-    function travelOrdercheckGetSupervisor($emp_id, $latitude, $longitude, $destination, $check_type) {
+    function travelOrdercheckGetSupervisor($emp_id, $latitude, $longitude, $destination, $check_type, $ref, $to_id) {
         $name = $this->getUserName($emp_id);
         $conn = $this->conn("gcchris");
         $sql = "SELECT e.supervisor_meta, e.tl_supervisory, d.head_id
@@ -2561,26 +2589,47 @@ public function getTravelOrderEmployeeDestination($id = null) {
         if($data_teleg['telegram_bot_token'] != null){
             $token = $data_teleg['telegram_bot_token'];
             $chatId = $data_teleg['chat_id'];
-            $this->telegramTravelOrder($token, $chatId, $latitude, $longitude, $destination, $name, $emp_id, $check_type);
+            $this->telegramTravelOrder($token, $chatId, $latitude, $longitude, $destination, $name, $emp_id, $check_type,$ref,$to_id);
         }
     }
 
-    public function telegramTravelOrder($token, $chatId, $latitude, $longitude, $destination, $name, $emp_id, $check_type) {
+    public function telegramTravelOrder($token, $chatId, $latitude, $longitude, $destination, $name, $emp_id, $check_type, $ref, $to_id) {
+        $conyxToUrl = $_ENV['BASE_URL_STAGING'] . '/eforms/travel_order/view_travel_order?id=' . $to_id;
         $checkStatus = $check_type === 1 ? "Check-In" : "Check-Out";
         $remarks = $check_type === 1 ? "Checked in to destination" : "Checked out from destination";
         $date_time = date('Y-m-d H:i:s');
         $formattedDate = date('l, F d, Y g:i A', strtotime($date_time));
         $mapUrl = "https://www.google.com/maps?q={$latitude},{$longitude}";
-        $telegram_msg = '';
-        $telegram_msg  = "<b>" . strtoupper($name) . "</b> HAS <b>" . strtoupper($checkStatus) . "</b> AT DESIGNATED DESTINATION.\n<b>" . strtoupper($destination) . "</b>\n";
+        $telegram_msg = "";
+        $telegram_msg .= "<b>" . strtoupper($name) . "</b> HAS <b>" . strtoupper($checkStatus) . "</b> AT DESIGNATED DESTINATION <b>" . strtoupper($destination) . "</b>\n";
+        $telegram_msg .= "<b>T.O Ref No: </b> " . strtoupper($ref) . "\n";
         $telegram_msg .= strtoupper($formattedDate) . "\n\n";
-        $telegram_msg .= "<a href='$mapUrl'><b>Map Coordinates</b></a>";
         $url = "https://api.telegram.org/bot$token/sendMessage";
+
+        $replyMarkup = [
+            'inline_keyboard' => [
+                [
+                    [
+                        'text' => 'Map Coordinates',
+                        'url' => $mapUrl
+                    ],
+                    [
+                        'text' => 'View Travel Order',
+                        'url' => $conyxToUrl
+                    ]
+                ]
+            ]
+        ];
+
+
+
         $data = [
             'chat_id' => $chatId,
             'text' => $telegram_msg,
-            'parse_mode' => 'HTML'
+            'parse_mode' => 'HTML',
+            'reply_markup' => json_encode($replyMarkup)
         ];
+
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POST, 1);

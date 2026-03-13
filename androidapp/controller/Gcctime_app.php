@@ -92,5 +92,9 @@
             $data = $this->GCCTIME_APP->travelOrderCheck();
             echo $data;
         }
+        public function getTravel_OrderRef(){
+            $data = $this->GCCTIME_APP->getTravelOrderRef();
+            echo $data;
+        }
     }
 ?>
