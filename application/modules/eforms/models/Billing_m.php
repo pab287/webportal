@@ -2962,17 +2962,38 @@ class Billing_m extends CI_Model {
         $subtotal = (float) str_replace(['₱', ','], '', $post['sub_total']);
         $balance = (float) str_replace(['₱', ','], '', $post['balance']);
 
+        // SMS/Email info start
         $cx_details = $this->getAccountDetails($post["account_id"])["data"];
-        var_dump($cx_details);die();
-
-        $bill_details = $this->getBillData($post["bill_id"]);
+        $bill_details = $this->getBillData($post["bill_id"])["billdata"];
         $ar_no = $this->generatePaymentAR();
 
-        // $mobile_no = $cx_details['phonenumber'];
-        $mobile_no = "09396348633";
-        $msg = "Hi " .$cx_details['firstname']." ".$cx_details['lastname'] .", thank you for your water bill payment to Bacolod Hydra in the amount of PHP " . number_format((float)$post['received_amount'], 2, '.', '') . " dated ". date("M j, Y", strtotime($post['payment_date'])) .", covering the billing period of " . date("M j, Y", strtotime($bill_details['billing_from'])) . " to " . date("M j, Y", strtotime($bill_details['billing_to'])) . ", with (AR No. ".$ar_no.") issued for this transaction.";
+        $from = strtotime($bill_details['billing_from']);
+        $to = strtotime($bill_details['billing_to']);
 
-        var_dump($msg);die();
+        if (date('Y', $from) === date('Y', $to)) {
+            // same year
+            $billing_period = date('M j', $from) . " – " . date('M j, Y', $to);
+        } else {
+            // different year
+            $billing_period = date('M j, Y', $from) . " – " . date('M j, Y', $to);
+        }
+
+        $sms_amount = number_format((float)$receive, 2, '.', '');
+        $sms_pay_date = date("M j, Y", strtotime($post['payment_date']));
+        $mobile_no = $cx_details->phonenumber;
+        $msg = "Hi {$cx_details->firstname} {$cx_details->lastname}, Thank you for your water bill payment to Bacolod Hydra in the amount of ₱{$sms_amount} dated {$sms_pay_date} covering the billing period of {$billing_period}  with (AR No. {$ar_no}) issued for this transaction.\n\nPlease do not reply. This is an automated message. Thank you";
+        // SMS/Email info End
+
+        // Email info start
+        $email_data = [
+            'email'          => $cx_details->email,
+            'full_name'      => ucwords($cx_details->firstname . " " . $cx_details->lastname),
+            'received'       => number_format((float)$receive, 2, '.', ''),
+            'payment_date'   => date("M j, Y", strtotime($post['payment_date'])),
+            'billing_period' => $billing_period,
+            'ar_no'          => $ar_no
+        ];
+        // Email info end
 
         if ($receive <= 0 && $balance_covered <= 0) {
             $resultarray["status"] = false;
@@ -2997,11 +3018,13 @@ class Billing_m extends CI_Model {
             $post["balance"] = $balance;
             $post['acknowledgement_receipt'] = $ar_no;
 
-            unset($post['billing_amount'], $post['overpayment']); // Remove these fields as they are not needed in the payments table
+            unset($post['billing_amount'], $post['overpayment']); // Reove these fields as they are not needed in the payments table
 
             $sms = $this->sendsms_payment($mobile_no, $msg);
+            $email = $this->email_payment($email_data);
 
             die();
+
             $query = $this->db->insert('hydra_billing.payments', $post);
 
             if ($query) {
@@ -3010,7 +3033,8 @@ class Billing_m extends CI_Model {
                     $this->updateDisconnectionStatus($post['account_id']);
                 }
 
-                $sms = $this->sendsms_payment($phone, $msg);
+                $sms = $this->sendsms_payment($mobile_no, $msg);
+                $email = $this->email_payment($emailAdd, $msg);
 
                 $resultarray["status"] = true;
                 $resultarray["ar_code"] = $ar_no;
@@ -8248,4 +8272,36 @@ class Billing_m extends CI_Model {
         return($response);
     }
 
+    public function email_payment($email_data) {
+        if ($this->checkEmail($email_data['email'])) {
+                $messageContent = "";
+                $messageContent .= $this->load->view("eforms/email_templates/hydra_billing_templ/email_payment", $email_data, true);
+                
+                if ($email_data['email']) {
+                    $module = "eforms_hydra_billing";
+                    $email_title = "Bacolod Hydra";
+                    $content_title = "Hydra Acknowledgment Receipt";
+                    $content = $messageContent;
+
+                    $overrideMailer = array();
+                    $overrideMailer["send_to"] = array($email_data['email']);
+                    
+                    if ($content) {
+                        $sent = $this->core_layout->send_email($module, $email_title, $content_title, $content, $overrideMailer);
+
+                        if ($sent) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    } else {
+                        return false;
+                    }
+                } else {
+                    echo $messageContent;
+                }
+        } else {
+            return false;
+        }
+    }
 }
