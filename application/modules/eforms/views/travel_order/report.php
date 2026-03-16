@@ -51,8 +51,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12" id="filter-buttons">
+                    <div class="row mb-3 justify-content-between">
+                        <div class="col-xl-7 col-lg-7 col-md-7 col-sm-12" id="filter-buttons">
                             <button type="button" class="btn btn-brand m-btn m-btn--icon btnAdvance_search" id="accomplishment-report-date-range-picker">
                                 <span>
                                     <em class="fa fa-calendar"></em>
@@ -78,7 +78,7 @@
                                 </span>
                             </button>
                         </div>
-                        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-12 offset-xl-3 offset-lg-3 offset-md-3 offset-sm-0 d-flex flex-row">
+                        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-12 d-flex flex-row">
                             <div class="flex-grow-1 flex-shrink-0">
                                 <input type="text" class="form-control" placeholder="Search..." id="search-accomplishments" style="height: auto;">
                             </div>
