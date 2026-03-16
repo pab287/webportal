@@ -68,10 +68,7 @@
                                 <label for="reply_needed" class="form-control-label required">
                                     Reply Needed
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-addon"><i class="la la-calendar"></i></span>
-                                    <input id="reply_needed" name="reply_needed" type="text" class="form-control m-input"  data-validation="required" autocomplete="off">
-                                </div>
+                                <input type="text" id="reply_needed" name="reply_needed" class="form-control m-input" data-validation="required" autocomplete="off">
                             </div>
                         </div>
                     </div>
@@ -221,7 +218,7 @@
                             <button type="button" class="btn btn-secondary mr-2" @click="clearForm">
                                 Clear
                             </button>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary btnSave">
                                 Submit
                             </button>
                         </div>

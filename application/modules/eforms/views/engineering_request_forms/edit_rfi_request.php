@@ -1,3 +1,26 @@
+<style>
+    .textarea-view {
+        height: auto !important; 
+        min-height: 120px;
+        max-height: 500px;
+        white-space: normal;
+        overflow-y: auto;
+        background-color: #fff;
+        cursor: default;
+        resize: none;
+        line-height: 1.6;
+    }
+
+    .textarea-view p {
+        margin-bottom: 0.5rem;
+    }
+
+    .textarea-view ul,
+    .textarea-view ol {
+        padding-left: 1.5rem;
+    }
+
+</style>
 <div class="m-content" id="edit_rfi_content">
     <div class="row">
         <div class="col-md-8 col-sm-12">
@@ -10,31 +33,24 @@
                             </h3>
                         </div>
                     </div>
+                    <div class="m-portlet__head-tools text-align-right">
+                        <ul class="nav nav-tabs m-tabs m-tabs-line m-tabs-line--right m-tabs-line--primary" role="tablist">
+                            <li class="nav-item m-tabs__item">
+                                <a class="nav-link m-tabs__link active" data-toggle="tab" href="#rfiForm" role="tab">
+                                    <h5 class="m-portlet__head-text">FORM</h5>
+                                </a>
+                            </li>
+                            <li class="nav-item m-tabs__item">
+                                <a class="nav-link m-tabs__link" data-toggle="tab" href="#replyForm" role="tab">
+                                    <h5 class="m-portlet__head-text">REPLY</h5>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="m-portlet__body">
                     <dvi class="row">
                         <div class="col-12">
-                            <div class="row">
-                                <div class="col-12 m-portlet__head-tools text-align-right">
-                                    <ul class="nav nav-tabs m-tabs m-tabs-line m-tabs-line--left m-tabs-line--primary" role="tablist">
-                                        <li class="nav-item m-tabs__item">
-                                            <a class="nav-link m-tabs__link active" data-toggle="tab" href="#rfiForm" role="tab">
-                                                <h5 class="m-portlet__head-text">FORM</h5>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item m-tabs__item">
-                                            <a class="nav-link m-tabs__link" data-toggle="tab" href="#replies" role="tab">
-                                                <h5 class="m-portlet__head-text">REPLY</h5>
-                                            </a>
-                                        </li>
-                                        <li class="nav-item m-tabs__item">
-                                            <a class="nav-link m-tabs__link" data-toggle="tab" href="#attachment" role="tab">
-                                                <h5 class="m-portlet__head-text">ATTACHMENT</h5>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
                             <div class="row">
                                 <div class="col-12 tab-content">
                                     <div class="tab-pane active" id="rfiForm">
@@ -43,39 +59,263 @@
                                                 <div class="row">
                                                     <div class="col-6">
                                                         <div class="form-group">
-                                                            <label for="project_name" class="form-control-label required">
+                                                            <div class="form-control-label mb-2">
                                                                 Project Name
-                                                            </label>
-                                                            <select type="text" id="project_name" name="project_name" class="form-control m-input" data-validation="required" autocomplete="off">
-                                                                <option></option>
-                                                            </select>
+                                                            </div>
+                                                            <div class="form-control" v-text="content.project_name"></div>
                                                         </div>
                                                     </div>
                                                     <div class="col-6">
                                                         <div class="form-group">
-                                                            <label for="project_name" class="form-control-label required">
+                                                            <div class="form-control-label mb-2">
                                                                 Project Location
-                                                            </label>
-                                                            <input type="text" id="project_location" name="project_location" class="form-control m-input" data-validation="required"  autocomplete="off" readonly>
+                                                            </div>
+                                                            <div class="form-control" v-text="content.project_location"></div>
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <div for="prepared_dt" class="form-control-label mb-2">
+                                                                Requested By
+                                                            </div>
+                                                            <div class="form-control" v-text="content.requested_by_name"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <div for="reply_needed" class="form-control-label mb-2">
+                                                                Reply Needed
+                                                            </div>
+                                                            <div class="input-group">
+                                                                <span class="input-group-addon"><i class="la la-calendar"></i></span>
+                                                                <div class="form-control" v-text="formatDate(content.reply_needed)"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="m-separator m-separator--dashed m-separator--md"></div>
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <div for="consultant" class="form-control-label mb-2">
+                                                                ATTENTION
+                                                            </div>
+                                                            <div class="form-control" v-text="content.consultant_name"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <div class="form-control-label mb-2">
+                                                                REQUEST TYPE
+                                                            </div>
+                                                            <div class="form-control" v-text="content.request_type"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="m-separator m-separator--dashed m-separator--md"></div>
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <div class="form-group">
+                                                            <div class="form-control-label mb-2">
+                                                                INFORMATION NEEDED
+                                                            </div>
+                                                            <div class="form-control textarea-view"
+                                                                v-html="content.needed_info">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="m-separator m-separator--dashed m-separator--md"></div>
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <label class="form-control-label">
+                                                            ATTACHMENTS
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <template v-if="attachments.length >= 1">
+                                                    <div class="row col-12 border rounded p-2 mx-auto">
+                                                        <template v-for="(item, index) in attachments">
+                                                            <div v-bind:class="getClass(item.filename)">
+                                                                <div class="m-widget4__item d-flex align-items-center pt-0" @click="openFile(item.filename)">
+                                                                    <div class="m-widget4__img m-widget4__img--icon">
+                                                                        <img v-bind:src="getExtension(item.filename)" alt="" height="50" width="50">
+                                                                    </div>
+                                                                    <div class="m-widget2__desc">
+                                                                        <span class="m-widget4__text">{{ item.filename.length > 30 ? item.filename.slice(0, 30) + '...' : item.filename }}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                                <template v-else>
+                                                    <div class="col-12 text-center">
+                                                        <strong>No attachments</strong>
+                                                    </div>
+                                                </template>
                                             </div>
                                         </div>
-
                                     </div>
-                                    <div class="tab-pane" id="replies">
+                                    <div class="tab-pane" id="replyForm">
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <div class="form-group">
+                                                    REMARKS
+                                                </div> 
+                                                <div class="form-control textarea-view" v-html="reply.reply">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="m-separator m-separator--dashed m-separator--md"></div>
 
-                                    </div>
-                                    <div class="tab-pane" id="attachment">
-
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <label class="form-control-label">
+                                                    ATTACHMENTS
+                                                </label>
+                                            </div>
+                                        </div>
+                                                <template v-if="replyAttachments.length >= 1">
+                                                    <div class="row col-12 border rounded p-2 mx-auto">
+                                                        <template v-for="(item, index) in replyAttachments">
+                                                            <div v-bind:class="getClass(item.filename)">
+                                                                <div class="m-widget4__item d-flex align-items-center pt-0" @click="openFile(item.filename)">
+                                                                    <div class="m-widget4__img m-widget4__img--icon">
+                                                                        <img v-bind:src="getExtension(item.filename)" alt="" height="50" width="50">
+                                                                    </div>
+                                                                    <div class="m-widget2__desc">
+                                                                        <span class="m-widget4__text">{{ item.filename.length > 30 ? item.filename.slice(0, 30) + '...' : item.filename }}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                                <template v-else>
+                                                    <div class="col-12 text-center">
+                                                        <strong>No attachments</strong>
+                                                    </div>
+                                                </template>
+                                        <div class="m-separator m-separator--dashed m-separator--md"></div>
+                                        <div class="row">
+                                            <div class="col-4">
+                                                <div class="form-group">
+                                                    <div class="form-control-label mb-2">
+                                                        Reply From
+                                                    </div>
+                                                    <div class="form-control" v-text="reply.created_by_name"></div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="form-group">
+                                                    <div class="form-control-label mb-2">
+                                                        Company
+                                                    </div>
+                                                    <div class="form-control" v-text="reply.company_name"></div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="form-group">
+                                                    <div class="form-control-label mb-2">
+                                                        Position
+                                                    </div>
+                                                    <div class="form-control" v-text="reply.position_name"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <button class="btn btn-primary" v-show="reply.status == 'pending'">APPROVE</button>
+                                            </div>
+                                        </div>
+                                        <!-- <div class="row">
+                                            <div class="col-12">
+                                                <h5>REPLY FROM:</h5>
+                                            </div>
+                                        </div> -->
+                                        <!-- <div class="row">
+                                            <div class="col-6">
+                                                <div class="form-group">
+                                                    <div class="form-control-label mb-2">
+                                                        COMPANY
+                                                    </div>
+                                                    <div class="form-control">HOMEWORLD</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="form-group">
+                                                    <div class="form-control-label mb-2">
+                                                        NAME
+                                                    </div>
+                                                    <div class="form-control">CHRISTIAN MARC NICO ALINGASA</div>
+                                                </div>
+                                            </div>
+                                            <div class="m-separator m-separator--dashed m-separator--md"></div>
+                                        </div> -->
+                                        <!-- <div class="row">
+                                            <div class="col-12">
+                                                <div class="form-group">
+                                                    <label for="information_needed" class="form-control-label">
+                                                        REMARKS
+                                                    </label>
+                                                    <textarea name="information_needed" id="information_needed" class="form-control" data-validation="required"></textarea>
+                                                <span id="information_needed-error" class="help-block form-error" style="display: none;">This is a required field</span>
+                                                </div>
+                                            </div>
+                                        </div> -->
+                                        <!-- <div class="row">
+                                            <div class="col-12 text-right">
+                                                <button type="submit" class="btn btn-primary">Submit</button>
+                                            </div>
+                                        </div> -->
+                                        <!-- <div class="row pb-2">
+                                            <div class="col-12">
+                                                <label for="fileupload" class="form-control-label">
+                                                    ATTACHMENTS
+                                                </label>
+                                                <div class="form-group">
+                                                    <span class="btn btn-success fileinput-button">
+                                                        <i class="glyphicon glyphicon-plus"></i>
+                                                        <span>SELECT FILE</span>
+                                                        <input type="file" id="fileupload" name="files[]" accept=".pdf, .docx, application/pdf, .jpg" multiple>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div> -->
+                                        <!-- <template v-if="uploadattachments.uploadedFiles.length >= 1">
+                                            <div class="row col-12">
+                                                <template v-for="(item, index) in uploadattachments.uploadedFiles">
+                                                    <div v-bind:class="getClass(item.type)">
+                                                        <div class="m-widget4__item d-flex align-items-center pt-0">
+                                                            <div class="m-widget4__img m-widget4__img--icon">
+                                                                <img v-bind:src="getExtension(item.type)" alt="" height="50" width="50">
+                                                            </div>
+                                                            <div class="m-widget2__desc">
+                                                                <span class="m-widget4__text">{{ item.name.length > 50 ? item.name.slice(0, 50) + '...' : item.name }}</span>
+                                                            </div>
+                                                            <div class="m-widget2__actions ml-auto">
+                                                                <button type="button" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView" v-on:click="fileDelete(index)">
+                                                                    <i class="m-nav__link-icon flaticon-circle"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template> -->
+                                        <!-- <template v-else>
+                                            <div class="col-12">
+                                                <strong><h5>NO ATTACHMENTS</h5></strong>
+                                            </div>
+                                        </template> -->
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </dvi>
-
                 </div>
             </div>
         </div>
@@ -85,17 +325,140 @@
                     <div class="m-portlet__head-caption">
                         <div class="m-portlet__head-title">
                             <h3 class="m-portlet__head-text">
-                                Other Information
+                                OTHER INFORMATION
                             </h3>
                         </div>
                     </div>
                 </div>
                 <div class="m-portlet__body">
-
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <div class="form-control-label mb-2">
+                                    STATUS
+                                </div>
+                                <div class="form-control">PENDING REPLY</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <button class="btn btn-primary">APPROVE</button>
+                            <button class="btn btn-success" data-toggle="modal" data-target="#replyModal">
+                                REPLY
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="modal fade" tabindex="-1" role="dialog" id="fileViewModal">
+        <div class="modal-dialog modal-extra-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">ATTACHMENTS</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-0">
+                    <iframe :src="filePath" width="100%" height="600px" frameborder="0"></iframe>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" tabindex="-1" role="dialog" id="replyModal">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">REPLY TO THIS REQUEST</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="reply_form" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <div class="form-control-label mb-2">
+                                        INFORMATION NEEDED
+                                    </div>
+                                    <div class="form-control textarea-view"
+                                        v-html="content.needed_info">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="m-separator m-separator--dashed m-separator--md"></div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="information_needed" class="form-control-label m--font-bold">
+                                        REPLY
+                                    </label>
+                                    <textarea name="reply" id="information_needed" class="form-control" data-validation="required"></textarea>
+                                    <span id="information_needed-error" class="help-block form-error" style="display: none;">This is a required field</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="m-separator m-separator--dashed m-separator--md"></div>
+                        <div class="row pb-2">
+                            <div class="col-12">
+                                <label for="fileupload" class="form-control-label m--font-bold">
+                                    ATTACHMENTS
+                                </label>
+                                <div class="form-group">
+                                    <span class="btn btn-success fileinput-button">
+                                        <i class="glyphicon glyphicon-plus"></i>
+                                        <span>SELECT FILE</span>
+                                        <input type="file" id="fileupload" name="files[]" accept=".pdf, .docx, application/pdf, .jpg" multiple data-validation="required">
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <template v-if="replyAttachmentsUpload.uploadedFiles.length >= 1">
+                            <div class="row col-12">
+                                <template v-for="(item, index) in replyAttachmentsUpload.uploadedFiles">
+                                    <div v-bind:class="getAttachClass(item.type)">
+                                        <div class="m-widget4__item d-flex align-items-center pt-0">
+                                            <div class="m-widget4__img m-widget4__img--icon">
+                                                <img v-bind:src="getAttachExtension(item.type)" alt="" height="50" width="50">
+                                            </div>
+                                            <div class="m-widget2__desc">
+                                                <span class="m-widget4__text">{{ item.name.length > 50 ? item.name.slice(0, 50) + '...' : item.name }}</span>
+                                            </div>
+                                            <div class="m-widget2__actions ml-auto">
+                                                <button type="button" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView" v-on:click="fileDelete(index)">
+                                                    <i class="m-nav__link-icon flaticon-circle"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        <template v-else>
+                            <div class="col-12">
+                                <strong><h5>NO ATTACHMENTS</h5></strong>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success btnSave">Submit</button>
+                        <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <!-- <div class="m-content" id="edit_rfi">
