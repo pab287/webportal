@@ -120,7 +120,7 @@
                                 <!-- <th>DESCRIPTION</th> -->
                                 <th>VENUE</th>
                                 <th>RESOURCE PERSON</th>
-                                <th>EVENT DETAILS</th>
+                                <th>TRAINING DETAILS</th>
                                 <th>ACTION ITEMS</th>
                             </tr>
                             </thead>

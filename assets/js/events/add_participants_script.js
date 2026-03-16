@@ -202,8 +202,9 @@ let eventVue = new Vue({
 
     },
     methods:{
-        viewCertificate(id) {
-            openCertificate(id);
+        viewCertificate(el,id) {
+            console.log("view cert ID",id);
+            openCertificate(el,id);
         },
         eventsStatus(date_from, date_to) {
             const now = new Date();
@@ -905,13 +906,6 @@ function itemDatatableActions(id, status, awarded) {
                 <i class="la la-eye"></i>
             </a>`;
 
-        _actionButton += `
-            <a href="javascript:void(0)" 
-                class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
-                onclick="archiveParticipant(${id})" 
-                title="Archive Participant">
-                <i class="la la-file-archive-o"></i>
-            </a>`;
         
         if(status == 'confirmed'){
             _actionButton += `
@@ -931,11 +925,20 @@ function itemDatatableActions(id, status, awarded) {
                 </a>`;
             }else{
                 _actionButton += `
-                <a class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnOpenCert btnSave" title="View Certificate" onclick="openCertificate(this,${id},0)">
+                <a class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnOpenCert btnSave" title="View Certificate" onclick="openCertificate(this,${id})">
                     <i class="la la-certificate"></i>
                 </a>`;
             }
         }
+
+        _actionButton += `
+        <a href="javascript:void(0)" 
+            class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
+            onclick="archiveParticipant(${id})" 
+            title="Archive Participant">
+            <i class="la la-file-archive-o"></i>
+        </a>`;
+
     }
 
     if (isDone) {
@@ -950,7 +953,7 @@ function itemDatatableActions(id, status, awarded) {
                     </a>`;
             } else {
                 _actionButton += `
-                    <a class="btn btn-secondary btn-sm m-btn m-btn--pill text-dark btnOpenCert btnSave" onclick="openCertificate(this,${id},1)">
+                    <a class="btn btn-secondary btn-sm m-btn m-btn--pill text-dark btnOpenCert btnSave" onclick="openCertificate(this,${id})">
                         <i class="la la-certificate"></i> View Certificate
                     </a>`;
             }
@@ -1004,11 +1007,13 @@ function awardCertificate(rowId,recent) {
 }
 
 
-function openCertificate(el, id, recent) {
+function openCertificate(el, id,) {
     const btn = $(el);
     btn.prop("disabled", true).attr("class", openCertLoadingClass).html('<i class="m-loader"></i>');
     const rowData = participantsTable.row(`#${id}`).data();
+    console.log(rowData);
     eventVue.emp_attendance_selected = rowData;
+    // let fileUrl = null;
 
     let fileUrl = rowData.is_employee == 1
         ? baseUrl(`/uploads/files/documents/employee_files/empcode_${rowData.emp_id}/trainings/${rowData.cert_attachment}`)

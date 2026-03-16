@@ -228,6 +228,7 @@ let eventVue = new Vue({
             });
 
             $('#company_source').select2({
+                dropdownParent: $('#new_event_form'),
                 placeholder: "Select an option",
                 allowClear: false,
                 width: '100%',

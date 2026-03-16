@@ -981,7 +981,7 @@
                             </div>
                         </div>
                         <div class="col-12 mt-3">
-                            <div class="table-responsive">
+                            <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
                                 <table class="table table-bordered table-striped" id="attendanceTable">
                                     <template v-if="attendance.length <= 0">
                                         <thead></thead>
@@ -1048,8 +1048,8 @@
                                                     </div>
                                                     <div v-else-if="item.cert_attachment != null">
                                                         <a href="javascript:void(0)"
-                                                        class="btn btn-info btn-sm m-btn m-btn--pill"
-                                                        @click="viewCertificate(item.participant_id)"
+                                                        class="btn btn-secondary btn-sm m-btn m-btn--pill"
+                                                        @click="viewCertificate($event.currentTarget,item.participant_id)"
                                                         title="View Certificate">
                                                             <i class="la la-eye"></i>
                                                             View Certificate
