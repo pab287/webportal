@@ -203,7 +203,6 @@ let eventVue = new Vue({
     },
     methods:{
         viewCertificate(el,id) {
-            console.log("view cert ID",id);
             openCertificate(el,id);
         },
         eventsStatus(date_from, date_to) {
@@ -1011,9 +1010,7 @@ function openCertificate(el, id,) {
     const btn = $(el);
     btn.prop("disabled", true).attr("class", openCertLoadingClass).html('<i class="m-loader"></i>');
     const rowData = participantsTable.row(`#${id}`).data();
-    console.log(rowData);
     eventVue.emp_attendance_selected = rowData;
-    // let fileUrl = null;
 
     let fileUrl = rowData.is_employee == 1
         ? baseUrl(`/uploads/files/documents/employee_files/empcode_${rowData.emp_id}/trainings/${rowData.cert_attachment}`)

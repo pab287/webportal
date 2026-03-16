@@ -129,7 +129,13 @@
                     </div>
                 </div>
                 <div class="tab-pane active" id="calender-view-tab" role="tabpanel">
-                    <div id="m_calendar" class="fc fc-unthemed fc-ltr"></div>
+                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 mb-2">
+                        <button type="button" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#addNewEvent">
+                            <i class="la la-plus"></i>
+                            Add Training
+                        </button>
+                    </div>
+                    <div id="m_calendar" class="fc fc-unthemed fc-ltr py-3"></div>
                 </div>
             </div>
         </div>
