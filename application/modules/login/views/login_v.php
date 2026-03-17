@@ -124,7 +124,7 @@
   </style>
 
 </head>
-<body id="m_login" style="background-image: url(<?= base_url("assets/app/media/img/bg/bg-3.jpg"); ?>);" data-token="<?= $tokenMatched; ?>">
+<body id="m_login" style="background-image: url(<?= base_url("assets/app/media/img/bg/bg-3.jpg"); ?>);" data-token="<?= $tokenMatched ?? ""; ?>">
     <div class="login-container">
         <img src="<?php echo base_url("assets/logo.png"); ?>" alt="GC&C Logo">
         <h2>SIGN IN TO GC&C</h2>
