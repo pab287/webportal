@@ -30,54 +30,6 @@
     <!--end::Base Scripts -->
     <!--begin::Page Vendors -->
     <!--end::Page Vendors -->
-    <?php $session = $this->session->userdata("logged_in"); ?>
-    <?php $redirectUrl = base_url("portal/index"); ?>
-    <?php if ($session) {
-        header("location: {$redirectUrl}");
-    } ?>
-
-    <?php
-        $remember_token = $this->input->cookie('remember_me', TRUE);
-        $tokenMatched = false;
-        if (isset($remember_token) && $remember_token) {
-            $this->load->model('Login_m', "login_m");
-            $row = $this->login_m->loginUsingRememberToken($remember_token);
-            if ($row) {
-                $tokenMatched = true;
-                $id = $row->id;
-                $privileges = $this->login_m->get_privileges_by_id($id);
-                $sess_array = array();
-
-                if ($row->is_suspended == 1) {
-                    $this->form_validation->set_message('check_database', 'This user account is suspended.');
-                } else {
-                    $sess_array = array(
-                        'id' => $row->id,//tbluser_id
-                        'emp_id' => $row->emp_id,
-                        'username' => $row->username,
-                        'firstname' => $row->firstname,
-                        'middlename' => $row->middlename,
-                        'lastname' => $row->lastname,
-                        'privileges' => $privileges,
-                        'suffix' => $row->suffix,
-                        'group_id' => $row->group_id,
-                        'email' => $row->email,
-                        'company' => $row->company_id,
-                        'department' => $row->department_id,
-                        'TwoFactorAuth' => $row->auth,
-                        'next_update' => $row->next_update,
-                        'waive_count' => $row->waive_password_update,
-                        'is_important' => $row->is_important,
-                    );
-                    $this->session->set_userdata('logged_in', $sess_array);
-                    redirect('portal/index', 'refresh');
-                }
-            } else {
-                $this->form_validation->set_message('check_database', 'Invalid username or password');
-            }
-        }
-    ?>
-
 <style>
     * {
       box-sizing: border-box;
@@ -172,15 +124,19 @@
   </style>
 
 </head>
-<body id="m_login">
+<body id="m_login" style="background-image: url(<?= base_url("assets/app/media/img/bg/bg-3.jpg"); ?>);" data-token="<?= $tokenMatched; ?>">
     <div class="login-container">
-        <img src="<?php echo base_url("assets/logo.png"); ?>" alt="GC&C Logo"> 
+        <img src="<?php echo base_url("assets/logo.png"); ?>" alt="GC&C Logo">
         <h2>SIGN IN TO GC&C</h2>
         <form method="post" action="<?php echo site_url('login/verifylogin/index'); ?>">
-            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
-            <?php echo(validation_errors()); ?>
+            <input type="hidden" name="<?= $this->security->get_csrf_token_name(); ?>" value="<?= $this->security->get_csrf_hash(); ?>">
+            <?php if (validation_errors()): ?>
+                <?= validation_errors(); ?>
+            <?php endif; ?>
             <div class="input-group">
-                <input type="text" name="username" placeholder="Username" autocomplete="off" maxlength="50">
+                <input type="text" name="username"
+                value="<?= set_value('username') ?>"
+                placeholder="Username" autocomplete="off" maxlength="50">
             </div>
             <div class="input-group">
                 <input type="password" name="password" placeholder="Password" autocomplete="off" maxlength="50" id="password">
@@ -188,7 +144,7 @@
             </div>
             
             <div class="options">
-                <label class="m-checkbox  m-checkbox--focus"><input type="checkbox" name="remember" <?= $tokenMatched ? "checked" : "" ?> > Remember me  <span></span></label>
+                <label class="m-checkbox  m-checkbox--focus"><input type="checkbox" name="remember" <?= !empty($tokenMatched) ? "checked" : "" ?>> Remember me  <span></span></label>
                 <a href="<?php echo base_url('login/forgotpassword'); ?>" class="m-link" id="m_login_forget_password">Forgot Password?</a>
             </div>
 

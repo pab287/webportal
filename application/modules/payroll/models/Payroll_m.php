@@ -5543,6 +5543,7 @@ class Payroll_m extends CI_Model{
                     $tempRow->ewd_decimal = $tempRow->no_of_days;
                 }
                 
+                $tempRow->basic_pay = number_format($tempRow->basic_pay, 2, ".", ",");
                 $tempRow->ewd = round($tempRow->ewd, 2);
                 $tempRow->ewd_decimal = round($tempRow->ewd_decimal, 2);
 

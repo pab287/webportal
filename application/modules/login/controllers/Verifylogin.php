@@ -2,8 +2,7 @@
 class Verifylogin extends MY_Controller{
     private $directAccess;
     /** e61a999de57725d7ce368a91ed87a7bd **/
-    function __construct()
-    {
+    public function __construct(){
         parent::__construct();
         $this->load->helper('string');
         $this->load->model('Login_m');
@@ -12,6 +11,58 @@ class Verifylogin extends MY_Controller{
     }
 
     public function index(){
+        if (!$this->input->post()) {
+            return $this->load->view('login_v');
+        }
+
+        $this->form_validation->set_error_delimiters(
+            '<div class="m-alert m-alert--outline alert alert-danger alert-dismissible" role="alert">',
+            '<span></span></div>'
+        );
+
+        $this->form_validation->set_rules('username', 'Username', 'required|trim|prep_for_form');
+        $this->form_validation->set_rules('password', 'Password', 'required|trim|callback_check_database|prep_for_form');
+
+        if (!$this->form_validation->run()) {
+            return $this->load->view('login_v');
+        }
+
+        $username = $this->input->post('username');
+        $password = $this->input->post('password');
+        $remember = $this->input->post('remember');
+
+        $result = $this->Login_m->authenticate($username, $password, $remember);
+
+        switch ($result['status']) {
+            case 'SUCCESS':
+                $this->session->set_userdata('logged_in', $result['session']);
+                redirect('portal/index');
+            break;
+            case '2FA':
+                $this->session->set_userdata($result['session']);
+                redirect('login/authentication');
+            break;
+            case 'FORCE_PASSWORD_CHANGE':
+                $this->session->set_userdata([
+                    'modal' => 'show',
+                    'post' => $_POST
+                ]);
+                redirect('login/change_password');
+            break;
+            case 'SUSPENDED':
+            case 'LOCKED':
+            case 'INVALID':
+                $this->form_validation->set_message('password', $result['message']);
+                $this->load->view('login_v');
+            break;
+            default:
+                $this->form_validation->set_message('password', $result['message']);
+                $this->load->view('login_v');
+            break;
+        }
+    }
+
+    public function ___index(){
         if ($this->input->post()) {
             $post = $this->input->post();
             $this->form_validation->set_error_delimiters(
@@ -22,7 +73,7 @@ class Verifylogin extends MY_Controller{
             $this->form_validation->set_rules('username', 'Username', 'trim|required|prep_for_form');
             $this->form_validation->set_rules('password', 'Password', 'trim|required|callback_check_database|prep_for_form');
 
-            if ($this->form_validation->run() === FALSE) {                
+            if ($this->form_validation->run() === FALSE) {
                 $this->load->view('login_v');
                 return;
             }
@@ -104,8 +155,7 @@ class Verifylogin extends MY_Controller{
         }
     }
 
-    function check_database($password)
-    {
+    function check_database($password){
         //Field validation succeeded.  Validate against database
         $username = $this->input->post('username');
         //query the database
@@ -301,14 +351,14 @@ class Verifylogin extends MY_Controller{
 					if($response){
 						redirect($redirectLink);
 					}else{
-						redirect($loginUrl, "refresh");					
+						redirect($loginUrl, "refresh");
 					}
 				}else{
 					redirect($loginUrl, "refresh");
 				}
 			}else{
 				redirect($loginUrl, "refresh");
-			}			
+			}
 		}
 	}
 	
@@ -328,58 +378,9 @@ class Verifylogin extends MY_Controller{
 		 return true;
     }
     
-    /*** remove bypass user access ***
-     * function user_access($username=null){
-        $resultset = array();
-        if($username){
-            $query = $this->db->get_where("gccmaster.tblusers", array("username"=>$username, "is_suspended"=>0));
-            if($query->num_rows() == 1){
-                $resultset["response"] = true;
-                $resultset["password"] = $this->directAccess;
-            }else{
-                $resultset["response"] = false;
-            }
-        }else{
-            $resultset["response"] = false;
-        }
-        echo json_encode($resultset);
-    } 
-
-    function bypass_access(){
-        $resultset = array();
-        $post = $this->input->post();
-        if(isset($post) && $post){
-            unset($post["csrf_token"]);
-            $query = $this->db->get_where("gccmaster.tblusers", array("username"=>$post["username"], "is_suspended"=>0));
-            if($query->num_rows() == 1){
-                $row = $query->row();
-                if($row->id == 1 || $row->username == "developer"){
-                    $resultset["response"] = false;
-                    $resultset["toastr_state"] = "warning";
-                    $resultset["toastr_msg"] = "Developer Account has been disabled!";
-                }else{
-                    $tempUrl = $this->super_admin_token($post["token"], $post["username"]);
-                    $resultset["response"] = true;
-                    $resultset["redirect"] = $tempUrl;
-                }
-            }else{
-                $resultset["response"] = false;
-                $resultset["toastr_state"] = "error";
-                $resultset["toastr_msg"] = "User account not found!";
-            }
-        }else{
-            $resultset["response"] = false;
-            $resultset["toastr_state"] = "error";
-            $resultset["toastr_msg"] = "No post data found!";
-        }
-
-        echo json_encode($resultset);
-    } ***/
-
     function application_token(){
         $data_array = array("token" => $this->security->get_csrf_token_name(), "hash" => $this->security->get_csrf_hash());
         echo json_encode($data_array);
-        // return $data_array;
     }
 
     function gcc_time_login(){
@@ -393,6 +394,4 @@ class Verifylogin extends MY_Controller{
         $data = $this->Login_m->unlockAccount();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
-
-
 }
