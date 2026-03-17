@@ -87,6 +87,10 @@ $("#clear-options").on("click",function(){
 
     $('#accomplishment-report-date-range-picker').data('daterangepicker').setStartDate(initAccomplishmentReportStartDate);
     $('#accomplishment-report-date-range-picker').data('daterangepicker').setEndDate(initAccomplishmentReportStartDate);
+
+    selectedAccomplishmentReportStartDate = moment();
+    selectedAccomplishmentReportEndDate = moment();
+    dtTable.ajax.reload(null, false);
 });
 
 $("#search-report").on('click', function(){
