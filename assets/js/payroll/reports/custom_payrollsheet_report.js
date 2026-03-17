@@ -518,12 +518,12 @@ const dtNetPayReport = tableNetpay.DataTable({
                 return numberFormat(data);
             }
         },
-        { data: "total_allowances", className:'text-right', width: "10%",
+        { data: "allowance_rate", className:'text-right', width: "10%", visible: false,
             render: function (data) {
                 return numberFormat(data);
             }
         },
-        { data: "allowance_rate", className:'text-right', width: "10%", visible: false,
+        { data: "total_allowances", className:'text-right', width: "10%",
             render: function (data) {
                 return numberFormat(data);
             }

@@ -279,15 +279,15 @@
                                         </li>
                                         <li class="dropdown-item pt-1 pb-1">
                                             <label class="m-checkbox mb-0" onclick="event.stopPropagation()">
-                                                <input type="checkbox" checked="checked" oninput="showOrHideColumn(14, this)">
-                                                ALLOWANCE
+                                                <input type="checkbox" oninput="showOrHideColumn(14, this)">
+                                                ALLOWANCE RATE
                                                 <span></span>
                                             </label>
                                         </li>
                                         <li class="dropdown-item pt-1 pb-1">
                                             <label class="m-checkbox mb-0" onclick="event.stopPropagation()">
-                                                <input type="checkbox" oninput="showOrHideColumn(15, this)">
-                                                ALLOWANCE RATE
+                                                <input type="checkbox" checked="checked" oninput="showOrHideColumn(15, this)">
+                                                ALLOWANCE
                                                 <span></span>
                                             </label>
                                         </li>
@@ -315,8 +315,8 @@
                                     <th scope="col">OT</th>
                                     <th scope="col">OT.ND</th>
                                     <th scope="col">HOL</th>
-                                    <th scope="col" class="text-right">Allowance</th>
                                     <th scope="col" class="text-right">Allowance Rate</th>
+                                    <th scope="col" class="text-right">Allowance</th>
                                     <th scope="col" class="text-right">Gross Pay</th>
                                     <th scope="col" class="text-right">Net Pay</th>
                                 </tr>
