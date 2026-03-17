@@ -284,6 +284,13 @@
                                                 <span></span>
                                             </label>
                                         </li>
+                                        <li class="dropdown-item pt-1 pb-1">
+                                            <label class="m-checkbox mb-0" onclick="event.stopPropagation()">
+                                                <input type="checkbox" oninput="showOrHideColumn(15, this)">
+                                                ALLOWANCE RATE
+                                                <span></span>
+                                            </label>
+                                        </li>
                                     </ul>
                                 </div>
                             </div>
@@ -309,6 +316,7 @@
                                     <th scope="col">OT.ND</th>
                                     <th scope="col">HOL</th>
                                     <th scope="col" class="text-right">Allowance</th>
+                                    <th scope="col" class="text-right">Allowance Rate</th>
                                     <th scope="col" class="text-right">Gross Pay</th>
                                     <th scope="col" class="text-right">Net Pay</th>
                                 </tr>
@@ -316,7 +324,7 @@
                             <tbody></tbody>
                             <tfoot>
                                 <tr>
-                                    <th scope="col" colspan="15" style="text-align:right; font-weight: 600;">GRAND TOTAL</th>
+                                    <th scope="col" colspan="16" style="text-align:right; font-weight: 600;">GRAND TOTAL</th>
                                     <th scope="col" class="text-right" style="font-weight: 600;">0.00</th>
                                     <th scope="col" class="text-right" style="font-weight: 600;">0.00</th>
                                 </tr>

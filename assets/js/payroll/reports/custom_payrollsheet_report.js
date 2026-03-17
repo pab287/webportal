@@ -523,6 +523,11 @@ const dtNetPayReport = tableNetpay.DataTable({
                 return numberFormat(data);
             }
         },
+        { data: "allowance_rate", className:'text-right', width: "10%", visible: false,
+            render: function (data) {
+                return numberFormat(data);
+            }
+        },
         { data: "gross_pay", className:'text-right', width: "10%",
             render: function (data) {
                 return numberFormat(data);
@@ -542,14 +547,14 @@ const dtNetPayReport = tableNetpay.DataTable({
         const intVal = function (i) { return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0; };
 
         const totalGrossPay = api
-            .column(15)
+            .column(16)
             .data()
             .reduce(function (a, b) {
                 return intVal(a) + intVal(b);
             }, 0);
 
         const totalNetPay = api
-            .column(16)
+            .column(17)
             .data()
             .reduce(function (a, b) {
                 return intVal(a) + intVal(b);
@@ -558,8 +563,8 @@ const dtNetPayReport = tableNetpay.DataTable({
 
         _globalNetPay = numberFormat(totalNetPay);
         _globalGrossPay = numberFormat(totalGrossPay);
-        $(api.column(15).footer()).html("<span class='m--font-boldest'>" + _globalGrossPay + "</span>");
-        $(api.column(16).footer()).html("<span class='m--font-boldest'>" + _globalNetPay + "</span>");
+        $(api.column(16).footer()).html("<span class='m--font-boldest'>" + _globalGrossPay + "</span>");
+        $(api.column(17).footer()).html("<span class='m--font-boldest'>" + _globalNetPay + "</span>");
     }
 });
 
