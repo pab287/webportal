@@ -82,6 +82,7 @@ $("#search-accomplishments").donetyping( function(){
 $("#clear-options").on("click",function(){
     $('#departmentSelect').val(null).trigger('change');
     $('#companySelect').val(null).trigger('change');
+    $("#statusSelect").val(null).trigger('change');
     $(".selected-filter", $('#accomplishment-report-date-range-picker')).html('Today');
 
     $('#accomplishment-report-date-range-picker').data('daterangepicker').setStartDate(initAccomplishmentReportStartDate);
