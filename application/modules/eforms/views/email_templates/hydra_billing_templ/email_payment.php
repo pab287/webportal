@@ -262,7 +262,7 @@
 
                     <p class="intro">
                         Thank you for your water bill payment to <strong>Bacolod Hydra</strong>.
-                        This email confirms that your payment has been received. No further action is required.
+                        This email confirms that your payment has been received.
                     </p>
 
                     <!-- Amount Highlight -->
