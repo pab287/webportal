@@ -928,17 +928,15 @@ class Gcctime_app_m extends Dbase{
 
     function userExists($bio, $emp) {
         $conn = $this->conn("gccmaster");
+
         $sth = $conn->prepare('
             SELECT * 
-            FROM tblemployees a
-            INNER JOIN gcctimeutility.app_users b 
+            FROM tblemployees a INNER JOIN gcctimeutility.app_users b 
                 ON a.id = b.emp_id
-            WHERE 
-                a.id = :emp
-                AND a.biometricno = :bio
+            WHERE a.id = :emp AND b.biometric_no = :bio
             LIMIT 1
         ');
-
+        
         $sth->execute([
             ':bio' => $bio,
             ':emp' => $emp
