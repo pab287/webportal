@@ -927,9 +927,9 @@ class Gcctime_app_m extends Dbase{
     }
 
     function userExists($bio, $emp) {
-        $conn = $this->conn("gcctimeutility");
-        $sth = $conn->prepare('SELECT * FROM `app_users` 
-                                WHERE `biometric_no` = :bio AND `emp_id` = :emp 
+        $conn = $this->conn("gccmaster");
+        $sth = $conn->prepare('SELECT * FROM `tblemployees` 
+                                WHERE `biometricno` = :bio AND `id` = :emp 
                                 ORDER BY `emp_id` DESC LIMIT 1');
         $sth->bindParam(':bio', $bio);
         $sth->bindParam(':emp', $emp);
