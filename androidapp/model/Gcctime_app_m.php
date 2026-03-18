@@ -928,14 +928,25 @@ class Gcctime_app_m extends Dbase{
 
     function userExists($bio, $emp) {
         $conn = $this->conn("gccmaster");
-        $sth = $conn->prepare('SELECT * FROM `tblemployees` 
-                                WHERE `biometricno` = :bio AND `id` = :emp 
-                                ORDER BY `id` DESC LIMIT 1');
-        $sth->bindParam(':bio', $bio);
-        $sth->bindParam(':emp', $emp);
-        $sth->execute();    
-        $user = $sth->fetch(PDO::FETCH_ASSOC);
-        return $user ?: false;
+        $sth = $conn->prepare('
+            SELECT * 
+            FROM tblemployees a
+            INNER JOIN gcctimeutility.app_users b 
+                ON a.id = b.emp_id
+            WHERE 
+                a.id = :emp
+                AND a.biometricno = :bio
+                AND b.emp_id = :emp
+                AND b.biometric_no = :bio
+            LIMIT 1
+        ');
+
+        $sth->execute([
+            ':bio' => $bio,
+            ':emp' => $emp
+        ]);
+
+        return $sth->fetch(PDO::FETCH_ASSOC) ?: false;
     }
 
     function getPrivilege($role_id){
