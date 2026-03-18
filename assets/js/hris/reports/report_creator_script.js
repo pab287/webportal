@@ -103,7 +103,8 @@ const dbFieldEl = '' +
     '<option value="IF(personnel.id IS NULL OR location.location_name IS NULL, \'No Station Assigned\', GROUP_CONCAT(DISTINCT location.location_name)) station">Station</option>' +
     `<option value='supervisor'>Dept. Supervisor</option>` +
     '<option value="manager">Dept. Manager</option>' +
-    '';
+    '<option value="emp.resignation_effective_date">Resignation Effectivity Date</option>' +
+    '<option value="personnel.is_flexi">Work Schedule</option>';
 
 
 const dbSortFieldEl = '' +
@@ -182,6 +183,7 @@ const dbSortFieldEl = '' +
     '<option value="LOWER(payout_schedule.name)">Payout Schedule</option>' +
     '<option value="CAST(REPLACE(salaries.sal_rate,TRIM(\',\'),\'\') AS DECIMAL(10,2))">Salary Rate</option>' +
     '<option value="IF(personnel.id IS NULL OR location.location_name IS NULL, \'No Station Assigned\', GROUP_CONCAT(DISTINCT location.location_name))">Station</option>' +
+    '<option value="DATE(emp.resignation_effective_date)">Resignation Effectivity Date</option>' +
     '';
 
 $('#field')
@@ -371,7 +373,44 @@ $(document).ready(function () {
                 },
                 {
                     id: "IF(location.id IS NULL, 'No Location Assigned', location.location_name)", label: "Station", type: "string"
-                }
+                },
+                {
+                    id: 'DATE(emp.resignation_effective_date)', 
+                    label: 'Resignation Effectivity Date', 
+                    type: 'date',
+                    plugin: 'datepicker',
+                    plugin_config: { format: 'yyyy-mm-dd' }
+                },
+                {
+                    id: 'personnel.is_flexi',
+                    label: 'Work Schedule',
+                    type: 'string',
+                    input: 'select',
+                    plugin: 'select2',
+                    plugin_config: {
+                        placeholder: 'Select. .',
+                        width: '110%',
+                        data: [
+                            {
+                                id: "4",
+                                text: "Default - NO TIME IN OR OUT"
+                            },{
+                                id: "3",
+                                text: "Super Flexi - 1 IN OR 1 OUT"
+                            },{
+                                id: "2",
+                                text: "Drivers - 1 IN AND 1 OUT"
+                            }, {
+                                id: "1",
+                                text: "Flexi - 1 IN AND 1 OUT"
+                            }, {
+                                id: "0",
+                                text: "Regular - 2 IN AND 2 OUT"
+                            }
+                        ]
+                    },
+                    operators: ['equal', 'not_equal']
+                },
             ]
         });
 
@@ -397,7 +436,7 @@ function generateReport(form) {
         $('.empty-table-message').html("");
         let criteria = $("#query-builder").queryBuilder('getSQL');
         criteria = criteria ? criteria.sql : null;
-        console.log(criteria);
+
         const table = $("#table-generated-report");
         if ($.fn.DataTable.isDataTable(table)) {
             table.DataTable().destroy();
@@ -462,6 +501,7 @@ function initDatatable(columns, fields, order_field, order_by, criteria) {
         const _columnMiddlename = column.id.indexOf('UPPER(emp.middlename)') !== -1;
         const _columnStation = column.id.indexOf('IF(personnel.id IS NULL OR location.location_name IS NULL, \'No Station Assigned\', GROUP_CONCAT(DISTINCT location.location_name)) station') !== -1;
         const _columnAge = column.id.indexOf('TIMESTAMPDIFF(YEAR, emp.bday, CURDATE()) age') !== -1;
+        const _columnIsFlexi = column.id.indexOf('personnel.is_flexi') !== -1;
 
         if (_columnCompany) {
             _column = column.id.replace('UPPER(IF(company.id IS NULL, emp.company_id, company.code)) ', '');
@@ -489,6 +529,8 @@ function initDatatable(columns, fields, order_field, order_by, criteria) {
             _column = column.id.replace('IF(personnel.id IS NULL OR location.location_name IS NULL, \'No Station Assigned\', GROUP_CONCAT(DISTINCT location.location_name)) station', 'station');
         } else if(_columnAge){
             _column = column.id.replace('TIMESTAMPDIFF(YEAR, emp.bday, CURDATE()) age', 'age');
+        } else if (_columnIsFlexi) {
+            _column = column.id.replace('personnel.is_flexi', 'is_flexi');
         } else {
             _column = column.id.replace("emp.", "");
         }
