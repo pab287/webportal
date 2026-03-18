@@ -2963,6 +2963,8 @@ class Billing_m extends CI_Model {
         $balance = (float) str_replace(['₱', ','], '', $post['balance']);
 
         // SMS/Email info start
+        $sms_msg = "";
+
         $cx_details = $this->getAccountDetails($post["account_id"])["data"];
         $bill_details = $this->getBillData($post["bill_id"])["billdata"];
         $ar_no = $this->generatePaymentAR();
@@ -2987,6 +2989,8 @@ class Billing_m extends CI_Model {
         // SMS/Email info End
 
         // Email info start
+        $email_msg = "";
+
         $email_data = [
             'email'          => $cx_details->email,
             'full_name'      => ucwords($cx_details->firstname . " " . $cx_details->lastname),
@@ -3025,25 +3029,25 @@ class Billing_m extends CI_Model {
 
             $query = $this->db->insert('hydra_billing.payments', $post);
 
-            $sms = $this->sendsms_payment($mobile_no, $msg);
-            $email = $this->email_payment($email_data);
-
-            if ($sms) {
-                $sms_msg = "SMS receipt sent!";
-            } else {
-                $sms_msg = "Failed to send SMS receipt";
-            }
-
-            if ($email) {
-                $email_msg = "Email receipt sent!";
-            } else {
-                $email_msg = "Failed to send Email receipt";
-            }
-
             if ($query) {
                 if ($receive >= $net_payment) {
                     $this->updateBillingPaidStatus($post['bill_id'], 1);
                     $this->updateDisconnectionStatus($post['account_id']);
+                }
+
+                $sms = $this->sendsms_payment($mobile_no, $msg);
+                $email = $this->email_payment($email_data);
+
+                if ($sms) {
+                    $sms_msg = "SMS receipt sent!";
+                } else {
+                    $sms_msg = "Failed to send SMS receipt";
+                }
+
+                if ($email) {
+                    $email_msg = "Email receipt sent!";
+                } else {
+                    $email_msg = "Failed to send Email receipt";
                 }
 
                 $resultarray["status"] = true;
