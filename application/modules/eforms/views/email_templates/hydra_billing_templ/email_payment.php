@@ -9,7 +9,7 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body {
+        .body-wrap {
             background-color: #eef3f7;
             font-family: 'DM Sans', sans-serif;
             color: #1a2b3c;
@@ -28,9 +28,9 @@
         }
 
         .logo-mark {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
+            width: 100%;
+            max-width: max-content;
+            margin: 0 auto;
         }
 
         .logo-icon {
@@ -106,10 +106,8 @@
             border: 1.5px solid #c3dcf7;
             border-radius: 12px;
             padding: 24px 28px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             gap: 16px;
+            width: 100%;
         }
 
         .amount-box .amount-label {
@@ -232,88 +230,98 @@
 </head>
 
 <body>
-  <div class="email-wrapper">
-      <!-- Logo Header -->
-      <div class="header">
-          <div class="logo-mark">
-              <svg class="logo-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="18" cy="18" r="18" fill="#0c5ea8"/>
-                  <path d="M18 8C18 8 10 16.5 10 21.5C10 25.642 13.582 29 18 29C22.418 29 26 25.642 26 21.5C26 16.5 18 8 18 8Z" fill="white"/>
-                  <path d="M18 14C18 14 14 18.5 14 21.5C14 23.433 15.791 25 18 25C20.209 25 22 23.433 22 21.5C22 18.5 18 14 18 14Z" fill="#1a8fe3"/>
-              </svg>
+    <div class="body-wrap">
+        <div class="email-wrapper">
+            <!-- Logo Header -->
+            <div class="header">
+                <table class="logo-mark">
+                    <tr>
+                        <td width="50">
+                             <img src="https://conyxph.com/web/assets/images/hydra/hydra_icon.png" alt="Bacolod Hydra" width="50">
+                        </td>
 
-              <span class="logo-text">Bacolod Hydra</span>
-          </div>
+                        <td>
+                            <span class="logo-text">Bacolod Hydra</span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Main Card -->
+            <div class="card">
+                <!-- Hero -->
+                <div class="hero-band">
+                    <div class="label">Acknowledgment Receipt</div>
+                    <h1>Payment Confirmed</h1>
+                    <div class="subtitle">Your water bill payment has been successfully processed.</div>
+                </div>
+
+                <!-- Body -->
+                <div class="body">
+                    <p class="greeting">Hi <?php echo htmlspecialchars($full_name); ?>,</p>
+
+                    <p class="intro">
+                        Thank you for your water bill payment to <strong>Bacolod Hydra</strong>.
+                        This email confirms that your payment has been received. No further action is required.
+                    </p>
+
+                    <!-- Amount Highlight -->
+                    <table class="amount-box">
+                       <tr>
+                            <td width="25%" class="amount-label">Amount Paid</td>
+                            <td wdith="75%" class="amount-value">₱ <?php echo htmlspecialchars($received); ?></td>
+                       </tr>
+                    </table>
+
+                    <!-- Transaction Details -->
+                    <table class="details-table">
+                        <tr>
+                            <td class="detail-key">Payment Date</td>
+                            <td class="detail-val"><?php echo htmlspecialchars($payment_date); ?></td>
+                        </tr>
+
+                        <tr>
+                            <td class="detail-key">Billing Period</td>
+                            <td class="detail-val"><?php echo htmlspecialchars($billing_period); ?></td>
+                        </tr>
+
+                        <tr>
+                            <td class="detail-key">Billing Reference No.</td>
+                            <td class="detail-val"><?php echo htmlspecialchars($billing_ref); ?></td>
+                        </tr>
+
+                        <tr>
+                            <td class="detail-key">AR No.</td>
+                            <td class="detail-val ar"><?php echo htmlspecialchars($ar_no); ?></td>
+                        </tr>
+                    </table>
+
+                    <!-- <hr class="divider" /> -->
+
+                    <!-- Automated note -->
+                    <div class="note">
+                        ⚠️ Please do not reply to this email. This is an automated message sent by Bacolod Hydra's billing system.
+                    </div>
+
+                    <!-- Sign-off -->
+                    <div class="signoff">
+                        Thank you for your continued support.
+                        <strong>Bacolod Hydra</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <!-- <div class="footer"> -->
+                <!-- <p>© <?php //echo date('Y'); ?> Bacolod Hydra. All rights reserved.</p> -->
+                <!-- <p>© 2026 Bacolod Hydra. All rights reserved.</p>
+                <p class="address">
+                Bacolod City, Negros Occidental, Philippines<br/>
+                For inquiries, contact our <a href="#">support team</a>.
+                </p>
+            </div> -->
+
+        </div>
       </div>
-
-      <!-- Main Card -->
-      <div class="card">
-          <!-- Hero -->
-          <div class="hero-band">
-              <div class="label">Acknowledgment Receipt</div>
-              <h1>Payment Confirmed</h1>
-              <div class="subtitle">Your water bill payment has been successfully processed.</div>
-          </div>
-
-          <!-- Body -->
-          <div class="body">
-              <p class="greeting">Hi <?php echo htmlspecialchars($full_name); ?>,</p>
-              <!-- <p class="greeting">Hi Rocke Ayuco,</p> -->
-
-              <p class="intro">
-                  Thank you for your water bill payment to <strong>Bacolod Hydra</strong>.
-                  This email confirms that your payment has been received. No further action is required.
-              </p>
-
-              <!-- Amount Highlight -->
-              <div class="amount-box">
-                  <div class="amount-label">Amount Paid</div>
-                  <div class="amount-value">₱<?php echo htmlspecialchars($received); ?></div>
-              </div>
-
-              <!-- Transaction Details -->
-              <table class="details-table">
-                  <tr>
-                      <td class="detail-key">Payment Date</td>
-                      <td class="detail-val"><?php echo htmlspecialchars($payment_date); ?></td>
-                  </tr>
-
-                  <tr>
-                      <td class="detail-key">Billing Period</td>
-                      <td class="detail-val"><?php echo htmlspecialchars($billing_period); ?></td>
-                  </tr>
-
-                  <tr>
-                      <td class="detail-key">AR No.</td>
-                      <td class="detail-val ar"><?php echo htmlspecialchars($ar_no); ?></td>
-                  </tr>
-              </table>
-
-              <!-- <hr class="divider" /> -->
-
-              <!-- Automated note -->
-              <div class="note">
-                ⚠️ Please do not reply to this email. This is an automated message sent by Bacolod Hydra's billing system.
-              </div>
-
-              <!-- Sign-off -->
-              <div class="signoff">
-                  Thank you for your continued support.
-                  <strong>Bacolod Hydra</strong>
-              </div>
-          </div>
-      </div>
-
-      <!-- Footer -->
-      <!-- <div class="footer"> -->
-        <!-- <p>© <?php echo date('Y'); ?> Bacolod Hydra. All rights reserved.</p> -->
-        <!-- <p>© 2026 Bacolod Hydra. All rights reserved.</p>
-        <p class="address">
-          Bacolod City, Negros Occidental, Philippines<br/>
-          For inquiries, contact our <a href="#">support team</a>.
-        </p>
-      </div> -->
-
-  </div>
 </body>
 </html>

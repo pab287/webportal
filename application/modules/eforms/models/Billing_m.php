@@ -2978,18 +2978,21 @@ class Billing_m extends CI_Model {
             $billing_period = date('M j, Y', $from) . " – " . date('M j, Y', $to);
         }
 
-        $sms_amount = number_format((float)$receive, 2, '.', '');
+        $billing_ref = $bill_details['ref_no'];
+
+        $sms_amount = number_format((float)$receive + (float)$balance_covered, 2, '.', '');
         $sms_pay_date = date("M j, Y", strtotime($post['payment_date']));
         $mobile_no = $cx_details->phonenumber;
-        $msg = "Hi {$cx_details->firstname} {$cx_details->lastname}, Thank you for your water bill payment to Bacolod Hydra in the amount of ₱{$sms_amount} dated {$sms_pay_date} covering the billing period of {$billing_period}  with (AR No. {$ar_no}) issued for this transaction.\n\nPlease do not reply. This is an automated message. Thank you";
+        $msg = "Hi {$cx_details->firstname} {$cx_details->lastname},\n\nThank you for your water bill payment to Bacolod Hydra in the amount of ₱{$sms_amount} dated {$sms_pay_date} covering the billing period of {$billing_period} ({$billing_ref}) with (AR No. {$ar_no}) issued for this transaction.\n\nPlease keep this message as your official confirmation of settlement.\n\nPlease do not reply. This is an automated message. Thank you.";
         // SMS/Email info End
 
         // Email info start
         $email_data = [
             'email'          => $cx_details->email,
             'full_name'      => ucwords($cx_details->firstname . " " . $cx_details->lastname),
-            'received'       => number_format((float)$receive, 2, '.', ''),
+            'received'       => number_format((float)$receive + (float)$balance_covered, 2, '.', ''),
             'payment_date'   => date("M j, Y", strtotime($post['payment_date'])),
+            'billing_ref'    => $billing_ref,
             'billing_period' => $billing_period,
             'ar_no'          => $ar_no
         ];
@@ -3020,12 +3023,22 @@ class Billing_m extends CI_Model {
 
             unset($post['billing_amount'], $post['overpayment']); // Reove these fields as they are not needed in the payments table
 
+            $query = $this->db->insert('hydra_billing.payments', $post);
+
             $sms = $this->sendsms_payment($mobile_no, $msg);
             $email = $this->email_payment($email_data);
 
-            die();
+            if ($sms) {
+                $sms_msg = "SMS receipt sent!";
+            } else {
+                $sms_msg = "Failed to send SMS receipt";
+            }
 
-            $query = $this->db->insert('hydra_billing.payments', $post);
+            if ($email) {
+                $email_msg = "Email receipt sent!";
+            } else {
+                $email_msg = "Failed to send Email receipt";
+            }
 
             if ($query) {
                 if ($receive >= $net_payment) {
@@ -3033,19 +3046,28 @@ class Billing_m extends CI_Model {
                     $this->updateDisconnectionStatus($post['account_id']);
                 }
 
-                $sms = $this->sendsms_payment($mobile_no, $msg);
-                $email = $this->email_payment($emailAdd, $msg);
-
                 $resultarray["status"] = true;
                 $resultarray["ar_code"] = $ar_no;
                 $resultarray["msg"] = "Payment successfully saved.";
-                $resultarray["sms"] = $sms;
+
+                $resultarray["sms"] = $sms['status'];
+                $resultarray["sms_msg"] = $sms_msg;
+
+                $resultarray["email"] = $email;
+                $resultarray["email_msg"] = $email_msg;
+
                 $this->core_layout->setEventLog("Payments - Created payment ".$post['ref_no'],"insert", "success", "hydra_billing", "user");
 
             } else {
                 $resultarray["status"] = false;
                 $resultarray["ar_code"] = false;
                 $resultarray["msg"] = "Error creating payment.";
+
+                $resultarray["sms"] = $sms['status'];
+                $resultarray["sms_msg"] = $sms_msg;
+
+                $resultarray["email"] = $email;
+                $resultarray["email_msg"] = $email_msg;
 
                 $this->core_layout->setEventLog("Payments - Error saving payment","insert", "error", "hydra_billing", "user");
             }
