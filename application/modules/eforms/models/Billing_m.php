@@ -2963,7 +2963,16 @@ class Billing_m extends CI_Model {
         $balance = (float) str_replace(['₱', ','], '', $post['balance']);
 
         // SMS/Email info start
-        $sms_msg = "";
+        $sms = ['status' => false];
+        $sms_msg = "SMS not sent";
+  
+        $sms_email_amount = 0;
+
+        if ($receive == 0) {
+            $sms_email_amount = $balance_covered;
+        } else {
+            $sms_email_amount = $receive;
+        }
 
         $cx_details = $this->getAccountDetails($post["account_id"])["data"];
         $bill_details = $this->getBillData($post["bill_id"])["billdata"];
@@ -2982,19 +2991,19 @@ class Billing_m extends CI_Model {
 
         $billing_ref = $bill_details['ref_no'];
 
-        $sms_amount = number_format((float)$receive + (float)$balance_covered, 2, '.', '');
         $sms_pay_date = date("M j, Y", strtotime($post['payment_date']));
         $mobile_no = $cx_details->phonenumber;
-        $msg = "Hi {$cx_details->firstname} {$cx_details->lastname},\n\nThank you for your water bill payment to Bacolod Hydra in the amount of ₱{$sms_amount} dated {$sms_pay_date} covering the billing period of {$billing_period} ({$billing_ref}) with (AR No. {$ar_no}) issued for this transaction.\n\nPlease keep this message as your official confirmation of settlement.\n\nPlease do not reply. This is an automated message. Thank you.";
+        $msg = "Hi {$cx_details->firstname} {$cx_details->lastname},\n\nThank you for your water bill payment to Bacolod Hydra in the amount of ₱{$sms_email_amount} dated {$sms_pay_date} covering the billing period of {$billing_period} ({$billing_ref}) with (AR No. {$ar_no}) issued for this transaction.\n\nPlease keep this message as your official confirmation of settlement.\n\nPlease do not reply. This is an automated message. Thank you.";
         // SMS/Email info End
 
         // Email info start
-        $email_msg = "";
+        $email = false;
+        $email_msg = "Email not sent";
 
         $email_data = [
             'email'          => $cx_details->email,
             'full_name'      => ucwords($cx_details->firstname . " " . $cx_details->lastname),
-            'received'       => number_format((float)$receive + (float)$balance_covered, 2, '.', ''),
+            'received'       => number_format($sms_email_amount, 2, '.', ''),
             'payment_date'   => date("M j, Y", strtotime($post['payment_date'])),
             'billing_ref'    => $billing_ref,
             'billing_period' => $billing_period,
@@ -3038,17 +3047,8 @@ class Billing_m extends CI_Model {
                 $sms = $this->sendsms_payment($mobile_no, $msg);
                 $email = $this->email_payment($email_data);
 
-                if ($sms) {
-                    $sms_msg = "SMS receipt sent!";
-                } else {
-                    $sms_msg = "Failed to send SMS receipt";
-                }
-
-                if ($email) {
-                    $email_msg = "Email receipt sent!";
-                } else {
-                    $email_msg = "Failed to send Email receipt";
-                }
+                $sms_msg = $sms ? "SMS receipt sent!" : "Failed to send SMS receipt";
+                $email_msg = $email ? "Email receipt sent!" : "Failed to send Email receipt";
 
                 $resultarray["status"] = true;
                 $resultarray["ar_code"] = $ar_no;
