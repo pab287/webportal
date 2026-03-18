@@ -1285,6 +1285,22 @@
                                 </li>`;
                                 ctrActions++;
                             }
+                            
+                            const rawData = JSON.stringify(row);
+                            btn += `<button title="SET AS PAID LOAN"
+                                class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary eventSetAsPaidLoan"
+                                data-raw="${encodeURIComponent(rawData)}">
+                            <i class="fa fa-tags"></i>
+                            </button> `;
+
+                            listActions += `<li class="m-nav__item">
+                                    <a href="javascript:void(0)" class="m-nav__link eventSetAsPaidLoan"
+                                    data-raw="${encodeURIComponent(rawData)}">
+                                        <i class="m-nav__link-icon fa fa-tags"></i>
+                                        <span class="m-nav__link-text">SET AS PAID LOAN</span>
+                                    </a>
+                                </li>`;
+                                ctrActions++;
                         }
                         
                         if (typeof _currentActions != "undefined" && _currentActions.includes("edit") && (isPaid !== 1 && tempIsPaid === false)) {
@@ -2111,6 +2127,74 @@
 
         }
     }
+    $(document).on('click', '.eventSetAsPaidLoan', function () {
+        const rawData = JSON.parse(decodeURIComponent($(this).data('raw')));
+        setAsPaidLoan(rawData);
+    });
+    
+    function setAsPaidLoan(rawData){
+        console.log(rawData);
+        const loanName = rawData.loan_name;
+        const debitNote = rawData.debit_note;
+        const tempHtml = debitNote ? `<span class='m--font-primary m--font-boldest m--margin-left-15 m--regular-font-size-lg1'>${debitNote.toUpperCase()}</span>` : '';
+        Swal.fire({
+            title: 'Set As Paid Loan?',
+            html: `
+                <p>Are you sure you want to set this loan as paid? You won't be able to revert this!</p>
+                <span class='m--font-boldest'>${loanName.toUpperCase()}</span>
+                ${tempHtml}
+                <div class='row m-1 mt-3'>
+                    <div class='col-12 p-0'>
+                        <input id="swal-debit-note" class="form-control m-input" placeholder="Debit Note" maxlength="12" required>
+                    </div>
+                    <div class='col-12 p-0 mt-2'>
+                        <textarea id="swal-remarks" class="form-control m-input" placeholder="Reason for set as paid" required></textarea>
+                    </div>
+                </div>
+            `,
+            icon: 'question',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, Set As Paid!',
+            preConfirm: () => {
+                const debitNote = document.getElementById('swal-debit-note').value.trim();
+                const remarks = document.getElementById('swal-remarks').value.trim();
+
+                if (!debitNote || !remarks) {
+                    Swal.showValidationMessage('Both Debit Note and Reason are required');
+                    return false;
+                }
+
+                return {
+                    debit_note: debitNote,
+                    remarks: remarks
+                };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const data = result.value;
+                $.ajax({
+                    url: baseUrl(`payroll/employee/set_as_paid_loan`),
+                    type: "POST",
+                    dataType: "JSON",
+                    data: {
+                        csrf_token: _csrf_hash,
+                        id: rawData.id,
+                        debit_note: data.debit_note,
+                        remarks: data.remarks
+                    },
+                    success: function (json) {
+                        if (json.response) {
+                            
+                        }
+                    }
+                });
+            }
+        });
+    }
+
 
     function openEditEmployeeLoanModal(id) {
         $.ajax({

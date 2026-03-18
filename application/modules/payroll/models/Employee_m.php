@@ -17,6 +17,9 @@
         protected $payrollGroupTransferTable = "payroll.payroll_group_transfer";
         protected $tbl_overtime = "gcceforms.overtime";
 
+        protected $tbl_hris_loans = "gcchris.loans";
+        protected $tbl_payroll_loans = "payroll.loans";
+
         private $user_data;
         private $db_debug;
 
@@ -3317,6 +3320,71 @@ public function getEmployeeNightDiffList(){
         } else {
             $resultset["response"] = false;
         }
+        return $resultset;
+    }
+
+    public function setAsPaidLoan() {
+        $post = $this->input->post();
+        $resultset = array();
+        if(isset($post) && $post){
+            $resultset = $this->insertUpdatePaidLoan($post);
+        }else{
+            $resultset["response"] = false;
+            $resultset["toastr_msg"] = "Failed to update Paid Loan, no post data found";
+        }
+        return $resultset;
+    }
+
+    protected function insertUpdatePaidLoan($post) {
+        $resultset = array();
+        if(isset($post["id"]) && $post["id"]){
+            $id = $post["id"];
+            unset($post["id"]);
+            
+            $this->db->select("loan.id, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+            END,' ', UPPER(TRIM(emp.lastname)),
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
+            END) as employee_name, loan.paid, UPPER(psl.loan_name) as loan_name");
+            $this->db->join($this->employeeTable . " emp", "emp.id = loan.emp_id", "left");
+            $this->db->join($this->tbl_payroll_loans . " psl", "psl.id = loan.loan_id", "left");
+            $loan = $this->db->get_where($this->tbl_hris_loans . " loan", array("loan.id" => $id, "loan.is_archived" => 0));
+            if($loan->num_rows() === 1){
+                $row = $loan->row();
+                if($row->paid == 0){
+                    $post["paid"] = 1;
+                    $this->db->where("id", $id);
+                    $this->db->set($post);
+                    $update = $this->db->update($this->tbl_payroll_loans);
+                    if($update && $this->db->affected_rows() > 0){
+                        $logMessage = `Payroll Loan of employee '${row->employee_name}' with loan #${row->id} and loan description '${row->loan_name}' has been set as 'Paid' with debit note '${post["debit_note"]}' and reason '${post["remarks"]}' has been successfully updated.`;
+                        $this->core_layout->setEventLog($logMessage, "update", "success", "payroll", "user");
+                        $resultset["response"] = true;
+                        $resultset["toastr_msg"] = $logMessage;
+                    }else{
+                        $logMessage = `Failed to update the payroll loan of employee '${row->employee_name}' with loan #${row->id} and loan description '${row->loan_name}' as 'Paid' with debit note '${post["debit_note"]}' and reason '${post["remarks"]}'`;
+                        $this->core_layout->setEventLog($logMessage, "update", "error", "payroll", "user");
+                        $resultset["response"] = false;
+                        $resultset["toastr_msg"] = $logMessage;
+                    }
+                }else{
+                    $logMessage = "Payroll Loan of employee '${row->employee_name}' with loan #${row->id} and loan description '${row->loan_name}' has already been set as 'Paid'";
+                    $this->core_layout->setEventLog($logMessage, "update", "error", "payroll", "user");
+                    $resultset["response"] = false;
+                    $resultset["toastr_msg"] = $logMessage;
+                }
+            }else{
+                $logMessage = "Failed to update the payroll loan, no record found";
+                $this->core_layout->setEventLog($logMessage, "update", "error", "payroll", "system");
+                $resultset["response"] = false;
+                $resultset["toastr_msg"] = $logMessage;
+            }
+        }
+        
         return $resultset;
     }
 }
