@@ -84,6 +84,11 @@
         }
 
         public function travel_order_data(){
+            $data = $this->GCCTIME_APP->getEmployeeTravelOrder();
+            echo $data;
+        }
+        
+        public function travel_order_data320(){
             $data = $this->GCCTIME_APP->getTravelOrderEmployeeDestination();
             echo $data;
         }

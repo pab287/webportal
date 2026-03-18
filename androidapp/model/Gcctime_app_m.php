@@ -930,7 +930,7 @@ class Gcctime_app_m extends Dbase{
         $conn = $this->conn("gccmaster");
         $sth = $conn->prepare('SELECT * FROM `tblemployees` 
                                 WHERE `biometricno` = :bio AND `id` = :emp 
-                                ORDER BY `emp_id` DESC LIMIT 1');
+                                ORDER BY `id` DESC LIMIT 1');
         $sth->bindParam(':bio', $bio);
         $sth->bindParam(':emp', $emp);
         $sth->execute();    
@@ -2621,8 +2621,6 @@ public function getTravelOrderEmployeeDestination($id = null) {
             ]
         ];
 
-
-
         $data = [
             'chat_id' => $chatId,
             'text' => $telegram_msg,
@@ -2637,6 +2635,61 @@ public function getTravelOrderEmployeeDestination($id = null) {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $response = curl_exec($ch);
         curl_close($ch);
+    }
+
+    public function getEmployeeTravelOrder(){
+        $employeeId = isset($_POST['emp_id']) ? $_POST['emp_id'] : null;
+        $token = isset($_POST['token']) ? $_POST['token'] : null;
+        $date = isset($_POST['date']) ? $_POST['date'] : null;
+        $validate_token = $this->checkToken($employeeId, $token);
+
+        if (!$validate_token) {
+            $this->saveLogs("error", "travel", $employeeId, "[Mobile] missing token");
+            $msg = "Invalid token to get travel order.";
+            return json_encode(['status' => false, 'msg'=> $msg]);
+        }
+
+        $resultset = array();
+        if($employeeId && $date){
+        $arrTravelId = $this->getTravelOrderDriverById($employeeId);
+        $arrPersonnelId = $this->getTravelOrderPersonnelById($employeeId);
+        $travelIds = array_merge($arrTravelId, $arrPersonnelId);
+            if(is_array($travelIds) && !empty($travelIds)){
+                $travelIds = array_unique($travelIds);
+                $tempDate = date('Y-m-d', strtotime($date));
+                $destinations = $this->getTravelOrderDestination($travelIds, $tempDate);
+                if(is_array($destinations) && !empty($destinations)){
+                $ids = array_column($destinations, 'id');
+                $uniqueIds = array_unique($ids);
+                $cData = array_intersect_key($destinations, $uniqueIds);
+                $resultset = array_values($cData);
+                }
+            }
+        }
+        return json_encode($resultset);
+    }
+		
+	protected function getTravelOrderDestination($travelIds = array(), $tempDate = null){
+        $arrData = array();
+        if(is_array($travelIds) && !empty($travelIds) && $tempDate){
+        $whereIn = implode(',', $travelIds);
+        $conn = $this->conn();
+        $sth = $conn->prepare("SELECT t.id, t.reference_no, t.created_dt, td.date_from, td.date_to, t.company, t.department, td.purpose, td.destination
+        FROM gcceforms.travel_destination as td
+        INNER JOIN gcceforms.travel_order as t ON td.travel_order_id = t.id
+        WHERE t.id IN (:id) OR (DATE(td.date_from) <= :_date AND DATE(td.date_to) >= :_date)
+        OR (DATE(td.date_from) >= :_date AND DATE(td.date_to) <= :_date)
+        AND t.status = 'Approved'");
+        $sth->bindParam(':id', $whereIn, PDO::PARAM_INT);
+        $sth->bindParam(':_date', $tempDate, PDO::PARAM_STR);
+        $sth->execute();
+        if($sth->rowCount() > 0){
+            foreach($sth->fetchAll(PDO::FETCH_ASSOC) as $row ){
+            if($this->insertTravelData($row, $travelIds, $tempDate)){ $arrData[] = $row; }
+            }
+        }
+        }
+        return $arrData;
     }
 
 }
