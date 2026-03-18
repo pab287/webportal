@@ -926,14 +926,13 @@ class Gcctime_app_m extends Dbase{
         }
     }
 
-    function userExists($bio, $emp) {
+    private function userExists($bio, $emp) {
         $conn = $this->conn("gccmaster");
 
         $sth = $conn->prepare('
-            SELECT * 
-            FROM tblemployees a INNER JOIN gcctimeutility.app_users b 
-                ON a.id = b.emp_id
-            WHERE a.id = :emp AND b.biometric_no = :bio
+            SELECT * FROM gcctimeutility.app_users b 
+                LEFT JOIN gccmaster.tblemployees a ON a.id = b.emp_id
+            WHERE a.id = :emp AND a.biometricno = :bio
             LIMIT 1
         ');
         
@@ -944,6 +943,7 @@ class Gcctime_app_m extends Dbase{
 
         return $sth->fetch(PDO::FETCH_ASSOC) ?: false;
     }
+
 
     function getPrivilege($role_id){
         $arrData = array();
