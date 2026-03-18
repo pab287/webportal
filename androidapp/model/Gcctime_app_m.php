@@ -936,8 +936,6 @@ class Gcctime_app_m extends Dbase{
             WHERE 
                 a.id = :emp
                 AND a.biometricno = :bio
-                AND b.emp_id = :emp
-                AND b.biometric_no = :bio
             LIMIT 1
         ');
 
