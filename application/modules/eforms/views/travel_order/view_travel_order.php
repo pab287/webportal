@@ -716,7 +716,7 @@
             <div class="col-sm-12">
                 <table style="font: 13px arial, sans-serif;" width="100%" border="0">
                 <tr>
-                    <td width="15%">Type</td>
+                    <td width="20%">Type</td>
                     <td width="40%"><div style="text-transform: uppercase;">: {{vm_to_data.type}}</div></td>
                     <td width="5%">Personnel</td>
                     <td width="30%"><div style="text-transform: uppercase;" v-for="vm_personnels in vm_personnel">: 
@@ -724,22 +724,26 @@
                     </div></td>
                 </tr>
                 <tr>
-                    <td width="15%">Duration</td>
+                    <td width="20%">Duration</td>
                     <td width="50%">: {{ vm_to_data.duration }}</td>
                 </tr>
                 <tr>
-                    <td width="15%">Official Station</td>
+                    <td width="20%">Official Station</td>
                     <td width="35%">: <b style="text-transform: uppercase;">{{ vm_to_data.station }}</b></td>
                 </tr>
-                <template>
+                <!-- <template> -->
                 <tr>
-                    <td width="15%">Vehicle</td>
+                    <td width="20%">Vehicle</td>
                     <td width="35%">: <b id="vehicle_print" style="text-transform: uppercase;">{{ vm_to_data.plateno }}</b></td>
                 </tr>
-                </template>
+                <!-- </template> -->
                 <tr>
-                    <td width="15%"><span id="driver_label"></span></td>
+                    <td width="20%"><span id="driver_label"></span></td>
                     <td width="35%"><b id="driver_print" style="text-transform: uppercase;">{{ vm_to_data.driver_print }}</b></td>          
+                </tr>
+                <tr>
+                    <td width="20%">Recommended by</td>
+                    <td width="35%">: <b id="vehicle_print" style="text-transform: uppercase;">{{ vm_to_data.approved_recommended_by }}</b></td>
                 </tr>
                 </table>
             </div>
@@ -792,15 +796,15 @@
                 <td style="text-align: left;" width="16%">&nbsp;</td>
             </tr>
             <tr>
-                <td style="border-top:1px dashed black;" style="text-align: left;" width="25%">&nbsp;</td>
-                <td style="border-top:0px dashed black;" width="5%">&nbsp;</td>
-                <td style="border-top:1px dashed black;" style="text-align: left;" width="25%">&nbsp;</td>
-                <td style="border-top:0px dashed black;" width="5%">&nbsp;</td>
-                <td style="border-top:1px dashed black;" style="text-align: left;" width="25%">&nbsp;</td>
-                <td style="border-top:0px dashed black;" width="5%">&nbsp;</td>
-                <td style="border-top:1px dashed black;" style="text-align: left;" width="25%">&nbsp;</td>
-                <td style="border-top:0px dashed black;" width="5%">&nbsp;</td>
-                <td style="border-top:0px dashed black;" style="text-align: left;" width="25%">&nbsp;</td>
+                <td style="border-bottom:1px dashed black; text-align: left;" width="25%">&nbsp;</td>
+                <td style="border-bottom:0px dashed black;" width="5%">&nbsp;</td>
+                <td style="border-bottom:1px dashed black; text-align: left;" width="25%">&nbsp;</td>
+                <td style="border-bottom:0px dashed black;" width="5%">&nbsp;</td>
+                <td style="border-bottom:1px dashed black; text-align: left;" width="35%">{{ vm_to_data.approved_name_by }}</td>
+                <td style="border-bottom:0px dashed black;" width="5%">&nbsp;</td>
+                <td style="border-bottom:1px dashed black; text-align: left;" width="25%">&nbsp;</td>
+                <td style="border-bottom:0px dashed black;" width="5%">&nbsp;</td>
+                <td style="border-bottom:0px dashed black; text-align: left;" width="25%">&nbsp;</td>
             </tr>
             <tr >
                 <td style="text-align: left;" width="16%">Guard on duty</td>
@@ -808,7 +812,7 @@
                 <td style="text-align: left;" width="16%">Time&emsp;&emsp;&emsp;&emsp;</td>
                 <td width="5%">&nbsp;</td>
                 <td style="text-align: left;" width="16%">Approving Authority</td>
-                <td width="5%">&nbsp;</td>
+                <td width="5%"></td>
                 <td style="text-align: left;" width="16%">Fuel Tender</td>
                 <td width="5%">&nbsp;</td>
                 <td style="text-align: left;" width="16%">&nbsp;</td>
