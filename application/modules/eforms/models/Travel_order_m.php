@@ -4859,12 +4859,13 @@
             $endDate = (isset($post['endDate']) && $post['endDate']) ? $post['endDate'] : null;
             $department = (isset($post['department']) && $post['department']) ? $post['department'] : null;
             $company = (isset($post['company']) && $post['company']) ? $post['company'] : null;
+            $status = (isset($post['status'])) && $post['status'] ? $post['status'] : null;
 
             $rowCount = 0;
             $rowData = array();
 
-            $rowData = $this->get_accomplished_item($company, $department, $limit, $offset, $sortBy, $sortOrder, $search, $startDate, $endDate);
-            $rowCount = $this->get_accomplished_item_count($company, $department, $search, $startDate, $endDate);
+            $rowData = $this->get_accomplished_item($company, $department, $limit, $offset, $sortBy, $sortOrder, $search, $startDate, $endDate, $status);
+            $rowCount = $this->get_accomplished_item_count($company, $department, $search, $startDate, $endDate, $status);
 
             $resultset["recordsTotal"] = $rowCount;
             $resultset["recordsFiltered"] = $rowCount;
@@ -4873,7 +4874,7 @@
             return $resultset;
         }
 
-        public function get_accomplished_item($company = null, $department = null, $limit, $offset, $sortBy, $sortOrder, $search = null, $startDate = null, $endDate = null){
+        public function get_accomplished_item($company = null, $department = null, $limit, $offset, $sortBy, $sortOrder, $search = null, $startDate = null, $endDate = null, $status = null){
             $result = array();
 
             $filterFields = array('a.station', 'a.type', 'a.company', 'a.department', 'a.reference_no', 'toe.firstname', 'toe.lastname');
@@ -4890,7 +4891,7 @@
             CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
                     TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
                 THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
-            END)) as accomplished_name";
+            END)) as accomplished_name, a.is_emergency";
 
             $this->db->select($sql);
             $this->db->from("gcceforms.travel_order a");
@@ -4899,8 +4900,15 @@
             $this->db->join('gccmaster.tblemployees toe', 'toe.id = top.employee_id', 'left');
             $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id");
             $this->db->join('gccmaster.tblemployees emp', 'emp.id = a.accomplished_by', 'left');
-            $this->db->where("a.status", "Approved");
-            $this->db->where("a.accomplished", 1);
+
+            if ($status) {
+                if ($status == 'Accomplished') {
+                    $this->db->where("a.status", "Approved");
+                    $this->db->where("a.accomplished", 1);
+                } else {
+                    $this->db->where('a.status', $status);
+                }
+            }
 
             if($startDate == $endDate){
                 $this->db->where('DATE(td.date_from)', $startDate);
@@ -5028,7 +5036,7 @@
             return $result;
         }
 
-        public function get_accomplished_item_count($company = null, $department = null, $search = null, $startDate = null, $endDate = null){
+        public function get_accomplished_item_count($company = null, $department = null, $search = null, $startDate = null, $endDate = null, $status = null){
             $filterFields = array('a.station', 'a.type', 'a.company', 'a.department', 'a.reference_no', 'toe.firstname', 'toe.lastname');
 
             $sql = "a.station, a.type, a.company, a.department, a.id, a.reference_no, a.company, a.driver, a.status, a.vehicle_id, 
@@ -5039,8 +5047,15 @@
             $this->db->join('gcceforms.travel_personnel top', 'top.travel_order_id = a.id', 'left');
             $this->db->join('gccmaster.tblemployees toe', 'toe.id = top.employee_id', 'left');
             $this->db->join("gcceforms.travel_destination td","td.travel_order_id = a.id");
-            $this->db->where("a.status", "Approved");
-            $this->db->where("a.accomplished", 1);
+
+            if ($status){
+                if ($status == 'Accomplished') {
+                    $this->db->where("a.status", "Approved");
+                    $this->db->where("a.accomplished", 1);
+                } else {
+                    $this->db->where('a.status', $status);
+                }
+            }
 
             if($startDate == $endDate){
                 $this->db->where('DATE(td.date_from)', $startDate);

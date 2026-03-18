@@ -169,7 +169,7 @@ class Travel_order extends MY_Controller
         $this->core_layout->setPageTitle("Travel Order - New Travel Order");
         $this->core_layout->setPrivilegeName("to_masterfile");
 
-        $version = filemtime(FCPATH.'assets/js/eforms/travel_order/new_travel_order.js');
+        $version = filemtime(FCPATH.'assets/js/eforms/travel_order/new_travel_order.js');$version = filemtime(FCPATH.'assets/js/eforms/travel_order/new_travel_order.js');
         $this->core_layout->addJs("js/eforms/travel_order/new_travel_order.js", true, $tempData,"?v={$version}");
         // $this->core_layout->addJs("js/eforms/travel_order/travel_order_sites.js", true);
 
@@ -1483,7 +1483,8 @@ class Travel_order extends MY_Controller
         $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
         
-        $this->core_layout->addJs("js/eforms/travel_order/accomplishment_report.js", true);
+        $version = filemtime(FCPATH.'assets/js/eforms/travel_order/accomplishment_report.js');
+        $this->core_layout->addJs("js/eforms/travel_order/accomplishment_report.js", true, array(), "?v={$version}");
 
         $this->load->view('core/templates/header');
         $this->load->view('eforms/travel_order/report');
