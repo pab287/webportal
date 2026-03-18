@@ -404,7 +404,7 @@
                                                                                         <span class="m-badge m-badge--danger m-badge--wide ml-2 m--regular-font-size-sm5"><?php echo $value->bonus_code; ?></span>
                                                                                     <?php endif; ?>
                                                                                     <?php if($value->id == $payroll_sheet_max_id): ?>
-                                                                                        <span class="m-badge m-badge--success m-badge--wide ml-2 m--regular-font-size-sm5" data-index="<?php echo $value->id; ?>">CURRENT</span>
+                                                                                        <span class="m-badge m-badge--success m-badge--wide ml-2 m--regular-font-size-sm5">CURRENT</span>
                                                                                         <?php if (intval($value->printed_payslip) == 1): ?>
                                                                                             <span class="m-badge m-badge--primary m-badge--wide m--regular-font-size-sm5">PRINTED</span>
                                                                                         <?php endif; ?>
@@ -457,7 +457,7 @@
                                             <div class="row">
                                                 <div class="col-12 col-md-12 col-lg-12 col-xl-12">
                                                     <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
-                                                        <table id="tbl-loans" class="table display table-bordered table-striped dataTable no-footer" width="100%">
+                                                        <table id="tbl-loans" class="table display table-bordered table-striped dataTable no-footer" style="width:100%">
                                                             <thead>
                                                                 <th width="30%">Loan Name</th>
                                                                 <th>Loaned Amount</th>
