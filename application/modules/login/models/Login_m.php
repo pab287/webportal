@@ -691,7 +691,7 @@ Class Login_m extends CI_Model{
         return $maskedLocalPart . '@' . $domain;
     }
 
-    public function authenticate($username, $password, $remember){
+    public function __authenticate($username, $password, $remember){
         $user = $this->login($username, $password);
         if (!$user) {
             return [
@@ -752,6 +752,115 @@ Class Login_m extends CI_Model{
         return [
             'status' => 'SUCCESS',
             'session' => $session
+        ];
+    }
+
+    public function authenticate($username, $password, $remember){
+        $user = $this->login($username, $password);
+        if (!$user) {
+            return $this->authResponse('INVALID', 'Invalid username or password');
+        }
+        $user = $user[0];
+        if ($user->is_suspended) {
+            return $this->authResponse('SUSPENDED', 'This user account is suspended.');
+        }
+
+        if ($user->lockout) {
+            return $this->authResponse('LOCKED', 'This user account is locked. Please contact IT Support');
+        }
+
+        $privileges = $this->get_privileges_by_id($user->id);
+        // ✅ Force auth if important
+        $requires2FA = ($user->auth == 1 || $user->is_important == 1);
+        // ✅ Check trusted device
+        $isTrustedDevice = $this->isTrustedDevice($user->emp_id);
+        // ✅ Remember me
+        if ($remember) { $this->setRememberMe($user->id); }
+        // ✅ If 2FA required and NOT trusted
+        if ($requires2FA && !$isTrustedDevice) {
+            $contacts = $this->getUserContacts($user->emp_id);
+            return [
+                'status' => '2FA',
+                'session' => [
+                    'auth' => 'show',
+                    'emp_id' => $user->emp_id,
+                    'username' => $username,
+                    'password' => $password,
+                    'contacts' => $contacts,
+                    'is_trusted_device' => false
+                ]
+            ];
+        }
+
+        // ✅ Normal login OR trusted device bypass
+        $session = $this->buildUserSession($user, $privileges);
+
+        return [
+            'status' => 'SUCCESS',
+            'session' => $session
+        ];
+    }
+
+    private function isTrustedDevice($emp_id){
+        $token = $this->input->cookie('device_trust_token', TRUE);
+        if (!$token) { return false; }
+        $query = $this->db->select('id')
+            ->from('gccmaster.trusted_devices')
+            ->where('trust_token', $token)
+            ->where('emp_id', $emp_id)
+            ->where('expiry >', date('Y-m-d H:i:s'))
+            ->get();
+
+        return ($query->num_rows() === 1);
+    }
+
+    private function getUserContacts($emp_id){
+        $data = $this->db->select('u.email, u.telegram_chat_id, e.mobile_no')
+            ->from('gccmaster.tblusers u')
+            ->join('gccmaster.tblemployees e', 'u.emp_id = e.id', 'left')
+            ->where('u.emp_id', $emp_id)
+            ->get()
+            ->row_array();
+
+        return array_map(function ($value) {
+            return is_null($value) ? '' : $value;
+        }, $data ?? []);
+    }
+
+    private function setRememberMe($userId){
+        $token = random_string('alnum', 60);
+        set_cookie('remember_me', $token, 0);
+        $this->db->update(
+            'gccmaster.tblusers',
+            ['remember_token' => $token],
+            ['id' => $userId]
+        );
+    }
+
+    private function buildUserSession($user, $privileges){
+        return [
+            'id' => $user->id,
+            'emp_id' => $user->emp_id,
+            'username' => $user->username,
+            'firstname' => $user->firstname,
+            'lastname' => $user->lastname,
+            'suffix' => $user->suffix,
+            'privileges' => $privileges,
+            'TwoFactorAuth' => $user->auth,
+            'group_id' => $user->group_id,
+            'email' => $user->email,
+            'company' => $user->company_id,
+            'department' => $user->department_id,
+            'next_update' => $user->next_update,
+            'waive_count' => $user->waive_password_update,
+            'is_important' => $user->is_important
+        ];
+    }
+
+    private function authResponse($status, $message){
+        return [
+            'status' => $status,
+            'message' => $message
         ];
     }
 }
