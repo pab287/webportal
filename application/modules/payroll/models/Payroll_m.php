@@ -1178,6 +1178,8 @@ class Payroll_m extends CI_Model{
                 $half_day_absent = 0;
                 $wholeDayAbsent = 0;
                 $unpaidHoliday = 0;
+                $unpaid_holiday_minutes = 0;
+                $unpaid_holiday_amount = 0;
 
                 if($isMonthlyPaidEmployee === false){
                     $timesheet = $this->db
@@ -1473,7 +1475,6 @@ class Payroll_m extends CI_Model{
                     $wholeDayAbsent = $temp_unrendered_data->absent_days;
                     $unpaidHoliday = $temp_unrendered_data->unpaid_holiday;
                     
-                    $unpaid_holiday_minutes = 0;
                     if(is_array($unpaidHoliday) && !empty($unpaidHoliday)){
                         $unpaid_holiday_minutes = array_reduce($unpaidHoliday, function ($carry, $item) {
                             return $carry + $item["total_minutes"];
@@ -1560,7 +1561,6 @@ class Payroll_m extends CI_Model{
                     }, 0);
                     
                 } // end of is monthly paid FALSE
-
 
                 /*** hourly unrendred minutes ***/
                 if($employee->payroll_type == "hourly"){
