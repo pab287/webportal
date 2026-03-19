@@ -7,6 +7,7 @@ projectTable = $('#project_table').DataTable({
     processing: true,
     searching: false,
     rowId: 'id',
+    order: [[ 0, "desc" ]],
     ajax: {
         url: baseUrl("eforms/engineering_request_forms/get_projects"),
         type: "POST",
@@ -19,7 +20,7 @@ projectTable = $('#project_table').DataTable({
         }
     },
     columns: [
-        { data: "id", visible: false, searchable: false },
+        { data: "id", visible: false, searchable: false, name: "id" },
         { data: "project_name" },
         { data: "project_location" },
         { data: "created_at",
@@ -64,7 +65,7 @@ projectTable = $('#project_table').DataTable({
         },
         // { data: "date_created" }
     ],
-    order: [[ 0, "desc" ]],
+
 
 
 });

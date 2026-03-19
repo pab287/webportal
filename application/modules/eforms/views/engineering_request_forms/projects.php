@@ -54,14 +54,14 @@
             <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll m-datatable--scroll">
                 <table class="table table-striped table-bordered table-sm" id="project_table" width="100%">
                     <thead>
-                    <tr>
-                        <th></th>
-                        <th>Project Name</th>
-                        <th>Project Location</th>
-                        <th>Created At</th>
-                        <th>Created By</th>
-                        <th>Actions</th>
-                    </tr>
+                        <tr>
+                            <th></th>
+                            <th>Project Name</th>
+                            <th>Project Location</th>
+                            <th>Created At</th>
+                            <th>Created By</th>
+                            <th>Actions</th>
+                        </tr>
                     </thead>
                     <tbody>
                     </tbody>

@@ -5,6 +5,7 @@ class Eng_req_m extends CI_Model {
     protected $rfiTable = "gcceforms.eng_rfi_form";
     protected $reqTypeTable = "gcceforms.eng_req_type";
     protected $replyTable = "gcceforms.eng_rfi_form_reply";
+    protected $replyAttachmentTable = "gcceforms.eng_rfi_form_attachments";
     protected $user_data;
     public function __construct() {
         parent::__construct();
@@ -135,16 +136,10 @@ class Eng_req_m extends CI_Model {
     
         $attachments = $this->db->get()->result_array();
 
-        $this->db->select("*");
-        $this->db->from("gcceforms.eng_rfi_form_attachments");
-        $this->db->where("eng_rfi_id", $id);
-        $this->db->where("type", "reply");
-        $reply_attachments = $this->db->get()->result_array();
-        
         $resultset['reply'] = $this->getRfiReply($id);
         $resultset['data'] = $rfiData;
         $resultset['attachments'] = $attachments;
-        $resultset['reply_attachments'] = $reply_attachments;
+        $resultset['reply_attachments'] = $this->getRFIAttachments($resultset['reply']);
         return $resultset;
     }
 
@@ -344,8 +339,26 @@ class Eng_req_m extends CI_Model {
         }
         $insert_id = $this->db->insert_id();
         $resultset["file_upload"] = [];
+
+        $insert_reply = $this->db->insert("gcceforms.eng_rfi_form_reply",
+            [
+                "rfi_id" => $insert_id,
+                "reply"   => "",
+                "status"       => "pending",
+                "created_by" => $this->user_data['emp_id'],
+            ]
+        );
+
+        if (!$insert_reply) {
+            $this->db->trans_rollback();
+            return [
+                "success" => false,
+                "message" => "Failed to create RFI."
+            ];
+        }
+
         if (!empty($_FILES['files']['name'][0])) {
-            $filepath = FCPATH . "uploads/files/engineering_request/rfi_" . $insert_id . "/";
+            $filepath = FCPATH . "uploads/files/engineering_request/rfi_" . $insert_id . "/request". "/";
             if (!is_dir($filepath)) {
                 mkdir($filepath, 0777, true);
             }
@@ -356,7 +369,7 @@ class Eng_req_m extends CI_Model {
                 $_FILES['file']['tmp_name'] = $_FILES['files']['tmp_name'][$i];
                 $_FILES['file']['error']    = $_FILES['files']['error'][$i];
                 $_FILES['file']['size']     = $_FILES['files']['size'][$i];
-                $originalName = str_replace(' ', '_', $_FILES['file']['name']);
+                $originalName = str_replace([' ', '(', ')'], ['_', '', ''], $_FILES['file']['name']);
                 $config = [
                     'upload_path'   => $filepath,
                     'allowed_types' => 'pdf|doc|docx|jpg|jpeg|png',
@@ -388,7 +401,8 @@ class Eng_req_m extends CI_Model {
                         "status"    => "success"
                     ];
     
-                } else {
+                } 
+                else {
     
                     $this->db->trans_rollback();
                     return [
@@ -569,7 +583,7 @@ class Eng_req_m extends CI_Model {
     }
 
     private function getRfiReply($id){
-        $this->db->select("a.id, a.status, a.reply, a.reply_remarks, a.created_by, a.created_at, c.description as company_name, d.name as position_name,
+        $this->db->select("a.id, a.rfi_id, a.status, a.reply, a.reply_remarks, a.created_by, a.created_at, c.description as company_name, d.name as position_name,
             CONCAT(b.firstname, ' ', IF(b.middlename IS NOT NULL AND b.middlename != '', CONCAT(LEFT(b.middlename,1), '. '), ''), b.lastname) as created_by_name,
         ");
         $this->db->from($this->replyTable. ' as a');
@@ -577,8 +591,21 @@ class Eng_req_m extends CI_Model {
         $this->db->join("gcchris.tblcompanies as c", "c.id = b.company_id", "LEFT");
         $this->db->join("gcchris.tblposition as d", "d.id = b.position", "LEFT");
         $this->db->where("a.rfi_id", $id);
+        $this->db->where("a.is_archived", 0);
         $query = $this->db->get();
         return $query->row_array();
+    }
+
+    private function getRFIAttachments($reply){
+        if (empty($reply) || empty($reply['rfi_id'])) {
+            return [];
+        }
+        $this->db->select("*");
+        $this->db->from("gcceforms.eng_rfi_form_attachments");
+        $this->db->where("eng_rfi_id",$reply['rfi_id']);
+        $this->db->where("type", "reply");
+        $query = $this->db->get();
+        return $query->result_array();
     }
 
     public function saveReply(){
@@ -601,10 +628,9 @@ class Eng_req_m extends CI_Model {
             ];
         }
     
-        $insert_id = $this->db->insert_id();
         $resultset["file_upload"] = [];
         if (!empty($_FILES['files']['name'][0])) {
-            $filepath = FCPATH . "uploads/files/engineering_request/rfi_" . $rfiId . "/reply_" . $insert_id . "/";
+            $filepath = FCPATH . "uploads/files/engineering_request/rfi_" . $rfiId . "/reply"."/";
             if (!is_dir($filepath)) {
                 mkdir($filepath, 0777, true);
             }
@@ -681,6 +707,163 @@ class Eng_req_m extends CI_Model {
         $resultset["success"] = true;
         $resultset["message"] = "Reply saved successfully.";
         return $resultset;
+    }
+
+    public function updateReply(){
+        $resultset = array();
+        $post = $this->input->post();
+        $this->db->trans_begin();
+        $data = array(
+            "rfi_id" => $post['rfi_id'],
+            "reply"      => $post['reply'],
+        );
+        $eng_rfi_id = $post['rfi_id'];
+        $update = $this->db->where('id', $eng_rfi_id)->update($this->replyTable,$data);
+        if(!$update){
+            $this->db->trans_rollback();
+            return [
+                "success" => false,
+                "message" => "Failed to update reply."
+            ];
+        }
+        $resultset["file_upload"] = [];
+        $filesToAdd    = json_decode($post['attachmentsToAdd'],    true) ?? [];
+        $filesToRemove = json_decode($post['attachmentsToRemove'], true) ?? [];
+        if (!empty($filesToRemove)) {
+            foreach ($filesToRemove as $filename) {
+                $this->db->where('eng_rfi_id', $eng_rfi_id)->where('filename', $filename)->delete($this->replyAttachmentTable);
+
+                $filePath = FCPATH . "uploads/files/engineering_request/rfi_{$eng_rfi_id}/reply/{$filename}";
+                if (file_exists($filePath)) {
+                    if (!unlink($filePath)) {
+                        $this->db->trans_rollback();
+                        return [ "success" => false, "message" => "Failed to delete file from server: $filename"];
+                    }
+                }
+            }
+        }
+
+        if (!empty($filesToAdd)) {
+            $filepath = FCPATH . "uploads/files/engineering_request/rfi_{$eng_rfi_id}/reply/";
+            
+            if (!is_dir($filepath)) {
+                mkdir($filepath, 0755, true);
+            }
+
+        
+            foreach ($_FILES['files']['name'] as $i => $fileName) {
+                $currentFileName = str_replace(' ', '_', $fileName);
+
+                if (!in_array(strtolower($currentFileName), $filesToAdd)) {
+                    continue;
+                }
+        
+                $_FILES['file']['name']     = $_FILES['files']['name'][$i];
+                $_FILES['file']['type']     = $_FILES['files']['type'][$i];
+                $_FILES['file']['tmp_name'] = $_FILES['files']['tmp_name'][$i];
+                $_FILES['file']['error']    = $_FILES['files']['error'][$i];
+                $_FILES['file']['size']     = $_FILES['files']['size'][$i];
+        
+                $config = [
+                    'upload_path'   => $filepath,
+                    'allowed_types' => 'pdf|doc|docx|jpg|jpeg|png',
+                    'max_size'      => 51200,
+                    'file_name'     => $currentFileName,
+                    'remove_spaces' => true
+                ];
+                $this->load->library("upload", $config);
+                $this->upload->initialize($config);
+                
+                if ($this->upload->do_upload('file')) {
+                    $uploadedName = $this->upload->data('file_name');
+        
+                    $saveAttachment = $this->db->insert(
+                        $this->replyAttachmentTable,
+                        [
+                            "eng_rfi_id" => $eng_rfi_id,
+                            "filename"   => $uploadedName,
+                            "type"       => "reply",
+                            "created_by" => $this->user_data['emp_id'],
+                        ]
+                    );
+        
+                    if (!$saveAttachment) {
+                        $this->db->trans_rollback();
+                        return [
+                            "success" => false,
+                            "message" => "Failed saving attachment: $uploadedName"
+                        ];
+                    }
+        
+                    $resultset["file_upload"][] = [
+                        "file_name" => $uploadedName,
+                        "status"    => "success"
+                    ];
+        
+                } else {
+                    $resultset["file_upload"][] = [
+                        "file_name" => $currentFileName,
+                        "status"    => "failed",
+                        "message"   => $this->upload->display_errors('', '')
+                    ];
+                }
+            }
+        }
+
+        if ($this->db->trans_status() === FALSE) {
+            $this->db->trans_rollback();
+            return [
+                "success" => false,
+                "message" => "Transaction failed."
+            ];
+        }
+    
+        $this->db->trans_commit();
+        $resultset["success"] = true;
+        $resultset["message"] = "Reply updated successfully.";
+        return $resultset;
+    }
+
+
+
+    public function approveReply(){
+        $post = $this->input->post();
+        $eng_rfi_id = $post['eng_rfi_id'];
+        $update = $this->db->where('rfi_id', $eng_rfi_id)->update($this->rfiTable, ['status' => 'for_note']);
+        if($update){
+            return [
+                "success" => true,
+                "message" => "Reply approved successfully."
+            ];
+        }
+    }
+
+    public function disapproveReply(){
+        $post = $this->input->post();
+        $eng_rfi_id = $post['eng_rfi_id'];
+        $update = $this->db->where('rfi_id', $eng_rfi_id)->update($this->rfiTable, ['status' => 'for_checking']);
+        if($update){
+            return [
+                "success" => true,
+                "message" => "Reply disapproved successfully."
+            ];
+        }
+    }
+
+    public function noteReply(){
+        $post = $this->input->post();
+        $eng_rfi_id = $post['eng_rfi_id'];
+        $update = $this->db->where('id', $eng_rfi_id)->update($this->rfiTable, ['status' => 'noted']);
+        if($update){
+            return [
+                "success" => true,
+                "message" => "Note saved successfully."
+            ];
+        }
+    }
+
+    private function sendTelegram(){
+
     }
 
 

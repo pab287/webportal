@@ -1,32 +1,27 @@
-let _request = null;
-let _req_types = null;
-let _attachments = null;
-let _replies = null;
-let _reply_attachments = null;
+let _request = false;
+let _req_types = false;
+let _attachments = false;
+let _replies = false;
+let _reply_attachments = [];
 let informationEditor;
+let id = null;
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
-
-    if(typeof _tempContentData.request !== "undefined" && Object.keys(_tempContentData.request).length > 0){
+    if(_tempContentData.request && Object.keys(_tempContentData.request).length > 0){
         _request = _tempContentData.request;
     }
-
-    if(typeof _tempContentData.req_types !== "undefined" && Object.keys(_tempContentData.req_types).length > 0){
+    if(_tempContentData.req_types && Object.keys(_tempContentData.req_types).length > 0){
         _req_types = _tempContentData.req_types;
     }
-
-    if(typeof _tempContentData.attachments !== "undefined" && Object.keys(_tempContentData.attachments).length > 0){
+    if(_tempContentData.attachments && Object.keys(_tempContentData.attachments).length > 0){
         _attachments = _tempContentData.attachments;
     }
-
-    if(typeof _tempContentData.reply !== "undefined" && Object.keys(_tempContentData.reply).length > 0){
+    if (_tempContentData.reply && Object.keys(_tempContentData.reply).length > 0) {
         _replies = _tempContentData.reply;
     }
-
-    if(typeof _tempContentData.reply_attachments !== "undefined" && Object.keys(_tempContentData.reply_attachments).length > 0){
+    if(_tempContentData.reply_attachments && Object.keys(_tempContentData.reply_attachments).length > 0){
         _reply_attachments = _tempContentData.reply_attachments;
     }
-
 }
 
 const maxFileSize = 50 * 1024 * 1024; // 50MB
@@ -53,19 +48,46 @@ let edit_rfi = new Vue ({
         req_types: _req_types,
         selectedType: null,
         attachments: _attachments,
-        replyAttachmentsUpload: {
-            className: "",
-            count: 0,
-            uploadedFiles: [],
-        },
         filePath: null,
         reply : _replies,
-        replyAttachments: _reply_attachments
+        replyAttachments: _reply_attachments,
+        currentReply: "",
+        currentAttachment: null,
+        changes:{
+            reply: false,
+            attachment: false
+        },
+        attachmentsToAdd: [],
+        attachmentsToRemove: [],
+        showUpdate: false,
+        
     },
     mounted: function () {
-        // console.log(this.attachments);
+        loadEditor(this.reply.reply);
+        id = this.content.id;
+        if (this.reply && this.reply.reply !== undefined) {
+            this.currentReply = JSON.parse(JSON.stringify(this.reply.reply));
+        }
+        
+        if (this.replyAttachments !== undefined) {
+            this.currentAttachment = JSON.parse(JSON.stringify(this.replyAttachments));
+        }
     },
     computed: {
+        reqApproved(){
+            if(this.reply.status == "approved"){
+                return true;
+            }else{
+                return false;
+            }
+        },
+        canEdit(){
+            if(_actions.includes('btnCanreply')){
+                return true;
+            }else{
+                return false;
+            }
+        },
         isOthersSelected: function () {
             const others = this.req_types.find(t =>
                 t.type_name.toLowerCase() === 'others'
@@ -102,34 +124,99 @@ let edit_rfi = new Vue ({
         },
     },
     methods: {
-        // formatReply(replies){
-        //     if (!replies) return '';
-        //     const list = Array.isArray(replies) ? replies : Object.values(replies);
-        //     return list.map(r => `
-        //         <div class="mb-2">
-        //             ${r.reply}
-        //             <div>
-        //                 <small class="text-muted">${r.created_at}</small>
-        //                 <small class="ml-2">${r.created_by_name || ''}</small>
-        //             </div>
-        //         </div>
-        //     `).join('<hr>');
-        // },
+        onFileChange(event) {
+            const files = event.target.files;
+            handleFiles(files);     
+            this.checkChanges();
+        },
+        fileDelete(index){
+            this.replyAttachments.splice(index,1);
+            this.replyAttachments.count = this.replyAttachments.length;
+            this.checkChanges();
+        },
+        checkChanges() {
+            const cleanName = (name) =>
+                name.trim()
+                    .replace(/[()]/g, '')
+                    .replace(/\s+/g, '')
+                    .toLowerCase();
+        
+            const replyFiles = this.replyAttachments.map(f => ({
+                original: f,
+                name: cleanName(f.filename)
+            }));
+        
+            const currentFiles = this.currentAttachment.map(f => ({
+                original: f,
+                name: cleanName(f.filename)
+            }));
+        
+            const replyNames = replyFiles.map(f => f.name);
+            const currentNames = currentFiles.map(f => f.name);
+            this.attachmentsToAdd = replyFiles.filter(f => !currentNames.includes(f.name)).map(f => f.original.filename || f.original.name);
+            this.attachmentsToRemove = currentFiles.filter(f => !replyNames.includes(f.name)).map(f => f.original.filename || f.original.name);
+            this.changes.attachment = this.attachmentsToAdd.length > 0 || this.attachmentsToRemove.length > 0;
+        },
+        editReply() {
+            this.showUpdate = !this.showUpdate;
+            if (this.showUpdate) {
+                console.log("Allow Editing");
+                informationEditor.disableReadOnlyMode('reply-lock'); // allow editing
+            } else {
+                console.log("Disalllow Editing");
+                informationEditor.enableReadOnlyMode('reply-lock');  // readonly
+            }
+        },
+        approveReply() {
+            _this = this;
+            $.ajax({
+                url: baseUrl('eforms/eng_request/approve_reply'),
+                method: "POST",
+                data: {
+                    csrf_token: _csrf_hash,
+                    reply: _this.reply
+                },
+                success: function (data) {
+
+                }
+            })
+        },
+        noteReply() {
+            _this = this;
+            $.ajax({
+                url: baseUrl('eforms/eng_request/note_reply'),
+                method: "POST",
+                data: {
+                    csrf_token: _csrf_hash,
+                    reply: _this.reply
+                },
+                success: function (data) {
+                }
+            })
+        },
+        disapproveReply() {
+            _this = this;
+            $.ajax({
+                url: baseUrl('eforms/eng_request/disapprove_reply'),
+                method: "POST",
+                data: {reply: _this.reply},
+                success: function (data) {
+                }
+            })
+        },
         formatDate(date) {
             return moment(date).format('MMMM D, YYYY');
         },
-        formatLabel: function (value) {
+        formatLabel(value) {
             return value.replace(/\b\w/g, function (l) {
                 return l.toUpperCase();
             });
         },
-        getExtension: function (name) {
+        getExtension(name) {
             if (!name || typeof name !== "string") {
                 return baseUrl("assets/images/file_icons/default.svg");
             }
-        
             const extension = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
-        
             const iconMap = {
                 doc: "doc.svg",
                 docx: "doc.svg",
@@ -137,21 +224,14 @@ let edit_rfi = new Vue ({
                 jpg: "jpg.svg",
                 jpeg: "jpg.svg"
             };
-        
             const fileName = iconMap[extension] || "default.svg";
-        
             return baseUrl(`assets/images/file_icons/${fileName}`);
         },
-        getClass: function (name) {
-
+        getClass(name) {
             if (!name || typeof name !== "string") {
                 return "m-widget4 m-widget2__item m-widget2__item--default col-lg-4 col-md-12 col-sm-12";
             }
-        
-            // get extension safely
-            const extension = name
-                .substring(name.lastIndexOf('.') + 1)
-                .toLowerCase();
+            const extension = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
         
             const classMap = {
                 doc: "m-widget4 m-widget2__item m-widget2__item--primary col-lg-4 col-md-12 col-sm-12",
@@ -164,24 +244,25 @@ let edit_rfi = new Vue ({
             return classMap[extension] ||
                 "m-widget4 m-widget2__item m-widget2__item--default col-lg-4 col-md-12 col-sm-12";
         },
-        openFile(filename) {
+        openFile(filename,reply = false) {
+            const rep = reply ? "reply" : "request";
             const extension = filename.split('.').pop().toLowerCase();
             const wordExtensions = ['doc', 'docx'];
         
             if (wordExtensions.includes(extension)) {
                 const encodedFilename = encodeURIComponent(filename);
-                const downloadPath = baseUrl() + `uploads/files/engineering_request/rfi_${this.content.id}/${encodedFilename}`;
+                const downloadPath = baseUrl() + `uploads/files/engineering_request/rfi_${id}/${rep}/${encodedFilename}`;
                 window.open(downloadPath, '_blank');
                 toastr.info('The document has been downloaded.');
                 return;
             }
         
             const encodedFilename = encodeURIComponent(filename);
-            this.filePath = baseUrl() + `uploads/files/engineering_request/rfi_${this.content.id}/${encodedFilename}`;
+            this.filePath = baseUrl() + `uploads/files/engineering_request/rfi_${id}/${rep}/${encodedFilename}`;
             $("#fileViewModal").modal("show");
         },
 
-        getAttachExtension: function(type) {
+        getAttachExtension(type) {
             let extension = mimeMap[type] || (type.includes('/') ? type.split('/').pop() : type);
             extension = extension.toLowerCase();
             const iconMap = {
@@ -195,7 +276,7 @@ let edit_rfi = new Vue ({
             const fileName = iconMap[extension] || "default.svg";
             return baseUrl(`assets/images/file_icons/${fileName}`);
         },
-        getAttachClass: function(type) {        
+        getAttachClass(type) {        
             let extension = mimeMap[type] || (type.includes('/') ? type.split('/').pop() : type);
             extension = extension.toLowerCase();
             const classMap = {
@@ -208,51 +289,9 @@ let edit_rfi = new Vue ({
         
             return classMap[extension] || "m-widget4 m-widget2__item m-widget2__item--default col-lg-4 col-md-12 col-sm-12";
         },
-        fileDelete: function(index){
-            this.replyAttachments.uploadedFiles.splice(index,1);
-            this.replyAttachments.count = this.replyAttachments.uploadedFiles.length;
-        },
-
     }
 })
 
-ClassicEditor.create( document.querySelector('#information_needed' ),{
-    toolbar: [
-        'bold',
-        'italic',
-        'bulletedList',
-        'numberedList',
-        'blockQuote',
-        'undo',
-        'redo'
-    ],
-})
-.then(editor => {
-    informationEditor = editor;
-    informationEditor.model.document.on('change:data', () => {
-        const data = informationEditor.getData();
-        const plainText = data.replace(/<[^>]*>/g, '').trim();
-        if (plainText) {
-            $('#information_needed-error').hide();
-        }else{
-            $('#information_needed-error').show();
-        }
-    });
-    editor.editing.view.change(writer => {
-        writer.setStyle(
-            'min-height',
-            '100px',
-            editor.editing.view.document.getRoot()
-        );
-    });
-})
-.catch( error => {
-});
-
-
-$('#fileupload').on('change', function(e) {
-    handleFiles(e.target.files);
-});
 
 function handleFiles(fileList) {
     $.each(fileList, function(index, file) {
@@ -262,7 +301,15 @@ function handleFiles(fileList) {
     });
 }
 
+function cleanName(name){
+    return name.trim().replace(/[()]/g, '').replace(/\s+/g, '') .toLowerCase();
+};
+
 function validateFile(file) {
+
+
+
+    console.log("Validate", file);
     if (file.size > maxFileSize) {
         toastr.error(`File "${file.name}" is too large. Maximum size is 10MB.`);
         return false;
@@ -273,7 +320,10 @@ function validateFile(file) {
         return false;
     }
     
-    const exists = edit_rfi.replyAttachments.uploadedFiles.some(f => f.name === file.name);
+    const exists = edit_rfi.replyAttachments.some(f =>
+        cleanName(f.filename) === cleanName(file.name)
+    );
+
     if (exists) {
         toastr.error(`File "${file.name}" is already selected.`);
         return false;
@@ -284,56 +334,103 @@ function validateFile(file) {
 function addFile(file) {
     let fileObj = {
         id: 'f' + Math.floor(1000 + Math.random() * 9000),
-        name: file.name,
+        filename: cleanName(file.name), //file.name,
         type: file.type,
         size: file.size,
     };
-    edit_rfi.replyAttachments.uploadedFiles.push(fileObj);
+    edit_rfi.replyAttachments.push(fileObj);
 }
 
-$('#replyModal').on('shown.bs.modal', function () {
-    let id = edit_rfi.content.id;
-    $.validate({
-        form: "#reply_form",
-        lang: "en",
-        scrollToTopOnError: false,
-        onValidate: function () {
-            if (informationEditor) {
-                const data = informationEditor.getData();
-                const plainText = data.replace(/<[^>]*>/g, '').trim();
-                $('#information_needed').val(data);
-                if (!plainText) {
-                    $('#information_needed-error').show();
-                    $('.ck-editor__editable')
-                        .addClass('is-invalid');
-                    return false;
-                } else {
-                    $('#information_needed-error').hide();
-                    $('.ck-editor__editable').removeClass('is-invalid');
+
+
+
+
+function loadEditor(reply){
+    reply = reply ?? "";
+    ClassicEditor.create( document.querySelector('#reply_needed' ),{
+        toolbar: [
+            'bold',
+            'italic',
+            'bulletedList',
+            'numberedList',
+            'blockQuote',
+            'undo',
+            'redo'
+        ],
+    })
+    .then(editor => {
+        informationEditor = editor;
+        informationEditor.model.document.on('change:data', () => {
+            const data = informationEditor.getData();
+            const plainText = data.replace(/<[^>]*>/g, '').trim();
+            if (plainText) {
+                $('#reply_needed-error').hide();
+            }else{
+                $('#reply_needed-error').show();
+            }
+
+            if(data != edit_rfi.currentReply){
+                edit_rfi.changes.reply = true;
+            }else{
+                edit_rfi.changes.reply = false;
+            }
+        });
+
+        editor.editing.view.change(writer => {
+            writer.setStyle(
+                'min-height',
+                '100px',
+                editor.editing.view.document.getRoot()
+            );
+        });
+
+        editor.setData(reply);
+        editor.enableReadOnlyMode('reply-lock');
+    })
+    .catch( error => {
+    });
+}
+
+$.validate({
+    form: "#edit_reply_form",
+    lang: "en",
+    scrollToTopOnError: false,
+    onValidate: function () {
+        if (informationEditor) {
+            const data = informationEditor.getData();
+            const plainText = data.replace(/<[^>]*>/g, '').trim();
+            $('#information_needed').val(data);
+            if (!plainText) {
+                $('#reply_needed-error').show();
+                $('.ck-editor__editable').addClass('is-invalid');
+                return false;
+            } else {
+                $('#reply_needed-error').hide();
+                $('.ck-editor__editable').removeClass('is-invalid');
+            }
+        }
+        return true;
+    },
+    onSuccess: function () {
+        const form = $('#edit_reply_form');
+        const formData = new FormData(form[0]);
+        formData.append('attachmentsToAdd',JSON.stringify(edit_rfi.attachmentsToAdd));
+        formData.append('attachmentsToRemove',JSON.stringify(edit_rfi.attachmentsToRemove));
+        formData.append('csrf_token', _csrf_hash);
+        formData.append('rfi_id', id);
+        $.ajax({
+            url: siteUrl("eforms/engineering_request_forms/update_reply"),
+            type: "POST",
+            dataType: "JSON",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+                if(res.success){
+                    foreach res.file_upload.filename add to edit_rfi.currentAttachment
                 }
             }
-            return true;
-        },
-        onSuccess: function () {
-            const form = $('#reply_form');
-            const formData = new FormData(form[0]);
-            formData.append('csrf_token', _csrf_hash);
-            formData.append('rfi_id', id);
-            $.ajax({
-                url: siteUrl("eforms/engineering_request_forms/save_reply"),
-                type: "POST",
-                dataType: "JSON",
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function (res) {
-                    if(res.success){
-                        $('#replyModal').modal('hide');
-                    }
-                }
-            });
-            return false; 
-        }
-    });
-
+        });
+        return false; 
+    }
 });

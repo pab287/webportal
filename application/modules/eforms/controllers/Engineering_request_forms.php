@@ -80,8 +80,10 @@
             $data['reply'] = $result['reply'];
             $data['reply_attachments'] = $result['reply_attachments'];
             $data['req_types'] = $this->eng_req->getReqTypes();
+            // $data['actions'] = $this->core_layout->generatePrivilegeAction();
+
             $this->core_layout->setPageTitle("Request For Information");
-            // $this->core_layout->setPrivilegeName("eforms_edit_rfi_request");
+            $this->core_layout->setPrivilegeName("eng_req");
             $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload.css", true);
             $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload-ui.css", true);
             $this->core_layout->addJs("global/plugins/ckeditor/build/ckeditor.js", true);
@@ -132,12 +134,33 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
+        public function update_reply(){
+            $data = $this->eng_req->updateReply();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
         public function get_rfi_request(){
             $id = $this->input->post('id');
             $data = array();
             $result = $this->eng_req->viewRFIRequest($id);
             $data['request'] = $result['data'];
             $data['attachments'] = $result['attachments'];
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+
+        public function approve_reply(){
+            $data = $this->eng_req->approveReply();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function disapprove_reply(){
+            $data = $this->eng_req->disapproveReply();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function note_reply(){
+            $data = $this->eng_req->noteReply();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
         
