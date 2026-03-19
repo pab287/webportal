@@ -176,7 +176,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="tab-pane" id="replyForm" v-if="canEdit || reqApproved">
+                                    <div class="tab-pane" id="replyForm" v-if="canEdit || reqNoted">
                                         <form  id="edit_reply_form" enctype="multipart/form-data">
                                             <div class="row">
                                                 <div class="col-12">
