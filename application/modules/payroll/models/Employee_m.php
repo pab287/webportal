@@ -19,6 +19,7 @@
 
         protected $tbl_hris_loans = "gcchris.loans";
         protected $tbl_payroll_loans = "payroll.loans";
+        protected $tbl_hris_loans_tagged = "gcchris.loans_tagged_paid";
 
         private $user_data;
         private $db_debug;
@@ -3323,7 +3324,7 @@ public function getEmployeeNightDiffList(){
         return $resultset;
     }
 
-    public function setAsPaidLoan() {
+    public function __setAsPaidLoan() {
         $post = $this->input->post();
         $resultset = array();
         if(isset($post) && $post){
@@ -3335,11 +3336,13 @@ public function getEmployeeNightDiffList(){
         return $resultset;
     }
 
-    protected function insertUpdatePaidLoan($post) {
+    protected function __insertUpdatePaidLoan($post) {
         $resultset = array();
         if(isset($post["id"]) && $post["id"]){
             $id = $post["id"];
-            unset($post["id"]);
+            $paidAmount = $post["paid_amount"] ?? 0;
+            $paidAmountFormatted = number_format($paidAmount, 2, ".", ",");
+            unset($post["id"], $post["paid_amount"]);
             
             $this->db->select("loan.id, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
             CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
@@ -3359,20 +3362,30 @@ public function getEmployeeNightDiffList(){
                     $post["paid"] = 1;
                     $this->db->where("id", $id);
                     $this->db->set($post);
-                    $update = $this->db->update($this->tbl_payroll_loans);
+                    $update = $this->db->update($this->tbl_hris_loans);
                     if($update && $this->db->affected_rows() > 0){
-                        $logMessage = `Payroll Loan of employee '${row->employee_name}' with loan #${row->id} and loan description '${row->loan_name}' has been set as 'Paid' with debit note '${post["debit_note"]}' and reason '${post["remarks"]}' has been successfully updated.`;
-                        $this->core_layout->setEventLog($logMessage, "update", "success", "payroll", "user");
-                        $resultset["response"] = true;
-                        $resultset["toastr_msg"] = $logMessage;
+                        $taggedPaid = array("loan_id" => $id, "paid_amount" => $paidAmount, "reason" => $post["remarks"], "debit_note" => $post["debit_note"],
+                        "tagged_by" => $this->core_layout->getCurrentEmployeeId(), "tagged_at" => date("Y-m-d H:i:s"));
+                        $tagged = $this->db->insert($this->tbl_hris_loans_tagged, $taggedPaid);
+                        if($tagged && $this->db->affected_rows() > 0){
+                            $logMessage = "Payroll Loan of employee '{$row->employee_name}' with loan #{$row->id} and loan description '{$row->loan_name}' has been set as 'Paid' with the amount of '{$paidAmountFormatted}', debit note '{$post['debit_note']}' and reason '{$post['remarks']}' has been successfully updated.";
+                            $this->core_layout->setEventLog($logMessage, "update", "success", "payroll", "user");
+                            $resultset["response"] = true;
+                            $resultset["toastr_msg"] = $logMessage;
+                        }else{
+                            $logMessage = "Failed to tag the payroll loans status of employee '{$row->employee_name}' with loan #{$row->id} and loan description '{$row->loan_name}' as 'Paid' with the amount of '{$paidAmountFormatted}', debit note '{$post["debit_note"]}' and reason '{$post["remarks"]}.'";
+                            $this->core_layout->setEventLog($logMessage, "update", "error", "payroll", "user");
+                            $resultset["response"] = false;
+                            $resultset["toastr_msg"] = $logMessage;
+                        }
                     }else{
-                        $logMessage = `Failed to update the payroll loan of employee '${row->employee_name}' with loan #${row->id} and loan description '${row->loan_name}' as 'Paid' with debit note '${post["debit_note"]}' and reason '${post["remarks"]}'`;
+                        $logMessage = "Failed to update the payroll loan of employee '{$row->employee_name}' with loan #{$row->id} and loan description '{$row->loan_name}' as 'Paid' with the amount of '{$paidAmountFormatted}', debit note '{$post["debit_note"]}' and reason '{$post["remarks"]}.'";
                         $this->core_layout->setEventLog($logMessage, "update", "error", "payroll", "user");
                         $resultset["response"] = false;
                         $resultset["toastr_msg"] = $logMessage;
                     }
                 }else{
-                    $logMessage = "Payroll Loan of employee '${row->employee_name}' with loan #${row->id} and loan description '${row->loan_name}' has already been set as 'Paid'";
+                    $logMessage = "Payroll Loan of employee '{$row->employee_name}' with loan #{$row->id} and loan description '{$row->loan_name}' has already been set as 'Paid'";
                     $this->core_layout->setEventLog($logMessage, "update", "error", "payroll", "user");
                     $resultset["response"] = false;
                     $resultset["toastr_msg"] = $logMessage;
@@ -3386,5 +3399,135 @@ public function getEmployeeNightDiffList(){
         }
         
         return $resultset;
+    }
+
+    public function setAsPaidLoan(){
+        $post = $this->input->post();
+        if (!$post) {
+            return $this->response(false, "Failed to update Paid Loan, no post data found");
+        }
+        return $this->insertUpdatePaidLoan($post);
+    }
+
+    protected function insertUpdatePaidLoan($post){
+        $result = null;
+        if (empty($post['id'])) {
+            $result = $this->response(false, "Invalid loan ID");
+        } else {
+            $id = $post['id'];
+            $paidAmount = $post['paid_amount'] ?? 0;
+            $paidAmountFormatted = number_format($paidAmount, 2, ".", ",");
+            unset($post['id'], $post['paid_amount']);
+            $loan = $this->getLoanDetails($id);
+            if (!$loan) {
+                $result = $this->fail("Failed to update the payroll loan, no record found!", "system");
+            } elseif ($loan->paid == 1) {
+                $result = $this->fail(
+                    "Payroll Loan of employee '{$loan->employee_name}' with loan #{$loan->id} has already been set as 'Paid'."
+                );
+            } else {
+                $update = $this->markLoanAsPaid($id, $post);
+                if (!$update) {
+                    $result = $this->fail(
+                        $this->buildFailUpdateMsg($loan, $post, $paidAmountFormatted)
+                    );
+                } else {
+                    $tagged = $this->insertTaggedLoan($id, $paidAmount, $post);
+                    if (!$tagged) {
+                        $result = $this->fail(
+                            $this->buildFailTagMsg($loan, $post, $paidAmountFormatted)
+                        );
+                    } else {
+                        $result = $this->success(
+                            $this->buildSuccessMsg($loan, $post, $paidAmountFormatted)
+                        );
+                    }
+                }
+            }
+        }
+        return $result;
+    }
+
+    private function getLoanDetails($id){
+        $this->db->select("loan.id,
+            CONCAT(UPPER(TRIM(emp.firstname)), ' ',
+            CASE
+                WHEN UPPER(TRIM(emp.middlename)) NOT IN ('N/A','NONE','') AND emp.middlename IS NOT NULL
+                THEN CONCAT(SUBSTR(emp.middlename,1,1),'.') ELSE ''
+            END,' ',
+            UPPER(TRIM(emp.lastname)),
+            CASE
+                WHEN UPPER(TRIM(emp.suffix)) NOT IN ('N/A','NONE','') AND emp.suffix IS NOT NULL
+                THEN CONCAT(' ',UPPER(TRIM(emp.suffix))) ELSE ''
+            END
+        ) as employee_name, loan.paid, UPPER(psl.loan_name) as loan_name");
+
+        $this->db->join($this->employeeTable . " emp", "emp.id = loan.emp_id", "left");
+        $this->db->join($this->tbl_payroll_loans . " psl", "psl.id = loan.loan_id", "left");
+        $query = $this->db->get_where($this->tbl_hris_loans . " loan", ["loan.id" => $id, "loan.is_archived" => 0]);
+        return $query->num_rows() === 1 ? $query->row() : null;
+    }
+
+    private function markLoanAsPaid($id, $post){
+        $post['paid'] = 1;
+        $this->db->where("id", $id);
+        return $this->db->update($this->tbl_hris_loans, $post);
+    }
+
+    private function insertTaggedLoan($id, $paidAmount, $post){
+        $data = [
+            "loan_id"     => $id,
+            "paid_amount" => $paidAmount,
+            "reason"      => $post['remarks'] ?? '',
+            "debit_note"  => $post['debit_note'] ?? '',
+            "tagged_by"   => $this->core_layout->getCurrentEmployeeId(),
+            "tagged_at"   => date("Y-m-d H:i:s")
+        ];
+        return $this->db->insert($this->tbl_hris_loans_tagged, $data);
+    }
+
+    private function buildSuccessMsg($loan, $post, $amount){
+        return "Payroll Loan of employee '{$loan->employee_name}' with loan #{$loan->id} 
+        and loan description '{$loan->loan_name}' has been set as 'Paid' with the amount 
+        of '{$amount}', debit note '{$post['debit_note']}' and reason '{$post['remarks']}' 
+        has been successfully updated.";
+    }
+
+    private function buildFailUpdateMsg($loan, $post, $amount){
+        return "Failed to update the payroll loan of employee '{$loan->employee_name}' 
+        with loan #{$loan->id} and loan description '{$loan->loan_name}' as 'Paid' 
+        with the amount of '{$amount}', debit note '{$post['debit_note']}' 
+        and reason '{$post['remarks']}'.";
+    }
+
+    private function buildFailTagMsg($loan, $post, $amount){
+        return "Failed to tag the payroll loan of employee '{$loan->employee_name}' 
+        with loan #{$loan->id} and loan description '{$loan->loan_name}' as 'Paid' 
+        with the amount of '{$amount}', debit note '{$post['debit_note']}' 
+        and reason '{$post['remarks']}'.";
+    }
+
+    private function success($message){
+        $this->core_layout->setEventLog($message, "update", "success", "payroll", "user");
+        return [
+            "response" => true,
+            "toastr_msg" => $message
+        ];
+    }
+
+    private function fail($message, $type = "user"){
+        $this->core_layout->setEventLog($message, "update", "error", "payroll", $type);
+
+        return [
+            "response" => false,
+            "toastr_msg" => $message
+        ];
+    }
+
+    private function response($status, $message){
+        return [
+            "response" => $status,
+            "toastr_msg" => $message
+        ];
     }
 }

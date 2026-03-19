@@ -1140,7 +1140,7 @@
             searching:false,
             width: "100%",
             ajax: {
-                url: "<?php echo base_url("payroll/employee/get_employee_loans");?>",
+                url: "<?php echo base_url("payroll/employee/get_employee_loans"); ?>",
                 type: "post",
                 dataType: "json",
                 global: false,
@@ -2136,16 +2136,19 @@
         console.log(rawData);
         const loanName = rawData.loan_name;
         const debitNote = rawData.debit_note;
+        const remainingBalance = rawData.tempbalance;
+        const balanceFormatted = numberFormat(remainingBalance);
         const tempHtml = debitNote ? `<span class='m--font-primary m--font-boldest m--margin-left-15 m--regular-font-size-lg1'>${debitNote.toUpperCase()}</span>` : '';
         Swal.fire({
             title: 'Set As Paid Loan?',
             html: `
                 <p>Are you sure you want to set this loan as paid? You won't be able to revert this!</p>
+                <p class='mb-1'><span class="m--font-bolder">Remaining Balance:</span> ${balanceFormatted}</p>
                 <span class='m--font-boldest'>${loanName.toUpperCase()}</span>
                 ${tempHtml}
                 <div class='row m-1 mt-3'>
                     <div class='col-12 p-0'>
-                        <input id="swal-debit-note" class="form-control m-input" placeholder="Debit Note" maxlength="12" required>
+                        <input id="swal-debit-note" class="form-control m-input" placeholder="Debit Note" maxlength="12" value="${debitNote}" required>
                     </div>
                     <div class='col-12 p-0 mt-2'>
                         <textarea id="swal-remarks" class="form-control m-input" placeholder="Reason for set as paid" required></textarea>
@@ -2182,12 +2185,16 @@
                     data: {
                         csrf_token: _csrf_hash,
                         id: rawData.id,
+                        paid_amount: remainingBalance,
                         debit_note: data.debit_note,
                         remarks: data.remarks
                     },
                     success: function (json) {
                         if (json.response) {
-                            
+                            toastr.success(json.toastr_msg, "Set As Paid Loan Successfully");
+                            dtLoans.ajax.reload();
+                        }else{
+                            toastr.error(json.toastr_msg, "Set As Paid Loan Failed");
                         }
                     }
                 });
