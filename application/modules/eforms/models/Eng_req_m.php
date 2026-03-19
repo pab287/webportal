@@ -311,7 +311,7 @@ class Eng_req_m extends CI_Model {
 
     public function createRFI(){
         $this->load->library('upload');
-        $resultset = [];
+        $resultset = []; $data = [];
         $post = $this->input->post();
         $information_needed = $this->input->post('information_needed', false);
         if($post['request_type'] == 'others'){
@@ -339,6 +339,13 @@ class Eng_req_m extends CI_Model {
             ];
         }
         $insert_id = $this->db->insert_id();
+        $data['id'] = $insert_id;
+        $data['requested_by_name'] = $post['requested_by_name'];
+        $data['project_location'] = $post['project_location'];
+        $data['attention'] = $post['consultant'];
+        $data['project_name_text'] = $post['project_name_text'];
+        $resultset['telegram'] = $this->sendCreateTelegram($data);
+
         $resultset["file_upload"] = [];
 
         $insert_reply = $this->db->insert($this->replyTable,
@@ -835,11 +842,59 @@ class Eng_req_m extends CI_Model {
         return $results;
     }
 
+    public function sendCreateTelegram($data){
+        $msg  = "<b>Request for Information has been created.</b>";
+        $msg .= "\n\n<b>Project:</b> "  . $data['project_name_text'];
+        $msg .= "\n\n<b>Location:</b> "      . $data['project_location'];
+        $msg .= "\n<b>RFI No:</b> "        . $data['rfi_no'];
+        $msg .= "\n<b>Requested By:</b> "  . $data['requested_by_name'];
+        $msg .= "\n<b>Request Type:</b> "  . $data['request_type'];
+        $msg .= "\n<b>Reply Needed:</b> "  . $data['reply_needed'];
+        $msg .= "\n<b>Request Description:</b> "  . $data['needed_info'];
+        $rfiUrl = base_url("eforms/engineering_request_forms/view_rfi_request/" . $data['id']);
+        return $this->sendTelegramMessage($msg,$rfiUrl);
+    }
+
+    private function sendTelegramMessage($message, $rfiUrl){
+        $bot_details = $this->getTelegramBot("gcc notification bot");
+        $bot_token   = $bot_details->telegram_bot_token;
+        $group_chat_id    = $bot_details->chat_id;
+        
+        $keyboard = [
+            'inline_keyboard' => [[
+                ['text' => 'Open RFI', 'url' => $rfiUrl]
+            ]]
+        ];
+
+        $url = "https://api.telegram.org/bot{$bot_token}/sendMessage";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+            'chat_id'      => $group_chat_id,
+            'text'         => $message,
+            'parse_mode'   => 'HTML',
+            'reply_markup' => json_encode($keyboard)
+        ]));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $response   = curl_exec($ch);
+        $curl_error = curl_error($ch);
+        curl_close($ch);
+
+        if ($response === false) {
+            $results = ['status' => 'failed', 'telegram_id' => $group_chat_id, 'messages' => $curl_error];
+        } else {
+            $results = ['status' => 'sent', 'telegram_id' => $group_chat_id];
+        }
+        return $results;
+    }
+
 
     private function getTelegramBot($bot_name){
         $this->db->select("telegram_bot_token, chat_id");
         $this->db->from($this->telegramConfigTable);
         $this->db->where('bot_name', $bot_name);
+        $this->db->where('is_archive', 0);
         $query = $this->db->get();
         return $query->row();
     }

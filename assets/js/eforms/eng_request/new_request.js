@@ -269,10 +269,14 @@ $.validate({
     onSuccess: function () {
         const form = $('#new_rfi_form');
         const formData = new FormData(form[0]);
+        const requestedByName = $('#requested_by').select2('data')[0]?.text || '';
+        const projectName = $('#project_name').select2('data')[0]?.text || '';
         formData.append('csrf_token', _csrf_hash);
         formData.append('consultant_id', person_in_charge);
         formData.append('request_type_id', request_type_id);
         formData.append('request_type_code', request_type_code);
+        formData.append('requested_by_name', requestedByName);
+        formData.append('project_name_text', projectName);
         $.ajax({
             url: siteUrl("eforms/engineering_request_forms/save_rfi"),
             type: "POST",
