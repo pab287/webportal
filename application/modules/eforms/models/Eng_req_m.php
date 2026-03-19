@@ -843,6 +843,14 @@ class Eng_req_m extends CI_Model {
     }
 
     public function sendCreateTelegram($data){
+        $needed_info = $data['needed_info'];
+        $needed_info = str_replace(['</li>', '</ol>', '</ul>', '</blockquote>', '</p>', '</div>', '<br>', '<br/>', '<br />'], "\n", $needed_info);
+        $needed_info = preg_replace('/<li[^>]*>/', '• ', $needed_info);
+        $needed_info = strip_tags($needed_info);
+        $needed_info = html_entity_decode($needed_info, ENT_QUOTES | ENT_HTML5);
+        $needed_info = preg_replace('/\n{3,}/', "\n\n", $needed_info);
+        $needed_info = trim($needed_info);
+
         $msg  = "<b>Request for Information has been created. </b>";
         $msg .= "\n\n<b>Project:</b> "  . $data['project_name_text'];
         $msg .= "\n\n<b>Location:</b> "      . $data['project_location'];
@@ -850,7 +858,7 @@ class Eng_req_m extends CI_Model {
         $msg .= "\n<b>Requested By:</b> "  . $data['requested_by_name'];
         $msg .= "\n<b>Request Type:</b> "  . $data['request_type'];
         $msg .= "\n<b>Reply Needed:</b> "  . $data['reply_needed'];
-        $msg .= "\n<b>Request Description:</b> "  . $data['needed_info'];
+        $msg .= "\n<b>Request Description:</b> \n"  . $needed_info;
         $rfiUrl = base_url("eforms/engineering_request_forms/view_rfi_request/" . $data['id']);
         return $this->sendTelegramMessage($msg,$rfiUrl);
     }
@@ -880,7 +888,6 @@ class Eng_req_m extends CI_Model {
         $response   = curl_exec($ch);
         $curl_error = curl_error($ch);
         curl_close($ch);
-
         if ($response === false) {
             $results = ['status' => 'failed', 'telegram_id' => $group_chat_id, 'messages' => $curl_error];
         } else {

@@ -294,9 +294,9 @@ $.validate({
                         ${fileList}
                     `;
                     toastr.success(message);
-                    // setTimeout(() => {
-                    //     window.location.href = siteUrl(`eforms/engineering_request_forms/view_rfi_request/${response.rfi_id}`);
-                    // }, 3000);
+                    setTimeout(() => {
+                        window.location.href = siteUrl(`eforms/engineering_request_forms/view_rfi_request/${response.rfi_id}`);
+                    }, 3000);
                 }
                 else{
                     toastr.error(response.message || 'An error occurred while creating the RFI.');
