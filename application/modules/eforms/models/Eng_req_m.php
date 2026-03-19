@@ -843,7 +843,7 @@ class Eng_req_m extends CI_Model {
     }
 
     public function sendCreateTelegram($data){
-        $msg  = "<b>Request for Information has been created.</b>";
+        $msg  = "<b>Request for Information has been created. </b>";
         $msg .= "\n\n<b>Project:</b> "  . $data['project_name_text'];
         $msg .= "\n\n<b>Location:</b> "      . $data['project_location'];
         $msg .= "\n<b>RFI No:</b> "        . $data['rfi_no'];
@@ -859,7 +859,7 @@ class Eng_req_m extends CI_Model {
         $bot_details = $this->getTelegramBot("gcc notification bot");
         $bot_token   = $bot_details->telegram_bot_token;
         $group_chat_id    = $bot_details->chat_id;
-        
+
         $keyboard = [
             'inline_keyboard' => [[
                 ['text' => 'Open RFI', 'url' => $rfiUrl]
