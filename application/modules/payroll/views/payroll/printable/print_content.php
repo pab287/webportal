@@ -329,10 +329,10 @@
                         <h5 class="m--marginless mt-3"><span class="">DEDUCTIONS</span></h5>
                             <?php if($item->sss && floatval($item->sss) > 0): ?>
                             <div class="row text-right">
-                                <div class="col-md-5 printable-width-5">
+                                <div class="col-md-7 printable-width-7">
                                     <h5 class="m--font-bolder m--marginless">SSS </h5>
                                 </div>
-                                <div class="col-md-7 printable-width-7 text-left">
+                                <div class="col-md-5 printable-width-5 text-left">
                                     <h5 class="m--font-bolder m--marginless"><?php echo $item->sss; ?></h5>
                                 </div>
                             </div>
@@ -340,10 +340,10 @@
 
                             <?php if($item->sss_prov && floatval($item->sss_prov) > 0): ?>
                                 <div class="row text-right">
-                                    <div class="col-md-5 printable-width-5">
+                                    <div class="col-md-7 printable-width-7">
                                         <h5 class="m--font-bolder m--marginless">SSS PROVIDENT</h5>
                                     </div>
-                                    <div class="col-md-7 printable-width-7 text-left">
+                                    <div class="col-md-5 printable-width-5 text-left">
                                         <h5 class="m--font-bolder m--marginless"><?php echo $item->sss_prov; ?></h5>
                                     </div>
                                 </div>
@@ -351,10 +351,10 @@
 
                             <?php if($item->ph && floatval($item->ph) > 0): ?>
                                 <div class="row text-right">
-                                    <div class="col-md-5 printable-width-5">
+                                    <div class="col-md-7 printable-width-7">
                                         <h5 class="m--font-bolder m--marginless">PHILHEALTH </h5>
                                     </div>
-                                    <div class="col-md-7 printable-width-7 text-left">
+                                    <div class="col-md-5 printable-width-5 text-left">
                                         <h5 class="m--font-bolder m--marginless"><?php echo $item->ph; ?></h5>
                                     </div>
                                 </div>
@@ -362,10 +362,10 @@
 
                             <?php if($item->hdmf && floatval($item->hdmf) > 0): ?>
                                 <div class="row text-right">
-                                    <div class="col-md-5 printable-width-5">
+                                    <div class="col-md-7 printable-width-7">
                                         <h5 class="m--font-bolder m--marginless">HDMF </h5>
                                     </div>
-                                    <div class="col-md-7 printable-width-7 text-left">
+                                    <div class="col-md-5 printable-width-5 text-left">
                                         <h5 class="m--font-bolder m--marginless"><?php echo $item->hdmf; ?></h5>
                                     </div>
                                 </div>
@@ -373,10 +373,10 @@
 
                             <?php if($item->tax && floatval($item->tax) > 0): ?>
                                 <div class="row text-right">
-                                    <div class="col-md-5 printable-width-5">
+                                    <div class="col-md-7 printable-width-7">
                                         <h5 class="m--font-bolder m--marginless">TAX </h5>
                                     </div>
-                                    <div class="col-md-7 printable-width-7 text-left">
+                                    <div class="col-md-5 printable-width-5 text-left">
                                         <h5 class="m--font-bolder m--marginless"><?php echo $item->tax; ?></h5>
                                     </div>
                                 </div>
@@ -474,10 +474,10 @@
                                 <div class="row text-right">
                                     <?php if($vv->amount_due > 0): ?>
                                         <?php ?>
-                                        <div class="col-md-5 printable-width-5">
+                                        <div class="col-md-7 printable-width-7">
                                             <h5 class="m--font-bolder m--marginless"><?php echo strtoupper($vv->loan_name); ?></h5>
                                         </div>
-                                        <div class="col-md-7 printable-width-7 text-left">
+                                        <div class="col-md-5 printable-width-5 text-left">
                                             <h5 class="m--font-bolder m--marginless"><?php echo $vv->amount_due; ?></h5>
                                         </div>
                                         <?php $temp_totalLoan += floatval(preg_replace('/[^\d\.\-]/', '', $vv->amount_due)); ?>
@@ -489,10 +489,10 @@
                             <h5 class="m--marginless mt-3"><span class="mt-3">OTHER LOANS</span></h5>
                             <?php foreach ($item->adjustment_deductions as $kk => $vv): ?>
                                 <div class="row text-right">
-                                    <div class="col-md-5 printable-width-5">
+                                    <div class="col-md-7 printable-width-7">
                                         <h5 class="m--font-bolder m--marginless"><?php echo strtoupper($vv->label); ?></h5>
                                     </div>
-                                    <div class="col-md-7 printable-width-7 text-left">
+                                    <div class="col-md-5 printable-width-5 text-left">
                                         <h5 class="m--font-bolder m--marginless"><?php echo $vv->display_value; ?></h5>
                                     </div>
                                 </div>
@@ -501,7 +501,7 @@
                             <?php endif; ?>
                             
                             <?php $overall_total_loan_payable = floatval($temp_totalLoan) + floatval($_temp_total_others); ?>
-                            <div class="row m--margin-top-5 m--margin-bottom-5">
+                            <div class="row m--margin-top-5">
                                 <div class="col-md-8 printable-width-8">
                                     <h5 class="m--font-bolder m--marginless">TOTAL LOANS</h5>
                                 </div>
@@ -514,7 +514,7 @@
 
                     <?php if($item->total_loans_interest && floatval($item->total_loans_interest) > 0): ?>
                         <div class="m-form__seperator m-form__seperator--line m-form__seperator--space-1x m--margin-bottom-5"></div>
-                        <div class="row m--margin-top-5 m--margin-bottom-5 mt-3">
+                        <div class="row m--margin-top-5">
                             <div class="col-md-8 printable-width-8">
                                 <h5 class="m--font-bolder m--marginless">TOTAL LOANS INTEREST</h5>
                             </div>

@@ -37,6 +37,7 @@ class Reports_m extends CI_Model{
     protected $tbl_hris_loans = "gcchris.loans";
     protected $tbl_payroll_settings = "payroll.settings";
     protected $tbl_hris_allawances = "gcchris.allowances";
+    protected $tbl_ps_allowances = "payroll.payroll_sheet_allowances";
 
     function __construct(){
         parent::__construct();
@@ -5603,7 +5604,7 @@ class Reports_m extends CI_Model{
                 SUM(a.ot_amount) as ot_amount, SUM(a.total_ndiff_amount) as total_ndiff_amount, SUM(a.ot_ndiff_amount) as ot_ndiff_amount, SUM(a.total_holiday_amount) as total_holiday_amount,
                 SUM(a.total_allowances) as total_allowances, SUM(a.gross_pay) as gross_pay, SUM(a.net_pay) as net_pay, b.lastname, b.firstname, b.middlename, b.suffix,
                 UPPER(c.code) as company_description, UPPER(IF(d.name IS NULL, b.position, d.name)) as position, UPPER(b.work_status) as work_status, b.date_start,
-                UPPER(e.code) as department_description";
+                UPPER(e.code) as department_description, IFNULL(f.rate, 0) as allowance_rate";
 
                 $this->db->select($sqlSelect);
                 $this->db->from($this->tbl_payroll_sheet." a");
@@ -5611,6 +5612,7 @@ class Reports_m extends CI_Model{
                 $this->db->join($this->tbl_tblcompanies." c", "c.id = a.company_id");
                 $this->db->join($this->tbl_tblposition." d", "d.id = b.position", "left");
                 $this->db->join($this->tbl_tbldepartment.' e', 'e.id = b.department_id OR e.code = b.department_id', 'LEFT');
+                $this->db->join($this->tbl_ps_allowances.' f', 'f.payroll_sheet_id = a.id', 'LEFT');
 
                 if ($option == 2) {
                     $this->db->where('a.gross_pay >', 0);
