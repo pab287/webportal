@@ -1956,6 +1956,10 @@
 
     loanPaymentHistoryModal.on("show.bs.modal", function () {
         const id = $(this).attr("data-id");
+        const portletBody = $(".m-portlet__body", this);
+        portletBody.find("#_for_remarks").text("Loading...");
+        portletBody.find(".m-widget1").remove();
+
         $("#tab_payments table", this)
             .DataTable({
                 dom: "frtlp",
@@ -2083,7 +2087,42 @@
             type: "GET",
             dataType: "JSON",
             success: function(response){
-                $("#_for_remarks").text(response.remarks);
+                portletBody.find("#_for_remarks").text(response.remarks && response.remarks != "" ? response.remarks : "No Remarks Found!");
+                portletBody.find(".m-widget1").remove();
+                
+                if(Number.parseInt(response.tagged_paid) > 0){
+                    const amountFormatted = numberFormat(response.paid_amount);
+                    const formattedDate = moment(response.tagged_at).format("LLL");
+                    const tempHtml = `<div class="m-widget1 p-0 pt-4">
+                        <div class="m-widget1__item">
+                            <div class="row m-row--no-padding align-items-center">
+                                <div class="col">
+                                    <h3 class="m-widget1__title">
+                                        Tagged As Paid Loan
+                                    </h3>
+                                    <span class="m-widget1__desc">
+                                        Tagged By: ${response.tagged_by}<br>
+                                        ${formattedDate}
+                                    </span>
+                                    <p class="m-widget1__sub mb-0">
+                                        Reason: ${response.tagged_reason}
+                                    </p>
+                                </div>
+                                <div class="col m--align-right">
+                                    <span class="m-widget1__number m--font-brand">
+                                        ${amountFormatted}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                    if(portletBody.find(".m-widget1").length > 0){
+                        portletBody.find(".m-widget1").remove();
+                        portletBody.append(tempHtml);
+                    } else {
+                        portletBody.append(tempHtml);
+                    }
+                }
             }
         });
     });

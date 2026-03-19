@@ -983,10 +983,20 @@
         }
 
         function getLoanRemark($id){
-            $this->db->select('remarks');
-            $this->db->where('id', $id);
-            $this->db->from('gcchris.loans');
-
+            $this->db->select("ln.remarks, IFNULL(ltp.id, 0) as tagged_paid, IFNULL(ltp.reason, '') as tagged_reason,
+            IFNULL(ltp.paid_amount, 0) as paid_amount, IFNULL(ltp.tagged_at, '') as tagged_at, CONCAT(UPPER(TRIM(emp.firstname)), ' ',
+            CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                    TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                THEN CONCAT(UPPER(SUBSTR(emp.middlename, 1, 1)), '.') ELSE ''
+            END,' ', UPPER(TRIM(emp.lastname)),
+            CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
+            END) as tagged_by");
+            $this->db->where('ln.id', $id);
+            $this->db->from('gcchris.loans as ln');
+            $this->db->join('gcchris.loans_tagged_paid as ltp', 'ltp.loan_id = ln.id', 'LEFT');
+            $this->db->join('gccmaster.tblemployees as emp', 'emp.id = ltp.tagged_by', 'LEFT');
             return $this->db->get()->row();
         }
 

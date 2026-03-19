@@ -8094,12 +8094,13 @@ class Employee_model extends CI_Model {
         
         $this->db->select("emp_loans.*, master_loans.loan_name, 
             ROUND(SUM(IFNULL(psloanpayments.amount_due, 0)),2) as total_amount_paid, 
-            GROUP_CONCAT(DISTINCT psloanpayments.amount_due, '||', ps.id) as temp_amount_paid, emp_loans.reference as ref");
+            GROUP_CONCAT(DISTINCT psloanpayments.amount_due, '||', ps.id) as temp_amount_paid, emp_loans.reference as ref, IFNULL(tagged_paid.paid_amount, 0) as tagged_paid_amount");
         $this->db->where("emp_loans.emp_id", $emp_id);
         $this->db->where("emp_loans.is_archived", 0);
         $this->db->join("payroll.loans master_loans", "master_loans.id = emp_loans.loan_id");
         $this->db->join("payroll.payroll_sheet_loan_payments psloanpayments", "psloanpayments.loan_id = emp_loans.id", "LEFT");
         $this->db->join("payroll.payroll_sheet ps", "ps.id = psloanpayments.payroll_sheet_id AND ps.posted = 1", "LEFT");
+        $this->db->join("gcchris.loans_tagged_paid tagged_paid", "tagged_paid.loan_id = emp_loans.id", "LEFT");
         $this->db->group_by("emp_loans.id, emp_loans.loan_id");
         $this->db->order_by("emp_loans.id", "DESC");
 
@@ -8118,6 +8119,9 @@ class Employee_model extends CI_Model {
                     $tempTotal += floatval($tempDD[0]);
                 }
                 $tempTotal = round($tempTotal, 2);
+                if($value->paid == 1 && $value->tagged_paid_amount > 0){
+                    $tempTotal += floatval($value->tagged_paid_amount);
+                }
                 if($tempTotal !== floatval($value->total_amount_paid)){ $value->total_amount_paid = $tempTotal; }
                 $tempCreatedBy = $value->created_by ? $this->core_layout->getEmployeeData($value->created_by)['display_name_1']: "[ System Generated: Cash Advance ]"; 
                 $value->created_by = $tempCreatedBy;
