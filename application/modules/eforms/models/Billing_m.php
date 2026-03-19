@@ -6678,9 +6678,7 @@ class Billing_m extends CI_Model {
     // ------------------------------------ Closing Quick fix database --------------------------------------
 
     function checkEmail($email){
-        $find1 = strpos($email, '@');
-        $find2 = strpos($email, '.');
-        return ($find1 !== false && $find2 !== false && $find2 > $find1);
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
     }
 
     function billing_statement_email($email=false, $email_address, $bill_id){
