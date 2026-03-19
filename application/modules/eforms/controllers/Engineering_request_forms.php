@@ -84,6 +84,8 @@
 
             $this->core_layout->setPageTitle("Request For Information");
             $this->core_layout->setPrivilegeName("eng_req");
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
             $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload.css", true);
             $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload-ui.css", true);
             $this->core_layout->addJs("global/plugins/ckeditor/build/ckeditor.js", true);
@@ -149,20 +151,9 @@
         }
 
 
-        public function approve_reply(){
-            $data = $this->eng_req->approveReply();
+        public function process_reply(){
+            $data = $this->eng_req->processReply();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
-
-        public function disapprove_reply(){
-            $data = $this->eng_req->disapproveReply();
-            $this->output->set_content_type('json')->set_output(json_encode($data));
-        }
-
-        public function note_reply(){
-            $data = $this->eng_req->noteReply();
-            $this->output->set_content_type('json')->set_output(json_encode($data));
-        }
-        
 
     }

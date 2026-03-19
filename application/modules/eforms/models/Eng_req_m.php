@@ -6,6 +6,8 @@ class Eng_req_m extends CI_Model {
     protected $reqTypeTable = "gcceforms.eng_req_type";
     protected $replyTable = "gcceforms.eng_rfi_form_reply";
     protected $replyAttachmentTable = "gcceforms.eng_rfi_form_attachments";
+    protected $telegramConfigTable = "gccmaster.telegram_config";
+    protected $usersTable = "gccmaster.tblusers";
     protected $user_data;
     public function __construct() {
         parent::__construct();
@@ -321,7 +323,6 @@ class Eng_req_m extends CI_Model {
             "needed_info"       => $information_needed,
             "reply_needed"      => date("Y-m-d", strtotime($post['reply_needed'])),
             "consultant"        => $post['consultant_id'],
-            "status"            => "pending",
             "request_type_code" => $post['request_type_code'],
             "rfi_no"            => $this->generateRFINumber($post['request_type_code']),
             "request_type"      => $post['request_type'],
@@ -340,7 +341,7 @@ class Eng_req_m extends CI_Model {
         $insert_id = $this->db->insert_id();
         $resultset["file_upload"] = [];
 
-        $insert_reply = $this->db->insert("gcceforms.eng_rfi_form_reply",
+        $insert_reply = $this->db->insert($this->replyTable,
             [
                 "rfi_id" => $insert_id,
                 "reply"   => "",
@@ -608,117 +609,18 @@ class Eng_req_m extends CI_Model {
         return $query->result_array();
     }
 
-    public function saveReply(){
-        $resultset = array();
-        $post = $this->input->post();
-        $rfiId = $post['rfi_id'];
-        $this->db->trans_begin();
-        $data = array(
-            "rfi_id"     => $rfiId,
-            "reply"      => $post['reply'],
-            "created_by" => $this->user_data['emp_id'],
-            "created_at" => date("Y-m-d H:i:s"),
-        );
-        $saveReply = $this->db->insert($this->replyTable, $data);
-        if(!$saveReply){
-            $this->db->trans_rollback();
-            return [
-                "success" => false,
-                "message" => "Failed to save reply."
-            ];
-        }
-    
-        $resultset["file_upload"] = [];
-        if (!empty($_FILES['files']['name'][0])) {
-            $filepath = FCPATH . "uploads/files/engineering_request/rfi_" . $rfiId . "/reply"."/";
-            if (!is_dir($filepath)) {
-                mkdir($filepath, 0777, true);
-            }
-    
-            $filesCount = count($_FILES['files']['name']);
-            for ($i = 0; $i < $filesCount; $i++) {
-                $_FILES['file']['name']     = $_FILES['files']['name'][$i];
-                $_FILES['file']['type']     = $_FILES['files']['type'][$i];
-                $_FILES['file']['tmp_name'] = $_FILES['files']['tmp_name'][$i];
-                $_FILES['file']['error']    = $_FILES['files']['error'][$i];
-                $_FILES['file']['size']     = $_FILES['files']['size'][$i];
-                $originalName = str_replace(' ', '_', $_FILES['file']['name']);
-                $config = [
-                    'upload_path'   => $filepath,
-                    'allowed_types' => 'pdf|doc|docx|jpg|jpeg|png',
-                    'max_size'      => 51200,
-                    'file_name'     => $originalName,
-                    'remove_spaces' => true
-                ];
-    
-                $this->upload->initialize($config);
-                if ($this->upload->do_upload('file')) {
-                    $saveAttachment = $this->db->insert(
-                        "gcceforms.eng_rfi_form_attachments",
-                        [
-                            "eng_rfi_id" => $rfiId,
-                            "filename"   => $originalName,
-                            "type"       => "reply",
-                            "created_by" => $this->user_data['emp_id'],
-                        ]
-                    );
-    
-                    if(!$saveAttachment){
-                        $this->db->trans_rollback();
-                        return [
-                            "success" => false,
-                            "message" => "Failed saving attachment."
-                        ];
-                    }
-    
-                    $resultset["file_upload"][] = [
-                        "file_name" => $originalName,
-                        "status"    => "success"
-                    ];
-                } else {
-                    $this->db->trans_rollback();
-                    return [
-                        "success" => false,
-                        "message" => strip_tags($this->upload->display_errors())
-                    ];
-                }
-            }
-        }
-    
-        $updateStatus = $this->db->where('id', $rfiId)->update($this->rfiTable, ['status' => 'for_checking']);
-    
-        if(!$updateStatus){
-            $this->db->trans_rollback();
-            return [
-                "success" => false,
-                "message" => "Failed updating RFI status."
-            ];
-        }
-    
-        if ($this->db->trans_status() === FALSE) {
-            $this->db->trans_rollback();
-            return [
-                "success" => false,
-                "message" => "Transaction failed."
-            ];
-        }
-    
-        $this->db->trans_commit();
-        $resultset["success"] = true;
-        $resultset["message"] = "Reply saved successfully.";
-        return $resultset;
-    }
-
     public function updateReply(){
         $resultset = array();
         $post = $this->input->post();
         $this->db->trans_begin();
         $data = array(
-            "rfi_id" => $post['rfi_id'],
             "reply"      => $post['reply'],
+            "status" => "for_approve",
         );
+        
         $eng_rfi_id = $post['rfi_id'];
-        $update = $this->db->where('id', $eng_rfi_id)->update($this->replyTable,$data);
+        $reply_id = $post['reply_id'];
+        $update = $this->db->where('rfi_id', $eng_rfi_id)->where('id',$reply_id)->update($this->replyTable,$data);
         if(!$update){
             $this->db->trans_rollback();
             return [
@@ -729,6 +631,7 @@ class Eng_req_m extends CI_Model {
         $resultset["file_upload"] = [];
         $filesToAdd    = json_decode($post['attachmentsToAdd'],    true) ?? [];
         $filesToRemove = json_decode($post['attachmentsToRemove'], true) ?? [];
+
         if (!empty($filesToRemove)) {
             foreach ($filesToRemove as $filename) {
                 $this->db->where('eng_rfi_id', $eng_rfi_id)->where('filename', $filename)->delete($this->replyAttachmentTable);
@@ -821,50 +724,141 @@ class Eng_req_m extends CI_Model {
         $this->db->trans_commit();
         $resultset["success"] = true;
         $resultset["message"] = "Reply updated successfully.";
+        $resultset["status"] ="for_approve";
+        return $resultset;
+    }
+    public function processReply(){
+        $resultset = ['success' => false, 'message' => ''];
+    
+        $post = $this->input->post();
+
+        $status     = $post['set_status'];
+        $eng_rfi_id = $post['rfi_id'];
+        $reply_id   = $post['id'];
+        $contacts = array(
+            "requestor" => $post['requestor'],
+            "creator" => $post['creator'],
+            "consultant" => $post['consultant'],
+        );
+
+        if ($status == "approved") {
+            $success = $this->approveReply($status, $eng_rfi_id, $reply_id);
+            $resultset['success'] = $success;
+            $resultset['message'] = $success ? "Reply approved successfully." : "Failed to approve reply.";
+            $resultset['status'] = $status;
+    
+        } elseif ($status == "pending") {
+            $success = $this->disapproveReply($status, $eng_rfi_id, $reply_id);
+            $resultset['success'] = $success;
+            $resultset['message'] = $success ? "Reply set to pending." : "Failed to update reply.";
+        } elseif ($status == "noted") {
+            $success = $this->noteReply($status, $eng_rfi_id, $reply_id);
+            $resultset['success'] = $success;
+            $resultset['message'] = $success ? "Reply noted successfully." : "Failed to note reply.";
+            $resultset['telegram'] = $this->sendTelegram($eng_rfi_id,$contacts);
+        } else {
+            $resultset['message'] = "Invalid status.";
+        }
         return $resultset;
     }
 
 
 
-    public function approveReply(){
-        $post = $this->input->post();
-        $eng_rfi_id = $post['eng_rfi_id'];
-        $update = $this->db->where('rfi_id', $eng_rfi_id)->update($this->rfiTable, ['status' => 'for_note']);
-        if($update){
-            return [
-                "success" => true,
-                "message" => "Reply approved successfully."
-            ];
+    private function approveReply($status,$eng_rfi_id,$reply_id){
+        $data = array(
+            'status' => $status,
+            'approve_by' => $this->user_data['emp_id'],
+            'approve_at' => date("Y-m-d H:i:s"),
+        );
+        return $this->db->where('rfi_id', $eng_rfi_id)->where('id',$reply_id)->update($this->replyTable, $data);
+    }
+
+    public function disapproveReply($status,$eng_rfi_id,$reply_id){
+        $data = array(
+            'status' => $status,
+            'disapprove_by' => $this->user_data['emp_id'],
+            'disapprove_at' => date("Y-m-d H:i:s"),
+        );
+        return $this->db->where('rfi_id', $eng_rfi_id)->where('id',$reply_id)->update($this->replyTable, $data);
+    }
+
+    public function noteReply($status,$eng_rfi_id,$reply_id){
+        $data = array(
+            'status' => $status,
+            'note_by' => $this->user_data['emp_id'],
+            'note_at' => date("Y-m-d H:i:s"),
+        );
+        return $this->db->where('rfi_id', $eng_rfi_id)->where('id',$reply_id)->update($this->replyTable, $data);
+    }
+
+    public function sendTelegram($eng_rfi_id, $contacts){
+        $telegram_details = $this->getTelegramBot("gcc notification bot");
+        $emp_details      = $this->getEmpTelegramId($contacts);
+        $bot_token        = $telegram_details->telegram_bot_token;
+        $rfiUrl           = base_url("eforms/engineering_request_forms/view_rfi_request/" . $eng_rfi_id);
+    
+        $message = "<b>RFI Approved</b>\nRequest for Information has been approved.";
+    
+        $keyboard = [
+            'inline_keyboard' => [[
+                ['text' => 'Open RFI', 'url' => $rfiUrl]
+            ]]
+        ];
+    
+        $results = [];
+        $url = "https://api.telegram.org/bot{$bot_token}/sendMessage";
+        foreach ($emp_details as $role => $telegramId) {
+            if (empty($telegramId)) {
+                $results[$role] = ['status' => 'skipped'];
+                continue;
+            }
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+                'chat_id'      => $telegramId,
+                'text'         => $message,
+                'parse_mode'   => 'HTML',
+                'reply_markup' => json_encode($keyboard)
+            ]));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $response   = curl_exec($ch);
+            $curl_error = curl_error($ch);
+            curl_close($ch);
+            if ($response === false) {
+                $results[$role] = ['status' => 'failed', 'telegram_id' => $telegramId, 'messages' => $curl_error];
+            } else {
+                $results[$role] = ['status' => 'sent', 'telegram_id' => $telegramId];
+            }
         }
+    
+        return $results;
     }
 
-    public function disapproveReply(){
-        $post = $this->input->post();
-        $eng_rfi_id = $post['eng_rfi_id'];
-        $update = $this->db->where('rfi_id', $eng_rfi_id)->update($this->rfiTable, ['status' => 'for_checking']);
-        if($update){
-            return [
-                "success" => true,
-                "message" => "Reply disapproved successfully."
-            ];
+
+    private function getTelegramBot($bot_name){
+        $this->db->select("telegram_bot_token, chat_id");
+        $this->db->from($this->telegramConfigTable);
+        $this->db->where('bot_name', $bot_name);
+        $query = $this->db->get();
+        return $query->row();
+    }
+
+    private function getEmpTelegramId($ids){
+        $empIds = array_unique(array_values($ids));
+        $this->db->select('emp_id, telegram_chat_id');
+        $this->db->from($this->usersTable);
+        $this->db->where_in('emp_id', $empIds);
+        $query = $this->db->get()->result_array();
+        $lookup = [];
+        foreach ($query as $row) {
+            $lookup[$row['emp_id']] = $row['telegram_chat_id'];
         }
-    }
-
-    public function noteReply(){
-        $post = $this->input->post();
-        $eng_rfi_id = $post['eng_rfi_id'];
-        $update = $this->db->where('id', $eng_rfi_id)->update($this->rfiTable, ['status' => 'noted']);
-        if($update){
-            return [
-                "success" => true,
-                "message" => "Note saved successfully."
-            ];
+        $result = [];
+        foreach ($ids as $role => $empId) {
+            $result[$role] = $lookup[$empId] ?? "";
         }
+        return $result;
     }
-
-    private function sendTelegram(){
-
-    }
-
 
 }

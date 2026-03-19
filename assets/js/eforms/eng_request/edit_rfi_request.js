@@ -5,6 +5,7 @@ let _replies = false;
 let _reply_attachments = [];
 let informationEditor;
 let id = null;
+let reply_id = null;
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(_tempContentData.request && Object.keys(_tempContentData.request).length > 0){
@@ -65,6 +66,7 @@ let edit_rfi = new Vue ({
     mounted: function () {
         loadEditor(this.reply.reply);
         id = this.content.id;
+        reply_id = this.reply.id;
         if (this.reply && this.reply.reply !== undefined) {
             this.currentReply = JSON.parse(JSON.stringify(this.reply.reply));
         }
@@ -74,8 +76,8 @@ let edit_rfi = new Vue ({
         }
     },
     computed: {
-        reqApproved(){
-            if(this.reply.status == "approved"){
+        reqNoted(){
+            if(this.reply.status == "noted"){
                 return true;
             }else{
                 return false;
@@ -167,42 +169,43 @@ let edit_rfi = new Vue ({
                 informationEditor.enableReadOnlyMode('reply-lock');  // readonly
             }
         },
-        approveReply() {
-            _this = this;
-            $.ajax({
-                url: baseUrl('eforms/eng_request/approve_reply'),
-                method: "POST",
-                data: {
-                    csrf_token: _csrf_hash,
-                    reply: _this.reply
-                },
-                success: function (data) {
-
-                }
-            })
-        },
-        noteReply() {
-            _this = this;
-            $.ajax({
-                url: baseUrl('eforms/eng_request/note_reply'),
-                method: "POST",
-                data: {
-                    csrf_token: _csrf_hash,
-                    reply: _this.reply
-                },
-                success: function (data) {
-                }
-            })
-        },
-        disapproveReply() {
-            _this = this;
-            $.ajax({
-                url: baseUrl('eforms/eng_request/disapprove_reply'),
-                method: "POST",
-                data: {reply: _this.reply},
-                success: function (data) {
-                }
-            })
+        processReply(status) {
+            const _this = this;
+            const messages = {
+                approved: "Approve this reply?",
+                pending: "Disapprove this reply?",
+                noted: "Mark this reply as noted?",
+            };
+            Swal.fire({
+                text: "Are you sure?",
+                title: messages[status] || "Update reply status?",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Yes!",
+                cancelButtonText: "Cancel"
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+                $.ajax({
+                    url: baseUrl('eforms/engineering_request_forms/process_reply'),
+                    method: "POST",
+                    data: {
+                        csrf_token: _csrf_hash,
+                        set_status: status,
+                        consultant: _this.content.consultant,
+                        requestor: _this.content.requested_by,
+                        creator: _this.content.created_by,
+                        ..._this.reply
+                    },
+                    success: function (res) {
+                        if (res.success) {
+                            toastr.success(res.message, "Success", { timeOut: 5000 });
+                            _this.reply.status = status;
+                        } else {
+                            toastr.error(res.message);
+                        }
+                    }
+                });
+            });
         },
         formatDate(date) {
             return moment(date).format('MMMM D, YYYY');
@@ -418,6 +421,7 @@ $.validate({
         formData.append('attachmentsToRemove',JSON.stringify(edit_rfi.attachmentsToRemove));
         formData.append('csrf_token', _csrf_hash);
         formData.append('rfi_id', id);
+        formData.append('reply_id', reply_id);
         $.ajax({
             url: siteUrl("eforms/engineering_request_forms/update_reply"),
             type: "POST",
@@ -426,8 +430,17 @@ $.validate({
             processData: false,
             contentType: false,
             success: function (res) {
-                if(res.success){
-                    foreach res.file_upload.filename add to edit_rfi.currentAttachment
+                if (res.success) {
+                    toastr.success(res.message, "Success", {
+                        timeOut: 3000,         
+                        closeButton: true,
+                        progressBar: true
+                    });
+            
+                    // setTimeout(function () {
+                    //     window.location.href =
+                    //         baseUrl("eforms/engineering_request_forms/masterfile/");
+                    // }, 5000);
                 }
             }
         });

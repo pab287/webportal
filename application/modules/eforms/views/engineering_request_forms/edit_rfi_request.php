@@ -49,7 +49,7 @@
                                     <h5 class="m-portlet__head-text">FORM</h5>
                                 </a>
                             </li>
-                            <li class="nav-item m-tabs__item" v-if="canEdit || reqApproved">
+                            <li class="nav-item m-tabs__item" v-if="canEdit || reqNoted">
                                 <a class="nav-link m-tabs__link" data-toggle="tab" href="#replyForm" role="tab">
                                     <h5 class="m-portlet__head-text">
                                         REPLY
@@ -170,7 +170,7 @@
                                                 </template>
                                                 <template v-else>
                                                     <div class="col-12 text-center">
-                                                        <strong>No attachments</strong>
+                                                        <strong><h4>NO ATTACHMENTS</h4></strong>
                                                     </div>
                                                 </template>
                                             </div>
@@ -316,11 +316,12 @@
                                                 <div class="col-6">
                                                     <button class="btn btn-info btnEdit" type="submit" v-show="showUpdate" :disabled="!changes.attachment && !changes.reply">UPDATE</button>
                                                     <button class="btn btn-warning text-light btnEdit" type="button" @click="editReply" v-show="reply.status == 'pending' && canEdit && !showUpdate">EDIT</button>
-                                                    <button class="btn btn-primary text-light btnNote" type="button" @click="noteReply">NOTE</button>
+                                                    
                                                 </div>
                                                 <div class="col-6 text-right">
-                                                    <button class="btn btn-success btnApprove_action" type="button" @click="approveReply" v-show="reply.status == 'pending' && reply.reply != ''">APPROVE</button>
-                                                    <button class="btn btn-danger btnDisapprove_action" type="button" @click="disapproveReply" v-show="reply.status == 'pending' && reply.reply != ''">DISAPPROVE</button>
+                                                    <button class="btn btn-success btnApprove_action" type="button" @click="processReply('approved')" v-show="reply.status == 'for_approve' && reply.reply != ''">APPROVE</button>
+                                                    <button class="btn btn-danger btnDisapprove_action" type="button" @click="processReply('pending')" v-show="reply.status == 'for_approve' && reply.reply != ''">DISAPPROVE</button>
+                                                    <button class="btn btn-primary text-light btnApprove_action" type="button" @click="processReply('noted')"  v-show="reply.status == 'approved' && reply.reply != ''">NOTE</button>
                                                 </div>
                                             </div>
                                         </form>
