@@ -992,7 +992,7 @@
             CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
                 UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
                 emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
-            END) as tagged_by");
+            END) as tagged_by, IFNULL(ltp.debit_note, '') as debit_note");
             $this->db->where('ln.id', $id);
             $this->db->from('gcchris.loans as ln');
             $this->db->join('gcchris.loans_tagged_paid as ltp', 'ltp.loan_id = ln.id', 'LEFT');

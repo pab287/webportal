@@ -918,7 +918,7 @@
 
                     if(Number.parseInt(response.tagged_paid) > 0){
                         const amountFormatted = numberFormat(response.paid_amount);
-                        const formattedDate = moment(response.tagged_at).format("LLL");
+                        const formattedDate = moment(response.tagged_at).format("LLLL");
                         const tempHtml = `<div class="m-widget1 p-0 pt-4">
                             <div class="m-widget1__item">
                                 <div class="row m-row--no-padding align-items-center">
@@ -926,10 +926,15 @@
                                         <h3 class="m-widget1__title">
                                             Tagged As Paid Loan
                                         </h3>
-                                        <span class="m-widget1__desc">
-                                            Tagged By: ${response.tagged_by}<br>
-                                            ${formattedDate}
+                                        <span class="m-widget1__desc mb-2">
+                                            <small>
+                                                Tagged By: ${response.tagged_by}<br>
+                                                ${formattedDate}
+                                            </small>
                                         </span>
+                                        <p class="m-widget1__sub mb-0">
+                                            Debit Note: ${response.debit_note}
+                                        </p>
                                         <p class="m-widget1__sub mb-0">
                                             Reason: ${response.tagged_reason}
                                         </p>
