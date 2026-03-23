@@ -43,9 +43,20 @@ class Eng_req_m extends CI_Model {
     }
 
     private function getRFIsData($search, $limit, $offset, $sortBy, $sortOrder, $filterFields, $is_archive){
-        $this->db->select("a.*");
+        $this->db->select("a.*, 
+                    CONCAT(
+                b.firstname, ' ',
+                IF(
+                    b.middlename IS NOT NULL AND b.middlename != '',
+                    CONCAT(LEFT(b.middlename,1), '. '),
+                    ''
+                ),
+                b.lastname
+            ) as created_by_name,
+        c.project_name, c.project_location");
         $this->db->from($this->rfiTable.' as a');
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.created_by", "LEFT");
+        $this->db->join($this->projectTable." as c", "c.id = a.project_id", "LEFT");
         $this->db->where("a.is_archive", $is_archive);
         if ($search) {
             $this->db->group_start();
@@ -143,6 +154,53 @@ class Eng_req_m extends CI_Model {
         $resultset['attachments'] = $attachments;
         $resultset['reply_attachments'] = $this->getRFIAttachments($resultset['reply']);
         return $resultset;
+    }
+
+    public function archiveRequest(){
+        $resultSet = array();
+        $post = $this->input->post();
+        $id = $post['id'];
+    
+        $this->db->where('id', $id);
+        $this->db->update($this->rfiTable, [
+            'is_archive' => 1
+        ]);
+    
+        if ($this->db->affected_rows() > 0) {
+            $resultSet = array(
+                'success' => true,
+                'message'=> 'Request archived successfully.'
+            );
+        } else {
+            $resultSet = array(
+                'success' => false,
+                'message'=> 'Failed to archive request.'
+            );
+        }
+        return $resultSet;
+    }
+
+    public function restoreRequest(){
+        $resultSet = array();
+        $post = $this->input->post();
+        $id = $post['id'];
+        $this->db->where('id', $id);
+        $this->db->update($this->rfiTable, [
+            'is_archive' => 0
+        ]);
+    
+        if ($this->db->affected_rows() > 0) {
+            $resultSet = array(
+                'success' => true,
+                'message'=> 'Request restored successfully.'
+            );
+        } else {
+            $resultSet = array(
+                'success' => false,
+                'message'=> 'Failed to restore request.'
+            );
+        }
+        return $resultSet;
     }
 
     public function getProjects(){
@@ -842,59 +900,101 @@ class Eng_req_m extends CI_Model {
         return $results;
     }
 
-    public function sendCreateTelegram($data){
-        $needed_info = $data['needed_info'];
-        $needed_info = str_replace(['</li>', '</ol>', '</ul>', '</blockquote>', '</p>', '</div>', '<br>', '<br/>', '<br />'], "\n", $needed_info);
-        $needed_info = preg_replace('/<li[^>]*>/', '• ', $needed_info);
-        $needed_info = strip_tags($needed_info);
-        $needed_info = html_entity_decode($needed_info, ENT_QUOTES | ENT_HTML5);
-        $needed_info = preg_replace('/\n{3,}/', "\n\n", $needed_info);
-        $needed_info = trim($needed_info);
+    private function buildCreateMessage($data){
+    $needed_info = $data['needed_info'];
+    $needed_info = str_replace(
+        ['</li>', '</ol>', '</ul>', '</blockquote>', '</p>', '</div>', '<br>', '<br/>', '<br />'],
+        "\n",
+        $needed_info
+    );
+    $needed_info = preg_replace('/<li[^>]*>/', '• ', $needed_info);
+    $needed_info = strip_tags($needed_info);
+    $needed_info = html_entity_decode($needed_info, ENT_QUOTES | ENT_HTML5);
+    $needed_info = preg_replace('/\n{3,}/', "\n\n", $needed_info);
+    $needed_info = trim($needed_info);
+    $msg  = "<b>Request for Information has been created.</b>";
+    $msg .= "\n\n<b>Project:</b> {$data['project_name_text']}";
+    $msg .= "\n\n<b>Location:</b> {$data['project_location']}";
+    $msg .= "\n<b>RFI No:</b> {$data['rfi_no']}";
+    $msg .= "\n<b>Requested By:</b> {$data['requested_by_name']}";
+    $msg .= "\n<b>Request Type:</b> {$data['request_type']}";
+    $msg .= "\n<b>Reply Needed:</b> {$data['reply_needed']}";
+    $msg .= "\n<b>Request Description:</b>\n{$needed_info}";
+    return $msg;
+}
 
-        $msg  = "<b>Request for Information has been created. </b>";
-        $msg .= "\n\n<b>Project:</b> "  . $data['project_name_text'];
-        $msg .= "\n\n<b>Location:</b> "      . $data['project_location'];
-        $msg .= "\n<b>RFI No:</b> "        . $data['rfi_no'];
-        $msg .= "\n<b>Requested By:</b> "  . $data['requested_by_name'];
-        $msg .= "\n<b>Request Type:</b> "  . $data['request_type'];
-        $msg .= "\n<b>Reply Needed:</b> "  . $data['reply_needed'];
-        $msg .= "\n<b>Request Description:</b> \n"  . $needed_info;
-        $rfiUrl = base_url("eforms/engineering_request_forms/view_rfi_request/" . $data['id']);
-        return $this->sendTelegramMessage($msg,$rfiUrl);
-    }
+public function sendCreateTelegram($data){
+    $message = $this->buildCreateMessage($data);
+    $rfiUrl = base_url(
+        "eforms/engineering_request_forms/view_rfi_request/" . $data['id']
+    );
 
-    private function sendTelegramMessage($message, $rfiUrl){
-        $bot_details = $this->getTelegramBot("gcc notification bot");
-        $bot_token   = $bot_details->telegram_bot_token;
-        $group_chat_id    = $bot_details->chat_id;
+    $telegram_details = $this->getTelegramBot("gcc notification bot");
 
-        $keyboard = [
-            'inline_keyboard' => [[
-                ['text' => 'Open RFI', 'url' => $rfiUrl]
-            ]]
-        ];
+    $sendto = [$data['created_by'],$data['requested_by']];
 
-        $url = "https://api.telegram.org/bot{$bot_token}/sendMessage";
+    $telegramIds = array_merge(
+        $this->getEmpTelegramId($sendto),
+        [$telegram_details->chat_id]
+    );
+
+    $telegramIds = array_values(array_unique($telegramIds));
+    return $this->sendTelegramMessage($message,$rfiUrl,$telegram_details->telegram_bot_token,$telegramIds);
+}
+
+private function sendTelegramMessage($message, $rfiUrl, $bot_token, $telegram_chat_ids)
+{
+    $keyboard = [
+        'inline_keyboard' => [[
+            ['text' => 'Open RFI', 'url' => $rfiUrl]
+        ]]
+    ];
+
+    $url = "https://api.telegram.org/bot{$bot_token}/sendMessage";
+
+    $results = [];
+
+    foreach ($telegram_chat_ids as $chat_id) {
+        if (empty($chat_id)) {
+            continue;
+        }
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
-            'chat_id'      => $group_chat_id,
-            'text'         => $message,
-            'parse_mode'   => 'HTML',
-            'reply_markup' => json_encode($keyboard)
-        ]));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query([
+                'chat_id'      => $chat_id,
+                'text'         => $message,
+                'parse_mode'   => 'HTML',
+                'reply_markup' => json_encode($keyboard)
+            ]),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 15
+        ]);
+
         $response   = curl_exec($ch);
         $curl_error = curl_error($ch);
+        $http_code  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
         curl_close($ch);
+
         if ($response === false) {
-            $results = ['status' => 'failed', 'telegram_id' => $group_chat_id, 'messages' => $curl_error];
+            $results[] = [
+                'chat_id' => $chat_id,
+                'status'  => 'failed',
+                'error'   => $curl_error
+            ];
         } else {
-            $results = ['status' => 'sent', 'telegram_id' => $group_chat_id];
+            $results[] = [
+                'chat_id' => $chat_id,
+                'status'  => ($http_code == 200 ? 'sent' : 'error'),
+                'response'=> $response
+            ];
         }
-        return $results;
     }
+
+    return $results;
+}
 
 
     private function getTelegramBot($bot_name){

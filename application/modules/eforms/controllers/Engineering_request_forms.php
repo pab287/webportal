@@ -15,6 +15,8 @@
             $data = array();
             $data['employee'] = $this->eng_req->select2Employee();
             $data['projects'] = $this->eng_req->select2Projects();
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
             $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
             $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
             $this->core_layout->addJs("js/eforms/eng_request/eng_req_form.js", true, $data);
@@ -93,6 +95,16 @@
             $this->load->view('core/templates/header');
             $this->load->view('eforms/engineering_request_forms/edit_rfi_request');
             $this->load->view('core/templates/footer');
+        }
+
+        public function archive_request(){
+            $data = $this->eng_req->archiveRequest();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function restore_request(){
+            $data = $this->eng_req->restoreRequest();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
         public function projects(){

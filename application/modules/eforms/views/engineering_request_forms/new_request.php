@@ -3,6 +3,11 @@
         <div class="m-portlet__head">
             <div class="m-portlet__head-caption">
                 <div class="m-portlet__head-title">
+                    <span class="m-portlet__head-icon">
+                        <a type="button" href="masterfile" title="Go to Masterfile" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnBack">
+                            <i class="la la-arrow-left"></i>
+                        </a>
+                    </span>
                     <h3 id="header" class="m-portlet__head-text">
                         New Request Forms
                     </h3>
