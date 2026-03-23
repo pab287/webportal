@@ -1,4 +1,6 @@
 //const { Socket } = require("engine.io");
+const customFilterBirthday = $("#customFilterBirthday");
+const customBirthdayFilterModal = $("#customBirthdayFilterModal");
 
 let select2_company_id = 0;
 let selectedPieItem;
@@ -1503,3 +1505,13 @@ const loadTurnoverRateByYear = function (year=null){
         return false;
     }
 }
+
+jQuery(document).on("click", customFilterBirthday, function () {
+    // 🔻 Close the dropdown (remove active/show classes)
+    $(this).closest('.m-dropdown')
+        .removeClass('m-dropdown--open m-dropdown--shown');
+    // Optional: blur the clicked element (removes focus)
+    $(this).blur();
+    console.log('clicked');
+    customBirthdayFilterModal.modal('show');
+});

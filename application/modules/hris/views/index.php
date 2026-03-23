@@ -519,6 +519,36 @@
                             <i class="la la-birthday-cake"></i>Upcoming Birthday Celebrants
                         </a>
                     </li>
+                    <li class="nav-item m-tabs__item m-dropdown m-dropdown--inline m-dropdown--align-right m-dropdown--align-push" data-dropdown-toggle="hover">
+                        <a href="javascript:void(0);" class="nav-link m-tabs__link">
+                            <i class="la la-filter"></i>
+                            Custom Filter
+                        </a>
+                        <div class="m-dropdown__wrapper">
+                            <span class="m-dropdown__arrow m-dropdown__arrow--right m-dropdown__arrow--adjust"></span>
+                            <div class="m-dropdown__inner">
+                                <div class="m-dropdown__body">
+                                    <div class="m-dropdown__content">
+                                        <ul class="m-nav">
+                                            <li class="m-nav__section m-nav__section--first">
+                                                <span class="m-nav__section-text">
+                                                    Quick Actions
+                                                </span>
+                                            </li>
+                                            <li class="m-nav__item">
+                                                <a href="javascript:void(0);" class="m-nav__link btnAdvance_search" id="customFilterBirthday">
+                                                    <i class="m-nav__link-icon 	fa fa-calendar"></i>
+                                                    <span class="m-nav__link-text">
+                                                        Birthday Filter By Month
+                                                    </span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -811,7 +841,40 @@
         </div>
     </div>
     <!-- END EVALUATION LIST -->
-</div> 
+</div>
+
+<div class="modal fade" id="customBirthdayFilterModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Custom Birthday Filter
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">
+                        &times;
+                    </span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label for="recipient-name" class="form-control-label">
+                            Recipient:
+                        </label>
+                        <input type="text" class="form-control" id="recipient-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="message-text" class="form-control-label">
+                            Message:
+                        </label>
+                        <textarea class="form-control" id="message-text"></textarea>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
 	.v-middle {
