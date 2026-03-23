@@ -437,10 +437,9 @@ $.validate({
                         progressBar: true
                     });
             
-                    // setTimeout(function () {
-                    //     window.location.href =
-                    //         baseUrl("eforms/engineering_request_forms/masterfile/");
-                    // }, 5000);
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 5000);
                 }
             }
         });

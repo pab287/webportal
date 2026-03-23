@@ -73,7 +73,7 @@
                                 <label for="reply_needed" class="form-control-label required">
                                     Reply Needed
                                 </label>
-                                <input type="text" id="reply_needed" name="reply_needed" class="form-control m-input" data-validation="required" autocomplete="off">
+                                <input type="text" id="reply_needed" name="reply_needed" class="form-control m-input" data-validation="required" autocomplete="off" readonly>
                             </div>
                         </div>
                     </div>

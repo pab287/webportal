@@ -18,11 +18,11 @@ class Eng_req_m extends CI_Model {
     public function getRFIs(){
         $resultset = array();
         $post = $this->input->post();
-        $order_val = array(array("column"=>"9", "dir"=>"desc"));
+        $order_val = array(array("column"=>"0", "dir"=>"desc"));
         $search = (isset($post["search"]['value']) && $post["search"]['value'])? $post["search"]['value']: false;
         $limit = (isset($post["length"]) && $post["length"])? $post["length"]: 10;
         $offset = (isset($post["start"]) && $post["start"])? $post["start"]: 0;
-        $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+        $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 0;
         $sortOrder = (isset($post["order"]) && $post["order"])? $post["order"]: $order_val;
         $is_archive =  (isset($post["is_archive"]) && $post["is_archive"])? $post["is_archive"]: '';
         $date_range = (isset($post["date_range"]) && $post["date_range"])? $post["date_range"]: false;
@@ -901,6 +901,8 @@ class Eng_req_m extends CI_Model {
     }
 
     private function buildCreateMessage($data){
+        var_dump($data);
+        die();
     $needed_info = $data['needed_info'];
     $needed_info = str_replace(
         ['</li>', '</ol>', '</ul>', '</blockquote>', '</p>', '</div>', '<br>', '<br/>', '<br />'],
@@ -913,9 +915,10 @@ class Eng_req_m extends CI_Model {
     $needed_info = preg_replace('/\n{3,}/', "\n\n", $needed_info);
     $needed_info = trim($needed_info);
     $msg  = "<b>Request for Information has been created.</b>";
-    $msg .= "\n\n<b>Project:</b> {$data['project_name_text']}";
-    $msg .= "\n\n<b>Location:</b> {$data['project_location']}";
-    $msg .= "\n<b>RFI No:</b> {$data['rfi_no']}";
+    $msg .= "\n\n<b>Project:</b> " . strtoupper($data['project_name_text']);
+    $msg .= "\n<b>Location:</b> " . strtoupper($data['project_location']);
+    $msg .= "\n\n<b>ATTENTION:</b> " . strtoupper($data['attention']);
+    $msg .= "\n<b>RFI No:</b> " . strtoupper($data['rfi_no']);
     $msg .= "\n<b>Requested By:</b> {$data['requested_by_name']}";
     $msg .= "\n<b>Request Type:</b> {$data['request_type']}";
     $msg .= "\n<b>Reply Needed:</b> {$data['reply_needed']}";

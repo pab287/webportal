@@ -21,6 +21,7 @@ $(document).ready(function () {
         processing: true,
         searching: false,
         rowId: 'id',
+        order: [[ 0, "desc" ]],
         ajax: {
             url: baseUrl("eforms/engineering_request_forms/get_rfis"),
             type: "POST",
