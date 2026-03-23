@@ -607,7 +607,7 @@ class Events_model extends MX_Controller {
         if($insert){
             $resultArray['participants'] = $this->getEventParticipants($post['event_id']);
             $resultArray['success'] = true;
-            $this->core_layout->setEventLog("Successfully added trainee with id: {$post['emp_id']} to event with id: {$post['event_id']}","insert","success","gcchris","user");
+            $this->core_layout->setEventLog("Successfully added trainee: {$post['firstname']} to event: {$post['event_id']}","insert","success","gcchris","user");
             $resultArray['message'] = "Successfully added trainee.";
         }else{
             $resultArray['success'] = false;
