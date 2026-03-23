@@ -2181,7 +2181,7 @@
         const debitNote = rawData.debit_note;
         const remainingBalance = rawData.tempbalance;
         const balanceFormatted = numberFormat(remainingBalance);
-        const tempHtml = debitNote ? `<span class='m--font-primary m--font-boldest m--margin-left-15 m--regular-font-size-lg1'>${debitNote.toUpperCase()}</span>` : '';
+        const tempHtml = debitNote && debitNote != null ? `<span class='m--font-primary m--font-boldest m--margin-left-15 m--regular-font-size-lg1'>${debitNote.toUpperCase()}</span>` : '';
         Swal.fire({
             title: 'Set As Paid Loan?',
             html: `
@@ -2191,7 +2191,7 @@
                 ${tempHtml}
                 <div class='row m-1 mt-3'>
                     <div class='col-12 p-0'>
-                        <input id="swal-debit-note" class="form-control m-input" placeholder="Debit Note" maxlength="12" value="${debitNote}" required>
+                        <input id="swal-debit-note" class="form-control m-input" placeholder="Debit Note" maxlength="12" value="${debitNote && debitNote != null ? debitNote : ""}" required>
                     </div>
                     <div class='col-12 p-0 mt-2'>
                         <textarea id="swal-remarks" class="form-control m-input" placeholder="Reason for set as paid" required></textarea>
