@@ -1700,6 +1700,7 @@
                     null,
                     false
                 );
+                $this->db->where("emp.work_status !=", 'NO CONTRACT');
                 $this->db->where("emp.employee_status", 'Active');
                 $this->db->order_by("DAY(STR_TO_DATE(emp.bday, '%Y-%m-%d')) ASC", "", false);
                 $this->db->order_by("emp.firstname", "ASC");
