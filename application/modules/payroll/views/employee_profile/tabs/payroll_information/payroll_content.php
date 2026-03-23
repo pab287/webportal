@@ -1286,7 +1286,6 @@
                                 ctrActions++;
                             }
                             
-                            const rawData = JSON.stringify(row);
                             btn += `<button title="SET AS PAID LOAN"
                                 class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary eventSetAsPaidLoan"
                                 data-raw="${encodeURIComponent(rawData)}">
