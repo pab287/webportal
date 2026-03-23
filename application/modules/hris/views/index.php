@@ -903,6 +903,7 @@
                             <col width="*">
                             <col width="15%">
                             <col width="15%">
+                            <col width="5%">
                         </colgroup>
                         <thead>
                             <tr>
@@ -911,6 +912,7 @@
                             <th>Position</th>
                             <th>Month &amp; Day</th>
                             <th>Date of Birth</th>
+                            <th>&nbsp;</th>
                             </tr>
                         </thead>
                         <tbody></tbody>

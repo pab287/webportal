@@ -1562,10 +1562,11 @@ const dtTableCustomBirthday = $("#table-birthday-filter").DataTable({
             className: 'btn btn-warning m-btn m-btn--icon text-white btnAdvance_search',
             title: function () {
                 let month_filter = $("#month_filter").val();
+                let timestamp = moment().format('YYYYMMDD_HHmmss');
                 if (month_filter) {
-                    return 'Employee Birthdays - ' + moment().month(month_filter - 1).format('MMMM');
+                    return 'Employee Birthdays - ' + moment().month(month_filter - 1).format('MMMM') + ' (' + timestamp + ')';
                 }
-                return 'Employee Birthdays';
+                return 'Employee Birthdays (' + timestamp + ')';
             },
             exportOptions: {
                 columns: [1, 2, 3, 4], // exclude image column (0)
@@ -1594,7 +1595,10 @@ const dtTableCustomBirthday = $("#table-birthday-filter").DataTable({
         }},
         { data: 'bday', width: '15%', render: function(data){
             return moment(data).format('LL');
-        } }
+        }}, { data: "id", width: '5%', className: 'text-center', render: function(data){
+            return `<a href="${siteUrl('hris/masterfile/view_employee_masterfile/' + data)}"
+            class="btn btn-outline-info m-btn m-btn--icon m-btn--icon-only" target="_blank"><i class="fa fa-external-link" title="Internal Link"></i></a>`
+        }}
     ], drawCallback: function(){
         $(".dataTables_filter").find("input[type=search]").removeClass("form-control-sm");
     }, initComplete: function () {
