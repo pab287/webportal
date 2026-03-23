@@ -1559,7 +1559,7 @@ const dtTableCustomBirthday = $("#table-birthday-filter").DataTable({
         {
             extend: 'excelHtml5',
             text: '<span><i class="fa fa-file-excel-o pr-2"></i>EXPORT EXCEL</span>',
-            className: 'btn btn-warning m-btn m-btn--icon text-white btnAdvance_search',
+            className: 'btn btn-warning m-btn m-btn--icon text-white btnExportexcel',
             title: function () {
                 let month_filter = $("#month_filter").val();
                 let timestamp = moment().format('YYYYMMDD_HHmmss');
