@@ -20,11 +20,15 @@
         function index()
         {
             $this->core_layout->setPrivilegeName("hris_dashboard");
-
+            
             $this->core_layout->addJs("global/js/amcharts4/core.js", true);
             $this->core_layout->addJs("global/js/amcharts4/charts.js", true);
             $this->core_layout->addJs("global/js/amcharts4/maps.js", true);
             $this->core_layout->addJs("global/js/amcharts4/themes/animated.js", true);
+
+            $this->core_layout->addJs("js/buttons.html5.min.js", true);
+            $this->core_layout->addJs("js/buttons.print.min.js", true);
+            $this->core_layout->addCss("css/buttons.dataTables.min.css", true);
 
             $this->core_layout->addJs('js/hris/search_employee_script.js', TRUE);
             $this->core_layout->addJs('js/hris/index_script.js', TRUE);

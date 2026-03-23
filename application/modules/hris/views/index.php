@@ -88,6 +88,25 @@
         border: none;
         outline: none;
     }
+
+    .m-portlet.m-portlet--tabs .m-portlet__head .m-portlet__head-tools .m-tabs-line .m-custom-tabs__link {
+        height: 100%;
+        padding: 1.7rem 0 1.5rem 0;
+    }
+    .m-tabs-line .m-custom-tabs__link {
+        background: transparent;
+        color: #7b7e8a;
+        border: 0;
+        border-bottom: 1px solid transparent;
+        font-size: 1.1rem;
+    }
+    div#table-birthday-filter_filter input[type=search] {
+        height: auto;
+    }
+
+    div#table-birthday-filter_filter label {
+        margin-bottom: 0;
+    }
 </style>
 
 
@@ -520,7 +539,7 @@
                         </a>
                     </li>
                     <li class="nav-item m-tabs__item m-dropdown m-dropdown--inline m-dropdown--align-right m-dropdown--align-push" data-dropdown-toggle="hover">
-                        <a href="javascript:void(0);" class="nav-link m-tabs__link">
+                        <a href="javascript:void(0);" class="nav-link m-custom-tabs__link">
                             <i class="la la-filter"></i>
                             Custom Filter
                         </a>
@@ -844,7 +863,7 @@
 </div>
 
 <div class="modal fade" id="customBirthdayFilterModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
@@ -857,20 +876,46 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form>
-                    <div class="form-group">
-                        <label for="recipient-name" class="form-control-label">
-                            Recipient:
-                        </label>
-                        <input type="text" class="form-control" id="recipient-name">
-                    </div>
-                    <div class="form-group">
-                        <label for="message-text" class="form-control-label">
-                            Message:
-                        </label>
-                        <textarea class="form-control" id="message-text"></textarea>
+                <form id="customBirthdayFilterForm" method="POST" action="<?php echo site_url('hris/dashboard/get_custom_birthday_filter'); ?>">
+                    <input type="hidden" name="<?php echo $this->security->get_csrf_token_name(); ?>" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="form-group">
+                                <label for="recipient-name" class="form-control-label required">
+                                    Filter by Month
+                                </label>
+                                <select name="month_filter" id="month_filter" class="form-control" data-validation="required">
+                                    <option value=""></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <button type="submit" class="btn btn-info m-btn m-btn--icon btnAdvance_search m--margin-top-25"><span><i class="fa fa-gears pr-2"></i>GENERATE</span></button>
+                        </div>
                     </div>
                 </form>
+
+                <div>
+                    <table id="table-birthday-filter" class="table table-hover m-table m-table--head-no-border" style="width: 100%">
+                        <colgroup>
+                            <col width="7%">
+                            <col width="30%">
+                            <col width="*">
+                            <col width="15%">
+                            <col width="15%">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                            <th>Image</th>
+                            <th>Employee Name</th>
+                            <th>Position</th>
+                            <th>Month &amp; Day</th>
+                            <th>Date of Birth</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
