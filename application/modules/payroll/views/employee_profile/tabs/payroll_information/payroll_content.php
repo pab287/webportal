@@ -260,7 +260,7 @@
                     </li>
                 </ul>
                 <div class="tab-content" style="border: 1px solid #dddddd; border-top: 0; padding: 15px">
-                    <div class="tab-pane active" id="tab_deductions">
+                    <div class="tab-pane active show" id="tab_deductions">
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="row align-items-center">
@@ -2884,7 +2884,7 @@
             }
         });
 
-    $(".nav-link").on('click', function(){
+    /*** $(".nav-link").on('click', function(){
         var item = $(this).attr('id');
         if(item == 'tab_deduction'){
             $("#tab_deductions").addClass('active');
@@ -2910,7 +2910,30 @@
             $("#tab_interest_charges").addClass('active');
             $("#tab_payments").removeClass('active');
         }
+    }); ***/
+
+    $(document).on('click', '.nav-tabs .nav-link', function (e) {
+        e.preventDefault();
+
+        let $this = $(this);
+        let target = $this.attr('href');
+
+        let $tabContainer = $this.closest('.nav-tabs');
+        let $content = $tabContainer.next('.tab-content');
+
+        // nav
+        $tabContainer.find('.nav-link').removeClass('active');
+        $this.addClass('active');
+
+        // content
+        $content.find('.tab-pane').removeClass('active show');
+        $content.find(target).addClass('active show');
     });
+
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function () {
+        $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+    });
+
     var imagesPreview = function(input, placeToInsertImagePreview) {
 
         if (input.files) {
