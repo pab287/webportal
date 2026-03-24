@@ -2368,12 +2368,19 @@ class Registration_model extends CI_Model{
         $schools = isset($post['schools']) ? implode(',', $post['schools']): '';
         $courses = isset($post['courses']) ? implode(',', $post['courses']): '';
         $positions = isset($post['positions']) ? implode(',', $post['positions']): '';
+
+        $contactno = isset($post['contactFormData']['contact_no']) ? $post['contactFormData']['contact_no'] : '';
+        $address = isset($post['contactFormData']['address']) ? $post['contactFormData']['address'] : '';
+        $permanent_address = isset($post['contactFormData']['permanent_address']) ? $post['contactFormData']['permanent_address'] : '';
+        $tel_no = isset($post['contactFormData']['tel_no']) ? $post['contactFormData']['tel_no'] : '';
+        $email = isset($post['contactFormData']['email']) ? $post['contactFormData']['email'] : '';
+
         $personal_info = array(
             "firstname"  => trim($post['firstname']),
             "middlename" => trim($post['middlename']),
             "lastname"   => trim($post['lastname']),
             "suffix"     => trim($post['suffix']),
-            "contact_no"         => $post['contact_no'],
+            "contact_no"         => $contactno,
             "status"             => "pooling",
             "gender"             => $post['gender'],
             "civil_status"       => $post['civil_status'],
@@ -2386,10 +2393,10 @@ class Registration_model extends CI_Model{
             "recruitment"        => $post['recruitment'],
             "applied_dt"         => date('Y-m-d', strtotime($post['applied_dt'])),
             "created_by"         => 0,
-            "address"            => $post['address'],
-            "permanent_address"  => $post['permanent_address'],
-            "tel_no"             => $post['tel_no'],
-            "email"              => $post['email'],
+            "address"            => $address,
+            "permanent_address"  => $permanent_address,
+            "tel_no"             => $tel_no,
+            "email"              => $email,
             "referral"           => $post['referral'],
             "is_online"          => 1,
         );
@@ -2484,26 +2491,30 @@ class Registration_model extends CI_Model{
             return $result;
         }
 
-        $workexp = array();
-        foreach ($post['work_experience_form'] as $work) {
-            $workexp[] = array(
-                "applicant_id"   => $candidate_id,
-                "work_company"   => $work['company'],
-                "work_position"  => $work['position'],
-                "work_from"      => $work['from'],
-                "work_to"        => $work['to'],
-                "work_status"    => $work['status'],
-                "work_reason"    => $work['reason'],
-            );
-        }
-        $inserted_workexp = $this->db->insert_batch("dbhrd.candidate_work_exp", $workexp);
+        if (!$post['fresh_graduate']) {
+            $workexp = array();
 
-        if (!$inserted_workexp) {
-            $this->db->trans_rollback();
-            $result['success'] = false;
-            $result['message'] = 'Failed to insert work experience records.';
-            return $result;
+            foreach ($post['work_experience_form'] as $work) {
+                $workexp[] = array(
+                    "applicant_id"   => $candidate_id,
+                    "work_company"   => $work['company'],
+                    "work_position"  => $work['position'],
+                    "work_from"      => $work['from'],
+                    "work_to"        => $work['to'],
+                    "work_status"    => $work['status'],
+                    "work_reason"    => $work['reason'],
+                );
+            }
+            $inserted_workexp = $this->db->insert_batch("dbhrd.candidate_work_exp", $workexp);
+    
+            if (!$inserted_workexp) {
+                $this->db->trans_rollback();
+                $result['success'] = false;
+                $result['message'] = 'Failed to insert work experience records.';
+                return $result;
+            }
         }
+
     
         $this->db->trans_commit();
         $result['success'] = true;

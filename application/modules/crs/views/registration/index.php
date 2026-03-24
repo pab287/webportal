@@ -70,6 +70,15 @@
                     </div>
                 </div>
                 <div class="m-portlet__body">
+                    <div class="alert alert-info mt-2 mb-3 py-2">
+                        <small>
+                            <i class="fa fa-info-circle"></i>
+                            <strong>DISCLAIMER:</strong> PLEASE ENSURE ALL INFORMATION PROVIDED IS ACCURATE AND COMPLETE. 
+                            FALSE INFORMATION MAY RESULT IN DISQUALIFICATION. FIELDS MARKED <span class="text-danger">*</span> ARE REQUIRED. 
+                            LEAVE FIELDS BLANK IF NOT APPLICABLE.
+                        </small>
+                    </div>
+                    <hr/>
                     <div class="tab-content">
                         <div id="personal_information" class="tab-pane active">
                             <form id="personal_information_form" action="javascript:void(0);">
@@ -204,31 +213,31 @@
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="contact_no" class="form-control-label required">Mobile Number</label>
-                                            <input type="text" name="contact_no" id="contact_no" placeholder="ENTER YOUR MOBILE NUMBER" class="form-control" data-validation="required" autocomplete="off">
+                                            <input type="text" v-model="contactFormData.contact_no" name="contact_no" id="contact_no" placeholder="ENTER YOUR MOBILE NUMBER" class="form-control" data-validation="required" autocomplete="off">
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="email" class="form-control-label">Email</label>
-                                            <input type="email" name="email" id="email" placeholder="(optional)" class="form-control" autocomplete="off">
+                                            <input type="email" v-model="contactFormData.email" name="email" id="email" placeholder="(optional)" class="form-control" autocomplete="off">
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="tel_no" class="form-control-label">Telephone Number</label>
-                                            <input type="text" name="tel_no" id="tel_no" placeholder="(optional)" class="form-control" autocomplete="off">
+                                            <input type="text" v-model="contactFormData.tel_no" name="tel_no" id="tel_no" placeholder="(optional)" class="form-control" autocomplete="off">
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="form-group">
                                             <label for="address" class="form-control-label required">Current Address</label>
-                                            <input type="text" name="address" id="address" placeholder="ENTER YOUR CURRENT ADDRESS" class="form-control" data-validation="required" autocomplete="off">
+                                            <input type="text" v-model="contactFormData.address" name="address" id="address" placeholder="ENTER YOUR CURRENT ADDRESS" class="form-control" data-validation="required" autocomplete="off">
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="form-group">
                                             <label for="permanent_address" class="form-control-label required">Permanent Address</label>
-                                            <input type="text" name="permanent_address" id="permanent_address" placeholder="ENTER YOUR PERMANENT ADDRESS" class="form-control" data-validation="required" autocomplete="off">
+                                            <input type="text" v-model="contactFormData.permanent_address" name="permanent_address" id="permanent_address" placeholder="ENTER YOUR PERMANENT ADDRESS" class="form-control" data-validation="required" autocomplete="off">
                                         </div>
                                     </div>
                                     <!-- <div class="col-12">
@@ -246,141 +255,143 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-2">
-                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
-                                        <div class="form-group">
-                                            <label for="full_name_1" class="form-control-label required">Full Name</label>
-                                            <input id="full_name_1" name="references[0][ref_name]" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                <template>
+                                    <div v-for="(reference, index) in references" v-for="(reference, index) in references" :key="'reference_' + index">
+                                        <div class="row mt-2">
+                                            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+                                                <div class="form-group">
+                                                    <label :for="`full_name_${index + 1}`" class="form-control-label required">Full Name</label>
+                                                    <input :id="`full_name_${index + 1}`" v-model="reference.ref_name" :name="`references[${index}][ref_name]`" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input"/>
+                                                </div>
+                                            </div>
+                                            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+                                                <div class="form-group">
+                                                    <label :for="`contact_no_${index + 1}`" class="form-control-label required">Contact Number</label>
+                                                    <input :id="`contact_no_${index + 1}`" v-model="reference.ref_contact_no" :name="`references[${index}][ref_contact_no]`" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="11" autocomplete="off" data-validation="required" class="form-control m-input"/>
+                                                </div>
+                                            </div>
+                                            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+                                                <div class="form-group">
+                                                    <label :for="`address_${index + 1}`" class="form-control-label required">Address</label>
+                                                    <input :id="`address_${index + 1}`" v-model="reference.ref_address" :name="`references[${index}][ref_address]`" placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input"/>
+                                                </div>
+                                            </div>
+                                            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+                                                <div class="form-group">
+                                                    <label :for="`company_${index + 1}`" class="form-control-label required">Company</label>
+                                                    <input :id="`company_${index + 1}`" v-model="reference.ref_company" :name="`references[${index}][ref_company]`" placeholder="ENTER COMPANY" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input"/>
+                                                </div>
+                                            </div>
+                                            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+                                                <div class="form-group">
+                                                    <label :for="`position_${index + 1}`" class="form-control-label required">Position</label>
+                                                    <input :id="`position_${index + 1}`" v-model="reference.ref_position" :name="`references[${index}][ref_position]`" placeholder="ENTER POSITION" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                                </div>
+                                            </div>
+                                            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+                                                <div class="form-group">
+                                                    <label :for="`relationship_${index + 1}`" class="form-control-label required">Relationship</label>
+                                                    <input :id="`relationship_${index + 1}`" v-model="reference.ref_relationship" :name="`references[${index}][ref_relationship]`" placeholder="ENTER RELATIONSHIP" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input"/>
+                                                </div>
+                                            </div>
                                         </div>
+                                        <hr />
                                     </div>
-                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
-                                        <div class="form-group">
-                                            <label for="contact_no_1" class="form-control-label required">Contact Number</label>
-                                            <input id="contact_no_1" name="references[0][ref_contact_no]" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="20" autocomplete="off" data-validation="required" class="form-control m-input" />
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
-                                        <div class="form-group">
-                                            <label for="address_1" class="form-control-label required">Address</label>
-                                            <input id="address_1" name="references[0][ref_address]" placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row mt-2">
-                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
-                                        <div class="form-group">
-                                            <label for="full_name_2" class="form-control-label required">Full Name</label>
-                                            <input id="full_name_2" name="references[1][ref_name]" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
-                                        <div class="form-group">
-                                            <label for="contact_no_2" class="form-control-label required">Contact Number</label>
-                                            <input id="contact_no_2" name="references[1][ref_contact_no]" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="20" autocomplete="off" data-validation="required" class="form-control m-input" />
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
-                                        <div class="form-group">
-                                            <label for="address_2" class="form-control-label required">Address</label>
-                                            <input id="address_2" name="references[1][ref_address]" placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input" />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row mt-2">
-                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
-                                        <div class="form-group">
-                                            <label for="full_name_3" class="form-control-label required">Full Name</label>
-                                            <input id="full_name_3" name="references[2][ref_name]" placeholder="ENTER FULL NAME" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
-                                        <div class="form-group">
-                                            <label for="contact_no_3" class="form-control-label required">Contact Number</label>
-                                            <input id="contact_no_3" name="references[2][ref_contact_no]" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="20" autocomplete="off" data-validation="required" class="form-control m-input" />
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
-                                        <div class="form-group">
-                                            <label for="address_3" class="form-control-label required">Address</label>
-                                            <input id="address_3" name="references[2][ref_address]"  placeholder="ENTER ADDRESS" type="text" maxlength="500" autocomplete="off" data-validation="required" class="form-control m-input" />
-                                        </div>
-                                    </div>
-                                </div>
+                                </template>
                             </form>
                         </div>
                         <div id="work_experience" class="tab-pane">
                             <form id="work_experience_form" action="javascript:void(0);">
-                                <div class="row mt-2">
+                                <div class="row my-2">
                                     <div class="col">
                                         <div class="m-portlet__head-title">
                                             <h5 class="m-portlet__head-text">WORK EXPERIENCE</h5>
                                         </div>
                                     </div>
                                 </div>
-                                <template v-for="(work, index) in workExperiences">
-                                    <div class="row mt-2 align-items-center">
-                                        <div class="col-12 d-flex justify-content-between">
-                                            <strong>ENTRY #{{ index + 1 }}</strong>
-                                            <button type="button" class="btn btn-danger btn-sm" v-on:click="removeWork(index)" v-if="workExperiences.length > 1">
-                                                <i class="la la-trash"></i> Remove
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <div class="form-group">
+                                            <label class="m-checkbox">
+                                                <input type="checkbox" v-model="isFreshGraduate" @change="onFreshGraduateChange"/>
+                                                I am a Fresh Graduate / No Work Experience
+                                                <span></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <template v-if="!isFreshGraduate">
+                                    <template v-for="(work, index) in workExperiences">
+                                        <div class="row mt-2 align-items-center">
+                                            <div class="col-12 d-flex justify-content-between">
+                                                <strong>ENTRY #{{ index + 1 }}</strong>
+                                                <button type="button" class="btn btn-danger btn-sm" v-on:click="removeWork(index)" v-if="workExperiences.length > 1">
+                                                    <i class="la la-trash"></i> Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-md-4 col-sm-12">
+                                                <div class="form-group">
+                                                    <label :for="'work_company_' + index" class="form-control-label required">Company</label>
+                                                    <input :id="'work_company_' + index" name="work_company" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" v-model="work.company"/>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 col-sm-12">
+                                                <div class="form-group">
+                                                    <label :for="'work_position_' + index" class="form-control-label required">Position</label>
+                                                    <input :id="'work_position_' + index" name="work_position" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" v-model="work.position"/>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 col-sm-12">
+                                                <div class="form-group">
+                                                    <label :for="'work_from_' + index" class="form-control-label required">From Year</label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon"><i class="la la-calendar"></i></span>
+                                                        <input :id="'work_from_' + index" name="work_from_year" type="text" maxlength="4" autocomplete="off" data-validation="required" class="form-control m-input" @input="work.from = work.from.replace(/\D/g, '')" v-model="work.from"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col-md-4 col-sm-12">
+                                                <div class="form-group">
+                                                    <label :for="'work_status_' + index" class="form-control-label required">Status</label>
+                                                    <input :id="'work_status_' + index" name="work_status" type="text" maxlength="50" autocomplete="off" data-validation="required" class="form-control m-input" v-model="work.status"/>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 col-sm-12">
+                                                <div class="form-group">
+                                                    <label :for="'work_reason_' + index" class="form-control-label">Reason for leaving *</label>
+                                                    <input :id="'work_reason_' + index" name="work_reason" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" v-model="work.reason"/>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 col-sm-12">
+                                                <div class="form-group">
+                                                    <label :for="'work_to_' + index" class="form-control-label required">To Year</label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-addon"><i class="la la-calendar"></i></span>
+                                                        <input :id="'work_to_' + index" name="work_to_year" type="text" maxlength="4" autocomplete="off" data-validation="required" class="form-control m-input" @input="work.to = work.to.replace(/\D/g, '')"  v-model="work.to"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                    </template>
+                                    <div class="row mt-2">
+                                        <div class="col-12">
+                                            <button type="button" class="btn btn-success" v-on:click="addWork">
+                                                <i class="la la-plus"></i> New
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="row mt-2">
-                                        <div class="col-4">
-                                            <div class="form-group">
-                                                <label :for="'work_company_' + index" class="form-control-label required">Company</label>
-                                                <input :id="'work_company_' + index" name="work_company" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" v-model="work.company"/>
-                                            </div>
-                                        </div>
-                                        <div class="col-4">
-                                            <div class="form-group">
-                                                <label :for="'work_position_' + index" class="form-control-label required">Position</label>
-                                                <input :id="'work_position_' + index" name="work_position" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" v-model="work.position"/>
-                                            </div>
-                                        </div>
-                                        <div class="col-4">
-                                            <div class="form-group">
-                                                <label :for="'work_from_' + index" class="form-control-label required">From Year</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="la la-calendar"></i></span>
-                                                    <input :id="'work_from_' + index" name="work_from_year" type="text" maxlength="4" autocomplete="off" data-validation="required" class="form-control m-input" @input="work.from = work.from.replace(/\D/g, '')" v-model="work.from"/>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row mt-2">
-                                        <div class="col-4">
-                                            <div class="form-group">
-                                                <label :for="'work_status_' + index" class="form-control-label required">Status</label>
-                                                <input :id="'work_status_' + index" name="work_status" type="text" maxlength="50" autocomplete="off" data-validation="required" class="form-control m-input" v-model="work.status"/>
-                                            </div>
-                                        </div>
-                                        <div class="col-4">
-                                            <div class="form-group">
-                                                <label :for="'work_reason_' + index" class="form-control-label">Reason for leaving *</label>
-                                                <input :id="'work_reason_' + index" name="work_reason" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" v-model="work.reason"/>
-                                            </div>
-                                        </div>
-                                        <div class="col-4">
-                                            <div class="form-group">
-                                                <label :for="'work_to_' + index" class="form-control-label required">To Year</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-addon"><i class="la la-calendar"></i></span>
-                                                    <input :id="'work_to_' + index" name="work_to_year" type="text" maxlength="4" autocomplete="off" data-validation="required" class="form-control m-input" @input="work.to = work.to.replace(/\D/g, '')"  v-model="work.to"/>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <hr>
                                 </template>
-                                <div class="row mt-2">
-                                    <div class="col-12">
-                                        <button type="button" class="btn btn-success" v-on:click="addWork">
-                                            <i class="la la-plus"></i> New
-                                        </button>
+                                <template v-else>
+                                    <div class="alert alert-info mt-2">
+                                        <i class="fa fa-info-circle"></i> 
+                                        Marked as <strong>Fresh Graduate / No Work Experience</strong>
                                     </div>
-                                </div>
+                                </template>
                             </form>
                         </div>
                         <div id="educational_information" class="tab-pane">
@@ -402,19 +413,27 @@
                                         </div>
                                     </div>
                                     <div class="row mt-2">
-                                        <div class="col-4">
+                                        <div class="col-md-4 col-sm-12">
                                             <div class="form-group">
                                                 <label :for="'level_' + index" class="form-control-label required">Level</label>
-                                                <input :id="'level_' + index" name="level" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" v-model="item.level"/>
+                                                <select :id="'level_' + index" :name="'schools[' + index + '][level]'" class="form-control m-input" data-validation="required" v-model="item.level">
+                                                    <option value="">-- SELECT LEVEL --</option>
+                                                    <option value="Primary">Primary</option>
+                                                    <option value="Secondary">Secondary</option>
+                                                    <option value="Senior High School">Senior High School</option>
+                                                    <option value="Vocational">Vocational / Technical</option>
+                                                    <option value="College">College</option>
+                                                    <option value="Post Graduate">Post Graduate</option>
+                                                </select>
                                             </div>
                                         </div>
-                                        <div class="col-4">
+                                        <div class="col-md-4 col-sm-12">
                                             <div class="form-group">
                                                 <label :for="'educ_school_' + index" class="form-control-label required">School</label>
                                                 <input :id="'educ_school_' + index" name="school" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" v-model="item.school"/>
                                             </div>
                                         </div>
-                                        <div class="col-4">
+                                        <div class="col-md-4 col-sm-12">
                                             <div class="form-group">
                                                 <label :for="'educ_from_' + index" class="form-control-label required">From Year</label>
                                                 <div class="input-group">
@@ -425,19 +444,19 @@
                                         </div>
                                     </div>
                                     <div class="row mt-2">
-                                        <div class="col-4">
+                                        <div class="col-md-4 col-sm-12">
                                             <div class="form-group">
-                                                <label :for="'educ_degree_' + index" class="form-control-label required">Educational Degree</label>
-                                                <input :id="'educ_degree_' + index" name="educ_degree" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" v-model="item.degree"/>
+                                                <label :for="'educ_degree_' + index" class="form-control-label">Educational Degree</label>
+                                                <input :id="'educ_degree_' + index" name="educ_degree" type="text" maxlength="200" autocomplete="off" class="form-control m-input" v-model="item.degree"/>
                                             </div>
                                         </div>
-                                        <div class="col-4">
+                                        <div class="col-md-4 col-sm-12">
                                             <div class="form-group">
-                                                <label :for="'honor_' + index" class="form-control-label required">Honor</label>
-                                                <input :id="'honor_' + index" name="educ_honor" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" v-model="item.honor"/>
+                                                <label :for="'honor_' + index" class="form-control-label">Honor</label>
+                                                <input :id="'honor_' + index" name="educ_honor" type="text" maxlength="200" autocomplete="off" class="form-control m-input" v-model="item.honor"/>
                                             </div>
                                         </div>
-                                        <div class="col-4">
+                                        <div class="col-md-4 col-sm-12">
                                             <div class="form-group">
                                                 <label :for="'educ_to_' + index" class="form-control-label required">To Year</label>
                                                 <div class="input-group">

@@ -64,6 +64,15 @@ function formatDate(input) {
 let application_vue = new Vue({
     el: "#m_content",
     data: {
+        isFreshGraduate: false,
+        contactFormData: {
+            contact_no: "", email: "", tel_no: "", address: "", permanent_address: "",
+        },
+        references: [
+            { ref_name: "", ref_contact_no: "", ref_address: "", ref_company: "", ref_position: "", ref_relationship: "" },
+            { ref_name: "", ref_contact_no: "", ref_address: "", ref_company: "", ref_position: "", ref_relationship: "" },
+            { ref_name: "", ref_contact_no: "", ref_address: "", ref_company: "", ref_position: "", ref_relationship: "" },
+        ],
         isSubmitting: false, 
         className: "",
         count: 0,
@@ -93,7 +102,10 @@ let application_vue = new Vue({
                 tab: "#contact_information",
                 form: "contact_information_form",
                 valid: false,
-                data: {}
+                data: {
+                    contactFormData: this.contactFormData,
+                    references: this.references,
+                }
             },
             {
                 tab: "#work_experience",
@@ -227,6 +239,9 @@ let application_vue = new Vue({
         }
     },
     methods: {
+        onFreshGraduateChange() {
+            this.freshGraduate = !this.freshGraduate;
+        },
         checksOnloads() {
             const consent = localStorage.getItem('gcc_data_consent');
             if (!consent) {
@@ -362,7 +377,9 @@ let application_vue = new Vue({
         },
         submitAll() {
             _this = this;
-            let payload = {};
+            let payload = {
+                fresh_graduate: this.isFreshGraduate
+            };
             this.steps.forEach(step => {
                 if (!step.valid) return;
                 if (Array.isArray(step.data)) {
@@ -459,6 +476,10 @@ application_vue.steps.forEach(function(step, index) {
             else if (step.tab === "#educational_information") {
                 application_vue.steps[index].data = application_vue.educInfo;
             }
+            else if(step.tab === "#contact_information") {
+                application_vue.steps[index].data.contactFormData = application_vue.contactFormData;
+                application_vue.steps[index].data.references = application_vue.references;
+            } 
             else {
                 const formData = {};
                 $("#" + step.form).serializeArray().forEach(function(field) {
@@ -467,21 +488,6 @@ application_vue.steps.forEach(function(step, index) {
                             formData[field.name] = [];
                         }
                         formData[field.name].push(field.value);
-                        return;
-                    }
-                    if (field.name.startsWith("references[")) {
-                        const keys = field.name.match(/[^[\]]+/g);
-                        let current = formData;
-                        keys.forEach((key, i) => {
-                            if (i === keys.length - 1) {
-                                current[key] = field.value;
-                            } else {
-                                if (!current[key]) {
-                                    current[key] = isNaN(keys[i + 1]) ? {} : [];
-                                }
-                                current = current[key];
-                            }
-                        });
                         return;
                     }
                     formData[field.name] = field.value;
@@ -532,26 +538,21 @@ function restoreApplicationData(vue_app) {
             if (step.tab === "#work_experience") {
                 vue_app.workExperiences = step.data;
             }
-            else if (step.tab === "#educational_information") {
+            if (step.tab === "#educational_information") {
                 vue_app.educInfo = step.data;
             }
-            else{
-                Object.keys(step.data).forEach(function(name) {
-                    if(name === "schools" || name === "courses" || name === "positions" || name === "gender" || name === "civil_status" || name === "recruitment") {
-                        $('[name="' + name + '"]').val(step.data[name]).trigger("change");
-                    }
-                    else if (name === "references") {
-                        step.data[name].forEach(function(ref, index) {
-                            Object.keys(ref).forEach(function(field){
-                                $('[name="references[' + index + '][' + field + ']"]').val(ref[field]);
-                            });
-                        });
-                    }
-                    else {
-                        $('[name="' + name + '"]').val(step.data[name]);
-                    }
-                });
+            if (step.tab === "#contact_information") {
+                vue_app.contactFormData = step.data.contactFormData;
+                vue_app.references = step.data.references;
             }
+            Object.keys(step.data).forEach(function(name) {
+                if(name === "schools" || name === "courses" || name === "positions" || name === "gender" || name === "civil_status" || name === "recruitment") {
+                    $('[name="' + name + '"]').val(step.data[name]).trigger("change");
+                }
+                else {
+                    $('[name="' + name + '"]').val(step.data[name]);
+                }
+            });
         }
     });
 }
