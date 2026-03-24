@@ -1321,6 +1321,12 @@ class Payroll_m extends CI_Model{
                             // END REGULAR NIGHTDIFF CALCULATION
 
                             if(intval($ts->is_holiday) !== 0){
+                                $includeHolidayBasic = false;
+                                if(isset($ts->paid_holiday) && intval($ts->paid_holiday) === 1 && intval($ts->total_time_rendered) === 0){
+                                    $ts->minutely_amount = $minutely * 60;
+                                    $includeHolidayBasic = true;
+                                }
+
                                 $tempHolidayTimesheet = $this->getHolidayAmountDaily($ts);
                                 if($tempHolidayTimesheet && count(get_object_vars($tempHolidayTimesheet)) > 0){
                                     $ts = (object)array_merge((array)$ts, (array)$tempHolidayTimesheet);
@@ -1332,7 +1338,7 @@ class Payroll_m extends CI_Model{
                                     }
 
                                     $tempTotalRendered = intval($ts->am_time_rendered) + intval($ts->pm_time_rendered);
-                                    $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($ts->am_time_rendered) > 0 || intval($ts->pm_time_rendered) > 0);
+                                    $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($ts->am_time_rendered) > 0 || intval($ts->pm_time_rendered) > 0) || $includeHolidayBasic;
 
                                     if($hasRenderedShift && $ts->holiday_amount > 0){
                                         if(floatval($ts->total_time_rendered) > 0 && $excludePaidHolidayMinutes >= floatval($ts->total_time_rendered)){
@@ -1383,6 +1389,11 @@ class Payroll_m extends CI_Model{
                             }
                             // END REGULAR NIGHTDIFF CALCULATION
                             if(intval($ts->is_holiday) !== 0){
+                                $includeHolidayBasic = false;
+                                if(isset($ts->paid_holiday) && intval($ts->paid_holiday) === 1 && intval($ts->total_time_rendered) === 0){
+                                    $ts->minutely_amount = $minutely * 60;
+                                    $includeHolidayBasic = true;
+                                }
                                 $tempHolidayTimesheet = $this->getHolidayAmountDaily($ts);
                                 if($tempHolidayTimesheet && count(get_object_vars($tempHolidayTimesheet)) > 0){
                                     $ts = (object)array_merge((array)$ts, (array)$tempHolidayTimesheet);
@@ -1394,7 +1405,7 @@ class Payroll_m extends CI_Model{
                                     }
 
                                     $tempTotalRendered = intval($ts->am_time_rendered) + intval($ts->pm_time_rendered);
-                                    $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($ts->am_time_rendered) > 0 || intval($ts->pm_time_rendered) > 0);
+                                    $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($ts->am_time_rendered) > 0 || intval($ts->pm_time_rendered) > 0) || $includeHolidayBasic;
 
                                     if($hasRenderedShift && $ts->holiday_amount > 0){
                                         if(floatval($ts->total_time_rendered) > 0 && $excludePaidHolidayMinutes >= floatval($ts->total_time_rendered)){
@@ -3055,7 +3066,6 @@ class Payroll_m extends CI_Model{
             /*** $_holiday_minutes = $timesheet->minutely * ($timesheet->minutes_per_day / 60); ***/
             $_holiday_minutes = floatval($timesheet->minutes_per_day);
             $_holiday_amount = $timesheet->minutely_amount * ($timesheet->minutes_per_day / 60);
-
             $deductUtMinutes = 0;
             $deductUtAmount = 0;
 
@@ -4227,7 +4237,7 @@ class Payroll_m extends CI_Model{
             }
 
             $allowance_total = $allowance_minutes_total;
-            
+
             $allowance_minutes_deduction = $total_unrendered_minutes * $allowance_per_minute;
             $undertime_deduction = $allowance_minutes_deduction;
             $undertime_deduction_decimal = number_format($undertime_deduction, 2);

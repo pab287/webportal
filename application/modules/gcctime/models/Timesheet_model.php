@@ -9286,7 +9286,8 @@ class Timesheet_model extends CI_Model{
                 $timesheet = $this->arrayToStdClass($this->input->post());
                 $weekday = strtolower(date("l", strtotime($timesheet->date)));
                 $timesheet->weekday = $weekday;
-                $timesheet->total_time_rendered = 8 * 60;
+                //$timesheet->total_time_rendered = 8 * 60;
+                $timesheet->total_time_rendered = 0;
                 $timesheet->is_manual = 1;
                 $timesheet->manual_mode = "generated";
                 $timesheet->manual_by = $logged_in_user_emp_id;
@@ -9346,7 +9347,19 @@ class Timesheet_model extends CI_Model{
                 
                 $timesheet->total_time_rendered = 8 * 60; ***/
                 /*** comment out, use actual time records and computation ***/
+                $tsRow = $qTemp->row();
+                if(intval($tsRow->total_time_rendered) === 0){
+                    $timesheet->am_late = 0;
+                    $timesheet->pm_late = 0;
+                    $timesheet->am_ut = 0;
+                    $timesheet->pm_ut = 0;
+                    $timesheet->total_late = 0;
+                    $timesheet->total_ut = 0;
+                    $timesheet->am_time_rendered = 0;
+                    $timesheet->pm_time_rendered = 0;
+                }
 
+                $timesheet->is_manual = 1;
                 $timesheet->paid_holiday = 1;
                 $timesheet->verified = 1;
                 $timesheet->verified_by = $logged_in_user_emp_id;
