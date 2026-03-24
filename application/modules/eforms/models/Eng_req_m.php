@@ -901,8 +901,6 @@ class Eng_req_m extends CI_Model {
     }
 
     private function buildCreateMessage($data){
-        var_dump($data);
-        die();
     $needed_info = $data['needed_info'];
     $needed_info = str_replace(
         ['</li>', '</ol>', '</ul>', '</blockquote>', '</p>', '</div>', '<br>', '<br/>', '<br />'],
