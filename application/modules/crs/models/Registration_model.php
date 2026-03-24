@@ -2398,6 +2398,7 @@ class Registration_model extends CI_Model{
             "tel_no"             => $tel_no,
             "email"              => $email,
             "referral"           => $post['referral'],
+            "referral_relationship" => $post['referral-relationship'],
             "is_online"          => 1,
         );
     
@@ -2461,6 +2462,9 @@ class Registration_model extends CI_Model{
                 "ref_name"       => $ref['ref_name'],
                 "ref_contact_no" => $ref['ref_contact_no'],
                 "ref_address"    => $ref['ref_address'],
+                "ref_company"    => $ref['ref_company'],
+                "ref_position"   => $ref['ref_position'],
+                "ref_relationship"      => $ref['ref_relationship'],
             );
         }
         $inserted_references = $this->db->insert_batch("dbhrd.candidate_references", $references);
@@ -2491,10 +2495,10 @@ class Registration_model extends CI_Model{
             return $result;
         }
 
-        if (!$post['fresh_graduate']) {
+        if (!$post['is_fresh_graduate']) {
             $workexp = array();
 
-            foreach ($post['work_experience_form'] as $work) {
+            foreach ($post['experiences'] as $work) {
                 $workexp[] = array(
                     "applicant_id"   => $candidate_id,
                     "work_company"   => $work['company'],

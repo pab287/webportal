@@ -12,7 +12,6 @@
         {
             $tempData = array();
             $tempData['data']['position'] = $this->registration->select2PositionData();
-            $tempData['data']['referral'] = $this->registration->select2RefferalData();
             $tempData['data']['schools'] = $this->registration->select2SchoolsData();
             $tempData['data']['courses'] = $this->registration->select2CoursesData();
             $this->load->view("core/templates/external/header");

@@ -1,8 +1,7 @@
-let position,referral, schools, courses;
+let position, schools, courses;
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.position != "undefined" && _tempContentData.position.length > 0){ position = _tempContentData.position; }
-    if(typeof _tempContentData.referral != "undefined" && _tempContentData.referral.length > 0){ referral = _tempContentData.referral; }
     if(typeof _tempContentData.schools != "undefined" && _tempContentData.schools.length > 0){ schools = _tempContentData.schools; }
     if(typeof _tempContentData.courses != "undefined" && _tempContentData.courses.length > 0){ courses = _tempContentData.courses; }
 }
@@ -26,6 +25,15 @@ const civilStatusOptions = [
     { id: 'widowed', text: 'WIDOWED' },
     { id: 'annulled', text: 'ANNULLED' },
     { id: 'other', text: 'OTHER' }
+];
+
+const levelOptions = [
+    { id: "Primary", text: "Primary" },
+    { id: "Secondary", text: "Secondary" },
+    { id: "Senior High School", text: "Senior High School" },
+    { id: "Vocational", text: "Vocational / Technical" },
+    { id: "College", text: "College" },
+    { id: "Post Graduate", text: "Post Graduate" }
 ];
 
 const genderOptions = [    
@@ -111,7 +119,7 @@ let application_vue = new Vue({
                 tab: "#work_experience",
                 form: "work_experience_form",
                 valid: false,
-                data: this.workExperiences
+                data: { experiences: [this.workExperiences] , is_fresh_graduate: this.isFreshGraduate}
             },
             {
                 tab: "#educational_information",
@@ -152,12 +160,12 @@ let application_vue = new Vue({
         let formatted = month + '/' + day + '/' + year;
         $('#applied_dt').val(formatted);
     
-        $("#referral").select2({
-            placeholder: 'SELECT AN OPTION',
-            width: '100%',
-            data: referral,
-            allowClear: true,
-        }).val(null).trigger('change');
+        // $("#referral").select2({
+        //     placeholder: 'SELECT AN OPTION',
+        //     width: '100%',
+        //     data: referral,
+        //     allowClear: true,
+        // }).val(null).trigger('change');
     
         // $("#school_id").select2({
         //     placeholder: 'SELECT AN OPTION',
@@ -211,17 +219,22 @@ let application_vue = new Vue({
             width: '100%',
             placeholder: 'SELECT SOURCE',
             data: recruitmentSources,
-        }).on('select2:select', function (e) {
-            const selectedValue = e.params.data.id;
+        }).on('change', function (e) {
+            const selectedValue = $(this).val();
             if (selectedValue == 'referral') {
                 $('.referral').removeClass('d-none');
             } else {
                 $('.referral').addClass('d-none');
-                $('#referral').val(null).trigger('change');
             }
+        }).on('select2:select', function (e) {
+            $('#referral').val("");
+            $('#referral-relationship').val("");
         });
 
         restoreApplicationData(this);
+        this.$nextTick(() => {
+            this.initEducSelect2();
+        })
     },
     computed: {
         canGoBack() {
@@ -285,12 +298,45 @@ let application_vue = new Vue({
             });
         },
         removeEducInfo: function(index) {
-            this.educInfo.splice(index, 1);
+            $('.educ-level-select').each(function () {
+                if ($(this).hasClass("select2-hidden-accessible")) {
+                    $(this).off('change').select2('destroy');
+                }
+            });
+            this.$nextTick(() => {
+                this.educInfo.splice(index, 1);
+                this.initEducSelect2();
+            });
         },
         addEducInfo: function() {
             this.educInfo.push(
                 { level: '', school: '', degree:'', honor: '', from: '', to: ''}
             );
+            this.initEducSelect2();
+        },
+        initEducSelect2() {
+            const vm = this;
+            this.$nextTick(() => {
+                $('.educ-level-select').each(function () {
+                    if ($(this).hasClass("select2-hidden-accessible")) {
+                        return;
+                    }
+                    const i = $(this).data('index');
+                    $(this).select2({
+                        width: '100%',
+                        placeholder: 'SELECT LEVEL',
+                        allowClear: true,
+                        data: levelOptions
+                    }).on('change', function () {
+                        const index = $(this).data('index');
+                        vm.educInfo[index].level = $(this).val();
+                    });
+                    const savedValue = vm.educInfo[i]?.level;
+                    if (savedValue) {
+                        $(this).val(savedValue).trigger('change');
+                    }
+                });
+            });
         },
         addWork: function() {
             this.workExperiences.push(
@@ -377,9 +423,7 @@ let application_vue = new Vue({
         },
         submitAll() {
             _this = this;
-            let payload = {
-                fresh_graduate: this.isFreshGraduate
-            };
+            let payload = {};
             this.steps.forEach(step => {
                 if (!step.valid) return;
                 if (Array.isArray(step.data)) {
@@ -407,7 +451,7 @@ let application_vue = new Vue({
                         toastr.success(res.message, "Success", 10000);
                         localStorage.clear();
                         document.cookie = "gcc_already_submitted=true;path=/;max-age=259200";
-                        window.location.href = "online_registration/thank_you";
+                        window.location.href = "thank_you";
                     }
                 },
                 error: function (err) {
@@ -471,7 +515,8 @@ application_vue.steps.forEach(function(step, index) {
         onSuccess: function () {
             application_vue.steps[index].valid = true;
             if (step.tab === "#work_experience") {
-                application_vue.steps[index].data = application_vue.workExperiences;
+                application_vue.steps[index].data.experiences = application_vue.workExperiences;
+                application_vue.steps[index].data.is_fresh_graduate = application_vue.isFreshGraduate;
             }
             else if (step.tab === "#educational_information") {
                 application_vue.steps[index].data = application_vue.educInfo;
@@ -529,6 +574,7 @@ function restoreApplicationData(vue_app) {
     let savedSteps = localStorage.getItem("gcc_job_application");
     if (!savedSteps) return;
     savedSteps = JSON.parse(savedSteps);
+    console.log(savedSteps);
     vue_app.steps = savedSteps;
     vue_app.steps.forEach(function(step){
         if (step.valid === true) {
@@ -536,7 +582,8 @@ function restoreApplicationData(vue_app) {
                 vue_app.validate = step.data
             }
             if (step.tab === "#work_experience") {
-                vue_app.workExperiences = step.data;
+                vue_app.isFreshGraduate = step.data.is_fresh_graduate;
+                vue_app.workExperiences = step.data.experiences;
             }
             if (step.tab === "#educational_information") {
                 vue_app.educInfo = step.data;

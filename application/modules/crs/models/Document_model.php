@@ -3237,24 +3237,15 @@ class Document_model extends CI_Model{
               ''),
               ' ',
               LOWER(a.lastname)
-          ) AS name, 
-          CONCAT(
-              LOWER(c.firstname),
-              IF(c.middlename IS NOT NULL AND c.middlename != '', 
-              CONCAT(' ', UPPER(LEFT(c.middlename, 1)), '.'), 
-              ''),
-              ' ',
-              LOWER(c.lastname)
-          ) AS referral_name,
-        a.positions, a.recruitment, 
+          ) AS name,
+          a.positions, a.recruitment, 
           a.applied_dt, a.remarks, a.contact_no";
           $this->db->select($sql);
           $this->db->from("dbhrd.candidates a");
           $this->db->where("a.is_archive", $archive);
-        //   $this->db->join("dbhrd.candidate_attachment b", "b.candidate_id = a.id", "left");
-          $this->db->join("gccmaster.tblemployees c", "a.referral = c.id", "left");
-      //   $this->db->where('status != ', 'hired');
-      //   $this->db->where('status != ', 'blacklisted');
+            //$this->db->join("dbhrd.candidate_attachment b", "b.candidate_id = a.id", "left");
+            //$this->db->where('status != ', 'hired');
+            //$this->db->where('status != ', 'blacklisted');
         if ($year && $year != 'All'){
           $this->db->where("YEAR(a.applied_dt)", $year);
         }
@@ -3364,7 +3355,7 @@ class Document_model extends CI_Model{
     }
 
     private function getReferenceData($id) {
-        $query = $this->db->select("id, ref_name, ref_contact_no, ref_address")
+        $query = $this->db->select("id, ref_name, ref_contact_no, ref_address, ref_company, ref_position, ref_relationship")
             ->from("dbhrd.candidate_references")
             ->where('applicant_id', $id)
             ->get();

@@ -225,6 +225,7 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <hr/>
                                     </div>
                                     <div id="contact_information" class="tab-pane">
                                         <div class="row mt-2">
@@ -302,7 +303,30 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div class="row mt-2">
+                                                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+                                                    <div class="form-group">
+                                                        <span class="form-control-label mb-2">Company</span>
+                                                        <div class="form-control" v-text="reference.ref_company || '-'"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+                                                    <div class="form-group">
+                                                        <span class="form-control-label mb-2">Position</span>
+                                                        <div class="form-control" v-text="reference.ref_position || '-'"></div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
+                                                    <div class="form-group">
+                                                        <span class="form-control-label mb-2">Relationship</span>
+                                                        <div class="form-control" v-text="reference.ref_relationship || '-'"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="m-separator m-separator--dashed d-xl-12"></div>
                                         </template>
+                                        <hr/>
                                     </div>
                                     <div id="work_experience" class="tab-pane">
                                         <div class="row mt-2">
@@ -361,6 +385,7 @@
                                             </div>
                                             <div class="m-separator m-separator--dashed d-xl-12"></div>
                                         </template>
+                                        <hr/>
                                     </div>
                                     <div id="educational_information" class="tab-pane">
                                         <div class="row mt-2">
@@ -419,6 +444,7 @@
                                             </div>
                                             <div class="m-separator m-separator--dashed d-xl-12"></div>
                                         </template>
+                                        <hr/>
                                     </div>
                                     <div id="application_information" class="tab-pane">
                                         <div class="row mt-2">
@@ -435,17 +461,23 @@
                                                     <div class="form-control" v-text="selectedApplication.recruitment || '-'"></div>
                                                 </div>
                                             </div>
+                                            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 referral" v-show="selectedApplication.recruitment == 'referral'">
+                                                <div class="form-group">
+                                                    <span  class="form-control-label mb-2">referral name</span>
+                                                    <div class="form-control" v-text="selectedApplication.referral || '-'"></div>
+                                                </div>
+                                            </div>
+                                            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 referral" v-show="selectedApplication.recruitment == 'referral'">
+                                                <div class="form-group">
+                                                    <span  class="form-control-label mb-2">referral relationship</span>
+                                                    <div class="form-control" v-text="selectedApplication.referral_relationship || '-'"></div>
+                                                </div>
+                                            </div>
                                             <div class="col-xl-8 col-lg-8 col-md-8 col-sm-12">
                                                 <div class="form-group">
                                                     <span class="form-control-label mb-2">Position Applied FOR</span>
                                                     <div class="form-control" v-text="selectedApplication.positions && selectedApplication.positions.length ? selectedApplication.positions.join(', ') : '-'"></div>
                                                     <span class="m-form__help mb-0 pt-1 text-muted m--regular-font-size-sm1" style="text-transform: none;">You can select multiple position.</span>
-                                                </div>
-                                            </div>
-                                            <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 referral" v-show="selectedApplication.recruitment == 'referral'">
-                                                <div class="form-group">
-                                                    <span  class="form-control-label mb-2">referral name</span>
-                                                    <div class="form-control" v-text="selectedApplication.referral_name || '-'"></div>
                                                 </div>
                                             </div>
                                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
@@ -460,6 +492,7 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <hr/>
                                     </div>
                                     <div id="resume_upload" class="tab-pane">
                                         <div class="row mt-2 mb-2">

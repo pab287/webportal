@@ -416,14 +416,8 @@
                                         <div class="col-md-4 col-sm-12">
                                             <div class="form-group">
                                                 <label :for="'level_' + index" class="form-control-label required">Level</label>
-                                                <select :id="'level_' + index" :name="'schools[' + index + '][level]'" class="form-control m-input" data-validation="required" v-model="item.level">
-                                                    <option value="">-- SELECT LEVEL --</option>
-                                                    <option value="Primary">Primary</option>
-                                                    <option value="Secondary">Secondary</option>
-                                                    <option value="Senior High School">Senior High School</option>
-                                                    <option value="Vocational">Vocational / Technical</option>
-                                                    <option value="College">College</option>
-                                                    <option value="Post Graduate">Post Graduate</option>
+                                                <select :id="'level_' + index" :name="'schools[' + index + '][level]'" :data-index="index" class="form-control m-input educ-level-select" data-validation="required" v-model="item.level">
+                                                    <option></option>
                                                 </select>
                                             </div>
                                         </div>
@@ -466,14 +460,14 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="row mt-2">
-                                        <div class="col-12">
-                                            <button type="button" class="btn btn-success" v-on:click="addEducInfo">
-                                                <i class="la la-plus"></i> New
-                                            </button>
-                                        </div>
-                                    </div>
                                 </template>
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <button type="button" class="btn btn-success" v-on:click="addEducInfo">
+                                            <i class="la la-plus"></i> New
+                                        </button>
+                                    </div>
+                                </div>
                             </form>
                         </div>
                         <div id="application_information" class="tab-pane">
@@ -494,20 +488,24 @@
                                             </select>
                                         </div>
                                     </div>
+                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 referral d-none">
+                                        <div class="form-group">
+                                            <label for="referral" class="form-control-label required">referral</label>
+                                            <input type="text" name="referral" id="referral" placeholder="Enter Referral Name" class="form-control" data-validation="required" autocomplete="off" maxlength="200">
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 referral d-none">
+                                        <div class="form-group">
+                                            <label for="referral-relationship" class="form-control-label required">relationship</label>
+                                            <input type="text" name="referral-relationship" id="referral-relationship" placeholder="Enter Referral Relationship" class="form-control" data-validation="required" autocomplete="off" maxlength="200">
+                                        </div>
+                                    </div>
                                     <div class="col-xl-8 col-lg-8 col-md-8 col-sm-12">
                                         <div class="form-group">
                                             <label for="position_id" class="form-control-label required">Position Applied FOR</label>
                                             <select id="position_id" name="positions" multiple="multiple" class="form-control" data-validation="required">
                                             </select>
                                             <span class="m-form__help mb-0 pt-1 text-muted m--regular-font-size-sm1" style="text-transform: none;">You can select multiple position.</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 referral d-none">
-                                        <div class="form-group">
-                                            <label for="referral" class="form-control-label required">referral</label>
-                                            <select id="referral" name="referral" class="form-control"  data-validation="required">
-                                                <option></option>
-                                            </select>
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
@@ -573,6 +571,28 @@
                                     </template>
                                 </div>
                             </form>
+                            <div class="m-separator m-separator--dashed d-xl-12"></div>
+                            <div class="row mt-2">
+                                <div class="col">
+                                    <div class="card border-secondary">
+                                        <div class="card-body">
+                                            <h6 class="card-title fw-bold text-uppercase">Privacy Consent Statement</h6>
+                                            <p class="mb-2">
+                                                BY SUBMITTING YOUR APPLICATION TO <strong>GC&amp;C GROUP OF COMPANIES</strong>, YOU CONSENT TO THE 
+                                                COLLECTION AND PROCESSING OF YOUR PERSONAL DATA FOR RECRUITMENT PURPOSES.
+                                            </p>
+                                            <p class="mb-2">
+                                                YOUR INFORMATION WILL BE KEPT CONFIDENTIAL AND ACCESSED ONLY BY AUTHORIZED PERSONNEL. 
+                                                ALL DATA WILL BE HANDLED IN COMPLIANCE WITH THE <STRONG>DATA PRIVACY ACT OF 2012 (RA 10173)</STRONG> 
+                                                AND WILL NOT BE SHARED WITHOUT YOUR CONSENT, UNLESS REQUIRED BY LAW.
+                                            </p>
+                                            <p class="mb-0">
+                                                BY PROCEEDING, YOU CONFIRM YOUR UNDERSTANDING AND AGREEMENT TO THIS CONSENT.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -588,7 +608,7 @@
                                     <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
                                     Submitting...
                                 </span>
-                                <span v-else>SUBMIT</span>
+                                <span v-else>SUBMIT APPLICATION</span>
                             </button>
                         </div>
                     </div>
