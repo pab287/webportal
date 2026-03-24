@@ -279,8 +279,7 @@
                                     </div>
                                 </div>
                                 <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
-                                    <table id="tbl-loans" class="table display table-bordered table-striped dataTable no-footer"
-                                        width="100%">
+                                    <table id="tbl-loans" class="table display table-bordered table-striped dataTable no-footer" style="width: 100%">
                                         <thead>
                                         <th>Loan Name</th>
                                         <th>Loaned Amount</th>
@@ -326,7 +325,7 @@
                                 </div>
                             </div>
                         </div>
-                        <table id="tbl-deduction-history" class="table display table-bordered table-striped dataTable no-footer" width="100%">
+                        <table id="tbl-deduction-history" class="table display table-bordered table-striped dataTable no-footer" style="width:100%;">
                             <thead>
                                 <th>Loan Name</th>
                                 <th>Loaned Amount</th>
@@ -369,7 +368,7 @@
                                 </div>
                             </div>
                         </div>
-                        <table id="tbl-deduction-cancelled" class="table display table-bordered table-striped dataTable no-footer" width="100%">
+                        <table id="tbl-deduction-cancelled" class="table display table-bordered table-striped dataTable no-footer" style="width:100%;">
                             <thead>
                                 <th>Loan Name</th>
                                 <th>Loaned Amount</th>
@@ -429,8 +428,7 @@
                     </div>
                 </div>
                 <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
-                    <table id="tbl-payroll_history" class="table display table-bordered table-striped dataTable no-footer"
-                           width="100%">
+                    <table id="tbl-payroll_history" class="table display table-bordered table-striped dataTable no-footer" style="width:100%">
                         <thead>
                             <th>Logs</th>
                             <th>Action</th>
@@ -840,14 +838,14 @@
                             <div class="m-portlet__head-caption">
                                 <div class="m-portlet__head-title">
                                     <h3 class="m-portlet__head-text">Mergeable Loan/s</h3>
-                                </div>			
+                                </div>
                             </div>
                         </div>
                         <div class="m-portlet__body pt-0">
                             <div class="m-widget4">
                                 <div class="m-widget4__item pb-1 pt-1" v-for="loan in row.to_merge_loans">
                                     <input type="hidden" :name="'balance_amt['+loan.id+']'" :value="loan.balance_amt" />
-                                    <div class="m-widget4__ext">							 
+                                    <div class="m-widget4__ext">
                                         <span class="m-widget4__icon m--font-brand">
                                             <i class="flaticon-coins"></i>
                                         </span>
@@ -858,7 +856,7 @@
                                     </p>
                                     <p class="m-widget4__sub m--font-danger m--font-bolder m--marginless">
                                         Deduction: <span>{{ loan.deduction_type == 0 ? loan.percentage +' ( % )':loan.fixed_deduction_amt + 'Fixed Amount' }}</span>
-                                    </p>						 		 
+                                    </p>
                                     </div>
                                     <div class="m-widget4__ext">
                                         <span class="m-switch m-switch--sm">
@@ -896,7 +894,7 @@
             </div>
             <div class="modal-body">
                 <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
-                    <table id="tbl-approval_history" class="table display table-bordered table-striped dataTable no-footer" width="100%">
+                    <table id="tbl-approval_history" class="table display table-bordered table-striped dataTable no-footer" style="width: 100%">
                         <colgroup>
                             <col width="*">
                             <col width="20%">
