@@ -3588,7 +3588,7 @@ class Timesheet_model extends CI_Model{
                     $hasShift = intval($vvvx->has_shift) == 1;
                     $_currentxDate = $vvvx->scheduled_date;
                     $_md5Date = md5($_currentxDate);
-                    $_tag = $vvvx->set_in;
+                    $_tag = $vvvx->set_in ?? null;
     
                     $weekDay = date("l", strtotime($_currentxDate));
                     $shiftIndexes = array("shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end");

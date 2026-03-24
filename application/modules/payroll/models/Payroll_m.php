@@ -1180,6 +1180,7 @@ class Payroll_m extends CI_Model{
                 $unpaidHoliday = 0;
                 $unpaid_holiday_minutes = 0;
                 $unpaid_holiday_amount = 0;
+                $monthly_paid_holiday_amount = 0;
 
                 if($isMonthlyPaidEmployee === false){
                     $timesheet = $this->db
@@ -1559,6 +1560,13 @@ class Payroll_m extends CI_Model{
                     $total_ot_allowance_minutes = array_reduce($timesheet, function ($carry, $item) {
                         return $carry + $item->total_allowance_ot_hrs_minutes;
                     }, 0);
+
+                    $monthly_paid_holiday_amount = array_reduce($timesheet, function ($carry, $item) {
+                        $tempTotalRendered = intval($item->am_time_rendered) + intval($item->pm_time_rendered);
+                        $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($item->am_time_rendered) > 0 || intval($item->pm_time_rendered) > 0);
+                        $holidayPaid = $hasRenderedShift && $item->holiday_amount > 0 ? $item->holiday_amount: 0;
+                        return $carry + $holidayPaid;
+                    }, 0);
                     
                 } // end of is monthly paid FALSE
 
@@ -1611,6 +1619,9 @@ class Payroll_m extends CI_Model{
                 if($isMonthlyPaid && $monthlyRate > 0 && $days_worked > 0){
                     $basic_rate = $monthlyRate - $total_unrendered_amount;
                     $basic_rate_total = $monthlyRate - $total_unrendered_amount;
+
+                    $basic_rate += $monthly_paid_holiday_amount;
+                    $basic_rate_total += $monthly_paid_holiday_amount;
                 }
                 
                 $employee->basic_rate = $basic_rate;
@@ -4216,7 +4227,7 @@ class Payroll_m extends CI_Model{
             }
 
             $allowance_total = $allowance_minutes_total;
-
+            
             $allowance_minutes_deduction = $total_unrendered_minutes * $allowance_per_minute;
             $undertime_deduction = $allowance_minutes_deduction;
             $undertime_deduction_decimal = number_format($undertime_deduction, 2);
