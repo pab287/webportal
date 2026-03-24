@@ -1663,4 +1663,60 @@
             }
             return $items;
         }
+        
+        private function check_image($path){
+            $absolute = FCPATH . $path;
+            if(!empty($path) && file_exists($absolute)){
+                return base_url($path);
+            }
+            return base_url('assets/images/profile/no_image.jpg');
+        }
+
+        public function getCustomBirthdayFilter(){
+            $resultset = array();
+            $post = $this->input->post();
+            if(isset($post["month_filter"]) && $post["month_filter"]){
+                $this->db->select("emp.id, UCASE(
+                          CONCAT(
+                              emp.firstname, ' ', 
+                              CASE 
+                                  WHEN emp.middlename IS NOT NULL AND emp.suffix != '' AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.middlename)
+                                  ELSE ''
+                              END,
+                              ' ', emp.lastname, 
+                              CASE 
+                                  WHEN emp.suffix IS NOT NULL AND emp.suffix != '' AND emp.suffix != 'N/A' AND emp.suffix != 'NONE' THEN CONCAT(' ', emp.suffix)
+                                  ELSE ''
+                              END
+                          )
+                       ) employee_name, emp.pic_filename, bday, UPPER(IFNULL(pos.name, emp.position)) position");
+                $this->db->from("gccmaster.tblemployees emp");
+                $this->db->join("gcchris.tblposition pos", "pos.id = emp.position", "left");
+                $this->db->where("emp.bday IS NOT NULL", null, false);
+                $this->db->where("emp.bday !=", '0000-00-00');
+                $this->db->where("emp.bday !=", '0000-01-01');
+                $this->db->where(
+                    "MONTH(STR_TO_DATE(emp.bday, '%Y-%m-%d')) = ".$this->db->escape($post["month_filter"]),
+                    null,
+                    false
+                );
+                $this->db->where("emp.work_status !=", 'NO CONTRACT');
+                $this->db->where("emp.employee_status", 'Active');
+                $this->db->order_by("DAY(STR_TO_DATE(emp.bday, '%Y-%m-%d')) ASC", "", false);
+                $this->db->order_by("emp.firstname", "ASC");
+                $query = $this->db->get();
+                $data = $query->result();
+
+                foreach($data as &$row){
+                    $relativePath = 'uploads/files/images/employee_files/empcode_'.$row->id.'/'.$row->pic_filename;
+                    $row->filename = $this->check_image($relativePath);
+                }
+
+                $resultset["response"] = true;
+                $resultset["data"] = $data;
+            }else{
+                $resultset["response"] = false;
+            }
+            return $resultset;
+        }
     }

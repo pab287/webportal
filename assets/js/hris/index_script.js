@@ -1,4 +1,20 @@
 //const { Socket } = require("engine.io");
+const customFilterBirthday = $("#customFilterBirthday");
+const customBirthdayFilterModal = $("#customBirthdayFilterModal");
+const months = [
+    { id: 1, text: "January" },
+    { id: 2, text: "February" },
+    { id: 3, text: "March" },
+    { id: 4, text: "April" },
+    { id: 5, text: "May" },
+    { id: 6, text: "June" },
+    { id: 7, text: "July" },
+    { id: 8, text: "August" },
+    { id: 9, text: "September" },
+    { id: 10, text: "October" },
+    { id: 11, text: "November" },
+    { id: 12, text: "December" }
+];
 
 let select2_company_id = 0;
 let selectedPieItem;
@@ -1503,3 +1519,114 @@ const loadTurnoverRateByYear = function (year=null){
         return false;
     }
 }
+
+customFilterBirthday.on("click", function () {
+    // 🔻 Close the dropdown (remove active/show classes)
+    $(this).closest('.m-dropdown').removeClass('m-dropdown--open m-dropdown--shown');
+    // Optional: blur the clicked element (removes focus)
+    $(this).blur();
+    customBirthdayFilterModal.modal('show');
+});
+
+$("#month_filter").select2({
+    placeholder: "Select Month",
+    data: months,
+    allowClear: true,
+    width: '100%',
+    dropdownParent: customBirthdayFilterModal,
+    escapeMarkup: function (markup) {
+        return markup;
+    },
+    templateResult: function (data) {
+        return data.text;
+    },
+    templateSelection: function (data) {
+        return data.text;
+    }
+}).on("change", function (e) {
+    $(this).validate();
+});
+
+const dtTableCustomBirthday = $("#table-birthday-filter").DataTable({
+    //dom: 'Bfrtlip',
+    dom: '<"d-flex justify-content-end align-items-center gap-2"Bf>rtlip',
+    destroy: true,
+    serverSide: false,
+    processing: false,
+    ordering: false,
+
+    buttons: [
+        {
+            extend: 'excelHtml5',
+            text: '<span><i class="fa fa-file-excel-o pr-2"></i>EXPORT EXCEL</span>',
+            className: 'btn btn-warning m-btn m-btn--icon text-white btnExportexcel',
+            title: function () {
+                let month_filter = $("#month_filter").val();
+                let timestamp = moment().format('YYYYMMDD_HHmmss');
+                if (month_filter) {
+                    return 'Employee Birthdays - ' + moment().month(month_filter - 1).format('MMMM') + ' (' + timestamp + ')';
+                }
+                return 'Employee Birthdays (' + timestamp + ')';
+            },
+            exportOptions: {
+                columns: [1, 2, 3, 4], // exclude image column (0)
+                format: {
+                    body: function (data, row, column) {
+                        if (column === 3 || column === 4) {
+                            return moment(data).format('YYYY-MM-DD');
+                        }
+                        return data;
+                    }
+                }
+            }
+        }
+    ],
+
+    columns: [
+        { data: 'filename', width: '7%', className: 'text-center', render: function(data, type, row){
+            return `<div clas="m-card-profile__pic-wrapper">
+                <img class="m--img-rounded m--marginless m--img-centered user__pic" src="${data}" alt="image-holder--${data.id}" data-birthday="${row.bday}" />
+            </div>`;
+            }
+        }, { data: 'employee_name', width: '30%' },
+        { data: 'position', width: '*' },
+        { data: 'bday', width: '15%', render: function(data){
+            return moment(data).format('MMMM D');
+        }},
+        { data: 'bday', width: '15%', render: function(data){
+            return moment(data).format('LL');
+        }}, { data: "id", width: '5%', className: 'text-center', render: function(data){
+            return `<a href="${siteUrl('hris/masterfile/view_employee_masterfile/' + data)}"
+            class="btn btn-outline-info m-btn m-btn--icon m-btn--icon-only" target="_blank"><i class="fa fa-external-link" title="Internal Link"></i></a>`
+        }}
+    ], drawCallback: function(){
+        $(".dataTables_filter").find("input[type=search]").removeClass("form-control-sm");
+    }, initComplete: function () {
+        $('.dt-button').removeClass('dt-button buttons-excel buttons-html5');
+    }
+});
+
+$.validate({
+    form: "#customBirthdayFilterForm",
+    scrollToTopOnError: false,
+    onSuccess: function(form) {
+        const currentForm = form[0];
+        const formData = $(currentForm).serialize();
+        const formUrl = currentForm.action;
+
+        $.ajax({
+            url: formUrl,
+            type: "POST",
+            dataType: "JSON",
+            data: formData,
+            success: function (json) {
+                if (json.response) {
+                    dtTableCustomBirthday.clear();
+                    dtTableCustomBirthday.rows.add(json.data).draw(false);
+                }
+            }
+        });
+
+        return false;
+    }
+})
