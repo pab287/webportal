@@ -1180,6 +1180,7 @@ class Payroll_m extends CI_Model{
                 $unpaidHoliday = 0;
                 $unpaid_holiday_minutes = 0;
                 $unpaid_holiday_amount = 0;
+                $monthly_paid_holiday_amount = 0;
 
                 if($isMonthlyPaidEmployee === false){
                     $timesheet = $this->db
@@ -1320,6 +1321,12 @@ class Payroll_m extends CI_Model{
                             // END REGULAR NIGHTDIFF CALCULATION
 
                             if(intval($ts->is_holiday) !== 0){
+                                $includeHolidayBasic = false;
+                                if(isset($ts->paid_holiday) && intval($ts->paid_holiday) === 1 && intval($ts->total_time_rendered) === 0){
+                                    $ts->minutely_amount = $minutely * 60;
+                                    $includeHolidayBasic = true;
+                                }
+
                                 $tempHolidayTimesheet = $this->getHolidayAmountDaily($ts);
                                 if($tempHolidayTimesheet && count(get_object_vars($tempHolidayTimesheet)) > 0){
                                     $ts = (object)array_merge((array)$ts, (array)$tempHolidayTimesheet);
@@ -1331,7 +1338,7 @@ class Payroll_m extends CI_Model{
                                     }
 
                                     $tempTotalRendered = intval($ts->am_time_rendered) + intval($ts->pm_time_rendered);
-                                    $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($ts->am_time_rendered) > 0 || intval($ts->pm_time_rendered) > 0);
+                                    $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($ts->am_time_rendered) > 0 || intval($ts->pm_time_rendered) > 0) || $includeHolidayBasic;
 
                                     if($hasRenderedShift && $ts->holiday_amount > 0){
                                         if(floatval($ts->total_time_rendered) > 0 && $excludePaidHolidayMinutes >= floatval($ts->total_time_rendered)){
@@ -1382,6 +1389,11 @@ class Payroll_m extends CI_Model{
                             }
                             // END REGULAR NIGHTDIFF CALCULATION
                             if(intval($ts->is_holiday) !== 0){
+                                $includeHolidayBasic = false;
+                                if(isset($ts->paid_holiday) && intval($ts->paid_holiday) === 1 && intval($ts->total_time_rendered) === 0){
+                                    $ts->minutely_amount = $minutely * 60;
+                                    $includeHolidayBasic = true;
+                                }
                                 $tempHolidayTimesheet = $this->getHolidayAmountDaily($ts);
                                 if($tempHolidayTimesheet && count(get_object_vars($tempHolidayTimesheet)) > 0){
                                     $ts = (object)array_merge((array)$ts, (array)$tempHolidayTimesheet);
@@ -1393,7 +1405,7 @@ class Payroll_m extends CI_Model{
                                     }
 
                                     $tempTotalRendered = intval($ts->am_time_rendered) + intval($ts->pm_time_rendered);
-                                    $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($ts->am_time_rendered) > 0 || intval($ts->pm_time_rendered) > 0);
+                                    $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($ts->am_time_rendered) > 0 || intval($ts->pm_time_rendered) > 0) || $includeHolidayBasic;
 
                                     if($hasRenderedShift && $ts->holiday_amount > 0){
                                         if(floatval($ts->total_time_rendered) > 0 && $excludePaidHolidayMinutes >= floatval($ts->total_time_rendered)){
@@ -1559,6 +1571,13 @@ class Payroll_m extends CI_Model{
                     $total_ot_allowance_minutes = array_reduce($timesheet, function ($carry, $item) {
                         return $carry + $item->total_allowance_ot_hrs_minutes;
                     }, 0);
+
+                    $monthly_paid_holiday_amount = array_reduce($timesheet, function ($carry, $item) {
+                        $tempTotalRendered = intval($item->am_time_rendered) + intval($item->pm_time_rendered);
+                        $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($item->am_time_rendered) > 0 || intval($item->pm_time_rendered) > 0);
+                        $holidayPaid = $hasRenderedShift && $item->holiday_amount > 0 ? $item->holiday_amount: 0;
+                        return $carry + $holidayPaid;
+                    }, 0);
                     
                 } // end of is monthly paid FALSE
 
@@ -1611,6 +1630,9 @@ class Payroll_m extends CI_Model{
                 if($isMonthlyPaid && $monthlyRate > 0 && $days_worked > 0){
                     $basic_rate = $monthlyRate - $total_unrendered_amount;
                     $basic_rate_total = $monthlyRate - $total_unrendered_amount;
+
+                    $basic_rate += $monthly_paid_holiday_amount;
+                    $basic_rate_total += $monthly_paid_holiday_amount;
                 }
                 
                 $employee->basic_rate = $basic_rate;
@@ -3044,7 +3066,6 @@ class Payroll_m extends CI_Model{
             /*** $_holiday_minutes = $timesheet->minutely * ($timesheet->minutes_per_day / 60); ***/
             $_holiday_minutes = floatval($timesheet->minutes_per_day);
             $_holiday_amount = $timesheet->minutely_amount * ($timesheet->minutes_per_day / 60);
-
             $deductUtMinutes = 0;
             $deductUtAmount = 0;
 

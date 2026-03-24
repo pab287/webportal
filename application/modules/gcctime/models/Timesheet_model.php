@@ -2986,16 +2986,19 @@ class Timesheet_model extends CI_Model{
     }
 
     public function updateTimesheetHolidayById($id=null){
+        $response = false;
         if($id){
             $qTemp = $this->db->get_where($this->tbl_timesheet, array("id"=>$id));
             if($qTemp->num_rows() == 1){
                 $tempRow = $qTemp->row();
                 $tempHoliday = (object) $this->ts_model->getCurrentDateIsHoliday($tempRow->date);
-                $isHoliday = ($tempHoliday->is_holiday == true)? 1: 0;
-                $payRateId = ($tempHoliday->is_holiday == true && $tempHoliday->payrate_id)? $tempHoliday->payrate_id: 0;
+                $isHoliday = ($tempHoliday->is_holiday === true)? 1: 0;
+                $payRateId = ($tempHoliday->is_holiday === true && $tempHoliday->payrate_id)? $tempHoliday->payrate_id: 0;
                 $updated = $this->db->update($this->tbl_timesheet, array("is_holiday"=>$isHoliday, "payrate_id"=>$payRateId), array("id"=>$tempRow->id, "verified"=>0));
+                if($updated && $this->db->affected_rows() > 0){ $response = true; }
             }
         }
+        return $response;
     }
 
     private function getAttendance($date=null, $employees=[], $end_date=null, $nightShiftRecord=null){
@@ -3588,7 +3591,7 @@ class Timesheet_model extends CI_Model{
                     $hasShift = intval($vvvx->has_shift) == 1;
                     $_currentxDate = $vvvx->scheduled_date;
                     $_md5Date = md5($_currentxDate);
-                    $_tag = $vvvx->set_in;
+                    $_tag = $vvvx->set_in ?? null;
     
                     $weekDay = date("l", strtotime($_currentxDate));
                     $shiftIndexes = array("shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end");
@@ -9279,14 +9282,14 @@ class Timesheet_model extends CI_Model{
         $post = $this->input->post();
         $resultset = array();
         if(isset($post) && $post){
-
             $logged_in_user_emp_id = $this->logged_in_user["emp_id"];
             $qTemp = $this->db->get_where($this->tbl_timesheet, $post);
             if($qTemp->num_rows() === 0){
                 $timesheet = $this->arrayToStdClass($this->input->post());
                 $weekday = strtolower(date("l", strtotime($timesheet->date)));
                 $timesheet->weekday = $weekday;
-                $timesheet->total_time_rendered = 8 * 60;
+                //$timesheet->total_time_rendered = 8 * 60;
+                $timesheet->total_time_rendered = 0;
                 $timesheet->is_manual = 1;
                 $timesheet->manual_mode = "generated";
                 $timesheet->manual_by = $logged_in_user_emp_id;
@@ -9328,12 +9331,11 @@ class Timesheet_model extends CI_Model{
                     $resultset["response"] = false;
                 }
             }else{
+                $tsRow = $qTemp->row();
                 $tempWhere = array();
-                $tempWhere["id"] = $qTemp->row()->id;
-                $hasOvertime = intval($qTemp->row()->has_overtime) === 1;
-
+                $tempWhere["id"] = $tsRow->id;
+                $hasOvertime = intval($tsRow->has_overtime) === 1;
                 $timesheet = new stdClass();
-                
                 /*** comment out, use actual time records and computation ***/
                 /*** $timesheet->am_late = 0;
                 $timesheet->pm_late = 0;
@@ -9346,7 +9348,19 @@ class Timesheet_model extends CI_Model{
                 
                 $timesheet->total_time_rendered = 8 * 60; ***/
                 /*** comment out, use actual time records and computation ***/
+                
+                if(intval($tsRow->total_time_rendered) === 0){
+                    $timesheet->am_late = 0;
+                    $timesheet->pm_late = 0;
+                    $timesheet->am_ut = 0;
+                    $timesheet->pm_ut = 0;
+                    $timesheet->total_late = 0;
+                    $timesheet->total_ut = 0;
+                    $timesheet->am_time_rendered = 0;
+                    $timesheet->pm_time_rendered = 0;
+                }
 
+                $timesheet->is_manual = 1;
                 $timesheet->paid_holiday = 1;
                 $timesheet->verified = 1;
                 $timesheet->verified_by = $logged_in_user_emp_id;
@@ -9361,13 +9375,15 @@ class Timesheet_model extends CI_Model{
 
                 $updated = $this->db->update($this->tbl_timesheet, $timesheet, $tempWhere);
                 if($updated){
+                    $this->updateTimesheetHolidayById($tsRow->id);
+
                     $tempWhere = array();
-                    $tempWhere["timesheet_id"] = $qTemp->row()->id;
+                    $tempWhere["timesheet_id"] = $tsRow->id;
 
                     $qTempPaidHoliday = $this->db->get_where($this->tbl_timesheet_paid_holiday, $tempWhere);
                     if($qTempPaidHoliday->num_rows() === 0){
                         $tempData = new stdClass();
-                        $tempData->timesheet_id = $qTemp->row()->id;
+                        $tempData->timesheet_id = $tsRow->id;
                         $tempData->created_by = $logged_in_user_emp_id;
                         $tempData->created_at = Date("Y-m-d H:i:s");
                         $addedLog = $this->db->insert($this->tbl_timesheet_paid_holiday, $tempData);
@@ -9404,6 +9420,8 @@ class Timesheet_model extends CI_Model{
         $post = $this->input->post();
         $resultset = array();
         if(isset($post) && $post){
+            $this->updateTimesheetHolidayById($post["id"]);
+
             $logged_in_user_emp_id = $this->logged_in_user["emp_id"];
             $tempWhere = $post;
             $tempWhere["is_holiday"] = 1;
