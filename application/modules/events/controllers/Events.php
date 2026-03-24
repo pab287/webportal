@@ -11,8 +11,10 @@ class Events extends MX_Controller {
 
     public function index() {
         $data = array();
-        $this->core_layout->setPageTitle("EVENTS - Event Calendar");
+        $this->core_layout->setPageTitle("Training - Training Calendar");
         $this->core_layout->setPrivilegeName("company_events");
+        $this->core_layout->setHeaderTitle("schedule");
+        $this->core_layout->setCrumbTitle("training");
         $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
         $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
         $this->core_layout->addJs("vendors/custom/fullcalendar/fullcalendar.bundle.js", true);
@@ -38,11 +40,15 @@ class Events extends MX_Controller {
         }
         $this->core_layout->setPageTitle("EVENTS - Event Calendar");
         $data = array();
+        $data["company"] = $this->em->select2CompanyData();
+        $data['departments'] = $this->em->select2DepartmentData();
         $data['event_details'] = $this->em->getEventDetails($id);
         $data['participants'] = $this->em->getEventParticipants($id);
         $data['employees'] = $this->em->getEmployeeSelection($id);
         $data['attachments'] = $this->em->getEventAttachments($id);
         $data['schedule'] = $this->em->getEventSchedule($id);
+        $data['options'] = $this->em->getEventsOptions();
+        $data['assigned_sched'] = $this->em->getAssignedSchedule($id);
         $this->core_layout->addCss("css/buttons.dataTables.min.css", true);
         $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
         $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
@@ -137,7 +143,8 @@ class Events extends MX_Controller {
     }
 
     public function get_modal_training($id = null) {
-        $data = $this->employee_model->getModalContainerContent($id, "training");
+        $post = $this->input->post();
+        $data = $this->employee_model->getModalContainerContent($post['participant_id'], "training");
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
@@ -147,7 +154,12 @@ class Events extends MX_Controller {
     }
 
     public function set_modal_trainings() {
-        $data = $this->em->setModalTrainings();
+        $post = $this->input->post();
+        $data['data'] = $this->em->setModalTrainings();
+        if(isset($post['sched_id'])){
+            $data['attendance'] = $this->em->takeAttendance($post['sched_id']);
+            unset($post['sched_id']);
+        }
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
@@ -208,7 +220,12 @@ class Events extends MX_Controller {
     }
 
     public function remove_certificate(){
+        $post = $this->input->post();
         $data = $this->em->removeCertificate();
+        if(isset($post['sched_id'])){
+            $data['attendance'] = $this->em->takeAttendance($post['sched_id']);
+            unset($post['sched_id']);
+        }
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 
@@ -229,6 +246,26 @@ class Events extends MX_Controller {
 
     public function archive_event_settings(){
         $data = $this->em->archiveEventSettings();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function update_budget(){
+        $data = $this->em->updateBudget();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function mass_add_participants(){
+        $data = $this->em->massAddParticipants();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function hold_event(){
+        $data = $this->em->holdEvent();
+        $this->output->set_content_type('json')->set_output(json_encode($data));
+    }
+
+    public function resume_event(){
+        $data = $this->em->resumeEvent();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
 

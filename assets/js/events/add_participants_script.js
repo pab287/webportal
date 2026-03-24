@@ -6,6 +6,17 @@ let attachments = null;
 let schedule = null;
 let selectedSchedule = null;
 let modalTraining = null;
+let attachment_type = null;
+let assigned_sched = null;
+let departments = null;
+let employee_selection = null;
+let sched_id = null;
+
+const classRecent = "btn btn-primary btn-sm m-btn m-btn--pill btnAward btnSave ";
+const classNotRecent = "btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnAward btnSave";
+const openCertNormalClass = "btn btn-secondary btn-sm m-btn m-btn--pill text-dark btnOpenCert btnSave";
+const openCertLoadingClass = "btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnOpenCert btnSave";
+
 const maxFileSize = 50 * 1024 * 1024; // 50MB
 const allowedTypes = [
     'application/pdf',
@@ -51,8 +62,10 @@ if (_tempContentData !== undefined && _tempContentData !== null && _tempContentD
     employees =_tempContentData.employees;
     attachments = _tempContentData.attachments;
     schedule = _tempContentData.schedule;
+    attachment_type = _tempContentData.options.attachment_type;
+    assigned_sched = _tempContentData.assigned_sched;
+    departments = _tempContentData.departments;
 }
-
 
 let eventVue = new Vue({
     el: "#events-content",
@@ -89,8 +102,14 @@ let eventVue = new Vue({
         attendance:{},
         employee_attendance:{},
         emp_attendance_selected:{},
+        originalBudgetData: {},
+        isRecent: false,
+        assigned_sched: assigned_sched,
+        multipleEmployees: employees,
+
     },
     mounted: function () {
+        const vm = this;
         this.eventsData = JSON.parse(JSON.stringify(eventsDetails));
         $('#employee-select').prop('disabled', false);
         $('#new_event_form input[type="text"], #new_event_form input[type="email"]')
@@ -103,41 +122,109 @@ let eventVue = new Vue({
             startDate: new Date(eventsDetails.event_from),
             endDate: new Date(eventsDetails.event_to),
         });
+
+        $('#company_source').select2({
+            placeholder: "Select Source of Fund",
+            allowClear: false,
+            width: '100%',
+            data: _tempContentData.company
+        })
+        .on('change', function () {
+            vm.eventsData.company_source = $(this).val();
+        });
+
+        $('#company_source').val(this.eventsData.company_source).trigger('change');
+
+        this.originalBudgetData = JSON.parse(JSON.stringify(this.eventsData));
+
     },
     computed: {
         eventStatus() {
             return this.eventsStatus(this.eventsData.event_from, this.eventsData.event_to);
         },
-        eventAlreadyHappened() {
-            if (!this.eventsData?.event_to) return false; 
+        buttonAddTrainee() {
+            const { event_from, event_to } = this.eventsData || {};
+            if (!event_from) return false;
             const now = new Date();
-            const eventEnd = new Date(this.eventsData.event_to);
-            return eventEnd < now; 
-          },
-          participantsCount() {
+            const start = new Date(event_from);
+            const end = new Date(event_to || event_from);
+            const endPlus3Days = new Date(end);
+            endPlus3Days.setDate(endPlus3Days.getDate() + 3);
+            return now <= endPlus3Days;
+        },
+        buttonTakeAttendance() {
+            const { event_from, event_to } = this.eventsData || {};
+            if (!event_from) return false;
+            const now = new Date();
+            const start = new Date(event_from);
+            const end = new Date(event_to || event_from);
+            const endPlus3Days = new Date(end);
+            endPlus3Days.setDate(endPlus3Days.getDate() + 3);
+            const isOngoing = now >= start && now <= end;
+            const isWithin3DaysAfter = now > end && now <= endPlus3Days;
+            return isOngoing || isWithin3DaysAfter;
+        },
+        participantsCount() {
             let list = Object.values(this.participants);
             let invited = list.length;
             let confirmed = list.filter(p => p.status === "confirmed").length;
             let declined = list.filter(p => p.status === "declined").length;
             let pending = list.filter(p => p.status === "pending").length;
             return { invited, confirmed, declined, pending };
+        },
+        variance() {
+            const budget = parseFloat(this.eventsData.budget) || 0;
+            const expense = parseFloat(this.eventsData.expense) || 0;
+            return budget - expense;
+        },
+        varianceRemark() {
+            if (this.variance > 0) return "Excess";
+            if (this.variance < 0) return "Deficit";
+            return "Balanced";
+        },
+    
+        varianceClass() {
+            if (this.variance > 0) return "border-success";
+            if (this.variance < 0) return "border-danger";
+            return "";
+        },
+    
+        varianceDisplay() {
+            return `${this.variance.toLocaleString()} (${this.varianceRemark})`;
+        },
+        isUpdateBudget() {
+            return (
+                this.eventsData.company_source == this.originalBudgetData.company_source &&
+                parseFloat(this.eventsData.budget || 0) == parseFloat(this.originalBudgetData.budget || 0) &&
+                parseFloat(this.eventsData.expense || 0) == parseFloat(this.originalBudgetData.expense || 0)
+            );
         }
+
     },
     methods:{
+        viewCertificate(el,id) {
+            openCertificate(el,id);
+        },
         eventsStatus(date_from, date_to) {
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const start = new Date(date_from);
-            const end = new Date(date_to);
+            const end = new Date(date_to || date_from);
             const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
             const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+            const endPlus3Days = new Date(endDate);
+            endPlus3Days.setDate(endPlus3Days.getDate() + 3);
             if (today < startDate) {
-                return { label: "Upcoming Event", class: "bg-info text-dark" };
+                return { label: "Upcoming Training", class: "bg-info text-dark" };
             }
             if (today >= startDate && today <= endDate) {
-                return { label: "Ongoing Event", class: "bg-warning text-dark" };
+                return { label: "Ongoing Training", class: "bg-warning text-dark" };
             }
-            return { label: "Event Done", class: "bg-success" };
+            if (today > endDate && today <= endPlus3Days) {
+                this.isRecent = true;
+                return { label: "Recently Completed", class: "bg-primary text-white" };
+            }
+            return { label: "Training Done", class: "bg-success" };
         },
         formatDate(date_from, date_to) {
             const start = new Date(date_from), end = new Date(date_to);
@@ -258,7 +345,7 @@ let eventVue = new Vue({
                                 if (self.attachments[type]) {
                                     self.attachments[type] = self.attachments[type].filter(item => item.id !== id);
                                 }
-                                if (self.attachments[type] && self.attachments[type].length === 0) {
+                                if (self.attachments[type] && self.attachments[type].length === 0 || self.attachments[type] === undefined) {
                                     delete self.attachments[type];
                                 }
                             } else {
@@ -316,8 +403,8 @@ let eventVue = new Vue({
         assignParticipant(schedule_id, participant_id) {
             self = this;
             Swal.fire({
-                title: "Assign this participant?",
-                text: "This will assign the participant to the schedule.",
+                title: "Assign this trainee?",
+                text: "This will assign the trainee to the schedule.",
                 icon: "question",
                 showCancelButton: true,
                 confirmButtonText: "Yes, assign",
@@ -358,8 +445,8 @@ let eventVue = new Vue({
         unassignParticipant(schedule_id, participant_id) {
             self = this;
             Swal.fire({
-                title: "Unassign this participant?",
-                text: "This will remove the participant from the schedule.",
+                title: "Unassign this trainee?",
+                text: "This will remove the trainee from the schedule.",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonText: "Yes, unassign",
@@ -415,6 +502,7 @@ let eventVue = new Vue({
             });
         },
         takeAttendance(sched) {
+            sched_id = sched.id
             const btn = $(event.currentTarget);
             btn.prop("disabled", true);
             $.ajax({
@@ -491,156 +579,152 @@ let eventVue = new Vue({
         },
         uploadCertificate(rowId) {
             const rowData = participantsTable.row(`#${rowId}`).data();
-            $('#attendanceCheck').modal('hide');
-            let modalTempContent = $("#modalTempContent"); // grab the whole modal
-            let modalContent = modalTempContent.find("#modal-content");
-            if (typeof modalContent !== "undefined" && typeof modalTraining !== "undefined") {
-                modalContent.empty();
-                modalContent.append(modalTraining);
-                modalTempContent.modal('show');
+            $.ajax({
+                url: baseUrl("events/get_modal_training"),
+                type: "POST",
+                global: false,
+                data: {
+                    csrf_token: _csrf_hash,
+                    participant_id: rowId
+                },
+                success: function(res) {
+                    if(res){
+                        modalTraining = res.html;
+                        let fullname = rowData?.fullname;
+                        $('#attendanceCheck').modal('hide');
+                        let modalTempContent = $("#modalTempContent"); 
+                        let modalContent = modalTempContent.find("#modal-content");
+                        modalContent.empty();
+                        modalContent.append(modalTraining);
+                        modalContent.find(".modal-body").prepend('<div class="text-dark text-center font-weight-bold mb-2"><h3>'+fullname+'</h3></div>');
+                        modalTempContent.modal('show');
+                        
+                        if ($('#train_from').data('daterangepicker')) {
+                            $('#train_from').data('daterangepicker').remove();
+                        }
+                        if ($('#train_to').data('daterangepicker')) {
+                            $('#train_to').data('daterangepicker').remove();
+                        }
 
-                if ($('#train_from').data('daterangepicker')) {
-                    $('#train_from').data('daterangepicker').remove();
-                }
-                if ($('#train_to').data('daterangepicker')) {
-                    $('#train_to').data('daterangepicker').remove();
-                }
-                
-                $('#train_from').daterangepicker({
-                    showDropdowns: true,
-                    autoUpdateInput: false,
-                    singleDatePicker: true,
-                    startDate: eventsDetails.event_from ? moment(eventsDetails.event_from) : moment(),
-                    locale: {
-                        format: 'YYYY-MM-DD',
-                        cancelLabel: 'Clear'
-                    }
-                });
-                
-                $('#train_from').on('apply.daterangepicker', function(ev, picker) {
-                    $(this).val(picker.startDate.format('YYYY-MM-DD'));
-                });
-                
-                $('#train_from').on('cancel.daterangepicker', function(ev, picker) {
-                    $(this).val('');
-                });
-                
-                $('#train_to').daterangepicker({
-                    showDropdowns: true,
-                    autoUpdateInput: false,
-                    singleDatePicker: true,
-                    startDate: eventsDetails.event_to ? moment(eventsDetails.event_to) : moment(),
-                    locale: {
-                        format: 'YYYY-MM-DD',
-                        cancelLabel: 'Clear'
-                    }
-                });
-                
-                $('#train_to').on('apply.daterangepicker', function(ev, picker) {
-                    $(this).val(picker.startDate.format('YYYY-MM-DD'));
-                });
-                
-                $('#train_to').on('cancel.daterangepicker', function(ev, picker) {
-                    $(this).val('');
-                });
-                $("#train_from").val(moment(eventsDetails.event_from).format("YYYY-MM-DD"));
-                $("#train_to").val(moment(eventsDetails.event_to).format("YYYY-MM-DD"));
-
-                $("#train_from").attr("data-original", eventsDetails.event_from); 
-                $("#train_from").attr("value", moment(eventsDetails.event_from).format("MMM DD, YYYY"));
-
-                $("#train_to").attr("data-original", eventsDetails.event_to);
-                $("#train_to").attr("value", moment(eventsDetails.event_to).format("MMM DD, YYYY"));
-
-                $("#training").val(eventsDetails.event_title);
-                $("#train_institution").val(eventsDetails.events_by);
-
-                if (Array.isArray(eventsDetails.speakers)) {
-                    const speakers = eventsDetails.speakers
-                        .map(s => s.speaker_name)
-                        .join(", ");
-                    $("#train_conductor").val(speakers);
-                }
-                $("#train_venue").val(eventsDetails.event_venue);
-
-                let url = baseUrl("events/upload_employee_training");
-                $("#fileupload_training")
-                    .fileupload({
-                        url: url,
-                        dataType: "json",
-                        formData: { csrf_token: _csrf_hash, employee_id: rowData.emp_id, is_employee:rowData.is_employee, applicant_id:rowData.id },
-                        done: function (e, data) {
-                            var result = data.result;
-                            if (result.response) {
-                                modalContent.find("#training_attachment").val(result.filename);
-                                modalContent.find("#temp_fileupload").empty().text(result.filename);
-                                toastr.success(result.toastr_msg, "Upload Training and Seminar File", 5000);
-                            } else {
-                                toastr.error(result.toastr_msg, "Upload Training and Seminar File", 5000);
+                        $('#train_from').daterangepicker({
+                            showDropdowns: true,
+                            autoUpdateInput: false,
+                            singleDatePicker: true,
+                            startDate: eventsDetails.event_from ? moment(eventsDetails.event_from) : moment(),
+                            locale: {
+                                format: 'YYYY-MM-DD',
+                                cancelLabel: 'Clear'
                             }
-                        }
-                    })
-                    .prop("disabled", !$.support.fileInput)
-                    .parent()
-                    .addClass($.support.fileInput ? undefined : "disabled");
-
-                $.validate({
-                    form: "#form-trainings",
-                    lang: "en",
-                    onSuccess: function (form) {
-                        let attachment = $("#training_attachment").val().trim();
-                        if (!attachment) {
-                            toastr.warning("Please upload a training attachment before submitting.", "Missing File");
-                            return false; 
-                        }
-                        let currentForm = form[0];
-                        let url = baseUrl("events/set_modal_trainings");
-                        let formData = $(currentForm).serialize();
-                        formData += "&event_id=" + encodeURIComponent(eventsDetails.id);
-                        formData += "&is_employee=" + encodeURIComponent(rowData.is_employee);
-                        formData += "&applicant_id=" + encodeURIComponent(rowData.id);
-                        formData += "&emp_id=" + encodeURIComponent(rowData.emp_id);
-                        $.ajax({
-                            url: url,
-                            type: "post",
-                            dataType: "json",
-                            data: formData,
-                            beforeSend: function () {
-                                $(currentForm)
-                                    .find(".btn-submit")
-                                    .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
-                            },
-                            success: function (json) {
-                                if (json.response) {
-                                    toastr.success(
-                                        json.toastr_msg,
-                                        "Employee training and seminar has been saved.",
-                                        5000
-                                    );
-                                    currentForm.reset();
-                                    modalTempContent.modal("hide");
-                                    setParticipantsData(json.participants,true);
-                                } else {
-                                    toastr.error(
-                                        json.toastr_msg,
-                                        "Error updating employee training and seminar!",
-                                        5000
-                                    );
-                                }
-
-                                $(currentForm)
-                                    .find(".btn-submit")
-                                    .removeClass(
-                                        "m-btn--custom m-loader m-loader--light m-loader--right"
-                                    );
-                            },
-
                         });
-                        return false;
-                    }
-                });
-            }
 
+                        $('#train_to').on('apply.daterangepicker', function(ev, picker) {
+                            $(this).val(picker.startDate.format('YYYY-MM-DD'));
+                        });
+                        
+                        $('#train_to').on('cancel.daterangepicker', function(ev, picker) {
+                            $(this).val('');
+                        });
+                        $("#train_from").val(moment(eventsDetails.event_from).format("YYYY-MM-DD"));
+                        $("#train_to").val(moment(eventsDetails.event_to).format("YYYY-MM-DD"));
+        
+                        $("#train_from").attr("data-original", eventsDetails.event_from); 
+                        $("#train_from").attr("value", moment(eventsDetails.event_from).format("MMM DD, YYYY"));
+        
+                        $("#train_to").attr("data-original", eventsDetails.event_to);
+                        $("#train_to").attr("value", moment(eventsDetails.event_to).format("MMM DD, YYYY"));
+        
+                        $("#training").val(eventsDetails.event_title);
+                        $("#train_institution").val(eventsDetails.events_by);
+        
+                        if (Array.isArray(eventsDetails.speakers)) {
+                            const speakers = eventsDetails.speakers
+                                .map(s => s.speaker_name)
+                                .join(", ");
+                            $("#train_conductor").val(speakers);
+                        }
+                        $("#train_venue").val(eventsDetails.event_venue);
+
+                        let url = baseUrl("events/upload_employee_training");
+                        $("#fileupload_training")
+                            .fileupload({
+                                url: url,
+                                dataType: "json",
+                                formData: { csrf_token: _csrf_hash, employee_id: rowData.emp_id, is_employee:rowData.is_employee, applicant_id:rowData.id },
+                                done: function (e, data) {
+                                    var result = data.result;
+                                    if (result.response) {
+                                        modalContent.find("#training_attachment").val(result.filename);
+                                        modalContent.find("#temp_fileupload").empty().text(result.filename);
+                                        toastr.success(result.toastr_msg, "Upload Training and Seminar File", 5000);
+                                    } else {
+                                        toastr.error(result.toastr_msg, "Upload Training and Seminar File", 5000);
+                                    }
+                                }
+                            })
+                            .prop("disabled", !$.support.fileInput)
+                            .parent()
+                            .addClass($.support.fileInput ? undefined : "disabled");
+        
+                        $.validate({
+                            form: "#form-trainings",
+                            lang: "en",
+                            onSuccess: function (form) {
+                                let attachment = $("#training_attachment").val().trim();
+                                if (!attachment) {
+                                    toastr.warning("Please upload a training attachment before submitting.", "Missing File");
+                                    return false; 
+                                }
+                                let currentForm = form[0];
+                                let url = baseUrl("events/set_modal_trainings");
+                                let formData = $(currentForm).serialize();
+                                formData += "&event_id=" + encodeURIComponent(eventsDetails.id);
+                                formData += "&is_employee=" + encodeURIComponent(rowData.is_employee);
+                                formData += "&applicant_id=" + encodeURIComponent(rowData.id);
+                                formData += "&emp_id=" + encodeURIComponent(rowData.emp_id);
+                                formData += "&sched_id=" + encodeURIComponent(sched_id);
+                                $.ajax({
+                                    url: url,
+                                    type: "post",
+                                    dataType: "json",
+                                    data: formData,
+                                    beforeSend: function () {
+                                        $(currentForm)
+                                            .find(".btn-submit")
+                                            .addClass("m-btn--custom m-loader m-loader--light m-loader--right");
+                                    },
+                                    success: function (json) {
+                                        if (json.data.response) {
+                                            toastr.success(
+                                                json.data.toastr_msg,
+                                                "Employee training and seminar has been saved.",
+                                                5000
+                                            );
+                                            currentForm.reset();
+                                            modalTempContent.modal("hide");
+                                            eventVue.attendance = json.attendance;
+                                            setParticipantsData(json.data.participants,true);
+                                        } else {
+                                            toastr.error(
+                                                json.data.toastr_msg,
+                                                "Error updating employee training and seminar!",
+                                                5000
+                                            );
+                                        }
+        
+                                        $(currentForm)
+                                            .find(".btn-submit")
+                                            .removeClass(
+                                                "m-btn--custom m-loader m-loader--light m-loader--right"
+                                            );
+                                    },
+        
+                                });
+                                return false;
+                            }
+                        });
+                    }
+                }
+            });
         },
         removeCertificate(rowId) {
             const rowData = participantsTable.row(`#${rowId}`).data();
@@ -651,7 +735,7 @@ let eventVue = new Vue({
             }
             Swal.fire({
                 title: "Are you sure?",
-                text: "This will remove the certificate record for this participant.",
+                text: "This will remove the certificate record for this trainee.",
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonText: "Yes, remove",
@@ -661,17 +745,20 @@ let eventVue = new Vue({
                     $.ajax({
                         url: baseUrl("events/remove_certificate"),
                         type: "POST",
+                        global: false,
                         data: {
                             csrf_token: _csrf_hash,
                             event_id: eventsDetails.id,
                             participant_id: rowData.id,
                             cert_id : rowData.cert_awarded,
                             file_path: fileUrl,
+                            sched_id: sched_id
                         },
                         dataType: "JSON",
                         success: function(res) {
                             if(res.success){
                                 toastr.success(res.message,"Certificate Removed", 5000);
+                                eventVue.attendance = res.attendance;
                                 setParticipantsData(res.participants,true);
                             }else{
                                 toastr.error(res.message,"Failed", 5000);
@@ -704,11 +791,12 @@ const participantsTable = $('#participantsTable').DataTable({
     order: [[1, 'asc']],
     columns: [
         { data: 'id', visible: false, defaultContent: '' },
+        { data: 'emp_id', visible: false, defaultContent: '' },
         { data: 'fullname', title:'Name', visible: false, defaultContent: '' },
         { data: 'position', title:'Position', visible: false, defaultContent: '' },
         { data: 'department_head_fullname', title:'Department Head', visible: false, defaultContent: '' },
         { data: 'department', title:'Department', visible: false, defaultContent: '' },
-        { data: 'lastname', title: 'Participant', defaultContent: '',
+        { data: 'lastname', title: 'Trainee', defaultContent: '',
             render: function (data, type, row, meta) {
                 return `
                     <div class="font-weight-bold text-uppercase">${row.fullname}</div>
@@ -759,11 +847,15 @@ const participantsTable = $('#participantsTable').DataTable({
                         return `<span class="badge badge-dark">Did not attend</span>`;
                     }
                 }
+                if(row.status === 'confirmed' && !isDone){
+
+                    // check if assigned participantSched row.is
+                }
         
                 return `<span class="badge ${statusMap[data] || 'badge-secondary'}">${data}</span>`;
             }
         },        
-        { data: null, title: 'Actions', className: "text-left", orderable: false, defaultContent: '',
+        { data: null, title: 'Actions', className: "text-left", orderable: false, defaultContent: '', width: "18%",
             render: function (data, type, row, meta) {
                 return itemDatatableActions(row.id, row.status, row.cert_awarded);
             }
@@ -787,7 +879,6 @@ function itemDatatableActions(id, status, awarded) {
     let today    = moment();
     let isUpcoming = today.isBefore(fromDate, 'day');
     let isDone     = today.isAfter(toDate, 'day');
-    console.log(status);
     if (!isDone) {
 
         if(status != 'confirmed' && status != 'declined'){
@@ -814,13 +905,6 @@ function itemDatatableActions(id, status, awarded) {
                 <i class="la la-eye"></i>
             </a>`;
 
-        _actionButton += `
-            <a href="javascript:void(0)" 
-                class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
-                onclick="archiveParticipant(${id})" 
-                title="Archive Participant">
-                <i class="la la-file-archive-o"></i>
-            </a>`;
         
         if(status == 'confirmed'){
             _actionButton += `
@@ -828,9 +912,32 @@ function itemDatatableActions(id, status, awarded) {
                 class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnEdit" 
                 onclick="assignSchedule(${id})" 
                 title="Manage Schedule">
-                <i class="la 	la-calendar-plus-o"></i>
+                <i class="la la-calendar-plus-o"></i>
             </a>`;
+            if(!awarded || awarded == 0){
+                _actionButton += `
+                <a href="javascript:void(0)" 
+                    class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnAward btnSave" 
+                    onclick="awardCertificate(${id},0)" 
+                    title="Verify Attendance">
+                    <i class="la la-clipboard"></i>
+                </a>`;
+            }else{
+                _actionButton += `
+                <a class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnOpenCert btnSave" title="View Certificate" onclick="openCertificate(this,${id})">
+                    <i class="la la-certificate"></i>
+                </a>`;
+            }
         }
+
+        _actionButton += `
+        <a href="javascript:void(0)" 
+            class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
+            onclick="archiveParticipant(${id})" 
+            title="Archive Participant">
+            <i class="la la-file-archive-o"></i>
+        </a>`;
+
     }
 
     if (isDone) {
@@ -838,16 +945,16 @@ function itemDatatableActions(id, status, awarded) {
             if (!awarded || awarded == 0) {
                 _actionButton += `
                     <a href="javascript:void(0)" 
-                        class="btn btn-primary btn-sm m-btn m-btn--pill btnSave" 
-                        onclick="awardCertificate(${id})" 
-                        title="Check Attendance">
-                        <i class="la la-clipboard"></i> Check Attendance
+                        class="btn btn-primary btn-sm m-btn m-btn--pill btnAward btnSave" 
+                        onclick="awardCertificate(${id},1)" 
+                        title="Verify Attendance">
+                        <i class="la la-clipboard"></i> Verify Attendance
                     </a>`;
             } else {
                 _actionButton += `
-                    <button class="btn btn-secondary btn-sm m-btn m-btn--pill text-dark" onclick="openCertificate(${id})">
+                    <a class="btn btn-secondary btn-sm m-btn m-btn--pill text-dark btnOpenCert btnSave" onclick="openCertificate(this,${id})">
                         <i class="la la-certificate"></i> View Certificate
-                    </button>`;
+                    </a>`;
             }
         } else {
             _actionButton += `
@@ -860,9 +967,12 @@ function itemDatatableActions(id, status, awarded) {
     return _actionButton;
 }
 
-function awardCertificate(rowId) {
-    const btn = $(`.btnSave[onclick="awardCertificate(${rowId})"]`);
-    btn.prop("disabled", true).html('<i class="la la-spinner la-spin"></i> Checking...');
+function awardCertificate(rowId,recent) {
+    const btn = $(`.btnAward[onclick*="awardCertificate(${rowId},"]`);
+    btn.prop("disabled", true);
+    btn.removeClass("btn-sm")
+       .addClass("m-btn--icon m-btn--icon-only");
+    btn.html('<i class="m-loader"></i>');
     $.ajax({
         url: baseUrl("events/check_attendance"),
         type: "post",
@@ -877,7 +987,7 @@ function awardCertificate(rowId) {
         success: function (res) {
             const rowData = participantsTable.row(`#${rowId}`).data();
             eventVue.employee_attendance = res.attendance;
-            modalTraining = res.modal.html;
+            // modalTraining = res.modal.html;
             eventVue.emp_attendance_selected = rowData;
             $("#attendanceCheck").modal("show");
         },
@@ -885,34 +995,52 @@ function awardCertificate(rowId) {
             toastr.error("An error occurred while checking attendance.", "Error");
         },
         complete: function () {
-            btn.prop("disabled", false).html('<i class="la la-clipboard"></i> Check Attendance');
+            btn.prop("disabled", false);
+            if (recent == 1) {
+                btn.attr("class", classRecent).html('<i class="la la-clipboard"></i> Verify Attendance');
+            } else {
+                btn.attr("class", classNotRecent).html('<i class="la la-clipboard"></i>');
+            }
         }
     });
 }
 
 
-function openCertificate(id) {
+function openCertificate(el, id,) {
+    const btn = $(el);
+    btn.prop("disabled", true).attr("class", openCertLoadingClass).html('<i class="m-loader"></i>');
     const rowData = participantsTable.row(`#${id}`).data();
     eventVue.emp_attendance_selected = rowData;
-    let fileUrl = "";
-    if (rowData.is_employee == 1) {
-        fileUrl = baseUrl(`/uploads/files/documents/employee_files/empcode_${rowData.emp_id}/trainings/${rowData.cert_attachment}`);
-    } else {
-        fileUrl = baseUrl(`/uploads/files/documents/applicant_files/appcode_${rowData.id}/trainings/${rowData.cert_attachment}`);
-    }
+
+    let fileUrl = rowData.is_employee == 1
+        ? baseUrl(`/uploads/files/documents/employee_files/empcode_${rowData.emp_id}/trainings/${rowData.cert_attachment}`)
+        : baseUrl(`/uploads/files/documents/applicant_files/appcode_${rowData.id}/trainings/${rowData.cert_attachment}`);
+
+
     checkFileExists(fileUrl, function (exists, mimeType) {
+
         const $modalBody = $('#pdfViewerModal .modal-body');
+
         if (!exists) {
             $modalBody.html('<p class="text-danger">Error: File not found.</p>');
             $('#pdfViewerModal').modal('show');
+            restoreOpenCert(btn);
             return;
         }
         if (mimeType && mimeType.startsWith('application/pdf')) {
-            $modalBody.html('<iframe id="pdfFrame" style="width:100%;height:600px;" frameborder="0"></iframe>');
+            $modalBody.html(
+                '<iframe id="pdfFrame" style="width:100%;height:600px;" frameborder="0"></iframe>'
+            );
             $('#pdfViewerModal').modal('show');
             $('#pdfFrame').attr('src', fileUrl);
+
+            $('#pdfViewerModal').off('shown.bs.modal.restoreCert').on('shown.bs.modal.restoreCert', function () {
+                    restoreOpenCert(btn);
+                });
+
         } else {
             window.open(fileUrl, '_blank');
+            restoreOpenCert(btn);
         }
     });
 }
@@ -981,6 +1109,9 @@ let newValidation = $.validate({
             formData.emp_id = empId; 
         }
         formData.event_id = eventsDetails.id;
+        if(eventVue.isRecent){
+            formData.is_recent = 1;
+        }
         $.ajax({
             url: baseUrl('events/save_participant'),
             type: "POST",
@@ -1002,7 +1133,7 @@ let newValidation = $.validate({
                         position: '',
                         suffix: '',
                     },
-                    $("#addNewParticipant").modal('hide');
+                    // $("#addNewParticipant").modal('hide');
                     toastr.success(res.message, 'Success', 5000);
                     $("#employee-select option[value='" + empId + "']").remove();
                     $("#employee-select").trigger('change.select2');
@@ -1033,18 +1164,28 @@ function setParticipantsData(newData, redraw = false) {
 }
 
 function onEditEvent(id) {
+    const btn = $(`.btnEdit[onclick="onEditEvent(${id})"]`);
+    btn.prop("disabled", true);
+    btn.find("i").removeClass().addClass("m-loader");
     let rowData = participantsTable.row('#'+id).data();
     selectedData = rowData; 
     eventVue.participantDataSelected = JSON.parse(JSON.stringify(rowData));
     $("#editParticipant").modal("show");
+    $('#editParticipant').on('shown.bs.modal', function () {
+        btn.prop("disabled", false)
+           .html('<i class="la la-eye"></i>');
+    });
 }
 
 function archiveParticipant(id) {
+    const btn = $(`.btnArchive[onclick="archiveParticipant(${id})"]`);
+    btn.prop("disabled", true);
+    btn.find("i").removeClass().addClass("m-loader");
     let rowData = participantsTable.row('#'+id).data();
     let fullname = rowData.firstname + ' ' + rowData.middlename + ' ' + rowData.lastname;
     Swal.fire({
         title: 'Are you sure?',
-        text: "This participant will be archived.",
+        text: "This trainee will be archived.",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#3085d6',
@@ -1056,6 +1197,7 @@ function archiveParticipant(id) {
             $.ajax({
                 url: baseUrl('events/archive_participant'),
                 type: 'POST',
+                global: false,
                 data: {
                     csrf_token: $("#csrf_token").val(),
                     id: id,
@@ -1091,8 +1233,11 @@ function archiveParticipant(id) {
                 },
                 error: function(xhr, status, error) {
                     toastr.error('Something went wrong. Please try again.', 'Error', { timeOut: 5000 });
-                }
+                },
             });
+        }
+        else{
+            btn.prop("disabled", false).html('<i class="la la-file-archive-o"></i>');
         }
     });
 }
@@ -1289,7 +1434,7 @@ function addFile(file) {
 $('#attachment_type').select2({
     placeholder: "Select Attachment Type",
     width: '100%',
-    data: attachmentTypes,
+    data: attachment_type,
 });
 
 $('#New_Add_File').on('submit', function(e) {
@@ -1341,6 +1486,9 @@ $('#schedule_end').timepicker({
 });
 
 function assignSchedule(participant){
+    const btn = $(`.btnEdit[onclick="assignSchedule(${participant})"]`);
+    btn.prop("disabled", true);
+    btn.find("i").removeClass().addClass("m-loader");
     $.ajax({
         url: baseUrl("events/assign_schedule"),
         type: "POST",
@@ -1366,6 +1514,9 @@ function assignSchedule(participant){
                 eventVue.participantSched = res;
                 $('#attendanceSheet').modal('show');
             }
+        },
+        complete: function() {
+            btn.prop("disabled", false).html('<i class="la la-calendar-plus-o"></i>');
         }   
     });
 }
@@ -1449,6 +1600,7 @@ function checkFileExists(url, callback) {
     $.ajax({
         url: url,
         type: 'HEAD',
+        global: false,
         success: function(response, status, xhr) {
             var mimeType = xhr.getResponseHeader("Content-Type");
             callback(true, mimeType);
@@ -1514,3 +1666,194 @@ $('#edit_schedule_start').on('change', function () {
 $('#edit_schedule_end').on('change', function () {
     syncScheduleTimeEdit('end');
 });
+
+$.validate({
+    form: "#budget_form",
+    lang: "en",
+    onSuccess: function (form) {
+            let formData = $(form[0]).serialize();
+            formData += "&event_id=" + encodeURIComponent(eventsDetails.id);
+            $.ajax({
+                url: baseUrl("events/update_budget"),
+                type: "POST",
+                dataType: "JSON",
+                data: formData,
+                global: false,
+                success: function (response) {
+                    if (response.success) {
+                        toastr.success(response.message, 'Success', 5000);
+                        eventVue.originalBudgetData = JSON.parse(JSON.stringify(eventVue.eventsData));
+                    } else {
+                        toastr.error(response.message, 'Error', 5000);
+                    }
+                }
+            });
+        return false;
+    }
+});
+
+function addMultipleEmployees() {
+    $('#addNewParticipant').one('hidden.bs.modal', function () {
+        $("#modalMassAddition").modal("show");
+    });
+    $('#addNewParticipant').modal('hide');
+    let participantIds = participantsTable.column(1).data().toArray();
+    const idSet = new Set([...new Set(participantIds)].map(String));
+    employee_selection = employees.filter(emp => !idSet.has(String(emp.id)));
+    multipleEmployeeTable.clear();
+    multipleEmployeeTable.rows.add(employee_selection);
+    multipleEmployeeTable.draw();
+    $("#departments").val(null).trigger('change');
+}
+
+let multipleEmployeeTable = $('#multipleEmployeeTable').DataTable({
+    dom: 'frtlip',
+    data: employee_selection,
+    responsive: true,
+    autoWidth: false,
+    rowId: 'id',
+    columns: [
+        { data: 'id',
+            render: function (data, type, row, meta) {
+                return `
+                    <div class="font-weight-bold text-uppercase">${row.text}</div>
+                    <div class="text-muted small">${row.position ?? ''}</div>
+                `;
+            }
+         },
+        { data: null, orderable: false, render: function (data, type, row, meta) {
+            return `
+                <div>${row.company ?? ''}</div>
+                <div class="text-muted small">${row.department ?? ''}</div>
+            `;
+            }
+        },
+        { data: null, orderable: false, render: function (data, type, row, meta) {
+            return `
+                ${row.email ? `<div>${row.email}</div>` : 'No Email'}
+                ${row.mobile_no ? `<div> ${row.mobile_no}</div>` : ''}
+            `;
+            } 
+        },
+        {
+            data: null,
+            orderable: false,
+            title: 'Action',
+            render: function (data, type, row, meta) {
+                
+                if (row._added) {
+                    return `
+                        <button 
+                            type="button"
+                            class="btn btn-sm btn-success btnSave"
+                            disabled>
+                            <i class="la la-check mr-1"></i>
+                            Already Added
+                        </button>
+                    `;
+                }
+        
+                return `
+                    <button 
+                        type="button"
+                        class="btn btn-sm btn-primary btnSave"
+                        onclick="addSelectedEmployee(${row.id})">
+                        <i class="la la-user-plus mr-1"></i>
+                        Add Trainee
+                    </button>
+                `;
+            }
+        }
+    ]
+});
+
+$("#departments").select2({
+    dropdownParent: $('#modalMassAddition'),
+    data: departments,
+    allowClear: true,
+    placeholder: "Select an option",
+    width: '100%'
+});
+
+$("#departments").on("change", function () {
+    const selectedDept = $(this).val(); 
+    let filteredData;
+    if (!selectedDept) {
+        filteredData = employee_selection;
+    } else {
+        filteredData = employee_selection.filter(emp =>
+            String(emp.department_id) === String(selectedDept)
+        );
+    }
+    multipleEmployeeTable.clear();
+    multipleEmployeeTable.rows.add(filteredData);
+    multipleEmployeeTable.draw();
+});
+
+function addSelectedEmployee(empId) {
+    let rowData = multipleEmployeeTable.row(`#${empId}`).data();
+    let data = { ...rowData };
+    data.csrf_token = _csrf_hash;
+    data.emp_id = empId;
+    data.event_id = eventsDetails.id;
+    if(eventVue.isRecent){
+        data.is_recent = 1;
+    }
+    data.is_employee = 1;
+    delete data.id;
+    delete data.text;
+    delete data.department_id;
+    $.ajax({
+        url: baseUrl('events/save_participant'),
+        type: "POST",
+        global: false,
+        dataType: "json",
+        data: data,
+        success: function(res) {
+            if(res.success){
+                toastr.success(res.message, 'Success', 5000);
+                $("#employee-select option[value='" + empId + "']").remove();
+                $("#employee-select").trigger('change.select2');
+                rowData._added = true;
+                multipleEmployeeTable.row(`#${empId}`).invalidate().draw(false);
+                setParticipantsData(res.participants);
+            }else{
+                toastr.error(res.message, 'Error', 5000);
+            }
+        }
+    });
+}
+
+$('#modalTempContent').on('show.bs.modal', function () {
+    $('#generate_attendance .modal-content').addClass('modal-blur');
+});
+
+$('#modalTempContent').on('hidden.bs.modal', function () {
+    $('#generate_attendance .modal-content').removeClass('modal-blur');
+});
+
+// $("#modalMassAddition").on("shown.bs.modal", function () {
+//     $("body").addClass("modal-open");
+// });
+
+$('#modalTempContent').on('show.bs.modal', function () {
+    var zIndex = 1060 + (10 * $('.modal:visible').length);
+    $(this).css('z-index', zIndex);
+    setTimeout(function () {
+        $('.modal-backdrop').not('.modal-backdrop:first').css('z-index', zIndex - 1);
+    }, 0);
+});
+
+$('#nonEmployeeToggle').on('change', function () {
+    if ($(this).is(':checked')) {
+        $('#multipleBtn').show();
+    } else {
+        $('#multipleBtn').hide();
+    }
+});
+
+function restoreOpenCert(btn) {
+    btn.prop("disabled", false)
+       .attr("class", openCertNormalClass)
+       .html('<i class="la la-certificate"></i> View Certificate');
+}

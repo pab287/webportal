@@ -1,73 +1,75 @@
 <style>
    .toggle-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-            padding: 16px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            border: 1px solid #e9ecef;
-        }
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+    }
 
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
 
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
 
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: 0.3s;
-            border-radius: 24px;
-        }
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.3s;
+        border-radius: 24px;
+    }
 
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: 0.3s;
-            border-radius: 50%;
-        }
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.3s;
+        border-radius: 50%;
+    }
 
-        input:checked + .toggle-slider {
-            background-color: #5BC236;
-        }
+    input:checked + .toggle-slider {
+        background-color: #5BC236;
+    }
 
-        input:checked + .toggle-slider:before {
-            transform: translateX(26px);
-        }
+    input:checked + .toggle-slider:before {
+        transform: translateX(26px);
+    }
 
-        .toggle-label {
-            font-weight: 500;
-            color: #333;
-            font-size: 14px;
-        }
+    .toggle-label {
+        font-weight: 500;
+        color: #333;
+        font-size: 14px;
+    }
 
-        .m-widget2__desc {
-            line-height: 50px; /* Match the height of the parent */
-        }
+    .m-widget2__desc {
+        line-height: 50px; /* Match the height of the parent */
+    }
 
-        #portlet_body {
-            transition: height 0.3s ease;
-        }
+    .modal-blur {
+        filter: blur(3px);
+        transition: filter 0.2s ease;
+    }
+
 </style>
 <div class="row" id="events-content">
     <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
@@ -83,7 +85,7 @@
                                         <i class="la la-calendar"></i>
                                     </span>
                                     <h3 class="m-portlet__head-text">
-                                        Event Details
+                                        TRAINING DETAILS
                                     </h3>
                                 </div>
                             </div>
@@ -179,13 +181,18 @@
                             <div class="m-portlet__head-tools">
                                 <ul class="nav nav-tabs m-tabs m-tabs-line m-tabs-line--left m-tabs-line--primary" role="tablist">
                                     <li class="nav-item m-tabs__item">
-                                        <a class="nav-link m-tabs__link active" data-toggle="tab" href="#participantTab" role="tab">
-                                            Participants
+                                        <a class="nav-link m-tabs__link active" data-toggle="tab" href="#scheduleTab" role="tab">
+                                            Schedule
                                         </a>
                                     </li>
                                     <li class="nav-item m-tabs__item">
-                                        <a class="nav-link m-tabs__link" data-toggle="tab" href="#scheduleTab" role="tab">
-                                            Schedule
+                                        <a class="nav-link m-tabs__link" data-toggle="tab" href="#participantTab" role="tab">
+                                            Trainees
+                                        </a>
+                                    </li>
+                                    <li class="nav-item m-tabs__item">
+                                        <a class="nav-link m-tabs__link" data-toggle="tab" href="#expenseTab" role="tab">
+                                            BUDGET
                                         </a>
                                     </li>
                                     <li class="nav-item m-tabs__item">
@@ -193,21 +200,16 @@
                                             Attachments
                                         </a>
                                     </li>
-                                    <!-- <li class="nav-item m-tabs__item">
-                                        <a class="nav-link m-tabs__link" data-toggle="tab" href="#expenseTab" role="tab">
-                                            Expenses
-                                        </a>
-                                    </li> -->
                                 </ul>
                             </div>
                         </div>
                         <div class="m-portlet__body">
                             <div class="tab-content">
-                                <div class="tab-pane active" id="participantTab">
+                                <div class="tab-pane" id="participantTab">
                                     <div class="row">
                                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
-                                            <button type="button" v-if="!eventAlreadyHappened" class="btn m-btn m-btn--sm btn-success mb-2 btnNew" data-toggle="modal" data-target="#addNewParticipant">
-                                                ADD PARTICIPANT
+                                            <button type="button" v-if="buttonAddTrainee" class="btn m-btn m-btn--sm btn-success mb-2 btnNew" data-toggle="modal" data-target="#addNewParticipant">
+                                                ADD TRAINEES
                                             </button>
                                         </div>
                                         <div class="col-12">
@@ -231,7 +233,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="tab-pane" id="scheduleTab">
+                                <div class="tab-pane active" id="scheduleTab">
                                     <div class="m-portlet m-portlet--collapsed" data-portlet="true" id="m_portlet_schedule">
                                         <div class="m-portlet__head" style="height: 3rem;">
                                             <div class="m-portlet__head-caption">
@@ -429,7 +431,7 @@
                                                                         <span class="m-widget4__text" @click="openFile(item.filename,item.type)">{{item.filename}}</span>
                                                                     </div>
                                                                     <div class="m-widget2__actions">
-                                                                        <button type="button" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView" v-on:click="removeAttachment(item.id,item.type,item.filename)">
+                                                                        <button type="button" class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnView" v-on:click="removeAttachment(item.id,item.name,item.filename)">
                                                                             <i class="m-nav__link-icon flaticon-circle"></i>
                                                                         </button>
                                                                     </div>
@@ -443,9 +445,59 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- <div  class="tab-pane" id="expenseTab">
-                                    EXPENSES AND BUDGET HERE
-                                </div> -->
+                                <div  class="tab-pane" id="expenseTab">
+                                    <!-- <div class="row">
+                                        <div class="col-12">
+                                            <div class="d-flex flex-column text-center text-uppercase">
+                                                <h3 class="m-widget1__title m--font-boldest">Budget</h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="m-separator m-separator--dashed"></div> -->
+                                    <div class="row">
+                                        <div class="col-8">
+                                            <form id="budget_form" @keydown.enter.prevent>
+                                                <input type="hidden" id="csrf_token" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <div class="form-group">
+                                                            <label for="company_source" class="form-control-label">Source of Funds: </label>
+                                                            <select name="company_source" id="company_source" data-validation="required">
+                                                                <option></option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="m-separator m-separator--solid"></div>
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <label for="budget" class="form-control-label">Allocated budget: </label>
+                                                            <input type="number" name="budget" id="budget" class="form-control m-input" step="any" data-validation="required" placeholder="Enter allocated budget" v-model="eventsData.budget">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="form-group">
+                                                            <label for="expense" class="form-control-label">Liquidated budget: </label>
+                                                            <input type="number" name="expense" id="expense" class="form-control m-input" step="any" data-validation="required" placeholder="Enter liquidated budget" v-model="eventsData.expense">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="m-separator m-separator--solid"></div>
+                                                <div class="form-group">
+                                                    <label for="variance" class="form-control-label">Variance: </label>
+                                                    <input type="text" name="variance" id="variance" class="form-control m-input" :class="varianceClass" :value="varianceDisplay"  readonly>
+                                                </div>
+                                                <template v-if="!isUpdateBudget">
+                                                    <div class="m-separator m-separator--solid"></div>
+                                                    <div class="form-group" type="submit" id="submit_budget">
+                                                        <button class="btn btn-success text center w-100">Update Budget</button>
+                                                    </div>
+                                                </template>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -458,7 +510,7 @@
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">ADD NEW PARTICIPANT</h5>
+                    <h5 class="modal-title">ADD NEW TRAINEE</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -486,7 +538,7 @@
                                 </div>
                             </div>
                             <div class="col-md-12 mb-3">
-                                <label class="form-control-label required">Participant Name</label>
+                                <label class="form-control-label required">Trainee Details</label>
                                 <div class="row">
                                     <div class="col-sm-12 col-md-3 mb-3">
                                         <input name="first_name" type="text" class="form-control m-input" placeholder="First Name" v-model="participantData.firstname" data-validation="required" maxlength="50">
@@ -535,8 +587,9 @@
                         </div>
                     </div>
                     <div class="modal-footer">
+                        <button type="button" class="btn btn-primary text-white mr-auto btnSave" id="multipleBtn" onClick="addMultipleEmployees()"><i class="la la-users mr-2"></i>Add Multiple Employees</button>
                         <button type="submit" class="btn btn-success btnSave"><i class="la la-check mr-2"></i>SAVE</button>
-                        <button class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
+                        <button type="button" class="btn btn-danger text-white btnBack" data-dismiss="modal"><i class="la la-times mr-2"></i>CANCEL</button>
                     </div>
                 </form>
             </div>
@@ -547,7 +600,7 @@
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">EDIT PARTICIPANT</h5>
+                    <h5 class="modal-title">EDIT TRAINEE DETAILS</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -567,7 +620,7 @@
                         </div>
                         <div class="row">
                             <div class="col-md-12 mb-3">
-                                <label class="form-control-label required">Participant Name</label>
+                                <label class="form-control-label required">Trainee Details</label>
                                 <div class="row">
                                     <div class="col-sm-12 col-md-3 mb-3">
                                         <input name="first_name" type="text" class="form-control m-input" placeholder="First Name" data-validation="required" v-model="participantDataSelected.firstname" maxlength="50" :disabled="participantDataSelected.is_employee == 1">
@@ -873,8 +926,22 @@
         </div>
     </div>
 
-    <div class="modal fade" id="generate_attendance" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-xl" role="document">
+    <div class="modal fade" id="modalTempContent" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content" id="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">DO NOT REMOVE THIS IS FOR UPLOADING</h5>
+                    <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">DO NOT REMOVE THIS IS FOR UPLOADING</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="generate_attendance" tabindex="-1">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Generate Attendance</h5>
@@ -914,7 +981,7 @@
                             </div>
                         </div>
                         <div class="col-12 mt-3">
-                            <div class="table-responsive">
+                            <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
                                 <table class="table table-bordered table-striped" id="attendanceTable">
                                     <template v-if="attendance.length <= 0">
                                         <thead></thead>
@@ -924,10 +991,11 @@
                                             <tr>
                                                 <th hidden>ID</th>
                                                 <th>#</th>
-                                                <th>Participant</th>
+                                                <th>Trainee</th>
                                                 <th>Company</th>
                                                 <th>Contact</th>
                                                 <th>Attendance</th>
+                                                <th>Certificate</th>
                                             </tr>
                                         </thead>
                                     </template>
@@ -957,9 +1025,39 @@
                                                 </td>
                                                 <td class="text-center">
                                                     <label class="m-checkbox m-checkbox--bold m-checkbox--state-success">
-                                                        <input type="checkbox" class="form-check-input h-10px w-10px" :value="item.is_present" @change="togglePresence(item.id,$event.target.checked ? 1 : 0)" true-value="1" false-value="0" :checked="item.is_present == 1"/>
+                                                        <input
+                                                            type="checkbox"
+                                                            class="form-check-input h-10px w-10px"
+                                                            v-model="item.is_present"
+                                                            :true-value="1"
+                                                            :false-value="0"
+                                                            @change="togglePresence(item.id,$event.target.checked ? 1 : 0)"
+                                                        />
                                                         <span></span>
                                                     </label>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div v-if="item.is_present == 1 && item.cert_awarded == 0" class="mt-2">
+                                                        <a href="javascript:void(0)"
+                                                        class="btn btn-success btn-sm m-btn m-btn--pill"
+                                                        @click="uploadCertificate(item.participant_id)"
+                                                        title="Award Certificate">
+                                                            <i class="la la-clipboard"></i>
+                                                            Award Certificate
+                                                        </a>
+                                                    </div>
+                                                    <div v-else-if="item.cert_attachment != null">
+                                                        <a href="javascript:void(0)"
+                                                        class="btn btn-secondary btn-sm m-btn m-btn--pill"
+                                                        @click="viewCertificate($event.currentTarget,item.participant_id)"
+                                                        title="View Certificate">
+                                                            <i class="la la-eye"></i>
+                                                            View Certificate
+                                                        </a>
+                                                    </div>
+                                                    <div v-else>
+                                                        <span class="text-muted">No Certificate</span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -996,16 +1094,44 @@
         </div>
     </div>
 
-    <div class="modal fade show" id="modalTempContent" tabindex="-1">
-        <div class="modal-dialog modal-md">
-            <div class="modal-content" id="modal-content">
+    <div class="modal fade show" id="modalMassAddition">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">DO NOT REMOVE THIS IS FOR UPLOADING</h5>
+                    <h5 class="modal-title">ADD MULTIPLE EMPLOYEES</h5>
                     <button type="button" class="close modalClose" aria-label="Close" data-dismiss="modal">
                         <span aria-hidden="true">×</span>
                     </button>
                 </div>
-                <div class="modal-body">DO NOT REMOVE THIS IS FOR UPLOADING</div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="companies" class="form-control-label">Department</label>
+                                <select name="departments" id="departments">
+                                    <option></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <table id="multipleEmployeeTable" class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Trainee Information</th>
+                                        <th>Company</th>
+                                        <th>Contact</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1061,5 +1187,6 @@
             </div>
         </div>
     </div>
+
 
 </div>
