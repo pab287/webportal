@@ -844,6 +844,7 @@ Class Login_m extends CI_Model{
             'emp_id' => $user->emp_id,
             'username' => $user->username,
             'firstname' => $user->firstname,
+            'middlename' => $user->middlename,
             'lastname' => $user->lastname,
             'suffix' => $user->suffix,
             'privileges' => $privileges,
