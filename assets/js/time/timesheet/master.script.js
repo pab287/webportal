@@ -906,8 +906,13 @@ $(document)
 
                             const tempLate = (typeof row.total_late !== "undefined" && row.total_late !== null) ? parseFloat(row.total_late) : 0;
                             const tempUt = (typeof row.total_ut !== "undefined" && row.total_ut !== null) ? parseFloat(row.total_ut) : 0;
-                            const tempData = (typeof data !== "undefined" && data !== null) ? parseFloat(data) : 0;
+                            let tempData = (typeof data !== "undefined" && data !== null) ? parseFloat(data) : 0;
                             const focusClass = (tempLate > 0 || tempUt > 0) ? 'm--font-boldest2 m--font-danger' : 'm--font-bolder';
+
+                            if(parseInt(row.is_holiday) === 1 && parseInt(row.paid_holiday) === 1 && tempData === 0) {
+                                tempData = 480;
+                            }
+
                             const hrs = (tempData / 60).toFixed(2);
 
                             const totalNdiffMinutes = row.total_ndiff_rendered ? row.total_ndiff_rendered : 0;
@@ -947,7 +952,7 @@ $(document)
                             const nDiffOTHrs = data && row.id ? parseFloat(row.total_accredited_ndiff_ot_hrs) : 0;
                             const diffNDiffOTHrs = Math.ceil(nDiffOTHrs) - Math.floor(nDiffOTHrs);
                             const nDiffOTHrsFormmatted = parseFloat(diffNDiffOTHrs) >= 1 ? nDiffOTHrs.toFixed(2) : nDiffOTHrs;
-                            const hasShiftValue = hasShift === true ? '0' : '';
+                            const hasShiftValue = hasShift === true ? '0' : '0';
                             const tooltip = parseFloat(totalOTHrs) > 0 ? `<div>
                                 <div class='text-left'>
                                     <span>Reg. Hrs.: </span>
@@ -957,10 +962,10 @@ $(document)
                                     <span>Night Diff. Hrs.: </span>
                                     <span class='m--font-boldest'>${nDiffOTHrsFormmatted}</span>
                                 </div>
-                            </div>` : hasShiftValue;
+                            </div>` : hasShiftValue ?? 0;
 
                             return data ? `<span class="" style="cursor: pointer;" data-toggle="m-tooltip" data-html="true"
-                                                 data-original-title="${tooltip}" data-delay='{"show": 150}'>${totalOTHrsFormmatted}</span>` : hasShiftValue;
+                                                 data-original-title="${tooltip}" data-delay='{"show": 150}'>${totalOTHrsFormmatted}</span>` : hasShiftValue ?? 0;
                         }
                     },
                     {
