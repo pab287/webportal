@@ -274,7 +274,7 @@ let application_vue = new Vue({
                     c.replace(/^ +/, "")
                      .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
             });
-            window.location.href = "/";
+            window.location.href = "https://www.facebook.com/gcandcgroup";
         },
         getCookie(name) {
             const cookies = document.cookie.split('; ');
@@ -574,7 +574,6 @@ function restoreApplicationData(vue_app) {
     let savedSteps = localStorage.getItem("gcc_job_application");
     if (!savedSteps) return;
     savedSteps = JSON.parse(savedSteps);
-    console.log(savedSteps);
     vue_app.steps = savedSteps;
     vue_app.steps.forEach(function(step){
         if (step.valid === true) {
