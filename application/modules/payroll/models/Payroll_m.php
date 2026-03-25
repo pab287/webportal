@@ -1647,7 +1647,6 @@ class Payroll_m extends CI_Model{
                     $basic_rate = $monthlyRate - $total_unrendered_amount;
                     $basic_rate_total = $monthlyRate - $total_unrendered_amount;
 
-                    //var_dump($monthlyRate, $total_unrendered_amount, $monthly_paid_holiday_amount);
                     $basic_rate += $monthly_paid_holiday_amount;
                     $basic_rate_total += $monthly_paid_holiday_amount;
                 }
@@ -9038,26 +9037,37 @@ class Payroll_m extends CI_Model{
         return ($h * 60) + $m;
     }
 
-    protected function calculateTotalMinutes($schedule) {
+    protected function calculateTotalMinutes($schedule){
         $ranges = [];
+        // Helper to normalize range (handles overnight)
+        $normalizeRange = function ($start, $end) {
+            $startMin = $this->timeToMinutes($start);
+            $endMin   = $this->timeToMinutes($end);
+            // Overnight shift (e.g., 18:00 → 06:00)
+            if ($endMin < $startMin) {
+                $endMin += 1440; // add 24 hours
+            }
+            // Ignore zero-length
+            if ($startMin === $endMin) {
+                return null;
+            }
+            return ['start' => $startMin, 'end' => $endMin];
+        };
 
-        // Add valid ranges only
-        if ($schedule->am_start !== $schedule->am_end) {
-            $ranges[] = [
-                'start' => $this->timeToMinutes($schedule->am_start),
-                'end'   => $this->timeToMinutes($schedule->am_end)
-            ];
+        // Add AM range
+        $amRange = $normalizeRange($schedule->am_start, $schedule->am_end);
+        if ($amRange) {
+            $ranges[] = $amRange;
         }
 
-        if ($schedule->pm_start !== $schedule->pm_end) {
-            $ranges[] = [
-                'start' => $this->timeToMinutes($schedule->pm_start),
-                'end'   => $this->timeToMinutes($schedule->pm_end)
-            ];
+        // Add PM range
+        $pmRange = $normalizeRange($schedule->pm_start, $schedule->pm_end);
+        if ($pmRange) {
+            $ranges[] = $pmRange;
         }
 
-        // Sort ranges by start time
-        usort($ranges, function($a, $b) {
+        // Sort ranges
+        usort($ranges, function ($a, $b) {
             return $a['start'] <=> $b['start'];
         });
 
@@ -9070,7 +9080,6 @@ class Payroll_m extends CI_Model{
                 $last = &$merged[count($merged) - 1];
 
                 if ($range['start'] <= $last['end']) {
-                    // Overlapping or duplicate → extend end if needed
                     $last['end'] = max($last['end'], $range['end']);
                 } else {
                     $merged[] = $range;
@@ -9078,12 +9087,12 @@ class Payroll_m extends CI_Model{
             }
         }
 
-        // Calculate total minutes
+        // Total minutes
         $totalMinutes = 0;
         foreach ($merged as $range) {
             $totalMinutes += ($range['end'] - $range['start']);
         }
 
-        return $totalMinutes;
+        return max(0, $totalMinutes);
     }
 }
