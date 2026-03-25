@@ -1496,13 +1496,23 @@ class Payroll_m extends CI_Model{
                     $unpaid_holiday_amount = floatval($unpaid_holiday_minutes) > 0 ? floatval($unpaid_holiday_minutes) * $per_minute : 0;
 
                     $unrendered_minutes = array_reduce($timesheet, function ($carry, $item) {
+                        /*** altered code for altered shift schedule unrendered minutes ***/
+                        $tempTotalRendered = intval($item->am_time_rendered) + intval($item->pm_time_rendered);
+                        $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($item->am_time_rendered) > 0 || intval($item->pm_time_rendered) > 0);
                         $tempTotalTimeRendered = intval($item->total_time_rendered);
-                        $tempMinutesDaily = (intval($item->paid_holiday) == 1)? $tempTotalTimeRendered : $item->minutes_daily;
+
+                        $scheduledTimeRendered = $tempTotalTimeRendered;
+                        if($item->is_holiday && $hasRenderedShift){
+                            $scheduledTimeRendered = $this->calculateTotalMinutes($item->schedule);
+                        }
+                        /*** altered code for altered shift schedule unrendered minutes ***/
+
+                        $tempMinutesDaily = (intval($item->paid_holiday) == 1) ? $scheduledTimeRendered : $item->minutes_daily;
                         $totalUndertime = $tempMinutesDaily - $tempTotalTimeRendered;
                         $totalUndertime = $totalUndertime > 0 ? $totalUndertime: 0;
                         return $carry + $totalUndertime;
                     }, 0);
-    
+
                     $holiday_minutes = array_reduce($timesheet, function ($carry, $item) {
                         return $carry + $item->holiday_minutely;
                     }, 0);
@@ -9014,5 +9024,59 @@ class Payroll_m extends CI_Model{
             restore_error_handler();
             return [ 'ok' => false, 'error' => "Error sending telegram notification: " . $e->getMessage() ];
         }
+    }
+
+    protected function timeToMinutes($time) {
+        list($h, $m, $s) = explode(':', $time);
+        return ($h * 60) + $m;
+    }
+
+    protected function calculateTotalMinutes($schedule) {
+        $ranges = [];
+
+        // Add valid ranges only
+        if ($schedule->am_start !== $schedule->am_end) {
+            $ranges[] = [
+                'start' => $this->timeToMinutes($schedule->am_start),
+                'end'   => $this->timeToMinutes($schedule->am_end)
+            ];
+        }
+
+        if ($schedule->pm_start !== $schedule->pm_end) {
+            $ranges[] = [
+                'start' => $this->timeToMinutes($schedule->pm_start),
+                'end'   => $this->timeToMinutes($schedule->pm_end)
+            ];
+        }
+
+        // Sort ranges by start time
+        usort($ranges, function($a, $b) {
+            return $a['start'] <=> $b['start'];
+        });
+
+        // Merge overlapping ranges
+        $merged = [];
+        foreach ($ranges as $range) {
+            if (empty($merged)) {
+                $merged[] = $range;
+            } else {
+                $last = &$merged[count($merged) - 1];
+
+                if ($range['start'] <= $last['end']) {
+                    // Overlapping or duplicate → extend end if needed
+                    $last['end'] = max($last['end'], $range['end']);
+                } else {
+                    $merged[] = $range;
+                }
+            }
+        }
+
+        // Calculate total minutes
+        $totalMinutes = 0;
+        foreach ($merged as $range) {
+            $totalMinutes += ($range['end'] - $range['start']);
+        }
+
+        return $totalMinutes;
     }
 }
