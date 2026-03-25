@@ -1497,16 +1497,22 @@ class Payroll_m extends CI_Model{
 
                     $unrendered_minutes = array_reduce($timesheet, function ($carry, $item) {
                         /*** altered code for altered shift schedule unrendered minutes ***/
-                        $tempTotalRendered = intval($item->am_time_rendered) + intval($item->pm_time_rendered);
-                        $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($item->am_time_rendered) > 0 || intval($item->pm_time_rendered) > 0);
+                        /*** $tempTotalRendered = intval($item->am_time_rendered) + intval($item->pm_time_rendered);
+                         $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($item->am_time_rendered) > 0 || intval($item->pm_time_rendered) > 0); ***/
                         $tempTotalTimeRendered = intval($item->total_time_rendered);
 
                         $scheduledTimeRendered = $tempTotalTimeRendered;
-                        if($item->is_holiday && $hasRenderedShift){
+                        if($item->is_holiday && intval($item->paid_holiday) == 1){
                             $scheduledTimeRendered = $this->calculateTotalMinutes($item->schedule);
                         }
-                        /*** altered code for altered shift schedule unrendered minutes ***/
 
+                        /*** if($item->is_holiday && $hasRenderedShift === false && intval($item->paid_holiday) === 1){
+                            $scheduledTimeRendered = $this->calculateTotalMinutes($item->schedule);
+                            $tempTotalTimeRendered = $scheduledTimeRendered;
+                        } ***/
+
+                        /*** altered code for altered shift schedule unrendered minutes ***/
+                        
                         $tempMinutesDaily = (intval($item->paid_holiday) == 1) ? $scheduledTimeRendered : $item->minutes_daily;
                         $totalUndertime = $tempMinutesDaily - $tempTotalTimeRendered;
                         $totalUndertime = $totalUndertime > 0 ? $totalUndertime: 0;
@@ -1583,9 +1589,9 @@ class Payroll_m extends CI_Model{
                     }, 0);
 
                     $monthly_paid_holiday_amount = array_reduce($timesheet, function ($carry, $item) {
-                        $tempTotalRendered = intval($item->am_time_rendered) + intval($item->pm_time_rendered);
-                        $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($item->am_time_rendered) > 0 || intval($item->pm_time_rendered) > 0);
-                        $holidayPaid = $hasRenderedShift && $item->holiday_amount > 0 ? $item->holiday_amount: 0;
+                        /*** $tempTotalRendered = intval($item->am_time_rendered) + intval($item->pm_time_rendered);
+                        $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($item->am_time_rendered) > 0 || intval($item->pm_time_rendered) > 0); ***/
+                        $holidayPaid = intval($item->paid_holiday) === 1 && $item->holiday_amount > 0 ? $item->holiday_amount: 0;
                         return $carry + $holidayPaid;
                     }, 0);
                     
@@ -1641,6 +1647,7 @@ class Payroll_m extends CI_Model{
                     $basic_rate = $monthlyRate - $total_unrendered_amount;
                     $basic_rate_total = $monthlyRate - $total_unrendered_amount;
 
+                    //var_dump($monthlyRate, $total_unrendered_amount, $monthly_paid_holiday_amount);
                     $basic_rate += $monthly_paid_holiday_amount;
                     $basic_rate_total += $monthly_paid_holiday_amount;
                 }
