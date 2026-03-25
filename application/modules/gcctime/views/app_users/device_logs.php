@@ -138,37 +138,45 @@
                                     </div>
                                 </template>
                                 <template v-if="logs.length > 0">
-                                    <div class="m-scrollable--logs mCustomScrollbar _mCS_3 mCS-autoHide" style="min-height: 215px; max-height: 580px; position: relative; overflow: visible;">
-                                        <div class="row">
-                                            <div class="col-4" v-for="log in logs">
-                                                <div class="m-portlet m-portlet--bordered m-portlet--bordered-semi m-portlet--rounded m-portlet--head-sm m-portlet--full-height">
-                                                    <div class="m-portlet__head">
-                                                        <div class="m-portlet__head-caption">
-                                                            <div class="m-portlet__head-title">
-                                                                <h3 class="m-portlet__head-text">{{ log.app_type }}</h3>
+                                    <div class="col-12">
+                                        <div class="m-scrollable--logs mCustomScrollbar _mCS_3 mCS-autoHide" style="min-height: 215px; max-height: 580px; position: relative; overflow: visible;">
+                                            <div class="row">
+                                                <div class="col-4" v-for="log in logs">
+                                                    <div class="m-portlet m-portlet--bordered m-portlet--bordered-semi m-portlet--rounded m-portlet--head-sm m-portlet--full-height">
+                                                        <div class="m-portlet__head">
+                                                            <div class="m-portlet__head-caption">
+                                                                <div class="m-portlet__head-title">
+                                                                    <h3 class="m-portlet__head-text">{{ log.app_type }}</h3>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                    <div class="m-portlet__body">
-                                                        <div class="m-widget3">
-                                                            <div class="m-widget3__item">
-                                                                <div class="m-widget3__header">
-                                                                    <div class="m-widget3__info p-0">
-                                                                        <span class="m-widget3__username text-uppercase">
-                                                                            {{ log.action }}
-                                                                        </span>
-                                                                        <br>
-                                                                        <span class="m-widget3__time">
-                                                                            {{ dateTimeFormatter(log.app_time) }}
-                                                                        </span>
+                                                        <div class="m-portlet__body">
+                                                            <div class="m-widget3">
+                                                                <div class="m-widget3__item">
+                                                                    <div class="m-widget3__header">
+                                                                        <div class="m-widget3__info p-0">
+                                                                            <span class="m-widget3__username text-uppercase">
+                                                                                {{ log.action }}
+                                                                            </span>
+                                                                            <br>
+                                                                            <span class="m-widget3__time">
+                                                                                {{ dateTimeFormatter(log.app_time) }}
+                                                                            </span>
+                                                                        </div>
+                                                                        <span class="m-widget3__status m--font-info">&nbsp;</span>
                                                                     </div>
-                                                                    <span class="m-widget3__status m--font-info">&nbsp;</span>
-                                                                </div>
-                                                                <div class="m-widget3__body">
-                                                                    <p class="m-widget3__text m--font-bolder text-uppercase">{{ log.message }}</p>
-                                                                    <p class="m-widget3__sub mb-0 m--font-bolder">{{ log.data?.reference_no ?? '' }}</p>
-                                                                    <p class="m-widget3__sub mb-0 text-uppercase">{{ log.data?.destination ?? '' }}</p>
-                                                                    <p class="m-widget3__sub mt-1 text-uppercase">{{ log.data?.location ?? '' }}</p>
+                                                                    <div class="m-widget3__body">
+                                                                        <p class="m-widget3__text m--font-bolder text-uppercase">{{ log.message }}</p>
+                                                                        <p class="m-widget3__sub mb-0 m--font-bolder m--font-primary" v-if="log.data?.reference_no">{{ log.data?.reference_no ?? '' }}</p>
+                                                                        <p class="m-widget3__sub mb-0 text-uppercase" v-if="log.data?.destination">{{ log.data?.destination ?? '' }}</p>
+                                                                        <p class="m-widget3__sub m-0 text-uppercase" v-if="log.data?.location">{{ log.data?.location ?? '' }}</p>
+                                                                        <p class="m-widget3__sub text-uppercase m-0 mt-2" v-if="log.data?.name">
+                                                                            <small class="m--font-boldest text-muted">User: {{ log.data?.name ?? '' }}</small>
+                                                                        </p>
+                                                                        <p class="m-widget3__sub text-uppercase" v-if="log.data?.device_id || log.data?.device_name">
+                                                                            <small class="m--font-boldest text-muted">Device: {{ log.data?.device_id ?? '' }} / {{ log.data?.device_name ?? '' }}</small>
+                                                                        </p>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
