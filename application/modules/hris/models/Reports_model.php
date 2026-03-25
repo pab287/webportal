@@ -1730,7 +1730,7 @@ class Reports_model extends CI_Model{
                                     foreach ($propShift as $prop) { $tempSchedule->{$prop} = $nSchedule->{$prop}; }
                                 }
 
-                                $isWholeDay = true;
+                                // $isWholeDay = true;
                                 $tempSchedule->am_start = $tempSchedule->am_start ? $tempSchedule->am_start : "00:00:00";
                                 $tempSchedule->am_end = $tempSchedule->am_end ? $tempSchedule->am_end : "00:00:00";
                                 $tempSchedule->pm_start = $tempSchedule->pm_start ? $tempSchedule->pm_start : "00:00:00";
@@ -1739,16 +1739,10 @@ class Reports_model extends CI_Model{
                                 $amDateTimeLog = $tempSchedule->am_start != "00:00:00" && $tempSchedule->am_end != "00:00:00" ? $date." ".$tempSchedule->am_start."~".$date." ".$tempSchedule->am_end : null;
                                 $pmDateTimeLog = $tempSchedule->pm_start != "00:00:00" && $tempSchedule->pm_end != "00:00:00" ? $date." ".$tempSchedule->pm_start."~".$date." ".$tempSchedule->pm_end : null;
 
-                                if (isset($tempSchedule->am_start) && isset($tempSchedule->am_end) && isset($tempSchedule->pm_start) && isset($tempSchedule->pm_end)){
-                                    if (($tempSchedule->am_start == null || $tempSchedule->am_start == "00:00:00")
-                                        && ($tempSchedule->am_end == null || $tempSchedule->am_end == "00:00:00")){
-                                        $isWholeDay = false;
-                                    }
-                                    if (($tempSchedule->pm_start == null || $tempSchedule->pm_start == "00:00:00")
-                                        && ($tempSchedule->pm_end == null || $tempSchedule->pm_end == "00:00:00")){
-                                        $isWholeDay = false;
-                                    }
-                                }
+                                $hasAM = $tempSchedule->am_start !== "00:00:00" && $tempSchedule->am_end !== "00:00:00";
+                                $hasPM = $tempSchedule->pm_start !== "00:00:00" && $tempSchedule->pm_end !== "00:00:00";
+                                $isWholeDay = $hasAM && $hasPM;
+
                                 if($amDateTimeLog){ $employeeLogDates[$key][$md5Date][] = $amDateTimeLog; }
                                 if($pmDateTimeLog){ $employeeLogDates[$key][$md5Date][] = $pmDateTimeLog; }
 
@@ -1760,6 +1754,8 @@ class Reports_model extends CI_Model{
                 }
                 
                 $updateEmployeeAbsences = array();
+
+                $overwrite_max_date = Date("Y-m-d", strtotime($endDate));
 
                 if(is_array($employeeDates) && !empty($employeeDates)){
                     foreach ($employeeDates as $empId => $dates) {
@@ -1777,11 +1773,11 @@ class Reports_model extends CI_Model{
                         $this->db->where("ts.emp_id", $empId);
                         $this->db->order_by("ts.date", "ASC");
                         $qdates = $this->db->get();
-
+                        
                         if($qdates->num_rows() > 0){
                             $qdates = $qdates->row();
-                            $qMaxDate = $qdates->max_date;
-                            
+                            // $qMaxDate = $qdates->max_date;
+                            $qMaxDate = $overwrite_max_date;
                             $qDateStart = $qdates->date_start;
 
                             $tsDates = $qdates->dates;
@@ -1789,15 +1785,35 @@ class Reports_model extends CI_Model{
                             $tsDates = array_map("trim", $tsDates);
                             $tsDates = array_filter($tsDates);
                             $tsDates = array_unique($tsDates);
-
+                            
                             $arrLogs = array();
                             $updateEmployeeAbsences[$empId]["attendance_logs"] = "";
                             $updateEmployeeAbsences[$empId]["absentee_dates"] = array();
                             foreach ($dates as $dt) {
                                 if(strtotime($dt) >= strtotime($qDateStart) && strtotime($dt) <= strtotime($qMaxDate) && !in_array($dt, $tsDates)){
                                     $md5Datex = md5($dt);
-                                    $updateEmployeeAbsences[$empId]["absentee_total"] = isset($updateEmployeeAbsences[$empId]["absentee_total"]) && $updateEmployeeAbsences[$empId]["absentee_total"] ? $updateEmployeeAbsences[$empId]["absentee_total"] : 0;
-                                    $updateEmployeeAbsences[$empId]["absentee_total"] += $newEmployeeRecord[$empId][$md5Datex];
+
+                                    $updateEmployeeAbsences[$empId]["absentee_total"] = isset($updateEmployeeAbsences[$empId]["absentee_total"]) ? $updateEmployeeAbsences[$empId]["absentee_total"] : 0;
+                                    
+                                    // --- NEW: derive credit from actual logs for this date ---
+                                    $dayCredit = 0;
+                                    if(isset($employeeLogDates[$empId][$md5Datex]) && is_array($employeeLogDates[$empId][$md5Datex])){
+                                        
+                                        foreach($employeeLogDates[$empId][$md5Datex] as $logSlot){
+                                            // Each slot = "YYYY-MM-DD HH:MM:SS~YYYY-MM-DD HH:MM:SS"
+                                            $slotParts = explode("~", $logSlot);
+                                            $slotHour  = (int) date("H", strtotime(trim($slotParts[0])));
+                                            $dayCredit += ($slotHour < 12) ? 0.5 : 0.5; // AM or PM = 0.5 each
+                                        }
+                                        // Cap at 1 (can't exceed whole day)
+                                        $dayCredit = min($dayCredit, 1);
+                                    } else {
+                                        // Fallback to shift-based value if no logs found
+                                        $dayCredit = $newEmployeeRecord[$empId][$md5Datex] ?? 1;
+                                    }
+                                    // --- END NEW ---
+
+                                    $updateEmployeeAbsences[$empId]["absentee_total"] += $dayCredit;
                                     
                                     if(is_array($employeeLogDates[$empId][$md5Datex]) && count($employeeLogDates[$empId][$md5Datex]) > 0){
                                         foreach ($employeeLogDates[$empId][$md5Datex] as $dtx) { $arrLogs[] = $dtx; }
@@ -1878,7 +1894,8 @@ class Reports_model extends CI_Model{
                     $filter = "";
                 }
                 if($ctrCount > 0){
-                    $maxDate = $qAttendance->row()->max_date;
+                    // $maxDate = $qAttendance->row()->max_date;
+                    $maxDate = $overwrite_max_date;
                     $qData = array();
                     $loaReference = array();
                     foreach($qAttendance->result() as $attx){
@@ -3445,7 +3462,7 @@ class Reports_model extends CI_Model{
                     "absent" => $absentPayload
                 ];
             } else {
-                 $merged[$empId]["absent"] = $absentPayload;
+                $merged[$empId]["absent"] = $absentPayload;
             }
         }
 

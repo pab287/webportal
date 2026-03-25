@@ -334,8 +334,9 @@
                                 <table class="table table-striped table-bordered table-hover">
                                     <thead class="thead-light">
                                         <tr>
-                                            <th style="width:60%">Date</th>
+                                            <th style="width:35%">Date</th>
                                             <th style="width:40%">LOA Reference</th>
+                                            <th style="width:25%" class="text-center">Day Credit</th>
                                         </tr>
                                     </thead>
 
@@ -345,6 +346,12 @@
                                             <td>
                                                 <span v-if="getLoaByAbsentDate(date)">
                                                     {{ getLoaByAbsentDate(date) }}
+                                                </span>
+                                                <span v-else class="text-muted">NO LOA</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span v-if="getLoaDayValue(date) !== null">
+                                                    {{ getLoaDayValue(date) }}
                                                 </span>
                                                 <span v-else class="text-muted">—</span>
                                             </td>

@@ -355,14 +355,69 @@ const vm_late_and_absentee = new Vue({
 
             const key = moment(dateFormatted, "LL").format("YYYY-MM-DD");
             const loa = this.loaMap[key];
-            if (!loa) return null;
+
+            if (!loa) {
+                const slot = this.getAbsentSlotInfo(dateFormatted);
+
+                if (slot.type === "whole") return "NO LOA (Whole Day)";
+                if (slot.type === "half") return `NO LOA (Half Day - ${slot.meridian})`;
+
+                return "ABSENT";
+            }
 
             let label = loa.reference;
+
+            if (loa.loa_type === 4) {
+                const slot = this.getAbsentSlotInfo(dateFormatted);
+
+                if (slot.type === "whole") label += " (Whole Day)";
+                else if (slot.type === "half") label += ` (Half Day - ${slot.meridian})`;
+
+                return label;
+            }
 
             if (loa.whole_day) label += " (Whole Day)";
             else if (loa.half_day) label += ` (Half Day - ${loa._meridian})`;
 
             return label;
+        },
+
+        getLoaDayValue(dateFormatted) {
+            const key = moment(dateFormatted, "LL").format("YYYY-MM-DD");
+            const loa = this.loaMap[key];
+
+            if (loa && loa.loa_type !== 4) {
+                if (loa.loa_type === 3 || loa.whole_day) return 1;
+                if (loa.loa_type === 2 || loa.half_day) return 0.5;
+            }
+
+            const slot = this.getAbsentSlotInfo(dateFormatted);
+
+            return slot.type === "whole" ? 1 : 0.5;
+        },
+
+        getAbsentSlotInfo(dateFormatted) {
+            const key = moment(dateFormatted, "LL").format("YYYY-MM-DD");
+
+            const logs = (this.row.absent?.attendance_logs || "")
+                .split(',')
+                .filter(log => log.trim().startsWith(key));
+
+            if (logs.length === 0) {
+                return { type: "whole" }; // no logs = whole day absent
+            }
+
+            const slots = logs.reduce((acc, log) => {
+                const hour = moment(log.split('~')[0].trim(), "YYYY-MM-DD HH:mm:ss").hour();
+                hour < 12 ? acc.am = true : acc.pm = true;
+                return acc;
+            }, { am: false, pm: false });
+
+            if (slots.am && slots.pm) return { type: "whole" };
+            if (slots.am) return { type: "half", meridian: "AM" };
+            if (slots.pm) return { type: "half", meridian: "PM" };
+
+            return { type: "whole" };
         }
     }
 });
