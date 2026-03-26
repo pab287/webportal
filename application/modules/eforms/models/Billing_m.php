@@ -8258,7 +8258,7 @@ class Billing_m extends CI_Model {
         $this->db->select("modem,sms_ip, sms_port, sms_user, sms_pass, department_id, exclude");
         $this->db->from("gccsms.tblsms");
         $this->db->where("is_connected",'1');
-        $this->db->where("sms_user",'VOP');
+        $this->db->where("sms_user",'VoP');
         $sms = $this->db->get()->row_array();
         if($sms && $phone){
             if (substr($phone, 0, 1) === '9') {
@@ -8270,7 +8270,7 @@ class Billing_m extends CI_Model {
             $url = '&u='.$user;
             $url.= '&h='.$password;
             $url.= '&op=pv';
-            $url.= '&smsc='."modem3";
+            $url.= '&smsc='.$sms['modem'];
             $url.= '&to='.$phone;
             $url.= '&msg='.urlencode($msg);
             $urltouse =  $playsms_url.$url;
