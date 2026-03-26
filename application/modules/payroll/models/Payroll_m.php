@@ -44,6 +44,7 @@ class Payroll_m extends CI_Model{
     protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
     protected $tbl_ps_employee_regular_ndiff = "payroll.employee_regular_ndiff";
     protected $tbl_payroll_group_transfer = "payroll.payroll_group_transfer";
+    protected $tbl_ps_group_history = "payroll.payroll_sheet_group_history";
 
     public function __construct(){
         parent::__construct();
@@ -2695,6 +2696,62 @@ class Payroll_m extends CI_Model{
                 $employee->contributions = $currentPayrollContributions;
 
                 $this->db->reset_query();
+
+                if(isset($payroll_sheet->id) && $payroll_sheet->id > 0 && intval($payroll_sheet->posted) == 0){
+                    $serializeEmployee = serialize($employee->id);
+                    $this->db->select("id as payroll_group_id, UPPER(description) as group_description");
+                    $this->db->from("payroll.payroll_group");
+                    $this->db->where("status", 1);
+                    $this->db->where("is_archived", 0);
+                    $this->db->like("employee_id", $serializeEmployee, "BOTH");
+                    $this->db->order_by("id", "DESC");
+                    $this->db->limit(1);
+                    $qPG = $this->db->get();
+                    if($qPG->num_rows() > 0){
+                        $paydateFormatted = date("F d, Y", strtotime($payroll_sheet->pay_date));
+                        $cDateStartFormatted = date("F d, Y", strtotime($payroll_sheet->date_start));
+                        $cDateEndFormatted = date("F d, Y", strtotime($payroll_sheet->date_end));
+
+                        $employeeName = $this->getNoEarnerEmployeeNameById($employee->id);
+                        $payroll_group = $qPG->row();
+                        $pg_history = $this->db->get_where($this->tbl_ps_group_history, array("payroll_sheet_id"=>$payroll_sheet->id));
+                        if($pg_history->num_rows() == 0){
+                            $pghData = array(
+                                "payroll_sheet_id"=>$payroll_sheet->id,
+                                "payroll_group_id"=>$payroll_group->payroll_group_id,
+                                "group_description"=>$payroll_group->group_description,
+                                "date_start"=>$payroll_sheet->date_start,
+                                "date_end"=>$payroll_sheet->date_end,
+                                "pay_date"=>$payroll_sheet->pay_date,
+                                "company_id"=>$payroll_sheet->company_id,
+                                "emp_id"=>$payroll_sheet->emp_id,
+                                "created_at"=>date("Y-m-d H:i:s"),
+                                "created_by"=>$this->core_layout->getCurrentEmployeeId()
+                            );
+
+                            $added = $this->db->insert($this->tbl_ps_group_history, $pghData);
+                            if($added && $this->db->affected_rows() > 0){
+                                $logMessage = "A new payroll group history has been added for the payroll sheet `{$payroll_sheet->id}`, employee name `{$employeeName}`, with payroll group `{$payroll_group->group_description}` and pay date `{$paydateFormatted}` with coverage date from `{$cDateStartFormatted}` to `{$cDateEndFormatted}`.";
+                                $this->core_layout->setEventLog($logMessage, "create", "success", "payroll");
+                            }else{
+                                $logMessage = "Failed to add a new payroll group history for the payroll sheet `{$payroll_sheet->id}`, employee name `{$employeeName}`, with payroll group `{$payroll_group->group_description}` and pay date `{$paydateFormatted}` with coverage date from `{$cDateStartFormatted}` to `{$cDateEndFormatted}`.";
+                                $this->core_layout->setEventLog($logMessage, "create", "error", "payroll", "system");
+                            }
+                        }else{
+                            $updated = $this->db->update($this->tbl_ps_group_history,
+                                array("payroll_group_id"=>$payroll_group->payroll_group_id, "group_description"=>$payroll_group->group_description, "updated_at"=>date("Y-m-d H:i:s"), "updated_by"=>$this->core_layout->getCurrentEmployeeId()),
+                                array("payroll_sheet_id"=>$payroll_sheet->id)
+                            );
+                            if($updated && $this->db->affected_rows() > 0){
+                                $logMessage = "Existing payroll group history has been updated for the payroll sheet `{$payroll_sheet->id}`, employee name `{$employeeName}`, with payroll group `{$payroll_group->group_description}` and pay date `{$paydateFormatted}` with coverage date from `{$cDateStartFormatted}` to `{$cDateEndFormatted}`.";
+                                $this->core_layout->setEventLog($logMessage, "update", "success", "payroll");
+                            }else{
+                                $logMessage = "Failed to update existing payroll group history for the payroll sheet `{$payroll_sheet->id}`, employee name `{$employeeName}`, with payroll group `{$payroll_group->group_description}` and pay date `{$paydateFormatted}` with coverage date from `{$cDateStartFormatted}` to `{$cDateEndFormatted}`.";
+                                $this->core_layout->setEventLog($logMessage, "update", "error", "payroll", "system");
+                            }
+                        }
+                    }
+                }
             }
 
             if(count($employees["data"]) > 0){
@@ -7936,7 +7993,7 @@ class Payroll_m extends CI_Model{
                             if(strtotime($psx->pay_date) != strtotime($payDate) || 
                                 (strtotime($psx->date_start) != strtotime($dateStart) && strtotime($psx->date_end) != strtotime($dateEnd))){
                                     $flagInjectArr = true;
-                            }else if(intval($psx->payroll_sched) != intval($payout_sched) || 
+                            } elseif (intval($psx->payroll_sched) != intval($payout_sched) || 
                                 intval($psx->payroll_seq) != intval($payout_seq)){
                                     $flagInjectArr = true;
                             }
@@ -7980,20 +8037,56 @@ class Payroll_m extends CI_Model{
                 }
             }
         }
+        
+        $existingEmployees = array_reduce($employees['data'], function ($carry, $item) {
+            return $carry ? $carry.",".$item->id : $item->id;
+        });
 
-        if(is_array($existingPayrollSheet) && count($existingPayrollSheet) > 0){
+        $pgHistoryRecords = [];
+        $employeeId = explode(',', $existingEmployees);
+        if(is_array($employeeId) && !empty($employeeId)){
+            $this->db->select("pgh.payroll_sheet_id as id,  UPPER(TRIM(CONCAT(emp.firstname, ' ',
+                CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                        TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                    THEN CONCAT(SUBSTR(emp.middlename, 1, 1), '.') ELSE ''
+                END,' ', emp.lastname,
+                CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                    UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                    emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''
+                END))) as employee_name");
+            $this->db->where_in("pgh.emp_id", $employeeId);
+            $this->db->join($this->tbl_payroll_sheet." ps", "ps.id = pgh.payroll_sheet_id");
+            $this->db->join($this->tbl_employees." emp", "emp.id = pgh.emp_id", "left");
+            $existingGroupHistory = $this->db->get_where($this->tbl_ps_group_history. " pgh",
+                array("pgh.date_start"=>$dateStart,
+                "pgh.date_end"=>$dateEnd,
+                "pgh.pay_date"=>$payDate,
+                "pgh.company_id"=>$companyId,
+                "ps.posted"=>1)
+            );
+            
+            $pgHistoryRecords = $existingGroupHistory->result_array();
+        }
+
+        if (is_array($existingPayrollSheet) && count($existingPayrollSheet) > 0){
             $resultset["response"] = true;
             $resultset["data"] = $existingPayrollSheet;
             $resultset["count"] = count($existingPayrollSheet);
             $resultset["filter"] = $post;
             $resultset["conflict_payroll_sheet"] = 1;
-        }else if(is_array($arrExistingPs) && count($arrExistingPs) > 0){
+            $resultset["existing_group_history"] = $pgHistoryRecords;
+        } elseif (is_array($arrExistingPs) && count($arrExistingPs) > 0){
             $resultset["response"] = true;
             $resultset["data"] = $arrExistingPs;
             $resultset["count"] = count($arrExistingPs);
             $resultset["filter"] = $post;
             $resultset["conflict_payroll_sheet"] = 2;
-        }else{
+            $resultset["existing_group_history"] = $pgHistoryRecords;
+        } elseif (is_array($pgHistoryRecords) && !empty($pgHistoryRecords)){
+            $resultset["response"] = true;
+            $resultset["existing_group_history"] = $pgHistoryRecords;
+        }
+        else{
             $resultset["response"] = false;
         }
 

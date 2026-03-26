@@ -3916,28 +3916,67 @@ const checkPayrollSheetData = function(date_range, employees, company, payout_sc
         dataType: "JSON",
         success: function(json){
             if(json.response){
-                toastr.warning("A total of ("+json.count+") existing payroll sheet data found!", "Existing Payroll Sheet Data");
-                vmExistingPayrollData.rows = json.data;
-                vmExistingPayrollData.conflict_payroll_sheet = json.conflict_payroll_sheet;
-                vmExistingPayrollData.count = json.count;
-                vmExistingPayrollData.filter = Object.assign({}, json.filter);
-                globalFilterOptions = Object.assign({}, json.filter);
-                
-                const globalPsConflict = parseInt(json.conflict_payroll_sheet) == 2;
-                vmToUpdateAction.show_action = globalPsConflict;
-                
-                const toUpdatePS = $("#modal-ps--existing-payroll_sheet #toUpdatePayrollSheet");
-                if(globalPsConflict){ 
-                    if(toUpdatePS.hasClass("m--hide")){ toUpdatePS.removeClass("m--hide"); }
+                let renderOtherOptions = false;
+                const { existing_group_history } = json;
+
+                const proceedRender = (json) => {
+                    toastr.warning(`A total of (${json.count}) existing payroll sheet data found!`, "Existing Payroll Sheet Data");
+
+                    vmExistingPayrollData.rows = json.data;
+                    vmExistingPayrollData.conflict_payroll_sheet = json.conflict_payroll_sheet;
+                    vmExistingPayrollData.count = json.count;
+                    vmExistingPayrollData.filter = Object.assign({}, json.filter);
+                    globalFilterOptions = Object.assign({}, json.filter);
+
+                    const globalPsConflict = parseInt(json.conflict_payroll_sheet) == 2;
+                    vmToUpdateAction.show_action = globalPsConflict;
+
+                    const toUpdatePS = $("#modal-ps--existing-payroll_sheet #toUpdatePayrollSheet");
+
+                    toUpdatePS.toggleClass("m--hide", !globalPsConflict);
+
+                    dtTableExistingPsData.clear();
+                    dtTableExistingPsData.rows.add(json.data);
+                    dtTableExistingPsData.draw();
+
+                    $("#modal-ps--existing-payroll_sheet").modal();
+                };
+
+                if(existing_group_history.length > 0){
+                    let tempHtml = `<div class='row swal--custom-list'>`;
+                    let _arrIds = [];
+                    existing_group_history.forEach((row, _index) => {
+                        tempHtml += `<div class='col-6 col-md-6 col-lg-6 col-sm-12'><span class='m--font-bolder text-left ml-1'>${row.employee_name}</span></div>`;
+                        _arrIds.push(row.id);
+                    });
+                    tempHtml += `</div>`;                    
+
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Posted Payroll Group Found!',
+                        html: "A total of <strong>("+existing_group_history.length+")</strong> existing payroll sheet payroll group data found! for the following employee(s):<br/>"+ tempHtml,
+                        width: '800px',
+                        showCancelButton: true,
+                        confirmButtonColor: "#3085d6",
+                        cancelButtonColor: "#d33",
+                        confirmButtonText: "Yes",
+                        cancelButtonText: "Proceed Anyway!",
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            console.log(_arrIds);
+                        }
+
+                        if (result.dismiss === Swal.DismissReason.cancel) {
+                            if(json.data.length > 0){ proceedRender(json); }
+                            else{ generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date); }
+                        }
+                    });
                 }else{
-                    if(!toUpdatePS.hasClass("m--hide")){ toUpdatePS.addClass("m--hide"); }
+                    if(json.data.length > 0){ proceedRender(json); }
+                    else{ generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date); }
                 }
-
-                dtTableExistingPsData.clear();
-                dtTableExistingPsData.rows.add(json.data);
-                dtTableExistingPsData.draw();
-
-                $("#modal-ps--existing-payroll_sheet").modal();
             }else{
                 if(jQuery.inArray("activate_loan", _currentActions) !== -1){
                     /*** for getting generated employees that have available cash advance loans ***/
