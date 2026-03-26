@@ -2375,11 +2375,16 @@ class Registration_model extends CI_Model{
         $tel_no = isset($post['contactFormData']['tel_no']) ? $post['contactFormData']['tel_no'] : '';
         $email = isset($post['contactFormData']['email']) ? $post['contactFormData']['email'] : '';
 
+        $weight = isset($post['weight']) ? $post['weight'] : '';
+        $height = isset($post['height']) ? $post['height'] : '';
+
         $personal_info = array(
             "firstname"  => trim($post['firstname']),
             "middlename" => trim($post['middlename']),
             "lastname"   => trim($post['lastname']),
             "suffix"     => trim($post['suffix']),
+            "weight"     => $weight,
+            "height"     => $height,
             "contact_no"         => $contactno,
             "status"             => "pooling",
             "gender"             => $post['gender'],
