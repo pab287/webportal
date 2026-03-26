@@ -3243,6 +3243,7 @@ class Document_model extends CI_Model{
           $this->db->select($sql);
           $this->db->from("dbhrd.candidates a");
           $this->db->where("a.is_archive", $archive);
+          $this->db->where("a.is_online", 1);
             //$this->db->join("dbhrd.candidate_attachment b", "b.candidate_id = a.id", "left");
             //$this->db->where('status != ', 'hired');
             //$this->db->where('status != ', 'blacklisted');
@@ -3304,6 +3305,7 @@ class Document_model extends CI_Model{
     //   $this->db->select($sql);
       $this->db->from("dbhrd.candidates a");
       $this->db->where("a.is_archive", $archive);
+      $this->db->where("a.is_online", 1);
     //   $this->db->join("dbhrd.file_attachment b", "a.id = b.body_id", "left");
     //   $this->db->where('vacancy_status != ', 'resolved');
     //   $this->db->where('vacancy_status != ', 'archived');

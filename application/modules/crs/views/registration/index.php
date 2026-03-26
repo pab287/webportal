@@ -631,11 +631,11 @@
                     </p>
                 </div>
                 <div class="modal-footer justify-content-center">
-                    <button class="btn btn-secondary" @click="declineConsent">
-                        Cancel
-                    </button>
-                    <button class="btn btn-primary" @click="acceptConsent">
+                    <button class="btn btn-success" @click="acceptConsent">
                         I Agree
+                    </button>
+                    <button class="btn btn-danger" @click="declineConsent">
+                        Cancel
                     </button>
                 </div>
             </div>
