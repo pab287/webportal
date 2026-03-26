@@ -2488,8 +2488,8 @@ class Registration_model extends CI_Model{
                 "educ_school"    => $edu['school'],
                 "educ_degree"    => $edu['degree'],
                 "educ_honors"    => $edu['honor'],
-                "educ_from"      => $edu['educ_from_year'],
-                "educ_to"        => $edu['educ_to_year'],
+                "educ_from"      => $edu['from'],
+                "educ_to"        => $edu['to'],
             );
         }
         $inserted_educ = $this->db->insert_batch("dbhrd.candidate_educations", $educ);

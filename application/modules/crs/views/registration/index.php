@@ -389,7 +389,7 @@
                                 <template v-else>
                                     <div class="alert alert-info mt-2">
                                         <i class="fa fa-info-circle"></i> 
-                                        Marked as <strong>Fresh Graduate / No Work Experience</strong>
+                                        MARKED AS <strong>FRESH GRADUATE / NO WORK EXPERIENCE</strong>
                                     </div>
                                 </template>
                             </form>

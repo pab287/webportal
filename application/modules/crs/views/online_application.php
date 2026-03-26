@@ -336,6 +336,15 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <template v-if="!selectedApplication.work_experience?.length">
+                                            <div class="row mt-2">
+                                                <div class="col">
+                                                    <div class="alert alert-info mt-2">
+                                                        <i class="fa fa-info-circle"></i> MARKED AS <strong>FRESH GRADUATE / NO WORK EXPERIENCE</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
                                         <template v-for="(work, index) in selectedApplication.work_experience" :key="index">
                                             <div class="row mt-2">
                                                 <div class="col-4">
