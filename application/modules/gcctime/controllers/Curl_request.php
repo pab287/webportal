@@ -1793,6 +1793,12 @@ class Curl_request extends MY_Controller {
         
     }
 
+	function app_hook_attendance_data(){
+		$data = $this->attendance->appHookAttendanceData();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+	}
 	public function test_generateMorningAbsenteeData(){
 		$getPersonnel = $this->getActivePersonnels();
 		if($getPersonnel){

@@ -82,13 +82,19 @@
             $data = $this->GCCTIME_APP->appVersionv311();
             echo $data;
         }
+
         public function travel_order_data(){
             $data = $this->GCCTIME_APP->getEmployeeTravelOrder();
             echo $data;
         }
 
-        public function forgot_password(){
-            $data = $this->GCCTIME_APP->forgotPassword();
+        public function travel_order_data320(){
+            $data = $this->GCCTIME_APP->getTravelOrderEmployeeDestination();
+            echo $data;
+        }
+
+        public function travel_order_check(){
+            $data = $this->GCCTIME_APP->travelOrderCheck();
             echo $data;
         }
     }
