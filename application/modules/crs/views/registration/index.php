@@ -213,7 +213,7 @@
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="contact_no" class="form-control-label required">Mobile Number</label>
-                                            <input type="text" v-model="contactFormData.contact_no" name="contact_no" id="contact_no" placeholder="ENTER YOUR MOBILE NUMBER" class="form-control" data-validation="required" autocomplete="off" maxlength="12">
+                                            <input type="text" v-model="contactFormData.contact_no" name="contact_no" id="contact_no" placeholder="ENTER YOUR MOBILE NUMBER" class="form-control" data-validation="required" autocomplete="off" maxlength="12" @input="contactFormData.contact_no = $event.target.value.replace(/\D/g, '')">
                                         </div>
                                     </div>
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
@@ -225,8 +225,7 @@
                                     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                         <div class="form-group">
                                             <label for="tel_no" class="form-control-label">Telephone Number</label>
-                                            <input type="text" v-model="contactFormData.tel_no" name="tel_no" id="tel_no" max="12" placeholder="(optional)" class="form-control" autocomplete="off" maxlength="12">
-                                        </div>
+                                            <input type="text" v-model="contactFormData.tel_no" name="tel_no" id="tel_no" placeholder="(optional)" class="form-control" autocomplete="off" maxlength="12" @input="contactFormData.tel_no = $event.target.value.replace(/\D/g, '')"></div>
                                     </div>
                                     <div class="col-12">
                                         <div class="form-group">
@@ -267,8 +266,7 @@
                                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                                 <div class="form-group">
                                                     <label :for="`contact_no_${index + 1}`" class="form-control-label required">Contact Number</label>
-                                                    <input :id="`contact_no_${index + 1}`" v-model="reference.ref_contact_no" :name="`references[${index}][ref_contact_no]`" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="12" autocomplete="off" data-validation="required" class="form-control m-input"/>
-                                                </div>
+                                                    <input :id="`contact_no_${index + 1}`" v-model="reference.ref_contact_no" :name="`references[${index}][ref_contact_no]`" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="12" autocomplete="off" data-validation="required" class="form-control m-input" @input="reference.ref_contact_no = $event.target.value.replace(/\D/g, '')"></div>
                                             </div>
                                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                                 <div class="form-group">
