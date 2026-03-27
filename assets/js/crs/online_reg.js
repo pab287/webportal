@@ -306,6 +306,7 @@ let application_vue = new Vue({
             this.$nextTick(() => {
                 this.educInfo.splice(index, 1);
                 this.initEducSelect2();
+                $('#educational_information_form').get(0).reset();
             });
         },
         addEducInfo: function() {
@@ -345,6 +346,7 @@ let application_vue = new Vue({
         },
         removeWork: function(index) {
             this.workExperiences.splice(index, 1);
+            $('#work_experience_form').get(0).reset();
         },
         getExtension: function(type) {
             let extension = mimeMap[type] || (type.includes('/') ? type.split('/').pop() : type);
