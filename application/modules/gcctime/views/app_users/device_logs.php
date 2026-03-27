@@ -334,6 +334,7 @@
         appUsers.users = [];
         selectedAppUsers = [];
         appUsers.loading = true;
+        $("#appUsers").val([]).trigger("change");
         getActiveAppUsers();
     }
 </script>
