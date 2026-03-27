@@ -1157,6 +1157,7 @@ class Payroll_m extends CI_Model{
                 $employee->deduct_allowance_days = 0;
                 $temp_unrendered_minutes = 0;
                 $unrendered_minutes = 0;
+                $holiday_unrendered_minutes = 0;
                 $undertime_minutes = 0;
                 $undertime = 0;
 
@@ -1519,6 +1520,23 @@ class Payroll_m extends CI_Model{
                         return $carry + $totalUndertime;
                     }, 0);
 
+                    $holiday_unrendered_minutes = array_reduce($timesheet, function ($carry, $item) {
+                        $tempTotalTimeRendered = intval($item->total_time_rendered);
+                        $tempTotalRendered = intval($item->am_time_rendered) + intval($item->pm_time_rendered);
+                        $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($item->am_time_rendered) > 0 || intval($item->pm_time_rendered) > 0);
+                        $scheduledTimeRendered = $tempTotalTimeRendered;
+                        if($item->is_holiday && intval($item->paid_holiday) == 1){
+                            $scheduledTimeRendered = $this->calculateTotalMinutes($item->schedule);
+                        }
+
+                        if($hasRenderedShift && $item->is_holiday && intval($item->paid_holiday) === 1){ $tempTotalTimeRendered = 0; }
+
+                        $tempMinutesDaily = (intval($item->paid_holiday) == 1) ? $scheduledTimeRendered : $item->minutes_daily;
+                        $totalUndertime = $tempMinutesDaily - $tempTotalTimeRendered;
+                        $totalUndertime = $totalUndertime > 0 ? $totalUndertime: 0;
+                        return $carry + $totalUndertime;
+                    }, 0);
+
                     $holiday_minutes = array_reduce($timesheet, function ($carry, $item) {
                         return $carry + $item->holiday_minutely;
                     }, 0);
@@ -1606,6 +1624,8 @@ class Payroll_m extends CI_Model{
                 }
                 /*** hourly unrendred minutes ***/
 
+                $employee->unrendered_minutes = $unrendered_minutes;
+                $employee->holiday_unrendered_minutes = $holiday_unrendered_minutes;
                 $total_unrendered_minutes = $unrendered_minutes + $temp_unrendered_minutes;
                 $total_unrendered_amount = $total_unrendered_minutes * $per_minute;
 
@@ -1649,6 +1669,12 @@ class Payroll_m extends CI_Model{
 
                     $basic_rate += $monthly_paid_holiday_amount;
                     $basic_rate_total += $monthly_paid_holiday_amount;
+                    
+                    /** for allowance holiday unrendered minutes **/
+                    if($holiday_unrendered_minutes > 0 && $unrendered_minutes >= $holiday_unrendered_minutes && $total_unrendered_minutes >= $unrendered_minutes){
+                        $total_unrendered_minutes -= $holiday_unrendered_minutes;
+                    }
+                    /** for allowance holiday unrendered minutes **/
                 }
                 
                 $employee->basic_rate = $basic_rate;
