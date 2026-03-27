@@ -1,350 +1,310 @@
-var selected_date;
-let tempFormat;
-$("#employee").select2({
-  placeholder: 'SELECT AN OPTION',
-  width: '100%',
-  minimumInputLength: 3,
-  ajax: {
-    url: baseUrl("eforms/billing/get_employee_collector"),
-    global: false,
-    processResults: function (data) {
-      return data;
+const exportBtns = new Vue({
+    el: '#exportButtons',
+    data: {
+        collection: [],
+        totalCollection: 0,
+        totalCancelled: 0,
+        totalPaymentCount: 0,
+    },
+    methods: {
+        exportExcel(type = 'xlsx') {
+            if (!this.collection.length) {
+                toastr.error("No data selected.", "Warning");
+                return;
+            }
+
+            const upper = v =>
+                (v === null || v === undefined)
+                ? ''
+                : typeof v === 'string'
+                    ? v.toUpperCase()
+                    : v;
+
+            let rows = [];
+
+            this.collection.forEach(group => {
+                group.payments.forEach(p => {
+                    rows.push({
+                        "AR #": upper(p.acknowledgement_receipt),
+                        "Applied Payment Date": upper(p.applied_payment_date),
+                        CASHIER: upper(group.cashier),
+                        ACCOUNT: upper(p.account),
+                        "Bill #": upper(p.bill_ref),
+                        "Payment #": upper(p.payment_ref),
+                        TYPE: upper(p.type),
+                        AMOUNT: p.received_amount,          // keep numeric
+                        "Balance Covered": p.balance_covered,  // keep numeric
+                        "Payment Date": upper(p.payment_date),
+                        CANCELLED: p.is_archived == 1 ? "YES" : "NO"
+                    });
+                });
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(rows);
+            const workbook = XLSX.utils.book_new();
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, "COLLECTIONS");
+            XLSX.writeFile(workbook, `PAYMENT_COLLECTION.${type}`);
+
+            saveExportLogs(`Accounts - Export ${type.toUpperCase()}`);
+        },
+
+        exportPDF() {
+            if (!this.collection.length) {
+                toastr.error("No data selected.", "Warning");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+
+            let startY = 10;
+
+            const pageWidth = doc.internal.pageSize.getWidth();
+
+            // TITLE
+            doc.setFontSize(14);
+            doc.text(
+                'PAYMENT COLLECTION REPORT',
+                pageWidth / 2,
+                startY,
+                { align: 'center' }
+            );
+            startY += 8;
+
+            // GENERATED DATE
+            doc.setFontSize(10);
+            doc.text(
+                `Generated Date: ${new Date().toLocaleString()}`,
+                pageWidth / 2,
+                startY,
+                { align: 'center' }
+            );
+            startY += 10;
+
+            doc.setFontSize(10);
+            doc.text(`Total cancelled: ${this.totalCancelled}`, 14, startY);
+            startY += 10;
+
+            doc.setFontSize(10);
+            doc.text(`Total payment(s): ${this.totalPaymentCount}`, 14, startY);
+            startY += 10;
+
+            doc.setFontSize(10);
+            doc.text(`Total collection: ${this.numberWithCommas(this.totalCollection)}`, 14, startY);
+            startY += 10;
+
+            this.collection.forEach(group => {
+                doc.setFontSize(11);
+                doc.text(`CASHIER: ${group.cashier.toUpperCase()} - TOTAL CANCELLED: ${group.archived_count} - TOTAL PAYMENT(S): ${group.payments.length - group.archived_count} - TOTAL COLLECTION: ${this.numberWithCommas(group.total_cash)}`, 14, startY);
+                startY += 5;
+
+                const body = group.payments.map(p => ([
+                    p.acknowledgement_receipt,
+                    p.applied_payment_date,
+                    p.account,
+                    p.bill_ref,
+                    p.payment_ref,
+                    p.type,
+                    p.received_amount,
+                    p.balance_covered,
+                    p.payment_date,
+                    p.is_archived,
+                ]));
+
+                doc.autoTable({
+                    startY,
+                    head: [[
+                        'AR #', 'AP Date', 'Account', 'Bill #', 'Payment #', 'Type', 'Amount', 'Bal Covered', 'Payment Date'
+                    ]],
+                    body,
+                    styles: { 
+                        fontSize: 8,
+                        halign: 'center'
+                    },
+
+                    // CENTER HEADERS
+                    headStyles: {
+                        halign: 'center'
+                    },
+
+                    // COLUMN-SPECIFIC ALIGNMENT
+                    columnStyles: {
+                        6: { halign: 'right' }, // Amount (received_amount)
+                        7: { halign: 'right' }, // Balance Covered
+                        9: { cellWidth: 0 }     // hide IS_ARCHIVED column
+                    },
+
+                    // This block is for changing row color based on IS_ARCHIVED value
+                    didParseCell: function (data) {
+                        // Body rows only
+                        if (data.section === 'body') {
+                            const isArchived = data.row.raw[9] == 1; // index of is_archived
+
+                            if (isArchived) {
+                                data.cell.styles.fillColor = [220, 53, 69]; // Bootstrap danger red
+                                data.cell.styles.textColor = 255;
+                            }
+                        }
+
+                        // Hide IS_ARCHIVED column
+                        if (data.column.index === 9) {
+                            data.cell.text = '';
+                        }
+                    },
+                });
+
+                startY = doc.lastAutoTable.finalY + 10;
+            });
+
+            doc.save('payment_collection.pdf');
+            saveExportLogs('Accounts - Export PDF');
+        },
+
+        numberWithCommas(data) {
+            return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        },
     }
-  }
 });
 
+const payment_collected = new Vue({
+    el: '#payment-collected-list',
+    data: {
+        collection: [],
+    }, 
+    methods: {
+        numberWithCommas(data) {
+            return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        },
+        date_format(data) {
+            return moment(data).format('MMM DD, YYYY');
+        }
+    }
+});
+
+const totalCollection = new Vue({
+    el: '#total-collection',
+    data: {
+        totalCollection: 0,
+        totalCancelled: 0,
+        totalPaymentCount: 0,
+    }, 
+    methods: {
+        numberWithCommas(data) {
+            return data.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        },
+    }
+});
+
+const payment_collection_app = new Vue({
+    el: '#payment-collection-app',
+    data: {
+        employee_ids: [],
+        date_range: null,
+        loading: false
+    }, 
+    mounted() {
+        this.fetchPaymentCollectionReport();
+    },
+    methods: {
+        fetchPaymentCollectionReport() {
+            this.loading = true;
+
+            $.ajax({
+                url: baseUrl("eforms/billing/get_payment_collection_report/"),
+                type: "post",
+                dataType: "json",
+                data: {
+                    csrf_token: _csrf_hash,
+                    ids: this.employee_ids,
+                    date: this.date_range
+                },
+                success: function(data) {
+                    payment_collected.collection = data.data;
+
+                    exportBtns.collection = data.data;
+
+                    totalCollection.totalCollection = data.totalCash;
+                    totalCollection.totalCancelled = data.totalArchived;
+                    totalCollection.totalPaymentCount = data.recordsTotal - data.totalArchived;
+
+                    exportBtns.totalCollection = data.totalCash;
+                    exportBtns.totalCancelled = data.totalArchived;
+                    exportBtns.totalPaymentCount = data.recordsTotal - data.totalArchived;
+                },
+                error: function(xhr, error, code) {
+                    console.log(error);
+                },
+                complete: () => {
+                    this.loading = false;
+                }
+            });
+        },
+
+        generateReport() {
+            console.log("Generating report for Employee ID:", this.employee_ids, "Date Range:", this.date_range);
+
+            this.fetchPaymentCollectionReport();
+        }
+    },
+    watch: {
+        employee_id() {
+            this.fetchPaymentCollectionReport();
+        },
+        date_range() {
+            this.fetchPaymentCollectionReport();
+        }
+    }
+});
+
+// Employee select
+$("#employee").select2({
+    placeholder: 'SELECT A CASHIER(S)',
+    width: '100%',
+    minimumInputLength: 3,
+    allowClear: true,
+    ajax: {
+        url: baseUrl("eforms/billing/get_employee_collector"),
+        global: false,
+        processResults: function (data) {
+            return data;
+        }
+    }
+}).on('select2:select', function(e) {
+      payment_collection_app.employee_ids = $(this).val() || [];
+}).on('select2:unselect', function(e) {
+      payment_collection_app.employee_ids = $(this).val() || [];
+});
+
+var selected_date;
+let tempFormat;
+
+// Date range select
 $("#date-picker").daterangepicker({
-  buttonClasses: 'm-btn btn',
-  applyClass: 'btn-primary',
-  cancelClass: 'btn-secondary',
-  locale: {
-      format: 'MM/DD/YYYY'
-  },
-  endDate: moment(),
-  maxDate: moment()
-})
-.on('apply.daterangepicker', function (ev, picker) {
-  var tempStartDate = picker.startDate.format('MMM DD, YYYY');
-  var tempEndDate = picker.endDate.format('MMM DD, YYYY');
-  tempFormat = tempStartDate + ' - ' + tempEndDate;
-  $("#date-range").val(tempFormat);
+    buttonClasses: 'm-btn btn',
+    applyClass: 'btn-primary',
+    cancelClass: 'btn-secondary',
+    locale: { format: 'MM/DD/YYYY' },
+    endDate: moment(),
+    maxDate: moment()
+}).on('apply.daterangepicker', function (ev, picker) {
+    const tempStartDate = picker.startDate.format('MMM DD, YYYY');
+    const tempEndDate = picker.endDate.format('MMM DD, YYYY');
+    const tempFormat = tempStartDate + ' - ' + tempEndDate;
+
+    $("#date-range").val(tempFormat);
+    payment_collection_app.date_range = tempFormat;
 });
 
 function numberWithCommas(x) {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-let total_amount = 0;
-let total_balance_covered = 0;
-const tbl_payment_collection = $("#tbl-payment_collection").DataTable({
-  dom: '<"toolbar">t',
-  destroy: true,
-  serverSide: true,
-  processing: true,
-  aaSorting: [],
-  scrollY: "440px",
-  paging: false,
-  scrollCollapse: true,
-  ajax: {
-       url: baseUrl("eforms/billing/get_payment_collection_report/"),
-       type: "post",
-       global: false,
-       dataType: "json",
-       data: function(d){
-          d.csrf_token = _csrf_hash,
-          d.id = $("#employee").val(),
-          d.date = selected_date
-      },
-      error: function (xhr, error, code){
-        console.log(error);
-      }
-  },
-  columns: [
-      { data: "account" },
-      { data: "bill_ref" },
-      { data: "acknowledgement_receipt" },
-      { data: "payment_ref" },
-      { data: "type" },
-      { 
-        data: "received_amount", render: function(data) {
-            return parseFloat(data).toFixed(2);
-        }
-      },
-      { 
-        data: "balance_covered", render: function(data) {
-            return parseFloat(data).toFixed(2);
-        }
-      },
-      { 
-        data: "payment_date", className: "text-center", render: function(data) {
-            return data ? moment(data).format('MMM DD, YYYY') : '';
-        }
-      },
-      { 
-        data: "applied_payment_date", className: "text-center", render: function(data) {
-            return data ? moment(data).format('MMM DD, YYYY') : '';
-        }
-      },
-      { data: "cashier" },
-  ],
-  order: [[ 8, "desc" ]],
-  columnDefs: [
-    {
-      targets: [0, 1, 2, 3, 4, 5, 6, 9],
-      orderable: false,
-    },
-    {
-      targets: [0, 1, 2, 3, 4, 7, 8, 9],
-      className: "text-center",
-    },
-    {
-      targets: [5, 6],
-      className: "text-right",
-    }
-  ],
-  createdRow: function( row, data, dataIndex ) {
-      const is_archived = data.is_archived;
-
-      if ( is_archived == 1 ) {
-          $(row).addClass('table-danger');
-      }
-  },
-  buttons: [
-      { 
-          extend: 'csv',
-          messageTop: function () {
-            return 'Hydra - Payment Collection | '+ tempFormat;
-          },
-          messageBottom: function () {
-            return 'Generated on '+ new Date();
-          },
-          footer: true,
-          exportOptions: {
-              columns: "thead th:not(.notExport)"
-          },
-          customize: function(csv) {
-              let data = csv.split('\n');
-
-              let targetUppercase = [7, 8, 9]; // Columns to make uppercase
-              let removeSpecialChar = []; // Remove special characters from these columns like peso sign
-              let removeComma = []; // Column to remove commas
-
-              // Loop through each row
-              data = data.map((row, rowIndex) => {  
-                  // Split row into columns, considering quoted fields
-                  let columns = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-
-                  columns = columns.map((col, columnIndex) => {
-                      col = col.trim(); // Remove extra spaces
-              
-                      if (rowIndex === 0) { 
-                          return col.replace(/\b\w/g, char => char.toUpperCase());
-                      }
-              
-                      // Convert to uppercase for specific columns
-                      if (targetUppercase.includes(columnIndex)) {
-                          col = col.toUpperCase();
-                      }
-
-                      // Remove special characters from specific columns
-                      if (removeSpecialChar.includes(columnIndex)) {
-                          col = col.replace(/[^\w\s.]/gi, '');
-                      }
-              
-                        // Remove commas from specific columns
-                      if (columnIndex === removeComma) {
-                          col = col.replace(/,/g, '');
-                      }
-              
-                      return col;
-                  });
-
-                  return columns.join(","); // Join modified columns
-              });
-
-              // Add UTF-8 BOM to the beginning of the CSV data for letter "ñ" to appear correctly
-              const utf8BOM = '\uFEFF';
-              return utf8BOM + data.join("\n"); // Reassemble CSV
-          }
-      }, { 
-          extend: 'excelHtml5',
-          messageTop: function () {
-            return 'Hydra - Payment Collection | '+ tempFormat;
-          },
-          messageBottom: function () {
-            return 'Generated on '+ new Date();
-          },
-          footer: true,
-          exportOptions: {
-              columns: "thead th:not(.notExport)"
-          },
-          customize: function(xlsx) {
-            let sheet = xlsx.xl.worksheets['sheet1.xml'];
-
-            // Convert Column to Uppercase
-            $('row:not(:nth-child(2)) c[r^="H"], row:not(:nth-child(2)) c[r^="I"], row:not(:nth-child(2)) c[r^="J"]', sheet).each(function () {
-                let cell = $(this).find('is t, v'); // Find the text inside
-                let text = cell.text().trim(); // Get the existing text
-
-                if (text) {
-                    cell.text(text.toUpperCase()); // Convert to uppercase
-                }
-            });
-          }
-      }, { 
-          extend: 'pdfHtml5',
-          orientation: 'landscape',
-          pageSize: 'LEGAL',
-          title: function() {
-            return `GC&C Portal | Hydra - Payment Collection`;
-          },
-          messageTop: function (data, type, row) {
-            var total_count = 0;
-            var table = $('#tbl-payment_collection').DataTable();
-
-            table.row().every(function() {
-              var data = this.data();
-              total_count += parseInt(data.total_count);
-            });
-
-            var html = `Total Number of Entries: ${total_count}
-                  Generated as of: ${moment().format('MMM DD, YYYY')}
-                  Coverage Date: ${tempFormat}`;
-
-            return html;
-          },
-          footer: true,
-          exportOptions: {
-            columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-          },
-          customize: function(doc) {
-            doc.styles.message = {
-              alignment: 'center',
-            }
-
-            doc.defaultStyle.fontSize = 9;
-            doc.styles.tableHeader.fontSize = 9;
-            doc.styles.tableFooter.fontSize = 9;
-
-            // Set dynamic widths for all columns
-            let columnWidths = new Array(doc.content[2].table.body[0].length).fill('*');
-
-            // Define custom widths for specific columns (adjust index as needed)
-            columnWidths[0] = '20%';
-            columnWidths[5, 6] = '10%';
-            columnWidths[9] = '15%';
-
-            // Apply column widths
-            doc.content[2].table.widths = columnWidths;
-
-            // Loop through table body and target specific column
-            doc.content[2].table.body.forEach(function (row, rowIndex) {
-                if (rowIndex === 0) { return; }
-
-                let targetUppercase = [0, 7, 8, 9]; // Columns to make uppercase
-                let targetCenter = [0, 1, 2, 3, 4, 7, 8, 9]; // Columns to center align
-                let targetRight = [5, 6]; // Column to right align
-
-                row.forEach((cell, columnIndex) => {
-                    // normalize if a plain string cell (robustness)
-                    if (typeof cell === 'string') {
-                      cell = { text: cell };
-                      row[columnIndex] = cell;
-                    }
-
-                    if (!cell || cell.text === undefined) return;
-
-                    // Uppercase if needed
-                    if (targetUppercase.includes(columnIndex)) {
-                      cell.text = String(cell.text).toUpperCase();
-                    }
-
-                    // Alignment: right takes precedence over center
-                    if (targetRight.includes(columnIndex)) {
-                      cell.alignment = 'right';
-                    } else if (targetCenter.includes(columnIndex)) {
-                      cell.alignment = 'center';
-                    }
-                });
-            });
-          }
-      }
-  ],
-  "footerCallback": function ( row, data, start, end, display ) {
-    var api = this.api(), data;
-
-    // Total Payment
-    const totalPayment = api
-        .column( 5 )
-        .data()
-        .reduce( function (a, b) {
-            return parseFloat(a) + parseFloat(b);
-        }, 0 );
-        total_amount = totalPayment;
-    $( api.column( 4 ).footer() ).html('<b>Total</b>');
-    $( api.column( 5 ).footer() ).html('<b>'+numberWithCommas(parseFloat(totalPayment).toFixed(2))+'</b>');
-
-    // Total Balance Covered
-    const totalBalanceCovered = api
-        .column( 6 )
-        .data()
-        .reduce( function (a, b) {
-            return parseFloat(a) + parseFloat(b);
-        }, 0 );
-    total_balance_covered = totalBalanceCovered;
-    $( api.column( 6 ).footer() ).html('<b>'+numberWithCommas(parseFloat(total_balance_covered).toFixed(2))+'</b>');
-  },
-});
-
-$("#ExportExcel").on("click", function() {
-  var tbl_payment_collection_count = $('#tbl-payment_collection').DataTable().rows().count();
-  if(tbl_payment_collection_count == 0) {
-    toastr.error("No data selected.", "Warning");
-  } else {
-    tbl_payment_collection.button( '.buttons-excel' ).trigger();
-    saveExportLogs('Accounts - Export Excel');
-  }
-});
-
-$("#ExportCSV").on("click", function() {
-  var tbl_payment_collection_count = $('#tbl-payment_collection').DataTable().rows().count();
-  if(tbl_payment_collection_count == 0) {
-    toastr.error("No data selected.", "Warning");
-  } else {
-    tbl_payment_collection.button( '.buttons-csv' ).trigger();
-    saveExportLogs('Accounts - Export CSV');
-  }
-});
-
-$("#ExportPDF").on("click", function() {
-  var tbl_payment_collection_count = $('#tbl-payment_collection').DataTable().rows().count();
-  if(tbl_payment_collection_count == 0) {
-    toastr.error("No data selected.", "Warning");
-  } else {
-    tbl_payment_collection.button( '.buttons-pdf' ).trigger();
-    saveExportLogs('Accounts - Export PDF');
-  }
-});
-
 function saveExportLogs(export_){
   $.ajax({
       url: baseUrl("eforms/billing/save_export_logs"),
       type: 'post',
       data: { csrf_token: _csrf_hash, export_: export_ },
-      success: function (data) {
-          
-      }
+      success: function (data) {}
   });
-}
-
-function generateReport(){
-    selected_date = $("input[name='date_range']").val();
-    const employee = $('#employee').val();
-    const dateRange = $('#date-range').val();
-
-    if (!employee || !dateRange) {
-        toastr.error('Please select Employee and Date Range.', 'Input Required');
-        return;
-    }
-    tbl_payment_collection.ajax.reload();
 }

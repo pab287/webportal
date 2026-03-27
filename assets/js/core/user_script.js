@@ -65,7 +65,19 @@ const _dtUsers = $("#table-users").DataTable({
         { data: "username", width: "18%",
             render: function (data, type, row, meta) {
                 let tempHtml = `<p class='mb-0'>${data}</p>`;
-                tempHtml += `<p><small class='m--font-bolder'>${row.email ? row.email : "NO EMAIL ADDRESS"}</small></p>`;
+                let email;
+
+                const invalidEmailPatterns = ["no email address", "no email", "no email add", "n/a", "na", "none", "null"];
+
+                if (row.email && !invalidEmailPatterns.includes(row.email.toLowerCase())) {
+                    email = row.email;
+                } else if (row.email === "" || row.emp_email) {
+                    email = row.emp_email;
+                } else {
+                    email = "NO EMAIL ADDRESS";
+                }
+
+                tempHtml += `<p><small class='m--font-bolder'>${email}</small></p>`;
                 return tempHtml;
         }},
         { data: "user_role", width: "*", render: function (data, _type, row) {

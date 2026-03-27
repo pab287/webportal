@@ -43,6 +43,7 @@ class Payroll_m extends CI_Model{
 
     protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
     protected $tbl_ps_employee_regular_ndiff = "payroll.employee_regular_ndiff";
+    protected $tbl_payroll_group_transfer = "payroll.payroll_group_transfer";
 
     public function __construct(){
         parent::__construct();
@@ -962,7 +963,7 @@ class Payroll_m extends CI_Model{
                     $daily = $employee->basic_rate;
                     $daily = round(floatval($daily), 2);
                     $employee->rate = $daily;
-                } else if ($employee->payroll_type === 'monthly') {
+                } elseif ($employee->payroll_type === 'monthly') {
                     /**** rate * 12 months / 314 working days in a year ****/
                     /*** $daily = $employee->basic_rate / $working_days_in_a_month; ***/
                     
@@ -1011,6 +1012,7 @@ class Payroll_m extends CI_Model{
                 $arrTempSchedule = array();
                 $monthCounter = array();
                 $tempShiftRecords = array();
+                $customShiftTaggedRestDay = array();
                 foreach ($period as $dt) {
                     $day = strtolower($dt->format("l"));
                     $tempDate = $dt->format("Y-m-d");
@@ -1051,7 +1053,11 @@ class Payroll_m extends CI_Model{
                             $tempAlteredDates->$md5Date->altered_shift = $isAlteredShift;
                             /*** $schedule->altered_shift_schedule->$md5Date = $altered_shift_schedule; ***/
                         }
-                        if(isset($shiftSchedule->has_shift) && intval($shiftSchedule->has_shift) == 0){ $_hasShiftSchedule = false; };
+                        if(isset($shiftSchedule->has_shift) && intval($shiftSchedule->has_shift) == 0){
+                            $customShiftTaggedRestDay[$md5Date]["is_rest_day"] = true;
+                            $_hasShiftSchedule = false;
+                        }
+
                         if($_hasShiftSchedule){
                             if (($schedule->am_start !== null && $schedule->am_end !== null)
                                 || ($schedule->pm_start !== null && $schedule->pm_end !== null)) {
@@ -1161,6 +1167,7 @@ class Payroll_m extends CI_Model{
 
                 $total_ndiff_minutes = 0;
                 $total_ndiff_amount = 0;
+                $total_ot_allowance_minutes = 0;
 
                 $holiday_minutes = 0;
                 $holiday = 0;
@@ -1171,6 +1178,9 @@ class Payroll_m extends CI_Model{
                 $half_day_absent = 0;
                 $wholeDayAbsent = 0;
                 $unpaidHoliday = 0;
+                $unpaid_holiday_minutes = 0;
+                $unpaid_holiday_amount = 0;
+                $monthly_paid_holiday_amount = 0;
 
                 if($isMonthlyPaidEmployee === false){
                     $timesheet = $this->db
@@ -1198,6 +1208,8 @@ class Payroll_m extends CI_Model{
                         $ts->total_ut_minutes = 0;
                         $ts->total_accredited_ot_hrs_amount = 0;
                         $ts->total_accredited_ndiff_ot_hrs_amount = 0;
+
+                        $ts->total_allowance_ot_hrs_minutes = 0;
 
                         $ts->regular_ndiff_minutes = 0;
                         $ts->regular_ndiff_amount = 0;
@@ -1252,6 +1264,12 @@ class Payroll_m extends CI_Model{
                                     $ts->is_rest_day = 1;
                                 }
                             }
+
+                            if(isset($customShiftTaggedRestDay[$md5Date]) && $customShiftTaggedRestDay[$md5Date]["is_rest_day"] === true){
+                                $payrate_setting = $this->getPayrateSetting("rest day");
+                                $ts->is_rest_day = 1;
+                            }
+                            
                             $ts->schedule = $_temp_ploted_schedule;
     
                             $minutesDaily = $this->getTotalMunitesDaily($ts);
@@ -1270,7 +1288,7 @@ class Payroll_m extends CI_Model{
                             $tempTs->actual_minutes = $ts->total_time_rendered;
                             $tempTs->actual_hours = $ts->total_time_rendered / 60;
                             $tempTs->actual_hours_decimal = number_format($tempTs->actual_hours, 2);
-    
+
                             $basic_rate += $tempRatex;
                             $basic_rate_total += $tempRatexx;
     
@@ -1303,6 +1321,12 @@ class Payroll_m extends CI_Model{
                             // END REGULAR NIGHTDIFF CALCULATION
 
                             if(intval($ts->is_holiday) !== 0){
+                                $includeHolidayBasic = false;
+                                if(isset($ts->paid_holiday) && intval($ts->paid_holiday) === 1 && intval($ts->total_time_rendered) === 0){
+                                    $ts->minutely_amount = $minutely * 60;
+                                    $includeHolidayBasic = true;
+                                }
+
                                 $tempHolidayTimesheet = $this->getHolidayAmountDaily($ts);
                                 if($tempHolidayTimesheet && count(get_object_vars($tempHolidayTimesheet)) > 0){
                                     $ts = (object)array_merge((array)$ts, (array)$tempHolidayTimesheet);
@@ -1311,6 +1335,17 @@ class Payroll_m extends CI_Model{
     
                                     if(floatval($ts->total_time_rendered) > 0 && isset($ts->paid_holiday) && intval($ts->paid_holiday) == 1){
                                         $excludePaidHolidayMinutes += floatval($ts->total_time_rendered);
+                                    }
+
+                                    $tempTotalRendered = intval($ts->am_time_rendered) + intval($ts->pm_time_rendered);
+                                    $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($ts->am_time_rendered) > 0 || intval($ts->pm_time_rendered) > 0) || $includeHolidayBasic;
+
+                                    if($hasRenderedShift && $ts->holiday_amount > 0){
+                                        if(floatval($ts->total_time_rendered) > 0 && $excludePaidHolidayMinutes >= floatval($ts->total_time_rendered)){
+                                            $excludePaidHolidayMinutes -= floatval($ts->total_time_rendered);
+                                        }
+                                        $basic_rate += $ts->holiday_amount;
+                                        $basic_rate_total += $ts->holiday_amount;
                                     }
                                 }
                             }
@@ -1330,7 +1365,7 @@ class Payroll_m extends CI_Model{
                             $tempTs->actual_minutes = $ts->total_time_rendered;
                             $tempTs->actual_hours = $ts->total_time_rendered / 60;
                             $tempTs->actual_hours_decimal = number_format($tempTs->actual_hours, 2);
-    
+
                             $basic_rate += $tempRatex;
                             $basic_rate_total += $tempRatexx;
     
@@ -1354,6 +1389,11 @@ class Payroll_m extends CI_Model{
                             }
                             // END REGULAR NIGHTDIFF CALCULATION
                             if(intval($ts->is_holiday) !== 0){
+                                $includeHolidayBasic = false;
+                                if(isset($ts->paid_holiday) && intval($ts->paid_holiday) === 1 && intval($ts->total_time_rendered) === 0){
+                                    $ts->minutely_amount = $minutely * 60;
+                                    $includeHolidayBasic = true;
+                                }
                                 $tempHolidayTimesheet = $this->getHolidayAmountDaily($ts);
                                 if($tempHolidayTimesheet && count(get_object_vars($tempHolidayTimesheet)) > 0){
                                     $ts = (object)array_merge((array)$ts, (array)$tempHolidayTimesheet);
@@ -1362,6 +1402,17 @@ class Payroll_m extends CI_Model{
     
                                     if(floatval($ts->total_time_rendered) > 0 && isset($ts->paid_holiday) && intval($ts->paid_holiday) == 1){
                                         $excludePaidHolidayMinutes += floatval($ts->total_time_rendered);
+                                    }
+
+                                    $tempTotalRendered = intval($ts->am_time_rendered) + intval($ts->pm_time_rendered);
+                                    $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($ts->am_time_rendered) > 0 || intval($ts->pm_time_rendered) > 0) || $includeHolidayBasic;
+
+                                    if($hasRenderedShift && $ts->holiday_amount > 0){
+                                        if(floatval($ts->total_time_rendered) > 0 && $excludePaidHolidayMinutes >= floatval($ts->total_time_rendered)){
+                                            $excludePaidHolidayMinutes -= floatval($ts->total_time_rendered);
+                                        }
+                                        $basic_rate += $ts->holiday_amount;
+                                        $basic_rate_total += $ts->holiday_amount;
                                     }
                                 }
                             }
@@ -1435,15 +1486,39 @@ class Payroll_m extends CI_Model{
                     $temp_unrendered_minutes = $temp_unrendered_data->total_minutes;
                     $wholeDayAbsent = $temp_unrendered_data->absent_days;
                     $unpaidHoliday = $temp_unrendered_data->unpaid_holiday;
-    
+                    
+                    if(is_array($unpaidHoliday) && !empty($unpaidHoliday)){
+                        $unpaid_holiday_minutes = array_reduce($unpaidHoliday, function ($carry, $item) {
+                            return $carry + $item["total_minutes"];
+                        }, 0);
+                    }
+                    
+                    $unpaid_holiday_amount = floatval($unpaid_holiday_minutes) > 0 ? floatval($unpaid_holiday_minutes) * $per_minute : 0;
+
                     $unrendered_minutes = array_reduce($timesheet, function ($carry, $item) {
+                        /*** altered code for altered shift schedule unrendered minutes ***/
+                        /*** $tempTotalRendered = intval($item->am_time_rendered) + intval($item->pm_time_rendered);
+                         $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($item->am_time_rendered) > 0 || intval($item->pm_time_rendered) > 0); ***/
                         $tempTotalTimeRendered = intval($item->total_time_rendered);
-                        $tempMinutesDaily = (intval($item->paid_holiday) == 1)? $tempTotalTimeRendered : $item->minutes_daily;
+
+                        $scheduledTimeRendered = $tempTotalTimeRendered;
+                        if($item->is_holiday && intval($item->paid_holiday) == 1){
+                            $scheduledTimeRendered = $this->calculateTotalMinutes($item->schedule);
+                        }
+
+                        /*** if($item->is_holiday && $hasRenderedShift === false && intval($item->paid_holiday) === 1){
+                            $scheduledTimeRendered = $this->calculateTotalMinutes($item->schedule);
+                            $tempTotalTimeRendered = $scheduledTimeRendered;
+                        } ***/
+
+                        /*** altered code for altered shift schedule unrendered minutes ***/
+                        
+                        $tempMinutesDaily = (intval($item->paid_holiday) == 1) ? $scheduledTimeRendered : $item->minutes_daily;
                         $totalUndertime = $tempMinutesDaily - $tempTotalTimeRendered;
                         $totalUndertime = $totalUndertime > 0 ? $totalUndertime: 0;
                         return $carry + $totalUndertime;
                     }, 0);
-    
+
                     $holiday_minutes = array_reduce($timesheet, function ($carry, $item) {
                         return $carry + $item->holiday_minutely;
                     }, 0);
@@ -1508,9 +1583,19 @@ class Payroll_m extends CI_Model{
                     $total_ndiff_amount = array_reduce($timesheet, function ($carry, $item) {
                         return $carry + $item->regular_ndiff_amount;
                     }, 0);
+
+                    $total_ot_allowance_minutes = array_reduce($timesheet, function ($carry, $item) {
+                        return $carry + $item->total_allowance_ot_hrs_minutes;
+                    }, 0);
+
+                    $monthly_paid_holiday_amount = array_reduce($timesheet, function ($carry, $item) {
+                        /*** $tempTotalRendered = intval($item->am_time_rendered) + intval($item->pm_time_rendered);
+                        $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($item->am_time_rendered) > 0 || intval($item->pm_time_rendered) > 0); ***/
+                        $holidayPaid = intval($item->paid_holiday) === 1 && $item->holiday_amount > 0 ? $item->holiday_amount: 0;
+                        return $carry + $holidayPaid;
+                    }, 0);
                     
                 } // end of is monthly paid FALSE
-
 
                 /*** hourly unrendred minutes ***/
                 if($employee->payroll_type == "hourly"){
@@ -1533,6 +1618,7 @@ class Payroll_m extends CI_Model{
                 /*** $days_worked = ceil($total_minutes / $minutes_per_day); ***/
                 $employee->paid_holiday_minutes = $excludePaidHolidayMinutes;
                 $excude_holiday_days_worked = 0;
+
                 if($total_minutes > 0 && $excludePaidHolidayMinutes > 0){
                     $total_holiday_minutes = $total_minutes - $excludePaidHolidayMinutes;
                     $excude_holiday_days_worked = $total_holiday_minutes / $minutes_per_day;
@@ -1560,6 +1646,9 @@ class Payroll_m extends CI_Model{
                 if($isMonthlyPaid && $monthlyRate > 0 && $days_worked > 0){
                     $basic_rate = $monthlyRate - $total_unrendered_amount;
                     $basic_rate_total = $monthlyRate - $total_unrendered_amount;
+
+                    $basic_rate += $monthly_paid_holiday_amount;
+                    $basic_rate_total += $monthly_paid_holiday_amount;
                 }
                 
                 $employee->basic_rate = $basic_rate;
@@ -1572,6 +1661,13 @@ class Payroll_m extends CI_Model{
 
                 $employee->ewd = $ewd;
                 $allowances = $this->getEmployeeAllowances($employee, $working_days_in_a_month, $minutes_per_day, $target_minutes_worked, $total_unrendered_minutes, 1);
+
+                $allowance_per_minute = array_reduce($allowances, function ($carry, $item) {
+                    return $carry + $item->allowance_per_minute;
+                });
+                
+                $allowance_per_minute = $allowance_per_minute ?? 0;
+                $total_ot_allowance_amount = $total_ot_allowance_minutes * $allowance_per_minute;
 
                 /*** $employee_allowance = array_reduce($allowances, function ($carry, $item) {
                     return $carry + (intval($item->is_active) === 0 ? 0 : $item->allowance_net);
@@ -1588,6 +1684,9 @@ class Payroll_m extends CI_Model{
 
                 $employee->total_allowance = $employeeAllowanceTotal;
 
+                $employee->total_ot_allowance_minutes = $total_ot_allowance_minutes;
+                $employee->total_ot_allowance_amount = $total_ot_allowance_amount;
+
                 $employeeRate = $employee->rate + 0;
                 $employeeRate = is_float($employeeRate) ? floatval($employeeRate): intval($employeeRate);
 
@@ -1595,7 +1694,9 @@ class Payroll_m extends CI_Model{
                 $tempAllowance = floatval($employeeAllowanceTotal);
                 $tempOtndiff = floatval($ot_amount) + floatval($ot_ndiff_amount);
                 $totalNightDifferential = floatval($total_ndiff_amount);
-                $earnings = $tempBasicRate + $tempAllowance + $tempOtndiff + $totalNightDifferential;
+                $totalOtAllowance = floatval($total_ot_allowance_amount);
+
+                $earnings = $tempBasicRate + $tempAllowance + $tempOtndiff + $totalNightDifferential + $totalOtAllowance;
 
                 $employee->earnings = $earnings;
                 $gross_pay = $earnings;
@@ -1933,7 +2034,7 @@ class Payroll_m extends CI_Model{
                         $employees["undertime_records"][] = $temp_undertime_records;
                     }
                 }
-
+                
                 $data = array(
                     "date_start" => $start,
                     "date_end" => $end,
@@ -1954,6 +2055,8 @@ class Payroll_m extends CI_Model{
                     "total_allowances" => $employee->total_allowance,
                     "total_holiday_minutes" => $holiday_minutes,
                     "total_holiday_amount" => $holiday,
+                    "unpaid_holiday_minutes" => $unpaid_holiday_minutes,
+                    "unpaid_holiday_amount" => $unpaid_holiday_amount,
                     "ut_minutes" => $total_ut_minutes,
                     "ut_amount" => $total_ut_amount,
                     "late_minutes" => $total_late_minutes,
@@ -1966,6 +2069,8 @@ class Payroll_m extends CI_Model{
                     "ot_amount" => $ot_amount,
                     "ot_ndiff_minutes" => $ot_ndiff_minutes,
                     "ot_ndiff_amount" => $ot_ndiff_amount,
+                    "ot_allowance_minutes" => $total_ot_allowance_minutes,
+                    "ot_allowance_amount" => $total_ot_allowance_amount,
                     "total_ndiff_minutes" => $total_ndiff_minutes,
                     "total_ndiff_amount" => $total_ndiff_amount,
                     "gross_pay" => $gross_pay,
@@ -2008,7 +2113,9 @@ class Payroll_m extends CI_Model{
                 $_total_allowances = $payroll_sheet->total_allowances;
                 $_total_ot_ndiff = $payroll_sheet->ot_amount + $payroll_sheet->ot_ndiff_amount;
                 $_total_night_diff = $payroll_sheet->total_ndiff_amount;
-                $gross_pay = $_total_basic_rate + $_total_allowances + $_total_ot_ndiff + $_total_night_diff;
+                $_total_ot_allowance = $payroll_sheet->ot_allowance_amount;
+
+                $gross_pay = $_total_basic_rate + $_total_allowances + $_total_ot_ndiff + $_total_night_diff + $_total_ot_allowance;
 
                 $custom_adjustments = $this->db->where("payroll_sheet_id", $payroll_sheet_id)
                     ->get("payroll.payroll_sheet_custom_adjustments");
@@ -2945,6 +3052,10 @@ class Payroll_m extends CI_Model{
             $ot_ndiff_minutely = $timesheet->per_minute * (isset($payrate_setting) ? $payrate_setting->ot_night_diff_rate : 0.1);
             $timesheet->ot_ndiff_minutely = floatval($tempNightDiffHours) > 0 ? floatval($tempNightDiffHours) * $ot_ndiff_minutely: 0;
             $timesheet->total_accredited_ndiff_ot_hrs_amount = ($tempNightDiffHours * 60) * $ot_ndiff_minutely;
+
+            if($tempTotalOvertimeHours >= 1 && ($timesheet->is_rest_day == 1 || $timesheet->has_shift == 0 || $timesheet->is_holiday == 1)){
+                $timesheet->total_allowance_ot_hrs_minutes = $tempTotalOvertimeHours * 60;
+            }
         }
         return $timesheet;
     }
@@ -2963,12 +3074,14 @@ class Payroll_m extends CI_Model{
     protected function getHolidayAmountDaily($timesheet=array()){
         if($timesheet && count(get_object_vars($timesheet)) > 0 && isset($timesheet->paid_holiday) && intval($timesheet->paid_holiday) == 1){
             $rowPayrate = $this->getPayrateSettingById($timesheet->payrate_id);
-            $isPaidHoliday = isset($timesheet->paid_holiday) && intval($timesheet->paid_holiday) == 1 ? true: false;
-            $tempHolidayRate = (isset($rowPayrate->regular_rate, $rowPayrate->is_holiday) && $rowPayrate->regular_rate && intval($rowPayrate->is_holiday) == 1 && $isPaidHoliday === false) ? $rowPayrate->regular_rate: 1;
+            $isPaidHoliday = isset($timesheet->paid_holiday) && intval($timesheet->paid_holiday) === 1;
+
+            $tempHolidayRate = (isset($rowPayrate->regular_rate, $rowPayrate->is_holiday)
+                && intval($rowPayrate->is_holiday) == 1 && $rowPayrate->regular_rate
+                && intval($rowPayrate->is_holiday) == 1 && $isPaidHoliday === false) ? $rowPayrate->regular_rate: 1;
             /*** $_holiday_minutes = $timesheet->minutely * ($timesheet->minutes_per_day / 60); ***/
             $_holiday_minutes = floatval($timesheet->minutes_per_day);
             $_holiday_amount = $timesheet->minutely_amount * ($timesheet->minutes_per_day / 60);
-
             $deductUtMinutes = 0;
             $deductUtAmount = 0;
 
@@ -2990,6 +3103,7 @@ class Payroll_m extends CI_Model{
 
             /*** $timesheet->holiday_gross_minutely = $_holiday_minutes;
             $timesheet->holiday_gross_amount = $_holiday_amount; ***/
+
             if(floatval($tempHolidayRate) > 1){ $tempHolidayRate = floatval($tempHolidayRate) - 1; }
             $tempMinutely = $timesheet->holiday_minutely * floatval($tempHolidayRate);
             $tempAmount = $timesheet->holiday_amount * floatval($tempHolidayRate);
@@ -4079,6 +4193,7 @@ class Payroll_m extends CI_Model{
         $allowances = $this->db
             ->select("hris_allowance.*, payroll_allowance.code, payroll_allowance.allowance_name")
             ->where("hris_allowance.emp_id", $employee->id)
+            ->where("hris_allowance.is_active", 1)
             ->where("hris_allowance.is_archived", 0)
             ->join("payroll.allowance payroll_allowance", "payroll_allowance.id = hris_allowance.allowance_id", "INNER")
             ->get("gcchris.allowances hris_allowance")
@@ -5369,7 +5484,7 @@ class Payroll_m extends CI_Model{
     public function getCurrentPayrollPayslip($id=null){
         $resultset = array();
         if($id){
-            $sqlSelect = "ps.*, DATE_FORMAT(ps.date_start, '%m/%d/%y') as date_start, DATE_FORMAT(ps.date_end, '%m/%d/%y') as date_end, emp.payroll_type, emp.basic_rate,
+            $sqlSelect = "ps.*, DATE_FORMAT(ps.date_start, '%m/%d/%y') as date_start, DATE_FORMAT(ps.date_end, '%m/%d/%y') as date_end, DATE_FORMAT(ps.pay_date, '%m/%d/%y') as pay_date, emp.payroll_type, emp.basic_rate,
             IFNULL(comp.description, emp.company_id) as company_description, IFNULL(dept.description, emp.department_id) as department_description,
             IFNULL(pos.name, emp.position) as position_description, GROUP_CONCAT(DISTINCT(loan_payments.id)) as loan_payments,
             GROUP_CONCAT(DISTINCT(CONCAT(custom_adjustments.particulars,'||',custom_adjustments.amount, '||', custom_adjustments.cadj_type))) custom_adjustments,
@@ -5390,9 +5505,6 @@ class Payroll_m extends CI_Model{
                 $tempDeductionIndexes = array("sss", "sss_prov", "hdmf", "ph", "tax", "total_loans");
 
                 $tempRow = $qTemp->row();
-                $payrollType = $tempRow->payroll_type;
-                $basicRate = $tempRow->basic_rate;
-
                 $tempData = $this->core_layout->getEmployeeData($tempRow->emp_id);
                 $tempData = (object) $tempData;
                 $displayName = (isset($tempData->display_name_0) && $tempData->display_name_0)? $tempData->display_name_0: "No assigned name";
@@ -5403,17 +5515,63 @@ class Payroll_m extends CI_Model{
                 /*** start computation ***/
                 $_target_hours_worked = ($tempRow->total_minutes_worked + $tempRow->total_unrendered_minutes) / 60;
                 $tempRow->target_hours = $_target_hours_worked;
+
+                $unpaidHolidayHrs = floatval($tempRow->unpaid_holiday_minutes) > 0 ? floatval($tempRow->unpaid_holiday_minutes) / 60: 0;
+                if($unpaidHolidayHrs > 0){
+                    $tempRow->target_hours -= $unpaidHolidayHrs;
+                }
+                
+                if($tempRow->total_holiday_minutes > 0){
+                    $tempHolidayHrs = $tempRow->total_holiday_minutes / 60;
+                    $tempRow->target_hours -= $tempHolidayHrs;
+                }
+
                 $tempRow->target_hours = round($tempRow->target_hours, 2);
                 $tempRow->hours_worked = $tempRow->total_minutes_worked / 60;
                 $tempRow->hours_worked = round($tempRow->hours_worked, 2);
                 $tempEwd = $_target_hours_worked / 8;
+
                 /*** $tempEwd = is_float($tempEwd) ? ceil($tempEwd): $tempEwd; ***/
                 $tempRow->ewd = $tempEwd;
                 $tempRow->ewd_decimal = $tempEwd;
 
                 $tempRow->target_payrate = $tempRow->daily * $tempRow->ewd;
+
                 if(strtolower($tempRow->payroll_type) == "monthly"){
                     $tempRow->target_payrate = (intval($tempRow->payroll_sched) == 2)? $tempRow->basic_rate / 2: $tempRow->basic_rate;
+                }
+
+                /*** if(floatval($tempRow->unpaid_holiday_amount) > 0 && floatval($tempRow->target_payrate) >= floatval($tempRow->unpaid_holiday_amount)){
+                    $tempRow->target_payrate -= $tempRow->unpaid_holiday_amount;
+                } ***/
+
+                if(floatval($tempRow->total_unrendered_minutes) > 0){
+                    $totalUnrenderedMinutes = floatval($tempRow->total_unrendered_minutes);
+                    $toDeduct = floatval($totalUnrenderedMinutes) - floatval($tempRow->total_undertime_minutes);
+                    $inDays = (floatval($toDeduct) / 60) / 8;
+                    if(floatval($tempRow->ewd) > $inDays){ $tempRow->ewd -= $inDays; }
+                    if(floatval($tempRow->ewd_decimal) > $inDays){ $tempRow->ewd_decimal -= $inDays; }
+                }
+
+                if(floatval($tempRow->unpaid_holiday_minutes) > 0 && $tempRow->total_unrendered_minutes >= $tempRow->unpaid_holiday_minutes){
+                    $tempRow->total_unrendered_minutes -= $tempRow->unpaid_holiday_minutes;
+                }
+
+                if(floatval($tempRow->unpaid_holiday_amount) > 0 && $tempRow->total_unrendered_amount >= $tempRow->unpaid_holiday_amount){
+                    $tempRow->total_unrendered_amount -= $tempRow->unpaid_holiday_amount;
+                }
+                
+                if($tempRow->ewd != floatval($tempRow->no_of_days)){
+                    $_days = $tempRow->no_of_days;
+                    $dailyMinutes = 480;
+
+                    $minutes = $_days * $dailyMinutes;
+                    $roundedMinutes = ceil($minutes / 5) * 5;
+                    if(floatval($tempRow->total_minutes_worked) > $roundedMinutes){
+                        $tempRow->ewd = $tempRow->no_of_days;
+                        $tempRow->ewd_decimal = $tempRow->no_of_days;
+                        $tempRow->target_hours = round($roundedMinutes / 60, 2);
+                    }
                 }
 
                 if(intval($tempRow->is_bonus) == 1){
@@ -5421,7 +5579,8 @@ class Payroll_m extends CI_Model{
                     $tempRow->ewd = $tempRow->no_of_days;
                     $tempRow->ewd_decimal = $tempRow->no_of_days;
                 }
-
+                
+                $tempRow->basic_pay = number_format($tempRow->basic_pay, 2, ".", ",");
                 $tempRow->ewd = round($tempRow->ewd, 2);
                 $tempRow->ewd_decimal = round($tempRow->ewd_decimal, 2);
 
@@ -5430,8 +5589,11 @@ class Payroll_m extends CI_Model{
                 $tempRow->absent_hours = number_format($absent_hours, 2, ".", ",");
                 $undertime_hours = $tempRow->total_undertime_minutes / 60;
                 $tempRow->undertime_hours = number_format($undertime_hours, 2, ".", ",");
-                $tempRow->total_unrendered_amount = $tempRow->total_unrendered_amount;
                 $tempRow->total_unrendered_amount = number_format($tempRow->total_unrendered_amount, 2, ".", ",");
+                $tempRow->unpaid_holiday_amount = number_format($tempRow->unpaid_holiday_amount, 2, ".", ",");
+                $unpaidHolidayHours = $tempRow->unpaid_holiday_minutes / 60;
+                $tempRow->unpaid_holiday_hours = number_format($unpaidHolidayHours, 2, ".", ",");
+                $tempRow->unpaid_holiday_minutes = number_format($tempRow->unpaid_holiday_minutes, 2, ".", ",");
 
                 /*** added holiday pay */
                 $tempRow->total_holiday_amount = number_format($tempRow->total_holiday_amount, 2, '.', ',');
@@ -5442,7 +5604,7 @@ class Payroll_m extends CI_Model{
                 $overtime_ndiff_hours = $tempRow->ot_ndiff_minutes / 60;
                 $tempRow->ot_ndiff_hours = floatval($overtime_ndiff_hours) > 0 ?
                     is_float($overtime_ndiff_hours)? number_format($overtime_ndiff_hours, 2, ".", ","): $overtime_ndiff_hours
-                    : $overtime_ndiff_hours;  
+                    : $overtime_ndiff_hours;
 
                 $overtime_hours = $tempRow->ot_minutes / 60;
                 
@@ -5705,16 +5867,14 @@ class Payroll_m extends CI_Model{
             if(isset($post["ids"]) && is_array($post["ids"]) && count($post["ids"]) > 0){
                 $arrData = array();
                 $forPrint = $this->getEmpId($post["ids"]);
-                foreach ($forPrint as $key => $id) {
+                foreach ($forPrint as $id) {
                     $result = (object) $this->getCurrentPayrollPayslip($id);
-                    if($result->response == true){
+                    if($result->response === true){
                         $arrData[] = $result->data;
                     }
                 }
-                if(is_array($arrData) && count($arrData) > 0){
-                    $html = $this->load->view("core/templates/printable/header", null, true);
-                    $html .= $this->load->view("payroll/payroll/printable/print_content", array("data"=>$arrData), true);
-                    $html .= $this->load->view("core/templates/printable/footer", null, true);
+                if(is_array($arrData) && !empty($arrData)){
+                    $html = $this->load->view("payroll/payroll/printable/print_content", array("data"=>$arrData), true);
                     $resultset["response"] = true;
                     $resultset["html"] = $html;
                 }else{
@@ -5748,6 +5908,13 @@ class Payroll_m extends CI_Model{
             $msg .= "ABSENT HRS: " . $arrData[0]->absent_hours . "\t";
             $msg .= "\nUT HRS: " . $arrData[0]->undertime_hours . "\n";
             $msg .= "----------------------------------------------\n";
+            if(floatval($arrData[0]->unpaid_holiday_amount) > 0){
+                $unpaidDays = floatval($arrData[0]->unpaid_holiday_hours) / 8;
+                $msg .= "UNPAID HOLIDAY: " . $arrData[0]->unpaid_holiday_amount . "\n";
+                $msg .= "DAYS: " . $unpaidDays . "\t";
+                $msg .= "\nHRS: " . $arrData[0]->unpaid_holiday_hours . "\n";
+                $msg .= "----------------------------------------------\n";
+            }
         }
 
         $msg .= "ALLOWANCES: " . $arrData[0]->total_allowances . "\n";
@@ -6040,13 +6207,13 @@ class Payroll_m extends CI_Model{
       $post = $this->input->post();
       $resultset = array();
     
-      foreach ($post["payslipId"] as $key => $id) {
+      foreach ($post["payslipId"] as $id) {
         $arrData = array();
         $psData = $this->getSelectedTelegram($id);
         if (!empty($psData) && isset($psData[0])) {
           $result = (object) $this->getCurrentPayrollPayslip($psData[0]->payslip_id);
     
-          if ($result->response == true) {
+          if ($result->response === true) {
             $arrData[] = $result->data;
             $data = $this->telegram_config_if_exist('payroll_payslip', 'data');
     
@@ -6083,7 +6250,7 @@ class Payroll_m extends CI_Model{
         if (!empty($psData) && isset($psData[0])) {
           $result = (object) $this->getCurrentPayrollPayslip($psData[0]->payslip_id);
           if ($result->response == true) {
-            $tempEmployeeName = $result->data->employee_name;  
+            $tempEmployeeName = $result->data->employee_name;
             $module = "payroll_payslip";
             $email_title = "PAYROLL - Payslip Notification";
             $content_title = "Payroll Notification For ".$tempEmployeeName;
@@ -6165,17 +6332,14 @@ class Payroll_m extends CI_Model{
         if(isset($post) && $post){
             if(isset($post["ids"]) && is_array($post["ids"]) && count($post["ids"]) > 0){
                 $arrData = array();
-                foreach ($post["ids"] as $key => $id) {
+                foreach ($post["ids"] as $id) {
                     $result = (object) $this->getCurrentPayrollPayslip($id);
-                    if($result->response == true){
+                    if($result->response === true){
                         $arrData[] = $result->data;
                     }
                 }
-                if(is_array($arrData) && count($arrData) > 0){
-                    $html = $this->load->view("core/templates/printable/header", null, true);
-                    $html .= $this->load->view("payroll/payroll/printable/print_aknowledgement_content", array("data"=>$arrData), true);
-                    $html .= $this->load->view("core/templates/printable/footer", null, true);
-
+                if(is_array($arrData) && !empty($arrData)){
+                    $html = $this->load->view("payroll/payroll/printable/print_aknowledgement_content", array("data"=>$arrData), true);
                     $resultset["response"] = true;
                     $resultset["html"] = $html;
                 }else{
@@ -6211,15 +6375,12 @@ class Payroll_m extends CI_Model{
                 $arrData = array();
                 foreach ($post["ids"] as $key => $id) {
                     $result = (object) $this->getCurrentPayrollPayslip($id);
-                    if($result->response == true){
+                    if($result->response === true){
                         $arrData[] = $result->data;
                     }
                 }
-                if(is_array($arrData) && count($arrData) > 0){
-                    $html = $this->load->view("core/templates/printable/header", null, true);
-                    $html .= $this->load->view("payroll/payroll/printable/print_netpay_total_content", array("data"=>$arrData, "other_data"=>$_otherData), true);
-                    $html .= $this->load->view("core/templates/printable/footer", null, true);
-
+                if(is_array($arrData) && !empty($arrData)){
+                    $html = $this->load->view("payroll/payroll/printable/print_netpay_total_content", array("data"=>$arrData, "other_data"=>$_otherData), true);
                     $resultset["response"] = true;
                     $resultset["html"] = $html;
                 }else{
@@ -8433,7 +8594,6 @@ class Payroll_m extends CI_Model{
                     $this->db->order_by("lastname","ASC");
                     $qTempEmp = $this->db->get();
 
-                    // var_dump($this->db->last_query());
                     if($qTempEmp->num_rows() > 0){
                         foreach($qTempEmp->result() as $rs){
                             $tempRs = (array) $rs;
@@ -8628,6 +8788,126 @@ class Payroll_m extends CI_Model{
         return array("results" => $resultarray);
     }
 
+    public function getTransferEmployeeGroupApproval(){
+        $arrResult = array();
+        $this->db->select("pgt.id, pgt.group_id, pgt.reason, pgt.status, pgt.employee_id, UPPER(pg.description) as payroll_group, comp.code as company_code");
+        $this->db->join($this->tbl_payroll_group." pg", " pg.id = pgt.group_id", "inner");
+        $this->db->join($this->tbl_tblcompanies." comp", "comp.id = pgt.company_id", "left");
+        $qpgt = $this->db->get_where($this->tbl_payroll_group_transfer." pgt", array("pgt.status" => 0));
+        if($qpgt->num_rows() > 0){
+            foreach ($qpgt->result() as $row) {
+                $row->employee_id = @unserialize($row->employee_id);
+                if(is_array($row->employee_id) && !empty($row->employee_id)){
+                    $this->db->select("TRIM(CONCAT(UPPER(emp.firstname), ' ',
+                        CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                                TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                            THEN CONCAT(SUBSTR(UPPER(emp.middlename), 1, 1), '.') ELSE ''
+                        END,' ', UPPER(emp.lastname),
+                        CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                            UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                            emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(emp.suffix)) ELSE ''
+                        END)) as employee_name");
+                    $this->db->from($this->tbl_employees." emp");
+                    $this->db->where_in("emp.id", $row->employee_id);
+                    $this->db->order_by("emp.firstname", "ASC");
+                    $employees = $this->db->get();
+                    if($employees->num_rows() > 0){
+                        $row->employees = $employees->result();
+                    }
+                    $this->db->reset_query();
+                }
+            }
+            $arrResult = $qpgt->result();
+        }
+        $this->db->reset_query();
+        return $arrResult;
+    }
+
+    public function getTransferEmployeeGroupHistory(){
+        $arrResult = array();
+        $this->db->select("
+            pgt.id,
+            pgt.group_id,
+            pgt.reason,
+            pgt.status,
+            pgt.employee_id,
+            pg.description as payroll_group,
+            comp.code as company_code,
+            CASE
+                WHEN pgt.status = 1 THEN 'Approved'
+                WHEN pgt.status = 2 THEN 'Disapproved'
+                ELSE 'Pending'
+            END as status_name,
+            TRIM(CONCAT(
+                UPPER(e_act.firstname), ' ',
+                IF(
+                    e_act.middlename IS NOT NULL
+                    AND TRIM(e_act.middlename) NOT IN ('', 'N/A', 'NONE'),
+                    CONCAT(SUBSTR(UPPER(e_act.middlename),1,1), '.'),
+                    ''
+                ),
+                ' ',
+                UPPER(e_act.lastname)
+            )) as action_by,
+
+            IF(pgt.updated_by > 0, pgt.updated_at, pgt.created_at) as action_at,
+            TRIM(CONCAT(
+                UPPER(e_stat.firstname), ' ',
+                IF(
+                    e_stat.middlename IS NOT NULL
+                    AND TRIM(e_stat.middlename) NOT IN ('', 'N/A', 'NONE'),
+                    CONCAT(SUBSTR(UPPER(e_stat.middlename),1,1), '.'),
+                    ''
+                ),
+                ' ',
+                UPPER(e_stat.lastname)
+            )) as action_status_by,
+
+            CASE
+                WHEN pgt.status = 1 THEN pgt.approved_at
+                WHEN pgt.status = 2 THEN pgt.disapproved_at
+                ELSE NULL
+            END as action_status_at
+        ", false);
+
+        $this->db->join($this->tbl_payroll_group." pg", "pg.id = pgt.group_id", "inner");
+        $this->db->join($this->tbl_tblcompanies." comp", "comp.id = pgt.company_id", "left");
+        $this->db->join($this->tbl_employees." e_act", "e_act.id = COALESCE(NULLIF(pgt.updated_by,0), pgt.created_by)", "left");
+        $this->db->join($this->tbl_employees." e_stat", "e_stat.id = CASE
+        WHEN pgt.status = 1 THEN pgt.approved_by
+        WHEN pgt.status = 2 THEN pgt.disapproved_by
+        ELSE NULL END", "left", false);
+        $this->db->order_by("pgt.id", "DESC");
+        $qpgt = $this->db->get_where($this->tbl_payroll_group_transfer." pgt", array("pgt.status !=" => 0));
+        if($qpgt->num_rows() > 0){
+            foreach ($qpgt->result() as $row) {
+                $row->employee_id = @unserialize($row->employee_id);
+                if(is_array($row->employee_id) && !empty($row->employee_id)){
+                    $this->db->select("TRIM(CONCAT(UPPER(emp.firstname), ' ',
+                        CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
+                                TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
+                            THEN CONCAT(SUBSTR(UPPER(emp.middlename), 1, 1), '.') ELSE ''
+                        END,' ', UPPER(emp.lastname),
+                        CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
+                            UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
+                            emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(emp.suffix)) ELSE ''
+                        END)) as employee_name");
+                    $this->db->from($this->tbl_employees." emp");
+                    $this->db->where_in("emp.id", $row->employee_id);
+                    $this->db->order_by("emp.firstname", "ASC");
+                    $employees = $this->db->get();
+                    if($employees->num_rows() > 0){
+                        $row->employees = $employees->result();
+                    }
+                    $this->db->reset_query();
+                }
+            }
+            $arrResult = $qpgt->result();
+        }
+        $this->db->reset_query();
+        return $arrResult;
+    }
+    
     protected function getNoEarnerEmployeeNameById($id=0){
         $this->db->select("UPPER(CONCAT(lastname, ', ', firstname,
             CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND
@@ -8750,5 +9030,69 @@ class Payroll_m extends CI_Model{
             restore_error_handler();
             return [ 'ok' => false, 'error' => "Error sending telegram notification: " . $e->getMessage() ];
         }
+    }
+
+    protected function timeToMinutes($time) {
+        list($h, $m, $s) = explode(':', $time);
+        return ($h * 60) + $m;
+    }
+
+    protected function calculateTotalMinutes($schedule){
+        $ranges = [];
+        // Helper to normalize range (handles overnight)
+        $normalizeRange = function ($start, $end) {
+            $startMin = $this->timeToMinutes($start);
+            $endMin   = $this->timeToMinutes($end);
+            // Overnight shift (e.g., 18:00 → 06:00)
+            if ($endMin < $startMin) {
+                $endMin += 1440; // add 24 hours
+            }
+            // Ignore zero-length
+            if ($startMin === $endMin) {
+                return null;
+            }
+            return ['start' => $startMin, 'end' => $endMin];
+        };
+
+        // Add AM range
+        $amRange = $normalizeRange($schedule->am_start, $schedule->am_end);
+        if ($amRange) {
+            $ranges[] = $amRange;
+        }
+
+        // Add PM range
+        $pmRange = $normalizeRange($schedule->pm_start, $schedule->pm_end);
+        if ($pmRange) {
+            $ranges[] = $pmRange;
+        }
+
+        // Sort ranges
+        usort($ranges, function ($a, $b) {
+            return $a['start'] <=> $b['start'];
+        });
+
+        // Merge overlapping ranges
+        $merged = [];
+        foreach ($ranges as $range) {
+            if (empty($merged)) {
+                $merged[] = $range;
+            } else {
+                $last = &$merged[count($merged) - 1];
+
+                if ($range['start'] <= $last['end']) {
+                    $last['end'] = max($last['end'], $range['end']);
+                } else {
+                    $merged[] = $range;
+                }
+            }
+        }
+
+        // Total minutes
+        $totalMinutes = 0;
+        foreach ($merged as $range) {
+            $totalMinutes += ($range['end'] - $range['start']);
+        }
+
+        return max(0, $totalMinutes);
     }
 }

@@ -45,24 +45,27 @@ class Events_model extends MX_Controller {
 
     private function getEventsData($limit, $offset, $sortBy, $sortOrder, $search , $year,$is_archived){
         $filterFields = array("a.event_title", "a.description", "a.event_venue", "a.event_from", "a.event_to","b.speaker_name","b.position","b.company","a.company_array","a.department_array","a.events_by");
-        $this->db->select("a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array, a.events_by, a.training_type, a.init_type, a.training_category, 
-            GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
-            GROUP_CONCAT(b.id SEPARATOR '||') as speaker_id,
-            GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
-            GROUP_CONCAT(b.company SEPARATOR '||') as speaker_companies,
+        $this->db->select("a.on_hold, a.budget, a.company_source, a.expense, a.id, a.event_title, 
+            a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, 
+            a.company_array, a.department_array, a.events_by, a.training_type, a.init_type, a.training_category, 
+            (SELECT GROUP_CONCAT(s.speaker_name SEPARATOR '||') FROM {$this->eventsSpeakersTable} s WHERE s.event_id = a.id) as speaker_names,
+            (SELECT GROUP_CONCAT(s.id SEPARATOR '||') FROM {$this->eventsSpeakersTable} s WHERE s.event_id = a.id) as speaker_id,
+            (SELECT GROUP_CONCAT(s.position SEPARATOR '||') FROM {$this->eventsSpeakersTable} s WHERE s.event_id = a.id) as speaker_positions,
+            (SELECT GROUP_CONCAT(s.company SEPARATOR '||') FROM {$this->eventsSpeakersTable} s WHERE s.event_id = a.id) as speaker_companies,
+            COUNT(DISTINCT CASE WHEN c.status = 'confirmed' THEN c.id END) as total_attendees,
+            SUM(CASE WHEN c.cert_awarded != 0 AND c.status = 'confirmed'  THEN 1 ELSE 0 END) as total_cert_awarded,
             CONCAT(
                 DATE_FORMAT(a.event_from, '%b %d, %Y'),
                 ' - ',
                 DATE_FORMAT(a.event_to, '%b %d, %Y')
             ) as date
-            ");
+        ");
         $this->db->from($this->eventsCalendarTable . " a");
-        $this->db->join($this->eventsSpeakersTable . " b", "a.id = b.event_id", "left");
-
-        $this->db->where("YEAR(a.event_to)", $year);
+        // $this->db->join($this->eventsSpeakersTable . " b", "a.id = b.event_id", "left");
+        $this->db->join($this->eventsParticipantsTable . " c", "a.id = c.event_id", "left");
+        // $this->db->where("YEAR(a.event_to)", $year);
         $this->db->where("a.is_archive", $is_archived ? 1 : 0);
         if (in_array("view_own_request", $this->actions)) {
-            $this->db->join($this->eventsParticipantsTable . " c", "a.id = c.event_id", "left");
             $this->db->join($this->employeesTable." d", "c.emp_id = d.id", "left");
             $this->db->select("c.emp_id as employee_id, d.firstname, d.middlename, d.lastname, c.status as participant_status");
             $this->db->where("c.emp_id", $this->user_data['emp_id']);
@@ -94,13 +97,13 @@ class Events_model extends MX_Controller {
             $companies = explode("||", $row['speaker_companies']);
         
             $speakers = [];
-            foreach ($names as $i => $name) {
+            foreach ($names as $idx => $name) {
                 if ($name) {
                     $speakers[] = [
                         "speaker_name" => $name,
-                        "id"           => $id[$i] ?? null,
-                        "position"     => $positions[$i] ?? null,
-                        "company"      => $companies[$i] ?? null,
+                        "id"           => $id[$idx] ?? null,
+                        "position"     => $positions[$idx] ?? null,
+                        "company"      => $companies[$idx] ?? null,
                     ];
                 }
             }
@@ -157,6 +160,7 @@ class Events_model extends MX_Controller {
 
     public function getEvents(){
         $this->db->select("
+            e.on_hold,
             e.id, 
             e.event_title title, 
             e.events_by,
@@ -172,18 +176,22 @@ class Events_model extends MX_Controller {
             e.training_type,
             e.init_type,
             e.training_category,
+            e.budget,
+            e.company_source,
+            COUNT(DISTINCT p.id) as total_participants,
             GROUP_CONCAT(
-                JSON_OBJECT(
+                DISTINCT JSON_OBJECT(
                     'id', s.id,
                     'speaker_name', s.speaker_name,
                     'position', s.position,
                     'company', s.company
                 )
-            ) as speakers_json
+            ) as speakers_json,
         ");
         $this->db->from($this->eventsCalendarTable . ' e');
         $this->db->join($this->eventsSpeakersTable . ' s', 'e.id = s.event_id', 'left');
         $this->db->join($this->eventsSettingsTable . ' a', 'e.training_category = a.id', 'left');
+        $this->db->join($this->eventsParticipantsTable . ' p', 'e.id = p.event_id AND p.status = "confirmed"', 'left');
         $this->db->where("e.is_archive", 0);
         $this->db->group_by('e.id');
         $events = $this->db->get()->result();
@@ -202,7 +210,7 @@ class Events_model extends MX_Controller {
 
     public function getEventDetails($id) {
         $this->db->select("
-            a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array, a.events_by, c.name as training_type, d.name as init_type, e.name as training_category,
+            a.id, a.event_title, a.description, a.event_venue, a.event_from, a.event_to, a.company_ids, a.department_ids, a.company_array, a.department_array, a.events_by, c.name as training_type, d.name as init_type, e.name as training_category, a.budget, a.expense, a.company_source, 
             GROUP_CONCAT(b.id SEPARATOR '||') as speaker_ids,
             GROUP_CONCAT(b.speaker_name SEPARATOR '||') as speaker_names,
             GROUP_CONCAT(b.position SEPARATOR '||') as speaker_positions,
@@ -297,29 +305,45 @@ class Events_model extends MX_Controller {
         $deptIds = @unserialize($filterIds->department_ids);
 
         $this->db->select("
-            id,
+            employee.id,
             CASE
-                WHEN LENGTH(middlename) > 1 
-                    THEN CONCAT(firstname, ' ', LEFT(middlename, 1), '. ', lastname)
-                WHEN LENGTH(middlename) = 1 
-                    THEN CONCAT(firstname, ' ', middlename, '. ', lastname)
-                ELSE CONCAT(firstname, ' ', lastname)
-            END AS text
+                WHEN LENGTH(employee.middlename) > 1 
+                    THEN CONCAT(employee.firstname, ' ', LEFT(employee.middlename, 1), '. ', employee.lastname)
+                WHEN LENGTH(employee.middlename) = 1 
+                    THEN CONCAT(employee.firstname, ' ', employee.middlename, '. ', employee.lastname)
+                ELSE CONCAT(employee.firstname, ' ', employee.lastname)
+            END AS text,
+            employee.firstname, 
+            employee.middlename, 
+            employee.lastname, 
+            employee.suffix,
+            employee.department_id,
+            employee.mobile_no,
+            user.email,
+            department.description as department,
+            company.description as company,
+            position.name as position
         ", false);
-    
-        $this->db->from($this->employeesTable);
-        $this->db->where('employee_status', 'Active');
+        
+        $this->db->from($this->employeesTable . " as employee");
+        $this->db->join($this->companyTable . " as company", "company.id = employee.company_id", "left");
+        $this->db->join($this->departmentTable . " as department", "department.id = employee.department_id", "left");
+        $this->db->join($this->usersTable . " as user", "user.emp_id = employee.id", "left");
+        $this->db->join($this->positionsTable." as position", "employee.position = position.id", "left");
+
+        $this->db->where('employee.employee_status', 'Active');
         if (!empty($ids)) {
-            $this->db->where_not_in('id', $ids);
+            $this->db->where_not_in('employee.id', $ids);
         }
         if (!empty($compIds)) {
-            $this->db->where_in('company_id', $compIds);
+            $this->db->where_in('employee.company_id', $compIds);
         }
         if (!empty($deptIds)) {
-            $this->db->where_in('department_id', $deptIds);
+            $this->db->where_in('employee.department_id', $deptIds);
         }
 
-        $this->db->order_by('firstname', 'ASC');
+        $this->db->order_by('employee.firstname', 'ASC');
+        $this->db->group_by('employee.id');
         $result = $this->db->get()->result();
         return $result;
     }
@@ -372,6 +396,8 @@ class Events_model extends MX_Controller {
             "events_by"         => $post['events_by'] ?? null,
             "training_type"     => $post['training_type'] ?? null,
             "training_category" => $post['training_category'] ?? null,
+            "budget"            => $post['budget'] ?? null,
+            "company_source"    => $post['company_source'] ?? null,
             // "init_type"         => $post['init_type'] ?? null,
             "event_from"        => $start_date,
             "event_to"          => $end_date,
@@ -474,6 +500,8 @@ class Events_model extends MX_Controller {
             "event_from"  => $event_from,
             "event_to"    => $event_to,
             "events_by"  => $events_by,
+            "budget"     => $post['budget'],
+            "company_source" => $post['company_source'],
             "company_ids" => serialize($companyIds),
             "department_ids" => serialize($departmentIds),
             "company_array" => !empty($companyArray) ? implode(", ", $companyArray) : null,
@@ -566,17 +594,25 @@ class Events_model extends MX_Controller {
     public function saveParticipant(){
         $resultArray = array();
         $post = $this->input->post();
-        $post['status'] = "pending";
+        if(isset($post['is_recent']) && $post['is_recent'] == 1){
+            $post['status'] = "confirmed";
+            unset($post['is_recent']);
+        }
+        else{
+            $post['status'] = "pending";
+        }
         $post['invited_by'] = $this->user_data['emp_id'];
         unset($post['csrf_token']);
         $insert = $this->db->insert($this->eventsParticipantsTable, $post);
         if($insert){
             $resultArray['participants'] = $this->getEventParticipants($post['event_id']);
             $resultArray['success'] = true;
-            $resultArray['message'] = "Successfully saved participant.";
+            $this->core_layout->setEventLog("Successfully added trainee: {$post['firstname']} to event: {$post['event_id']}","insert","success","gcchris","user");
+            $resultArray['message'] = "Successfully added trainee.";
         }else{
             $resultArray['success'] = false;
-            $resultArray['message'] = "Failed to save participant.";
+            $this->core_layout->setEventLog("Failure to add trainee with id: {$post['emp_id']} to event with id: {$post['event_id']}","insert","error","gcchris","system");
+            $resultArray['message'] = "Failed to add trainee.";
         }
         return $resultArray;
     }
@@ -711,6 +747,9 @@ class Events_model extends MX_Controller {
             $id = $post['is_employee'] ? $post['emp_id'] : $post['applicant_id'];
             $tempAttachment = $post["training_attachment"];
             $eventId = $post['event_id'];
+            if(isset($post["sched_id"])){
+                unset($post["sched_id"]);
+            }
             unset($post["csrf_token"], $post["training_attachment"], $post["files"], $post['event_id'], $post['applicant_id'], $post['is_employee']);
             $loggedIn = $this->core_layout->getCurrentSession();
 
@@ -860,22 +899,22 @@ class Events_model extends MX_Controller {
     }
 
     public function getEventAttachments($id){
-        $this->db->select("id, filename, type");
-        $this->db->where('event_id', $id);
-        $attachments = $this->db->get($this->eventsAttachmentsTable)->result();
+        $attachments = $this->db
+            ->select("a.id, a.filename, a.type, b.name")
+            ->from($this->eventsAttachmentsTable . " as a")
+            ->join($this->eventsSettingsTable . " as b", "b.id = a.type", "left")
+            ->where("a.event_id", $id)
+            ->get()
+            ->result();
     
         $grouped = [];
     
         foreach ($attachments as $attachment) {
-            $type = $attachment->type;
-            if (!isset($grouped[$type])) {
-                $grouped[$type] = [];
-            }
-    
-            $grouped[$type][] = [
-                'id' => $attachment->id,
+            $grouped[$attachment->name][] = [
+                'id'       => $attachment->id,
                 'filename' => $attachment->filename,
-                'type' => $attachment->type
+                'type'     => $attachment->type,
+                'name'     => $attachment->name
             ];
         }
     
@@ -896,7 +935,6 @@ class Events_model extends MX_Controller {
                 if (!unlink($decodedPath)) {
                     $response['message'] = 'Unable to delete file from server.';
                     return $response;
-                    ;
                 }
             }
     
@@ -913,6 +951,16 @@ class Events_model extends MX_Controller {
         }
     
        return $response;
+    }
+
+    public function getAssignedSchedule($id){
+        return $this->db->select('a.participant_id, a.schedule_id, b.event_id, b.title')
+            ->from($this->events_attendance . ' a')
+            ->join($this->eventsSched . ' b', 'a.schedule_id = b.id', 'left')
+            ->where('b.event_id', $id)
+            ->where('b.is_archived', 0)
+            ->get()
+            ->result_array();
     }
 
     public function getEventSchedule($id){
@@ -1051,10 +1099,14 @@ class Events_model extends MX_Controller {
         return $resultset;
     }
 
-    public function takeAttendance() {
+    public function takeAttendance($sch = null) {
         $post = $this->input->post();
-        $schedule_id = $post['sched_id'];
-        $this->db->select("a.id,a.participant_id,a.is_present, b.firstname, b.middlename, b.lastname,
+        if(isset($post['sched_id']) && $post['sched_id'] != null){
+            $schedule_id = $post['sched_id'];
+        }else{
+            $schedule_id = $sch;
+        }
+        $this->db->select("a.id,a.participant_id,a.is_present, b.firstname, b.middlename, b.lastname, b.cert_awarded, t.attachment as cert_attachment,
         CONCAT(
             LOWER(b.firstname),
             IF(b.middlename IS NOT NULL AND b.middlename != '', CONCAT(' ', UPPER(LEFT(b.middlename, 1)), '.'), ''),
@@ -1064,6 +1116,7 @@ class Events_model extends MX_Controller {
         $this->db->from($this->events_attendance.' a');
         $this->db->where('schedule_id', $schedule_id);
         $this->db->join($this->eventsParticipantsTable.' b', 'a.participant_id = b.id', 'left');
+        $this->db->join($this->tbltrainings." as t", "b.cert_awarded = t.id", "left");
         $result = $this->db->get()->result_array();
         return $result;
     }
@@ -1186,6 +1239,7 @@ class Events_model extends MX_Controller {
     public function removeCertificate(){
         $post = $this->input->post();
         $id = $post['participant_id'] ?? null;
+        $cert_id = $post['cert_id'] ?? null;
         if (!$id) {
             return ['success' => false,'message' => 'Invalid participant ID.'];
         }
@@ -1199,8 +1253,8 @@ class Events_model extends MX_Controller {
             return ['success' => false,'message' => 'Failed to update participant record.'];
         }
     
-        $this->db->where('id', $id);
-        $delete = $this->db->update($this->tbltrainings, ['is_archived' => 0]);
+        $this->db->where('id', $cert_id);
+        $delete = $this->db->update($this->tbltrainings, ['is_archived' => 1]);
     
         if (!$delete) {
             $this->db->trans_rollback();
@@ -1224,6 +1278,11 @@ class Events_model extends MX_Controller {
         $post = $this->input->post();
         $post['created_by'] = $this->user_data['emp_id'];
         unset($post['csrf_token']);
+        foreach ($post as $key => $value) {
+            if (is_string($value)) {
+                $post[$key] = strtolower(trim($value));
+            }
+        }
         $data = $this->db->insert($this->eventsSettingsTable, $post);
         if($data){
             $response['success'] = true;
@@ -1373,6 +1432,52 @@ class Events_model extends MX_Controller {
     
         $message = ($action == 1) ? 'Failed to archive event settings.' : 'Failed to restore event settings.';
         return ['success' => false, 'message' => $message];
+    }
+
+    public function updateBudget(){
+        $post = $this->input->post();
+        $id = $post['event_id'];
+        unset($post['csrf_token'], $post['event_id'], $post['variance']);
+        $this->db->where('id', $id);
+        $update = $this->db->update($this->eventsCalendarTable, $post);
+        if($update){
+            $response['success'] = true;
+            $response['message'] = "Budget has been updated.";
+        }else{
+            $response['success'] = false;
+            $response['message'] = "Failed to update budget.";
+        }
+        return $response;
+    }
+
+    public function holdEvent(){
+        $post = $this->input->post();
+        $id = $post['id'];
+        $this->db->where('id', $id);
+        $update = $this->db->update($this->eventsCalendarTable, ['on_hold' => 1]);
+        if($update){
+            $response['success'] = true;
+            $response['message'] = "Training has been held.";
+        }else{
+            $response['success'] = false;
+            $response['message'] = "Failed to hold event.";
+        }
+        return $response;
+    }
+
+    public function resumeEvent(){
+        $post = $this->input->post();
+        $id = $post['id'];
+        $this->db->where('id', $id);
+        $update = $this->db->update($this->eventsCalendarTable, ['on_hold' => 0]);
+        if($update){
+            $response['success'] = true;
+            $response['message'] = "Training has been unheld.";
+        }else{
+            $response['success'] = false;
+            $response['message'] = "Failed to unhold event.";
+        }
+        return $response;
     }
 
 }

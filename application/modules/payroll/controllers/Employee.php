@@ -350,7 +350,9 @@
             $this->load->model("payroll/payroll_m", "payroll");
             $tempData = array();
             $tempData["company"] = $this->payroll->select2CompanyData();
-
+            $tempData["for_approval"] = $this->payroll->getTransferEmployeeGroupApproval();
+            $tempData["transfer_history"] = $this->payroll->getTransferEmployeeGroupHistory();
+            
             $this->core_layout->setPageTitle("Payroll - Employee Group");
             $this->core_layout->setPrivilegeName("payroll_employee_group");
 
@@ -548,6 +550,39 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
+        public function get_transferable_employee_groups(){
+            $data = $this->employee->getTransferableEmployeeGroups();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_payroll_groups(){
+            $data = $this->employee->getPayrollGroups();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function transfer_employee_group(){
+            $data = $this->employee->transferEmployeeGroup();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function approve_employee_group_transfer(){
+            $data = $this->employee->approveEmployeeGroupTransfer();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function disapprove_employee_group_transfer(){
+            $data = $this->employee->disapproveEmployeeGroupTransfer();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function get_employee_transfer_state(){
+            $this->load->model("payroll/payroll_m", "payroll");
+            $tempData = array();
+            $tempData["for_approval"] = $this->payroll->getTransferEmployeeGroupApproval();
+            $tempData["transfer_history"] = $this->payroll->getTransferEmployeeGroupHistory();
+            $this->output->set_content_type('json')->set_output(json_encode($tempData));
+        }
+        
         public function approve_auto_overtime(){
             $data = $this->employee->approveAutoOvertime();
             $this->output->set_content_type('json')->set_output(json_encode($data));

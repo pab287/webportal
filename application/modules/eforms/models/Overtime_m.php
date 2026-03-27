@@ -1100,7 +1100,14 @@ class Overtime_m extends CI_Model {
             $resultarray["print_purpose"] = nl2br($resultarray["purpose"]);
             $resultarray["purpose"] = str_replace("\n",", ",str_replace("-","", $resultarray["purpose"]));
 
-            $resultarray['approved_by'] = ($resultarray['approved_by'] == 'N/A' && $resultarray['approved_at'] != '0000-00-00 00:00:00') ? '[ System Generated Approval ]' : 'N/A';
+            if ($resultarray['approved_by'] == 'N/A' && $resultarray['approved_at'] != '0000-00-00 00:00:00') {
+                $resultarray['approved_by'] = '[ System Generated Approval ]';
+            } else if ($resultarray['approved_by'] != 'N/A' && $resultarray['approved_at'] != '0000-00-00 00:00:00') {
+                $resultarray['approved_by'] = $resultarray['approved_by'];
+            }else {
+                $resultarray['approved_by'] = 'N/A';
+            }
+            // $resultarray['approved_by'] = ($resultarray['approved_by'] == 'N/A' && $resultarray['approved_at'] != '0000-00-00 00:00:00') ? '[ System Generated Approval ]' : 'N/A';
 
             $stdResult = (object) $resultarray;
             $tempImage = isset($stdResult->attachment_image) ? unserialize($stdResult->attachment_image) : array();

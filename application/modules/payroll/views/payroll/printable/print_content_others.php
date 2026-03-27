@@ -130,26 +130,25 @@
                                     </div>
                                 </div>
 
-                                <div class="row m--margin-top-5">
-                                    <div class="col-md-8 printable-width-8">
-                                        <h5 class="m--font-bolder m--marginless">ALLOWANCES </h5>
-                                    </div>
-                                    <div class="col-md-4 printable-width-4 text-right">
-                                        <!-- span class="m--font-boldest"><?=$item->psa_total; ?></span -->
-                                        <h5 class="m--font-boldest m--marginless"><?=number_format($item->total_allowances, 2); ?></h5>
-                                    </div>
-                                </div>
-
                                 <?php if(floatval($item->holiday_hours) > 0): ?>
                                     <div class="row mb-2">
                                         <div class="col-md-8 printable-width-8">
-                                            <h5 class="m--font-bolder m--marginless">HOLIDAY PAY</h5>
+                                            <h5 class="m--font-bolder m--marginless">HOLIDAY PAY <small class="m--font-bolder">(BASIC PAY INC)</small></h5>
                                         </div>
                                         <div class="col-md-4 printable-width-4 text-right">
                                             <h5 class="m--font-boldest m--marginless"><?=$item->total_holiday_amount; ?></h5>
                                         </div>
                                     </div>
                                 <?php endif; ?>
+
+                                <div class="row m--margin-top-5">
+                                    <div class="col-md-8 printable-width-8">
+                                        <h5 class="m--font-bolder m--marginless">ALLOWANCES </h5>
+                                    </div>
+                                    <div class="col-md-4 printable-width-4 text-right">
+                                        <h5 class="m--font-boldest m--marginless"><?=number_format($item->total_allowances, 2); ?></h5>
+                                    </div>
+                                </div>
 
                                 <?php if($item->ot_amount > 0): ?>
                                     <div class="row m--margin-top-5">
@@ -158,10 +157,21 @@
                                         </div>
                                         <div class="col-md-6 printable-width-6 text-right">
                                             <?php if($item->ot_ndiff_amount > 0): ?>
-                                                <h5 class="m--font-boldest m--marginless"><?=number_format($item->ot_amount + $item->ot_ndiff_amount,2); ?></h5>
+                                                <h5 class="m--font-boldest m--marginless"><?=number_format($item->ot_amount + $item->ot_ndiff_amount, 2); ?></h5>
                                             <?php else: ?>
                                                 <h5 class="m--font-boldest m--marginless"><?=$item->ot_amount; ?></h5>
                                             <?php endif; ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
+                                <?php if($item->ot_allowance_amount > 0): ?>
+                                    <div class="row m--margin-top-5">
+                                        <div class="col-md-6 printable-width-6">
+                                            <h5 class="m--font-bolder m--marginless">OT ALLOWANCE </h5>
+                                        </div>
+                                        <div class="col-md-6 printable-width-6 text-right">
+                                            <h5 class="m--font-boldest m--marginless"><?=$item->ot_allowance_amount; ?></h5>
                                         </div>
                                     </div>
                                 <?php endif; ?>

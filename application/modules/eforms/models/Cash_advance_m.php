@@ -22,7 +22,7 @@ class Cash_advance_m extends CI_Model {
     
 
     function getDatatableRequest(){
-     
+    
         $resultset = array();
         $post = $this->input->post();
         $order_val = array(array("column"=>"1", "dir"=>"desc"));
@@ -84,7 +84,7 @@ class Cash_advance_m extends CI_Model {
 
     private function get_all_post($view, $query_builder=null, $limit=10, $offset=0, $sortBy, $sortOrder, $status = null, $view_dept, $view_by_company = false, $companyDescription = null){
         $date= date("Y-m-d", strtotime("-1 year", time()));
-        $sql = "a.id, a.employee, a.status, a.reference_no, b.firstname, b.middlename, b.lastname, b.suffix, a.amt_applied, a.purpose, a.amt_approved, a.created_dt, a.approved_dt, b.position as empPosition";
+        $sql = "a.id, a.employee, a.company, a.status, a.reference_no, b.firstname, b.middlename, b.lastname, b.suffix, a.amt_applied, a.purpose, a.amt_approved, a.created_dt, a.approved_dt, b.position as empPosition";
 
         $this->db->select($sql);
         $this->db->from("gcceforms.cash_advance a");
@@ -198,8 +198,8 @@ class Cash_advance_m extends CI_Model {
     private function get_searched_item($view, $query_builder=null, $search=null, $limit=10, $offset=0, $sortBy, $sortOrder, $status = null, $view_dept, $view_by_company = false, $companyDescription = null){
         $date= date("Y-m-d", strtotime("-1 year", time()));
         if($search){
-            $sql = "a.id, a.status, a.reference_no, b.firstname, b.middlename, b.lastname, b.suffix, a.amt_applied, a.purpose, a.amt_approved, a.created_dt, a.approved_dt, b.position as empPosition";
-            $filterFields = array("a.id", "a.status", "a.reference_no", "b.firstname", "b.lastname", "a.amt_applied", "a.purpose", "a.amt_approved", "a.created_dt", "a.approved_dt");
+            $sql = "a.id, a.status, a.company, a.reference_no, b.firstname, b.middlename, b.lastname, b.suffix, a.amt_applied, a.purpose, a.amt_approved, a.created_dt, a.approved_dt, b.position as empPosition";
+            $filterFields = array("a.id", "a.status", "a.company", "a.reference_no", "b.firstname", "b.lastname", "a.amt_applied", "a.purpose", "a.amt_approved", "a.created_dt", "a.approved_dt");
             $this->db->select($sql);
             $this->db->from("gcceforms.cash_advance a");
             $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
@@ -281,8 +281,8 @@ class Cash_advance_m extends CI_Model {
         $date= date("Y-m-d", strtotime("-1 year", time()));
         $rowCount = 0;
         if($search){
-            $sql = "a.id, a.status, a.reference_no, b.firstname, b.middlename, b.lastname, b.suffix, a.amt_applied, a.purpose, a.amt_approved, a.created_dt, a.approved_dt";
-            $filterFields = array("a.id", "a.status", "a.reference_no", "b.firstname", "b.lastname", "a.amt_applied", "a.purpose", "a.amt_approved", "a.created_dt", "a.approved_dt");
+            $sql = "a.id, a.status, a.company, a.reference_no, b.firstname, b.middlename, b.lastname, b.suffix, a.amt_applied, a.purpose, a.amt_approved, a.created_dt, a.approved_dt";
+            $filterFields = array("a.id", "a.status", "a.company", "a.reference_no", "b.firstname", "b.lastname", "a.amt_applied", "a.purpose", "a.amt_approved", "a.created_dt", "a.approved_dt");
             $this->db->select($sql);
             $this->db->from("gcceforms.cash_advance a");
             $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");

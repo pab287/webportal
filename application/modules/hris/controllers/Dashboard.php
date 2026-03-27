@@ -78,4 +78,9 @@
             $data = $this->company_model->getCompanySelect2Data();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
+
+        public function get_custom_birthday_filter() {
+            $data = $this->dashboard->getCustomBirthdayFilter();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
     }

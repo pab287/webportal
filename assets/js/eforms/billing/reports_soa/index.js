@@ -1,18 +1,21 @@
-var search_val = "";
-var query_builder = "";
+let search_val = "";
+let query_builder = "";
 
 const initReadingStartDate = moment();
 const initReadingEndDate = moment();
 let selectedReadingStartDate = moment();
 let selectedReadingEndDate = moment();
 
+let reportGenerated = false;
+let modalReset = false;
 
-var tbl_reports = $("#table-reports").DataTable({
-   dom: '<"toolbar">rtlip',
-   serverSide: true,
-   processing: true,
-   aaSorting: [],
-   ajax: {
+
+const tbl_reports = $("#table-reports").DataTable({
+    dom: '<"toolbar">rtlip',
+    serverSide: true,
+    processing: true,
+    aaSorting: [],
+    ajax: {
         url: baseUrl("eforms/billing/get_reports_soa/"),
         type: "post",
         global: false,
@@ -25,26 +28,30 @@ var tbl_reports = $("#table-reports").DataTable({
    },
    searching: true,
    columns: [
-       { data: "customer_name", width: "5%", render: function (data) {
+        { data: "customer_name", width: "5%", render: function (data) {
                 return "<strong style='color: #525252;'>"+data+"</strong>";
             }
         },
-       { data: "accountno", width: "5%"},
-       { data: "meterno", width: "5%"},
-       { data: "subdivision_name", width: "15%"},
-       { data: "overPayment", className: "text-right", width: "5%", render: function (data) {
+        { data: "accountno", width: "7%", className: "v-mid"},
+        { data: "meterno", width: "5%", className: "v-mid"},
+        { data: "subdivision_name", width: "13%", className: "v-mid"},
+        { data: "overPayment", className: "text-right v-mid", width: "5%", render: function (data) {
                 return "₱ <strong style='color: #525252;'>"+numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
             }
         },
-        { data: "total_penalty", className: "text-right", width: "5%", render: function (data) {
-                 return "₱ <strong style='color: #525252;'>"+numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
-             }
-         },
-         { data: "total_balance", className: "text-right", width: "5%", render: function (data) {
-                  return "₱ <strong style='color: #525252;'>"+numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
-              }
-          },
-       { data: null, width: "2%", className: "text-center"},
+        { data: "total_penalty", className: "text-right v-mid", width: "5%", render: function (data) {
+                return "₱ <strong style='color: #525252;'>"+numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
+            }
+        },
+        { data: "overdue_charges", className: "text-right v-mid", width: "7%", render: function (data) {
+                return "₱ <strong style='color: #525252;'>"+numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
+            }
+        },
+        { data: "total_balance", className: "text-right v-mid", width: "5%", render: function (data) {
+                return "₱ <strong style='color: #525252;'>"+numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
+            }
+        },
+        { data: null, width: "2%", className: "text-center v-mid"},
    ],
    columnDefs: [
         {
@@ -52,37 +59,42 @@ var tbl_reports = $("#table-reports").DataTable({
             defaultContent: "",
             targets: -1,
             orderable: false,
-            render: function ( data, type, row, meta ) { return itemDatatableActions(row); 
+            render: function ( data, type, row, meta ) { return itemDatatableActions(row); },
         },
-    }
-   ],
-   select: {
-    style:    'os',
-    selector: 'td:first-child'
-   },
-   buttons: [
-       { 
-           extend: 'csv',
-           exportOptions: {
-               columns: "thead th:not(.notExport)"
-           }
-       }, { 
-           extend: 'excel',
-           exportOptions: {
-               columns: "thead th:not(.notExport)"
-           }
-       }, { 
-           extend: 'pdf',
-           exportOptions: {
-               columns: "thead th:not(.notExport)"
-           }
-       }
-   ]
+        {
+            targets: "_all",
+            className: "v-mid"
+        }
+    ],
+    select: {
+        style: 'os',
+        selector: 'td:first-child'
+    },
+    buttons: [
+        { 
+            extend: 'csv',
+            exportOptions: {
+                columns: "thead th:not(.notExport)"
+            }
+        }, 
+        { 
+            extend: 'excel',
+            exportOptions: {
+                columns: "thead th:not(.notExport)"
+            }
+        }, 
+        { 
+            extend: 'pdf',
+            exportOptions: {
+                columns: "thead th:not(.notExport)"
+            }
+        }
+    ]
 });
 
 function itemDatatableActions(row){
 	if(row){
-		var _actionButton ="";
+		let _actionButton ="";
         
         _actionButton += "<a title='SOA' href='javascript:void(0);' data-toggle='tooltip' data-placement='top' class='btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill tooltip-inner' onclick='modalSOA("+ row.id +","+"\"" + row.customer_name+ "\""+","+"\"" + row.accountno + "\","+"\"" + row.meterno + "\")'><i class='la la-eye'></i> </a>";
 
@@ -92,37 +104,38 @@ function itemDatatableActions(row){
 
 $('#generalSearch').donetyping(function(callback) {
     search_val = $(this).val();
-    tbl_reports.ajax.reload();
+    if (search_val.length >= 3 || search_val.length === 0) {
+        tbl_reports.ajax.reload();
+    }
 });
 
 function modalSOA(id,customer_name,accountno,meterno){
-    // tbl_reports.ajax.reload();
     $("#m_soa #name").html(customer_name);
     $("#m_soa #account_no").html(accountno);
     $("#m_soa #meter_no").html(meterno);
-    // $("#m_soa #balance").html('₱ '+numberWithCommas(total_balance));
-    // $("#m_soa #total_penalty").html('₱ '+numberWithCommas(total_penalty));
-    // $("#m_soa #overPayment").html('₱ '+numberWithCommas(overPayment));
     $('#customer_id').val(id);
     $('#account_name').val(customer_name);
     $('#m_soa').modal('show');
 }
 
 function getTotalBalanceEtc(){
-    var customer_id = $('#customer_id').val();
+    const customer_id = $('#customer_id').val();
     $.ajax({
         type: "POST",
         url: baseUrl('eforms/billing/get_total_balance_etc/'),
         dataType: "JSON",
-        data: { csrf_token: _csrf_hash, id: customer_id },
+        data: { 
+            csrf_token: _csrf_hash, 
+            id: customer_id,
+            selectedDate: _selectedDate,
+            startDate: _startDate,
+            endDate: _endDate
+        },
         success: function (result) {
-            var total_balance = (result.total_balance < 0) ? 0 : result.total_balance;
-            // $("#m_soa #balance").html('₱ '+numberWithCommas(result.lastbill.total_balance.toFixed(2)));
-            $("#m_soa #balance").html('₱ '+numberWithCommas(total_balance.toFixed(2)));
-            $("#m_soa #total_penalty").html('₱ '+numberWithCommas(result.lastbill.total_penalty.toFixed(2)));
-            $("#m_soa #overPayment").html('₱ '+numberWithCommas(result.overpayment));
-            let final_bal = parseFloat(result.lastbill.total_amount) - parseFloat(result.overpayment);
-            $("#m_soa #total_balance").html('₱ '+ numberWithCommas(total_balance.toFixed(2)));
+            statement_details.total_charges = result.total_charges;
+            statement_details.total_penalty = result.total_penalty;
+            statement_details.overpayment = result.overpayment;
+            statement_details.total_balance = result.total_balance;
         },
         error: function (request, status, error) {
             toastr.error("Please check your internet connection.", "Connection error");
@@ -139,8 +152,6 @@ function initTableSOA(selectedDate, startDate = null, endDate = null){
     _selectedDate = selectedDate;
     _startDate = startDate;
     _endDate = endDate;
-    // tbl_reports_dialog.ajax.reload();
-    // tbl_reports_dialog_billing.ajax.reload();
 }
 
 var tbl_reports_dialog = $("#table-reports_soa").DataTable({
@@ -163,32 +174,56 @@ var tbl_reports_dialog = $("#table-reports_soa").DataTable({
             d.endDate = _endDate
         },
         error: function (xhr, error, code){
-            $('#m_soa').modal('hide');
+            console.log(error);
         }
     },
     searching: true,
     columns: [
-        { data: "ref_no", render: function (data) { return "<strong style='color: #525252;'>"+data+"</strong>"; } },
-        { data: "bill_ref", render: function (data) { return "<strong style='color: #525252;'>"+data+"</strong>";} },
-        { data: "created_date", width: "20%", render: function (data) { return data; } },
+        { data: "payment_date", width: "20%", 
+            render: function (data) { 
+                return moment(data).format("MMM DD, YYYY");
+            } 
+        },
+        { data: "created_date", width: "20%", 
+            render: function (data) { 
+                return moment(data).format("MMM DD, YYYY");
+            } 
+        },
+        { data: "ref_no", render: function (data) { return "<strong>"+data+"</strong>"; } },
+        { data: "bill_ref", render: function (data) { return "<strong>"+data+"</strong>";} },
         { data: "payment_type" },
-        { data: "total_charges" },
-        { data: "net_payment", className: "text-right", render: function (data) {
-            return numberWithCommas(parseFloat(data).toFixed(2));
-            }
+        { data: "total_charges", className: "text-right", render: function (data) {
+                return "₱ " + numberWithCommas(parseFloat(data).toFixed(2));
+            } 
+        },
+        { data: "penalty", className: "text-right", render: function (data) {
+                return "₱ " + numberWithCommas(parseFloat(data).toFixed(2));
+            } 
         },
         { data: "balance_covered", className: "text-right", render: function (data) {
-                return data > 0 ? '-'+numberWithCommas(parseFloat(data).toFixed(2)) : '';
+                return (data > 0) ? "₱ " + numberWithCommas(parseFloat(data).toFixed(2)) : '₱ 0.00';
+            }
+        },
+        { data: "net_payment", className: "text-right", render: function (data) {
+                return "₱ " + numberWithCommas(parseFloat(data).toFixed(2));
             }
         },
         { data: "received_amount", className: "text-right", render: function (data) {
-                return "<strong style='color: #525252;'>"+numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
+                return "<strong>₱ "  +numberWithCommas(parseFloat(data).toFixed(2))+"</strong>";
             }
         },
     ],
     select: {
      style:    'os',
      selector: 'td:first-child'
+    },
+    createdRow: function(row, data, dataIndex){
+        const is_archive = data.is_archive;
+        if (is_archive == 1) {
+            $(row).addClass('is_archived_text').find('strong').addClass('is_archived_text');
+        } else {
+            $(row).find('strong').css('color', '#525252');
+        }
     },
     buttons: [
         { 
@@ -210,37 +245,16 @@ var tbl_reports_dialog = $("#table-reports_soa").DataTable({
     ],
     "footerCallback": function ( row, data, start, end, display ) {
         var api = this.api(), data;
-
-        var totalNetPayment = api
-            .column(5)
-            .data()
-            .reduce(function (a, b) {
-                return parseFloat(a) + parseFloat(b);
-            }, 0);
-
-        var totalBalance = api
-            .column(6)
-            .data()
-            .reduce(function (a, b) {
-                return parseFloat(a) + parseFloat(b);
-            }, 0);
-        
         var totalPayment = api
-            .column(7)
+            .column(9)
             .data()
             .reduce(function (a, b) {
                 return parseFloat(a) + parseFloat(b);
             }, 0);
 
         // Update footer by showing the total with the reference of the column index 
-        $(api.column(0).footer()).html();
-        $(api.column(1).footer()).html();
-        $(api.column(2).footer()).html();
-        $(api.column(3).footer()).html();
-        $(api.column(4).footer()).html('Total');
-        $(api.column(5).footer()).html('₱ '+numberWithCommas(totalNetPayment.toFixed(2)));
-        $(api.column(6).footer()).html('₱ -'+numberWithCommas(totalBalance.toFixed(2)));
-        $(api.column(7).footer()).html('₱ '+numberWithCommas(totalPayment.toFixed(2)));
+        $(api.column(8).footer()).html('Total');
+        $(api.column(9).footer()).html('₱ '+numberWithCommas(totalPayment.toFixed(2)));
     },
 });
 
@@ -268,7 +282,7 @@ var tbl_reports_dialog_billing = $("#table-reports_billing").DataTable({
             d.endDate = _endDate
         },
         error: function (xhr, error, code){
-            // $('#m_soa').modal('hide');
+            console.log(error);
         }
     },
     searching: true,
@@ -278,11 +292,11 @@ var tbl_reports_dialog_billing = $("#table-reports_billing").DataTable({
              }
          },
         { data: "billing_from", width: "15%", render: function (data) {
-                 return data;
+                return moment(data).format("MMM DD, YYYY");
              }
          },
         { data: "billing_to", width: "15%", render: function (data) {
-                return data;
+                return moment(data).format("MMM DD, YYYY");
             }
         },
         { data: "is_paid", class: 'text-center', render: function (data){
@@ -371,13 +385,13 @@ var tbl_reports_dialog_reading = $("#table-reports_reading").DataTable({
     searching: true,
     columns: [
         { data: "ref_no", render: function (data) {
-                 return "<strong style='color: #525252;'>"+data+"</strong>";
-             }
-         },
+                return "<strong style='color: #525252;'>"+data+"</strong>";
+            }
+        },
         { data: "reading_date", render: function (data) {
-                 return data;
-             }
-         },
+                return moment(data).format("MMM DD, YYYY");
+            }
+        },
         { data: "reading", class: "text-center"},
     ],
     select: {
@@ -402,115 +416,56 @@ var tbl_reports_dialog_reading = $("#table-reports_reading").DataTable({
             }
         }
     ],
-    "footerCallback": function ( row, data, start, end, display ) {
-        var api = this.api(), data;
+    // "footerCallback": function ( row, data, start, end, display ) {
+    //     var api = this.api(), data;
 
-        var totalReading = api
-            .column( 2 )
-            .data()
-            .reduce( function (a, b) {
-                return parseFloat(a) + parseFloat(b);
-            }, 0 );
+    //     var totalReading = api
+    //         .column( 2 )
+    //         .data()
+    //         .reduce( function (a, b) {
+    //             return parseFloat(a) + parseFloat(b);
+    //         }, 0 );
 
-        // Update footer by showing the total with the reference of the column index 
-        $( api.column( 1 ).footer() ).html('Total');
-        $( api.column( 2 ).footer() ).html("<span class='text-center'>"+totalReading+"</span>");
-    },
+    //     // Update footer by showing the total with the reference of the column index 
+    //     $( api.column( 1 ).footer() ).html('Total');
+    //     $( api.column( 2 ).footer() ).html("<span class='text-center'>"+totalReading+"</span>");
+    // },
 });
 
-var tbl_reports_dialog_ledger = $("#table-reports_ledger").DataTable({
-    dom: '<"toolbar">t',
-    destroy: true,
-    serverSide: true,
-    processing: true,
-    aaSorting: [],
-    ajax: {
-         url: baseUrl("eforms/billing/get_reports_soa_ledger/"),
-         type: "post",
-         global: false,
-         dataType: "json",
-         data: function(d){
-            d.csrf_token = _csrf_hash,
-            d.id = _customer_id,
-            d.selectedDate = _selectedDate,
-            d.startDate = _startDate, 
-            d.endDate = _endDate
+function load_ledger_report() {
+    $.ajax({
+        url: baseUrl("eforms/billing/get_reports_soa_ledger/"),
+        type: "post",
+        global: false,
+        dataType: "json",
+        data: {
+            csrf_token: _csrf_hash,
+            id: _customer_id,
+            selectedDate: _selectedDate,
+            startDate: _startDate,
+            endDate: _endDate
         },
-        error: function (xhr, error, code){
-            // $('#m_soa').modal('hide');
-        }
-    },
-    searching: true,
-    columns: [
-        {
-          data: "due_date", render: function (data) {
-                return "<strong style='color: #525252;'>"+data+"</strong>";
-            }
+        success: function(resp) {
+            vm_reports_soa_ledger.ledger_data = resp.data;
+            vm_reports_soa_ledger.totalBalance = resp.total_balance;
         },
-        { data: "ref_no", render: function (data) {
-                 return "<strong style='color: #525252;'>"+data+"</strong>";
-             }
-         },
-        { data: "debit", class: 'text-right', render: function (data, type, row, meta) {
-                 return '<span class="m--text-muted" style="font-size: 11px;"><small>'+numberWithCommas(parseFloat(row.total_charges).toFixed(2))+' + '+numberWithCommas(parseFloat(row.penalty).toFixed(2))+' + '+numberWithCommas(parseFloat(row.reconnection_fee).toFixed(2))+' =</small></span><br><span data-toggle="tooltip" data-placement="top">₱ ' +numberWithCommas(parseFloat(data).toFixed(2))+'</span><br>';
-             }
-         },
-        { data: "credit", class: "text-right", render: function(data, type, row, meta){
-                return row.payment_date+'<br><span data-toggle="tooltip" data-placement="top">₱ ' +numberWithCommas(parseFloat(data).toFixed(2))+'</span>';
-            }
-        },
-        // { data: "balance_covered", class: "text-right", render: function(data){
-        //     return '<span data-toggle="tooltip" data-placement="top" title="">₱ ' +numberWithCommas(parseFloat(data).toFixed(2))+'</span><br>';
-        //     }
-        // },
-        { data: "balance", class: "text-right", render: function(data){
-            return '<span data-toggle="tooltip" data-placement="top" title="">₱ ' +numberWithCommas(parseFloat(data).toFixed(2))+'</span>';
+        error: function(xhr, err, code) {
+            console.log(err);
         }
-    },
-    ],
-    select: {
-     style:    'os',
-     selector: 'td:first-child'
-    },
-    buttons: [
-        { 
-            extend: 'csv',
-            exportOptions: {
-                columns: "thead th:not(.notExport)"
-            }
-        }, { 
-            extend: 'excel',
-            exportOptions: {
-                columns: "thead th:not(.notExport)"
-            }
-        }, { 
-            extend: 'pdf',
-            exportOptions: {
-                columns: "thead th:not(.notExport)"
-            }
-        }
-    ],
-    "footerCallback": function ( row, data, start, end, display ) {
-    },
-});
-
-function updateFooter() {
-  if (tbl_reports_dialog_ledger.data().count() > 0) {
-    const lastRowData = tbl_reports_dialog_ledger.row(':last').data();
-    const lastValue = lastRowData['balance'];
-    $("#remaining_balance").text('₱ ' +numberWithCommas(parseFloat(lastValue).toFixed(2)));
-    $("#print_ledger").prop("disabled", false);
-  } else {
-    // If DataTable is empty, display a message or a default value in the footer
-    $("#remaining_balance").text("₱ 0.00");
-    $("#print_ledger").prop("disabled", true);
-  }
+    });
 }
 
-// Call the function on page load and whenever the DataTable is redrawn (e.g., after sorting or filtering)
-updateFooter();
-tbl_reports_dialog_ledger.on('draw', function() {
-  updateFooter();
+const vm_reports_soa_ledger = new Vue({
+    el: "#soa_ledger_vue_wrap",
+    data: {
+        ledger_data: [],
+        totalBalance: 0,
+    },
+    methods: {
+        formatDate(dateStr) {
+            return moment(dateStr).format("MMM DD, YYYY");
+        }
+    }
 });
 
 $('#datePicker_soa').datepicker({
@@ -566,16 +521,22 @@ var vm_waterUsage = new Vue({
 });
 
 $(".btnPrint").on("click", function(){
-    var account_name = document.getElementById("account_name").value;
-    var customer_id = document.getElementById("customer_id").value;
-    var selectedDate = document.getElementById("selectedDate").value;
-    var report_type = $("#report_type").val();
+    if (!reportGenerated) {
+        toastr.warning("Please click Generate first before printing.", "Action Required");
+        return;
+    }
+
+    const account_name = document.getElementById("account_name").value;
+    const customer_id = document.getElementById("customer_id").value;
+    const selectedDate = document.getElementById("selectedDate").value;
+    const report_type = $("#report_type").val();
+    
     $.ajax({
         url: baseUrl("eforms/billing/print_reports_soa"),
         type: "POST",
         data:{
             csrf_token: _csrf_hash, 
-            customer_id: customer_id, 
+            id: customer_id, 
             selectedDate: _selectedDate, 
             account_name: account_name, 
             startDate: _startDate, 
@@ -583,7 +544,6 @@ $(".btnPrint").on("click", function(){
             report_type: report_type
         },
         success: function(response){
-            
             var w = window.open("about:blank");
             w.document.open();
             w.document.write(response);
@@ -595,7 +555,7 @@ $(".btnPrint").on("click", function(){
             }, 250);
         },
         error: function (request, status, error) {
-        toastr.error("Please check your internet connection.", "Connection error");
+            toastr.error("Please check your internet connection.", "Connection error");
         }
     });
 
@@ -604,24 +564,48 @@ $(".btnPrint").on("click", function(){
 $("#report_type").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
-});
+}).on("change", function(){
+    if (modalReset) return; // Stop here to prevent double report generation
+
+    const selectedDate = $("#selectedDate").val();
+
+    if (selectedDate) {
+        generateReport(); // generate report onchange if not custom    
+        reportGenerated = true; // mark as generated
+        enablePrintButton(reportGenerated);
+    }
+});;
 
 $("#date_filter").select2({
     placeholder: 'SELECT AN OPTION',
     width: '100%',
     ajax: {
-      url: baseUrl("eforms/billing/get_reports_soa_dates"),
-      global: false,
-      processResults: function (data) {
-        return data;
-      }
+        url: baseUrl("eforms/billing/get_reports_soa_dates"),
+        global: false,
+        processResults: function (data) {
+            return data;
+        }
     }
 }).on("change", function(){
-    if($("#date_filter").val() == "custom"){
+    if (modalReset) return; // Stop here to prevent double report generation
+
+    $("#selectedDate").val($(this).val());
+
+    if ($(this).val() == "custom") {
         $("#custom_range").removeClass("m--hide");
-    }else{
+    } else {
+        generateReport(); // generate report onchange if not custom    
+        reportGenerated = true; // mark as generated
+        enablePrintButton(reportGenerated);
+
+        let date_picker = $("#date-picker").data('daterangepicker');
+        date_picker.setStartDate(moment());
+        date_picker.setEndDate(moment());
+
         $("#custom_range").addClass("m--hide");
-        $("#date-picker").val("");
+        $("#date-range").val("");
+        _startDate = "";
+        _endDate = "";
     }
 });
 
@@ -632,69 +616,133 @@ let tempRangeDates = {
 
 var generateDateTimePicker = function (min = null, max = null) {
     $("#date-range").val("");
-    $("#date-picker")
-        .daterangepicker({
-            // minDate: min,
-            // maxDate: max,
-            buttonClasses: 'm-btn btn',
-            applyClass: 'btn-primary',
-            cancelClass: 'btn-secondary',
-            locale: {
-                format: 'MM/DD/YYYY'
-            }
-        }).on('apply.daterangepicker', function (ev, picker) {
-            $("#date-range")
-                .val(picker.startDate.format('MMM DD, YYYY') + ' - ' + picker.endDate.format('MMM DD, YYYY'))
-        });
+    $("#date-picker").daterangepicker({
+        buttonClasses: 'm-btn btn',
+        applyClass: 'btn-primary',
+        cancelClass: 'btn-secondary',
+        locale: {
+            format: 'MM/DD/YYYY'
+        }
+    }).on('apply.daterangepicker', function (ev, picker) {
+        $("#date-range").val(picker.startDate.format('MMM DD, YYYY') + ' - ' + picker.endDate.format('MMM DD, YYYY'));
+        _startDate = picker.startDate.format('MMM DD, YYYY');
+        _endDate = picker.endDate.format('MMM DD, YYYY');
+
+        generateReport(); // generate report onchange of date range picker
+        reportGenerated = true; // mark as generated
+    }).on('cancel.daterangepicker', function(ev, picker) {
+        $("#date-range").val("");
+
+        // Reset the internal dates
+        picker.setStartDate(moment());
+        picker.setEndDate(moment());
+
+        generateReport(); // generate report onchange of date range picker
+        reportGenerated = true; // mark as generated
+        enablePrintButton(reportGenerated);
+    });
 }
 generateDateTimePicker(tempRangeDates.min_date, tempRangeDates.max_date);
 
 
 function generateReport(e){
+    if (modalReset) return; // Stop here to prevent double report generation
+
+    const date_filter = $("#date_filter").val();
+    const report_type = $("#report_type").val();
+
+    if (date_filter == '' || report_type == '') {
+        toastr.error("Please select a type & year.", "Error");
+        return; 
+    }
+
     _selectedDate = $("#date_filter").val();
     _customer_id = document.getElementById("customer_id").value;
-    var date_range = $("#date-range").val();
-    var dates = date_range.split("-");
-    _startDate = dates[0];
-    _endDate = dates[1];
+
+    var date_range = $("#date-range").val().split("-");
+    _startDate = date_range[0];
+    _endDate = date_range[1]; 
     
     getTotalBalanceEtc();
-    
-    if($("#report_type").val() == "billing"){
-        $("#table-reports_billing").removeClass("m--hide");
-        $("#table-reports_reading").addClass("m--hide");
-        $("#table-reports_soa").addClass("m--hide");
-        $("#table-reports_ledger").addClass("m--hide");
-        tbl_reports_dialog_billing.ajax.reload();
-    }else if($("#report_type").val() == "reading"){
-        $("#table-reports_reading").removeClass("m--hide");
-        $("#table-reports_billing").addClass("m--hide");
-        $("#table-reports_soa").addClass("m--hide");
-        $("#table-reports_ledger").addClass("m--hide");
-        tbl_reports_dialog_reading.ajax.reload();
-    }else if($("#report_type").val() == "payment"){
-        $("#table-reports_soa").removeClass("m--hide");
-        $("#table-reports_reading").addClass("m--hide");
-        $("#table-reports_billing").addClass("m--hide");
-        $("#table-reports_ledger").addClass("m--hide");
-        tbl_reports_dialog.ajax.reload();
-    }else{
-        $("#table-reports_soa").addClass("m--hide");
-        $("#table-reports_billing").addClass("m--hide");
-        $("#table-reports_reading").addClass("m--hide");
-        $("#table-reports_ledger").removeClass("m--hide");
-        tbl_reports_dialog_ledger.ajax.reload();
+
+    let selected = $("#report_type").val();
+
+    // Hide all report blocks
+    $(".report-wrapper").addClass("m--hide");
+
+    // Show selected report block
+    $(`.report-wrapper[data-type="${selected}"]`).removeClass("m--hide");
+
+    // Reload only the correct table
+    switch (selected) {
+        case "billing":
+            tbl_reports_dialog_billing.ajax.reload();
+            break;
+        case "reading":
+            tbl_reports_dialog_reading.ajax.reload();
+            break;
+        case "payment":
+            tbl_reports_dialog.ajax.reload();
+            break;
+        case "ledger":
+            load_ledger_report();
+            break;
+    }
+
+    // mark as generated
+    reportGenerated = true;
+    enablePrintButton(reportGenerated);
+}
+
+function enablePrintButton(reportGenerated){
+    if (reportGenerated) {
+        $(".btnPrint").prop("disabled", false);
     }
 }
 
 $("#m_soa").on('hidden.bs.modal', function(){
+    modalReset = true; // reset modal then prevent double report generation of trigger change in report type and date_filter
+
     $("#report_type").val([]).trigger("change");
     $("#date_filter").val([]).trigger("change");
     $("#customer_id").val("");
-    $("#table-reports_reading").addClass('m--hide');
-    $("#table-reports_billing").addClass('m--hide');
-    $("#table-reports_soa").addClass('m--hide');
-    $("#table-reports_ledger").addClass('m--hide');
+    $(".report-wrapper").addClass("m--hide");
+    $("#selectedDate").val("");
+
+    $("#report-tbl-wrapper table>tbody").empty();
+    $("#payment_footer_total").html('₱ 0.00');
+
     $("#date-range").val("");
     generateDateTimePicker(null, null);
+
+    $("div.report-wrapper").addClass("m--hide");
+    vm_reports_soa_ledger.ledger_data = [];
+    vm_reports_soa_ledger.totalBalance = 0;
+
+    $(".btnPrint").prop("disabled", true);
+
+    Object.assign(statement_details.$data, {
+        total_charges: 0,
+        total_penalty: 0,
+        overpayment: 0,
+        total_balance: 0
+    });
+
+    modalReset = false; 
+    reportGenerated = false;
+});
+
+const statement_details = new Vue({
+    el: "#statement_details",
+    data: {
+        total_charges: 0,
+        total_penalty: 0,
+        overpayment: 0,
+        total_balance: 0
+    },
+    methods: {
+        numberWithCommas(x) {
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+    }
 });

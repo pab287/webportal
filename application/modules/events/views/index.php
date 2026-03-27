@@ -47,7 +47,7 @@
                         <i class="flaticon-calendar-2"></i>
                     </span>
                     <h3 class="m-portlet__head-text">
-                        Company Events
+                        Training Schedule
                     </h3>
                 </div>
             </div>
@@ -56,14 +56,14 @@
                     role="tablist">
                     <li class="nav-item m-tabs__item">
                         <a class="nav-link m-tabs__link active" data-toggle="tab"
-                           href="#list-view-tab" role="tab">
-                            TABULAR VIEW
+                           href="#calender-view-tab" role="tab">
+                            CALENDAR VIEW
                         </a>
                     </li>
                     <li class="nav-item m-tabs__item">
                         <a class="nav-link m-tabs__link" data-toggle="tab"
-                           href="#calender-view-tab" role="tab">
-                            CALENDAR VIEW
+                           href="#list-view-tab" role="tab">
+                            TABULAR VIEW
                         </a>
                     </li>
                 </ul>
@@ -82,12 +82,12 @@
         </div>
         <div class="m-portlet__body">
             <div class="tab-content">
-                <div class="tab-pane active" id="list-view-tab" role="tabpanel">
+                <div class="tab-pane" id="list-view-tab" role="tabpanel">
                     <div class="row m--margin-top-20 m--margin-bottom-30">
                         <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                             <button type="button" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#addNewEvent">
                                 <i class="la la-plus"></i>
-                                ADD EVENT
+                                Add Training
                             </button>
                         </div>
                         <div class="col-xl-2 col-lg-2 col-md-2 col-sm-12 mb-2">
@@ -120,6 +120,7 @@
                                 <!-- <th>DESCRIPTION</th> -->
                                 <th>VENUE</th>
                                 <th>RESOURCE PERSON</th>
+                                <th>TRAINING DETAILS</th>
                                 <th>ACTION ITEMS</th>
                             </tr>
                             </thead>
@@ -127,8 +128,14 @@
                         </table>
                     </div>
                 </div>
-                <div class="tab-pane" id="calender-view-tab" role="tabpanel">
-                    <div id="m_calendar" class="fc fc-unthemed fc-ltr"></div>
+                <div class="tab-pane active" id="calender-view-tab" role="tabpanel">
+                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 mb-2">
+                        <button type="button" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill mb-2 btnNew" data-toggle="modal" data-target="#addNewEvent">
+                            <i class="la la-plus"></i>
+                            Add Training
+                        </button>
+                    </div>
+                    <div id="m_calendar" class="fc fc-unthemed fc-ltr py-3"></div>
                 </div>
             </div>
         </div>
@@ -139,7 +146,7 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Add New Company Event</h5>
+                <h5 class="modal-title">Add New Training Schedule</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -197,25 +204,53 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="company_source" class="form-control-label">Source of fund(s)</label>
+                                            <select name="company_source" class="form-control m-input" id="company_source" data-validation="required">
+                                                <option value=""></option>
+                                            </select>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="event_title" class="form-control-label required">Budget</label>
+                                        <input name="budget" type="number" step="any" class="form-control m-input" placeholder="Budget" data-validation="required">
+                                    </div>
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <label for="event_title" class="form-control-label required">Training Title</label>
                                 <input name="event_title" type="text" class="form-control m-input" placeholder="Training title" data-validation="required">
                             </div>
-                            <div class="form-group">
-                                <label for="event_description" class="form-control-label required">description</label>
-                                <input name="event_description" type="text" class="form-control m-input" placeholder="description" data-validation="required">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="event_description" class="form-control-label required">Description</label>
+                                        <input name="event_description" type="text" class="form-control m-input" placeholder="description" data-validation="required">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="events_by" class="form-control-label required">Institution</label>
+                                        <input name="events_by" type="text" class="form-control m-input" placeholder="Institution" data-validation="required">
+                                    </div>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="events_by" class="form-control-label required">Institution</label>
-                                <input name="events_by" type="text" class="form-control m-input" placeholder="Institution" data-validation="required">
-                            </div>
-                            <div class="form-group">
-                                <label for="date" class="form-control-label required">Schedule</label>
-                                <input name="date" type="text" id="event_date" class="form-control m-input" placeholder="Select date" data-validation="required" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label for="event_venue" class="form-control-label required">Venue</label>
-                                <input name="event_venue" type="text" class="form-control m-input" placeholder="venue" data-validation="required">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="date" class="form-control-label required">Schedule</label>
+                                        <input name="date" type="text" id="event_date" class="form-control m-input" placeholder="Select date" data-validation="required" readonly>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="event_venue" class="form-control-label required">Venue</label>
+                                        <input name="event_venue" type="text" class="form-control m-input" placeholder="venue" data-validation="required">
+                                    </div>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="" class="form-control-label required">Resource Persons</label>
@@ -241,7 +276,7 @@
                                     </div>
                                 </template>
                                 <button type="button" class="btn btn-success mt-2 w-100 btnSave" @click="addNewSpeaker()">
-                                    <i class="la la-plus"></i> Add Speaker
+                                    <i class="la la-plus"></i> Add Resource Person
                                 </button>
                             </div>
                         </div>
@@ -260,7 +295,7 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">View Company Event</h5>
+                <h5 class="modal-title">View Training Details</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -319,25 +354,53 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="edit_company_source" class="form-control-label">Source of fund(s)</label>
+                                            <select name="company_source" class="form-control m-input" id="edit_company_source" :disabled="disabled">
+                                                <option value=""></option>
+                                            </select>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="event_title" class="form-control-label required">Budget</label>
+                                        <input name="budget" type="number" step="any" class="form-control m-input" placeholder="Budget" v-model="eventsData.budget" :disabled="disabled">
+                                    </div>
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <label for="event_title" class="form-control-label required">Training Title</label>
                                 <input name="event_title" type="text" class="form-control m-input" placeholder="event title" v-model="eventsData.event_title" data-validation="required" :disabled="disabled">
                             </div>
-                            <div class="form-group">
-                                <label for="event_description" class="form-control-label required">description</label>
-                                <textarea name="event_description" type="text" class="form-control m-input" placeholder="description" v-model="eventsData.description" data-validation="required" :disabled="disabled"></textarea>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="event_description" class="form-control-label required">Description</label>
+                                        <input name="event_description" type="text" class="form-control m-input" placeholder="description" v-model="eventsData.description" data-validation="required" :disabled="disabled">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="events_by" class="form-control-label required">Institution</label>
+                                        <input name="events_by" type="text" class="form-control m-input" placeholder="Institution" v-model="eventsData.events_by" data-validation="required" :disabled="disabled">
+                                    </div>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="events_by" class="form-control-label required">Institution</label>
-                                <input name="events_by" type="text" class="form-control m-input" placeholder="Institution" v-model="eventsData.events_by" data-validation="required" :disabled="disabled">
-                            </div>
-                            <div class="form-group">
-                                <label for="date" class="form-control-label required">Schedule</label>
-                                <input name="date" type="text" id="edit_event_date" class="form-control m-input" placeholder="Select date" :value="formatSchedule(eventsData.event_from,eventsData.event_to)" data-validation="required" :disabled="disabled">
-                            </div>
-                            <div class="form-group">
-                                <label for="event_venue" class="form-control-label required">Venue</label>
-                                <input name="event_venue" type="text" class="form-control m-input" placeholder="event venue" v-model="eventsData.event_venue" data-validation="required" :disabled="disabled">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="date" class="form-control-label required">Schedule</label>
+                                        <input name="date" type="text" id="edit_event_date" class="form-control m-input" placeholder="Select date" :value="formatSchedule(eventsData.event_from,eventsData.event_to)" data-validation="required" :disabled="disabled">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="event_venue" class="form-control-label required">Venue</label>
+                                        <input name="event_venue" type="text" class="form-control m-input" placeholder="event venue" v-model="eventsData.event_venue" data-validation="required" :disabled="disabled">
+                                    </div>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="" class="form-control-label required">Resource Persons</label>
@@ -364,7 +427,7 @@
                                     </div>
                                 </template>
                                 <button type="button" class="btn btn-success mt-2 w-100 btnSave" v-if="!disabled" @click="addNewSpeaker()">
-                                    <i class="la la-plus"></i> Add Speaker
+                                    <i class="la la-plus"></i> Add Resource Person
                                 </button>
                             </div>
                         </div>

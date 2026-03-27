@@ -38,7 +38,7 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
                 render: function(data, type, row) {
                     return `
                         <div>
-                            <div class="fw-bold">${row.event_title}</div>
+                            <div class="fw-bold"><strong>${row.event_title}</strong></div>
                             <div class="small text-muted">BY: ${row.events_by}</div>
                         </div>
                     `;
@@ -66,8 +66,10 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
                         } else {
                             schedule = displayFrom + " - " + displayTo;
                         }
-            
-                        if (today.isBefore(fromDate, 'day')) {
+                        if(row.on_hold == 1){
+                            statusTag = `<span class="badge badge-danger">On Hold</span>`;
+                         }
+                        else if (today.isBefore(fromDate, 'day')) {
                             statusTag = `<span class="badge badge-info">Upcoming</span>`;
                         } else if (today.isBetween(fromDate, toDate, 'day', '[]')) {
                             statusTag = `<span class="badge badge-warning">Ongoing</span>`;
@@ -78,8 +80,8 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
             
                     return `
                         <div>
-                            <strong>${venue}</strong><br> 
-                            <small>${schedule}</small><br>
+                            ${venue}<br/> 
+                            <small>${schedule}</small><br/>
                             ${statusTag}
                         </div>`;
                 }
@@ -93,19 +95,40 @@ let tblCalendarOfHolidays = $("#table-calendar-of-holidays")
         
                     return row.speakers.map(function(s) {
                         return `<div>
-                            <strong>${s.speaker_name}</strong> - ${s.position}<br>
+                            ${s.speaker_name} - ${s.position}<br>
                             <small>${s.company}</small>
                         </div>`;
                     }).join(""); // separator between speakers
 
                 }
-            }, 
+            },
+            {
+                data: null,
+                render: function(data, type, row) {
+                    return `
+                        <div class="d-flex flex-column gap-1 mb-2">
+                            <div>
+                                <span class="m-badge m-badge--info m-badge--wide">
+                                    <i class="la la-users mr-1"></i>
+                                    Total Attendees:<span class="ml-2 font-weight-bold">${row.total_attendees}</span>
+                                </span>
+                            </div>
+                            <div>
+                                <span class="m-badge m-badge--success m-badge--wide">
+                                    <i class="la la-certificate mr-1"></i>
+                                    Certificates Awarded:<span class="ml-2 font-weight-bold">${row.total_cert_awarded}</span>
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                }
+            },
             {
                 data: null,
                 orderable: false,
                 width: "10%",
                 render: function (data, type, row, meta) {
-                    return itemDatatableActions(row.id, row.participant_status, row.event_from, row.event_to);
+                    return itemDatatableActions(row.id, row.participant_status, row.event_from, row.event_to, row.on_hold);
                 }
             },            
         ]
@@ -204,6 +227,13 @@ let eventVue = new Vue({
                 selectedDepartments = data.map(item => item.text); 
             });
 
+            $('#company_source').select2({
+                dropdownParent: $('#new_event_form'),
+                placeholder: "Select an option",
+                allowClear: false,
+                width: '100%',
+                data: _tempContentData.company
+            });
         }
     },
 });
@@ -244,31 +274,8 @@ $.validate({
     }
 });
 
-function itemDatatableActions(id, status, from, to) {
+function itemDatatableActions(id, status, from, to, on_hold) {
     let _actionButton = "<span class='action-buttons'>";
-
-    if (_currentActions.includes("view_own_request")) {
-        if (status !== undefined && status === "pending") {
-            _actionButton += `
-                <a href="javascript:void(0)" 
-                    class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
-                    onclick="confirmParticipant(${id})" 
-                    title="Confirm Attendance">
-                    <i class="la la-check-circle text-success"></i>
-                </a>
-                <a href="javascript:void(0)" 
-                    class="btn btn-default m-btn m-btn--icon m-btn--icon-only m-btn--pill btnSave" 
-                    onclick="declineParticipant(${id})" 
-                    title="Decline Attendance">
-                    <i class="la la-times-circle text-danger"></i>
-                </a>`;
-        } else {
-            _actionButton += `<span class="text-success">Attendance Confirmed</span>`;
-        }
-
-        _actionButton += "</span>";
-        return _actionButton;
-    }
 
     _actionButton += `
         <a style="text-decoration: none;" 
@@ -276,25 +283,48 @@ function itemDatatableActions(id, status, from, to) {
             onclick="onEditEvent(${id})" 
             data-toggle="m-tooltip" data-placement="bottom" 
             data-skin="dark" 
-            title="View Event">
+            title="View Training">
             <i class="la la-eye"></i>
         </a>
         <button 
             type="button" 
             class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
             onclick="deleteArchive(${id})" 
-            data-toggle="m-tooltip" data-placement="bottom" title="Archive Event" 
+            data-toggle="m-tooltip" data-placement="bottom" title="Archive Training" 
             data-skin="dark">
             <i class="la la-file-archive-o"></i>
         </button>
-        <a 
-            href="${baseUrl('events/add_participants/') + id}" 
-            class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnNew" 
-            data-toggle="m-tooltip" data-placement="bottom" title="Manage Event" 
-            data-skin="dark">
-            <i class="la la-user"></i>
-        </a>
     `;
+
+    if(on_hold == 0){
+        _actionButton += `        
+            <a 
+                href="${baseUrl('events/add_participants/') + id}" 
+                class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnNew" 
+                data-toggle="m-tooltip" data-placement="bottom" title="Manage Training" 
+                data-skin="dark">
+                <i class="la la-user"></i>
+            </a>
+
+            <a style="text-decoration: none;" 
+                class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit" 
+                onclick="onHoldEvent(${id})" 
+                data-toggle="m-tooltip" data-placement="bottom" 
+                data-skin="dark" 
+                title="Hold Training">
+                <i class="la la-hand-stop-o"></i>
+            </a>`
+    }else{
+        _actionButton += `        
+        <a style="text-decoration: none;" 
+            class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnEdit" 
+            onclick="continueEvent(${id})" 
+            data-toggle="m-tooltip" data-placement="bottom" 
+            data-skin="dark" 
+            title="Resume Training">
+            <i class="la la-play"></i>
+        </a>`
+    }
 
     _actionButton += "</span>";
 
@@ -408,6 +438,17 @@ let editEventVue = new Vue({
                 select2Category = selectedId;
             })
 
+            $('#edit_company_source').select2({
+                placeholder: "Select an option",
+                dropdownParent: $('#edit_event_form'),
+                allowClear: false,
+                width: '100%',
+                data: _tempContentData.company
+            }).on('change', function () {
+                let selectedId = $(this).val();
+                editEventVue.eventsData.company_source = selectedId;
+            });
+
         }
     },
 });
@@ -424,6 +465,7 @@ function onEditEvent(id) {
     $("#edit_training_type").val(rowData.training_type).trigger('change');
     // $("#edit_init_type").val(rowData.init_type).trigger('change');
     $("#edit_training_category").val(rowData.training_category).trigger('change');
+    $("#edit_company_source").val(rowData.company_source).trigger('change');
     $("#edit-events-modal").modal("show");
 }
 
@@ -456,6 +498,7 @@ $.validate({
                     $("#edit_training_type").val(null).trigger('change');
                     // $("#edit_init_type").val(null).trigger('change');
                     $("#edit_training_category").val(null).trigger('change');
+                    $("#edit_company_source").val(null).trigger('change');
                     selectedCompaniesEdit = null;
                     selectedDepartmentsEdit = null;
                     $("#edit-events-modal").modal('hide');
@@ -557,6 +600,69 @@ function deleteArchive(id){
     });
 }
 
+function onHoldEvent(id){
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This training will be on hold!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, hold it!',
+        cancelButtonText: 'Cancel'
+        
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl('events/hold_event'),
+                type: "POST",
+                dataType: "json",
+                data: {
+                    csrf_token : _csrf_hash,
+                    id:id
+                },
+                success: function(res) {
+                    if(res.success){
+                        toastr.success(res.message, 'Success', 5000);
+                        tblCalendarOfHolidays.ajax.reload(null, false);
+                    }
+                }
+            });
+        }
+    });
+}
+
+function continueEvent(id){
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This training will be continue!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, resume it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl('events/resume_event'),
+                type: "POST",
+                dataType: "json",
+                data: {
+                    csrf_token : _csrf_hash,
+                    id:id
+                },
+                success: function(res) {
+                    if(res.success){
+                        toastr.success(res.message, 'Success', 5000);
+                        tblCalendarOfHolidays.ajax.reload(null, false);
+                    }
+                }
+            });
+        }
+    });
+}
+
 
 
 const CalendarBasic = function () {
@@ -583,49 +689,87 @@ const CalendarBasic = function () {
                     },
 
                     eventRender: function(event, element) {
+                        console.log(event);
+                    
                         element.find('.fc-time').remove();
+                    
                         const speakers = event.speakers || [];
-                        const speakerNames = speakers.map(speaker => speaker.speaker_name).join(', ');
+                        let title = event.title.length > 20 ? event.title.slice(0, 20) + '...' : event.title;
+                    
+                        let now = new Date();
+                        let start = new Date(event.start);
+                        let end = new Date(event.end);
+                    
+                        let status = '';
+                        let statusColor = '';
+                        if (parseInt(event.on_hold) === 1) {
+                            status = 'On Hold';
+                            statusColor = '#dc3545';
+                        } 
+                        else if (now < start) {
+                            status = 'Upcoming';
+                            statusColor = '#17a2b8';
+                        } 
+                        else if (now >= start && now <= end) {
+                            status = 'Ongoing';
+                            statusColor = '#28a745';
+                        } 
+                        else {
+                            status = 'Done';
+                            statusColor = '#6c757d'; 
+                        }
+                    
                         const customContent = `
-                            <div class="m-widget4__item-wrapper">
-                                <div class="m-widget4__item-title m--font-boldest mb-1" style="color: black; font-size: 1.2em;">
-                                    ${event.title}
-                                </div>
-                                <div class="m-widget4__item-desc mb-1" style="color: black; font-size: 1em;">
-                                    <span class=" m--margin-right-5">
-                                        <i class="la la-map-marker"></i> ${event.venue}
-                                    </span>
-                                   
-                                </div>
-                                ${speakers.length > 0 ? `
-                                <div class="m-widget4__item-desc mb-1" style="color: black; font-size: 1em;">
-                                    <span class="m--margin-right-5">
-                                        <i class="la la-user"></i> ${speakerNames}
-                                    </span>
-                                   
-                                </div>` : ''}
+                        <div class="m-widget4__item-wrapper">
+                            <div class="m-widget4__item-title m--font-boldest mb-1" style="color:black;font-size:1.2em;">
+                                ${title}
                             </div>
-                        `;
-                        
+                            <div>
+                                <span style="color:${statusColor}; font-weight:600;">
+                                    ${status}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                    
                         element.find('.fc-content').html(customContent);
-                        let tooltipText = `${event.description}\nVenue: ${event.venue}`;
+                        const totalParticipants = event.total_participants || 0;
+                        let tooltipText = '';
                         if (speakers.length > 0) {
-                            tooltipText += '\nSpeakers:\n';
+                            tooltipText += '\nResource Person(s):\n';
                             speakers.forEach(speaker => {
-                                tooltipText += `• ${speaker.speaker_name} - ${speaker.position}, ${speaker.company}\n`;
+                                tooltipText += `• ${speaker.speaker_name.toUpperCase()}\n`;
                             });
                         }
-                        element.attr('title', tooltipText);
+                    
+                        tooltipText += `Venue: ${event.venue.toUpperCase()}\n`;
+                        tooltipText += `Number of Trainees: ${totalParticipants}\n`;
+                    
+                        let budget = parseFloat(event.budget) || 0;
+                    
+                        if (budget > 0) {
+                            tooltipText += `Budget: ₱${budget.toLocaleString('en-PH', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            })}`;
+                        }
+                    
+                        element.attr('title', tooltipText.trim());
                         element.addClass('m-portlet__body m--padding-5');
                         element.css({
                             'border-radius': '4px',
                             'border': 'none'
                         });
-                        let background = event.hex_code && event.hex_code.trim() !== '' ? event.hex_code: '#c4c4c4';
+                        let background = event.hex_code && event.hex_code.trim() !== '' ? event.hex_code : '#c4c4c4';
                         element.css({
                             'background-color': background,
                             'border-color': background
                         });
+                        if (parseInt(event.on_hold) === 1) {
+                            element.css({
+                                'border': '1.5px solid #dc3545'
+                            });
+                        }
                     },
                 });
             calendarInitialized = true;
@@ -651,6 +795,8 @@ function openEditHolidayModal(event) {
     const data = {
         id: event.id,
         events_by: event.events_by,
+        company_array: event.company_array ? event.company_array : [],
+        department_array: event.department_array ? event.department_array : [],
         company_ids: event.company_ids,
         department_ids: event.department_ids,
         event_title: event.title,
@@ -661,17 +807,22 @@ function openEditHolidayModal(event) {
         speakers: event.speakers || [],
         training_type: event.training_type || null,
         init_type: event.init_type || null,
-        training_category: event.training_category || null
+        training_category: event.training_category || null,
+        budget: event.budget || null,
+        company_source: event.company_source || null
     };
 
     editEventVue.eventsData = JSON.parse(JSON.stringify(data));
+    selectedEventData = JSON.parse(JSON.stringify(data));
+
     $("#company_edit").val(data.company_ids).trigger('change');
     $("#department_edit").val(data.department_ids).trigger('change');
     $("#edit_training_type").val(data.training_type).trigger('change');
     // $("#edit_init_type").val(data.init_type).trigger('change');
     $("#edit_training_category").val(data.training_category).trigger('change');
+    $("#edit_company_source").val(data.company_source).trigger('change');
     $("#edit-events-modal").modal("show");
-    $("#btnEdit").hide();
+    // $("#btnEdit").hide();
 }
  
 function confirmParticipant(id) {
@@ -786,3 +937,5 @@ $('#training_category').select2({
     width: '100%',
     data: _tempContentData.options.training_category
 });
+
+CalendarBasic.init();

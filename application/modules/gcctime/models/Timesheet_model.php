@@ -493,13 +493,14 @@ class Timesheet_model extends CI_Model{
                             /*** $alteredShifts = $this->getCustomizedShiftScheduleByDate($date, $tempRow->emp_id); ***/
                             /*** $shift_id = 0; ***/
 
-                            $this->db->select("a.id, b.shift_id");
+                            $this->db->select("a.id, b.shift_id, b.is_flexi");
                             $this->db->from($this->tbl_employees." a");
                             $this->db->join($this->tbl_personnel." b", "b.biometric_id = a.biometricno OR b.biometricno = a.biometricno");
                             $this->db->where("a.id", $tempRow->emp_id);
                             $queryTempx = $this->db->get();
                             if($queryTempx->num_rows() == 1){
                                 /*** $shift_id = $queryTempx->row()->shift_id; ***/
+                                $ctrShiftCount = 0;
                                 $employee = $queryTempx->row();
 
                                 $updatedSchedule = $this->getCurrentShiftSchedule($date, $employee);
@@ -509,11 +510,35 @@ class Timesheet_model extends CI_Model{
                                     $tempSchedule = "shift_{$prop}";
                                     if(isset($schedule->$prop)){
                                         $tempRow->$tempSchedule = $schedule->$prop !== null ? $schedule->$prop: null;
+                                        if($tempRow->$tempSchedule !== null){ $ctrShiftCount++; }
                                     }
                                 }
 
                                 $tempRow->has_shift = $updatedSchedule->has_shift;
                                 $tempRow->custom_shift_id = $updatedSchedule->custom_shift_id;
+
+                                /*** custom script for timesheet attendance with 2 attendance records ***/
+                                if(intval($tempRow->has_shift) == 1 && intval($employee->is_flexi) > 0){
+                                    $tsAttendances = array();
+                                    $tsInOut = array("am_in", "am_out", "pm_in", "pm_out");
+                                    foreach ($tsInOut as $inOut) {
+                                        if(isset($tempRow->{$inOut}) && $tempRow->{$inOut} != null){
+                                            $tsAttendances[] = $tempRow->{$inOut};
+                                        }
+                                    }
+
+                                    if(is_array($tsAttendances) && !empty($tsAttendances) && count($tsAttendances) === 2 && $ctrShiftCount === 4){
+                                        $shifts = array("shift_am_start" => $tempRow->shift_am_start, "shift_am_end" => $tempRow->shift_am_end,
+                                        "shift_pm_start" => $tempRow->shift_pm_start, "shift_pm_end" => $tempRow->shift_pm_end);
+                                        $attendanceShift = $this->buildAttendanceFromShift($tsAttendances, $shifts);
+
+                                        $updatedTimesheetRecord = $this->db->update($this->tbl_timesheet, $attendanceShift, array("id" => $tempRow->id));
+                                        if($updatedTimesheetRecord && $this->db->affected_rows() > 0){
+                                            $tempRow = $this->db->get_where($this->tbl_timesheet, array("id"=>$tempRow->id))->row();
+                                        }
+                                    }
+                                }
+                                /*** custom script for timesheet attendance with 2 attendance records ***/
                             }
 
                             $temp_overtime = $this->db
@@ -2361,7 +2386,13 @@ class Timesheet_model extends CI_Model{
             }
             /*** am 2hrs deduction custom ***/
             $has2hrsDeduction = false;
-            if(($am_in && $am2hrsDeduction) && ($am_in > $am2hrsDeduction) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
+            /*** if(($am_in && $am2hrsDeduction) && ($am_in > $am2hrsDeduction) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
+                $amPlus2hrs = strtotime(date("Y-m-d H:i", strtotime("+2 hours", strtotime($employee_time_sheet->date . " " . $employee_time_sheet->shift_am_start))));
+                $employee_time_sheet->am_late = round(($amPlus2hrs - $_am_start) / 60, 2);
+                $has2hrsDeduction = true;
+            } ***/
+
+            if(($am_in && $am2hrsDeduction) && ($am_in > $am2hrsDeduction) && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
                 $amPlus2hrs = strtotime(date("Y-m-d H:i", strtotime("+2 hours", strtotime($employee_time_sheet->date . " " . $employee_time_sheet->shift_am_start))));
                 $employee_time_sheet->am_late = round(($amPlus2hrs - $_am_start) / 60, 2);
                 $has2hrsDeduction = true;
@@ -2398,10 +2429,16 @@ class Timesheet_model extends CI_Model{
                 $tempAmOutx = ($am_out > $_am_end) ? $_am_end : $am_out;
 
                 /*** am 2hrs deduction custom ***/
-                if(($am_in && $am2hrsDeduction) && ($am_in > $am2hrsDeduction) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
+                /*** if(($am_in && $am2hrsDeduction) && ($am_in > $am2hrsDeduction) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
+                    $tempAmInx = strtotime(date("Y-m-d H:i", strtotime("+2 hours", strtotime($employee_time_sheet->date . " " . $employee_time_sheet->shift_am_start))));
+                    $has2hrsDeduction = true;
+                } ***/
+
+                if(($am_in && $am2hrsDeduction) && ($am_in > $am2hrsDeduction) && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
                     $tempAmInx = strtotime(date("Y-m-d H:i", strtotime("+2 hours", strtotime($employee_time_sheet->date . " " . $employee_time_sheet->shift_am_start))));
                     $has2hrsDeduction = true;
                 }
+
                 if($flexibleEmployee && $has2hrsDeduction === false && $allow_late_adjustment === false){ $tempAmInx = $_am_start; }
                 /*** am 2hrs deduction custom ***/
 
@@ -2452,7 +2489,8 @@ class Timesheet_model extends CI_Model{
         }
 
         /*** am half day deduction custom ***/
-        if(($am_in && $amHalfDayAbsent) && ($am_in >= $amHalfDayAbsent) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
+        /*** if(($am_in && $amHalfDayAbsent) && ($am_in >= $amHalfDayAbsent) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){ ***/
+        if(($am_in && $amHalfDayAbsent) && ($am_in >= $amHalfDayAbsent) && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
             $employee_time_sheet->am_late = 0;
             $employee_time_sheet->am_ut = round(($_am_end - $_am_start) / 60, 2);
             $employee_time_sheet->am_time_rendered = 0;
@@ -2466,11 +2504,16 @@ class Timesheet_model extends CI_Model{
         if (($pm_in && $_pm_end) && ($pm_in >= $_pm_end)) {
             $employee_time_sheet->pm_late = 0;
         } else {
-            if (($pm_in && $_pm_start) && ($pm_in > $_pm_start) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false) {
+            /*** if (($pm_in && $_pm_start) && ($pm_in > $_pm_start) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false) {
+                $employee_time_sheet->pm_late = round(($pm_in - $_pm_start) / 60, 2);
+            } ***/
+            if (($pm_in && $_pm_start) && ($pm_in > $_pm_start) && $allow_late_adjustment === false && $isHourlySlashPartimer === false) {
                 $employee_time_sheet->pm_late = round(($pm_in - $_pm_start) / 60, 2);
             }
             if($superFlexibleEmployee){ $employee_time_sheet->pm_late = 0; }
         }
+
+
 
         if(($pm_in && $pmHalfDayAbsent) && ($pm_in > $pmHalfDayAbsent) && $allow_late_adjustment === false && $isHourlySlashPartimer === false){ $hasHalfDayDeduction = true; }
         if($flexibleEmployee && $hasHalfDayDeduction === false && $allow_late_adjustment === false){ $employee_time_sheet->pm_late = 0; }
@@ -2488,6 +2531,8 @@ class Timesheet_model extends CI_Model{
             if($superFlexibleEmployee){ $employee_time_sheet->pm_ut = 0; }
         }
         
+        
+
         if ($pm_in >= $_pm_end) {
             $employee_time_sheet->pm_time_rendered = 0;
             $employee_time_sheet->pm_ndiff_rendered = 0;
@@ -2543,7 +2588,12 @@ class Timesheet_model extends CI_Model{
         }
 
         /*** pm half day deduction custom ***/
-        if(($pm_in && $pmHalfDayAbsent) && ($pm_in > $pmHalfDayAbsent) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
+        /*** if(($pm_in && $pmHalfDayAbsent) && ($pm_in > $pmHalfDayAbsent) && $isHoliday === false && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
+            $employee_time_sheet->pm_late = 0;
+            $employee_time_sheet->pm_time_rendered = 0;
+            $employee_time_sheet->pm_ut = round(($_pm_end - $_pm_start) / 60, 2);
+        }***/
+        if(($pm_in && $pmHalfDayAbsent) && ($pm_in > $pmHalfDayAbsent) && $allow_late_adjustment === false && $isHourlySlashPartimer === false){
             $employee_time_sheet->pm_late = 0;
             $employee_time_sheet->pm_time_rendered = 0;
             $employee_time_sheet->pm_ut = round(($_pm_end - $_pm_start) / 60, 2);
@@ -2936,16 +2986,19 @@ class Timesheet_model extends CI_Model{
     }
 
     public function updateTimesheetHolidayById($id=null){
+        $response = false;
         if($id){
             $qTemp = $this->db->get_where($this->tbl_timesheet, array("id"=>$id));
             if($qTemp->num_rows() == 1){
                 $tempRow = $qTemp->row();
                 $tempHoliday = (object) $this->ts_model->getCurrentDateIsHoliday($tempRow->date);
-                $isHoliday = ($tempHoliday->is_holiday == true)? 1: 0;
-                $payRateId = ($tempHoliday->is_holiday == true && $tempHoliday->payrate_id)? $tempHoliday->payrate_id: 0;
+                $isHoliday = ($tempHoliday->is_holiday === true)? 1: 0;
+                $payRateId = ($tempHoliday->is_holiday === true && $tempHoliday->payrate_id)? $tempHoliday->payrate_id: 0;
                 $updated = $this->db->update($this->tbl_timesheet, array("is_holiday"=>$isHoliday, "payrate_id"=>$payRateId), array("id"=>$tempRow->id, "verified"=>0));
+                if($updated && $this->db->affected_rows() > 0){ $response = true; }
             }
         }
+        return $response;
     }
 
     private function getAttendance($date=null, $employees=[], $end_date=null, $nightShiftRecord=null){
@@ -3188,6 +3241,7 @@ class Timesheet_model extends CI_Model{
             $tempToRecord = $this->getToRecordByDateRange($start);
             $tempLoaRecord = $this->getLoaRecordByDateRange($start);
             $tempOvertimeRecord = $this->getOvertimeRecordByDateRange($start, $empIds);
+
             $alteredShiftRecords = $this->getAlteredShiftRecordByDateRange($start, $end);
             
             foreach ($employees->result() as $employee) {
@@ -3537,6 +3591,7 @@ class Timesheet_model extends CI_Model{
                     $hasShift = intval($vvvx->has_shift) == 1;
                     $_currentxDate = $vvvx->scheduled_date;
                     $_md5Date = md5($_currentxDate);
+                    $_tag = $vvvx->set_in ?? null;
     
                     $weekDay = date("l", strtotime($_currentxDate));
                     $shiftIndexes = array("shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end");
@@ -3587,6 +3642,7 @@ class Timesheet_model extends CI_Model{
                                             $results[$vxxa->id][$_md5Date]["schedule"] = $nRowData;
                                             $results[$vxxa->id][$_md5Date]["has_shift"] = intval($vvvx->has_shift);
                                             $results[$vxxa->id][$_md5Date]["altered_date"] = $_currentxDate;
+                                            $results[$vxxa->id][$_md5Date]["tag"] = $_tag;
                                         }
                                     }
                                 }
@@ -9226,14 +9282,14 @@ class Timesheet_model extends CI_Model{
         $post = $this->input->post();
         $resultset = array();
         if(isset($post) && $post){
-
             $logged_in_user_emp_id = $this->logged_in_user["emp_id"];
             $qTemp = $this->db->get_where($this->tbl_timesheet, $post);
             if($qTemp->num_rows() === 0){
                 $timesheet = $this->arrayToStdClass($this->input->post());
                 $weekday = strtolower(date("l", strtotime($timesheet->date)));
                 $timesheet->weekday = $weekday;
-                $timesheet->total_time_rendered = 8 * 60;
+                //$timesheet->total_time_rendered = 8 * 60;
+                $timesheet->total_time_rendered = 0;
                 $timesheet->is_manual = 1;
                 $timesheet->manual_mode = "generated";
                 $timesheet->manual_by = $logged_in_user_emp_id;
@@ -9275,13 +9331,13 @@ class Timesheet_model extends CI_Model{
                     $resultset["response"] = false;
                 }
             }else{
+                $tsRow = $qTemp->row();
                 $tempWhere = array();
-                $tempWhere["id"] = $qTemp->row()->id;
-                $hasOvertime = intval($qTemp->row()->has_overtime) === 1;
-
+                $tempWhere["id"] = $tsRow->id;
+                $hasOvertime = intval($tsRow->has_overtime) === 1;
                 $timesheet = new stdClass();
-
-                $timesheet->am_late = 0;
+                /*** comment out, use actual time records and computation ***/
+                /*** $timesheet->am_late = 0;
                 $timesheet->pm_late = 0;
                 $timesheet->am_ut = 0;
                 $timesheet->pm_ut = 0;
@@ -9290,7 +9346,21 @@ class Timesheet_model extends CI_Model{
                 $timesheet->am_time_rendered = 0;
                 $timesheet->pm_time_rendered = 0;
                 
-                $timesheet->total_time_rendered = 8 * 60;
+                $timesheet->total_time_rendered = 8 * 60; ***/
+                /*** comment out, use actual time records and computation ***/
+                
+                if(intval($tsRow->total_time_rendered) === 0){
+                    $timesheet->am_late = 0;
+                    $timesheet->pm_late = 0;
+                    $timesheet->am_ut = 0;
+                    $timesheet->pm_ut = 0;
+                    $timesheet->total_late = 0;
+                    $timesheet->total_ut = 0;
+                    $timesheet->am_time_rendered = 0;
+                    $timesheet->pm_time_rendered = 0;
+                }
+
+                $timesheet->is_manual = 1;
                 $timesheet->paid_holiday = 1;
                 $timesheet->verified = 1;
                 $timesheet->verified_by = $logged_in_user_emp_id;
@@ -9305,18 +9375,36 @@ class Timesheet_model extends CI_Model{
 
                 $updated = $this->db->update($this->tbl_timesheet, $timesheet, $tempWhere);
                 if($updated){
+                    $this->updateTimesheetHolidayById($tsRow->id);
+
                     $tempWhere = array();
-                    $tempWhere["timesheet_id"] = $qTemp->row()->id;
-                    $tempData = new stdClass();
-                    $tempData->status = 1;
-                    $tempData->updated_by = $logged_in_user_emp_id;
-                    $tempData->updated_at = Date("Y-m-d H:i:s");
-                    $updatedLog = $this->db->update($this->tbl_timesheet_paid_holiday, $tempData, $tempWhere);
-                    if($updatedLog){
-                        $resultset["response"] = true;
-                        $resultset["data"] = $timesheet;
+                    $tempWhere["timesheet_id"] = $tsRow->id;
+
+                    $qTempPaidHoliday = $this->db->get_where($this->tbl_timesheet_paid_holiday, $tempWhere);
+                    if($qTempPaidHoliday->num_rows() === 0){
+                        $tempData = new stdClass();
+                        $tempData->timesheet_id = $tsRow->id;
+                        $tempData->created_by = $logged_in_user_emp_id;
+                        $tempData->created_at = Date("Y-m-d H:i:s");
+                        $addedLog = $this->db->insert($this->tbl_timesheet_paid_holiday, $tempData);
+                        if($addedLog){
+                            $resultset["response"] = true;
+                            $resultset["data"] = $timesheet;
+                        }else{
+                            $resultset["response"] = false;
+                        }
                     }else{
-                        $resultset["response"] = false;
+                        $tempData = new stdClass();
+                        $tempData->status = 1;
+                        $tempData->updated_by = $logged_in_user_emp_id;
+                        $tempData->updated_at = Date("Y-m-d H:i:s");
+                        $updatedLog = $this->db->update($this->tbl_timesheet_paid_holiday, $tempData, $tempWhere);
+                        if($updatedLog){
+                            $resultset["response"] = true;
+                            $resultset["data"] = $timesheet;
+                        }else{
+                            $resultset["response"] = false;
+                        }
                     }
                 }else{
                     $resultset["response"] = false;
@@ -9332,6 +9420,8 @@ class Timesheet_model extends CI_Model{
         $post = $this->input->post();
         $resultset = array();
         if(isset($post) && $post){
+            $this->updateTimesheetHolidayById($post["id"]);
+
             $logged_in_user_emp_id = $this->logged_in_user["emp_id"];
             $tempWhere = $post;
             $tempWhere["is_holiday"] = 1;
@@ -10154,5 +10244,218 @@ class Timesheet_model extends CI_Model{
         }
 
         return $_empIds;
+    }
+
+    protected function buildAttendanceFromShift($logs, $shift) {
+        sort($logs);
+        $firstLog = $logs[0] ?? null;
+        $lastLog  = end($logs) ?: null;
+        $result = [
+            'am_in'  => null,
+            'am_out' => null,
+            'pm_in'  => null,
+            'pm_out' => null,
+        ];
+
+        $first = strtotime($firstLog);
+        $last  = strtotime($lastLog);
+
+        $amStart = strtotime($shift['shift_am_start']);
+        $amEnd   = strtotime($shift['shift_am_end']);
+        $pmStart = strtotime($shift['shift_pm_start']);
+        $pmEnd   = strtotime($shift['shift_pm_end']);
+
+        if ($first <= $amStart) { $result['am_in'] = date('H:i', $first); }
+        if ($last >= $pmStart) { $result['am_out'] = date('H:i', $amEnd); }
+        if ($last >= $pmStart) { $result['pm_in'] = date('H:i', $pmStart); }
+        if ($last >= $pmEnd) { $result['pm_out'] = date('H:i', $last); }
+
+        return $result;
+    }
+    // here
+    public function tag_date_restday() {
+        $result = array();
+        $post = $this->input->post();
+        $date = isset($post['date']) && $post['date'] ? date('Y-m-d', strtotime($post['date'])) : date('Y-m-d');
+        $id = isset($post['id']) && $post['id'] ? $post['id'] : 0;
+        $has_shift = isset($post['has_shift']) ? $post['has_shift'] : 0;
+        $reason = isset($post['reason']) && $post['reason'] ? trim($post['reason']) : null;
+        $timesheetId = isset($post['timesheetId']) && $post['timesheetId'] ? $post['timesheetId'] : 0;
+        $weekDay = date('l', strtotime($date));
+        $empName = $this->getEmployeeNameById($id);
+        $_date = date('F d, Y', strtotime($date));
+
+        if ($id) {
+            $shiftId = $this->get_shift_id($post['id']);
+
+            $data = array(
+                'shift_id' => serialize(array()),
+                'employee_id' => serialize(array($id)),
+                'scheduled_date' => $date,
+                'shift_am_start' => '',
+                'shift_am_end' => '',
+                'shift_pm_start' => '',
+                'shift_pm_end' => '',
+                'remarks' => $reason,
+                'has_shift' => 0,
+                'set_in' => 'timesheet',
+                'created_by' => $this->core_layout->getCurrentEmployeeId(),
+                'created_at' => date('Y-m-d')
+            );
+
+            $this->db->select('employee_id, shift_id');
+            $this->db->where('DATE(scheduled_date)', $date);
+            $this->db->from($this->tbl_timesheet_customized_shift_schedule);
+            $_query = $this->db->get();
+
+            $isExist = false;
+            if ($_query->num_rows() > 0) {
+                $row = $_query->row();
+                $shift = @unserialize($row->shift_id);
+                $meta = @unserialize($row->employee_id);
+
+                if (!empty($shift) && $shift) {
+                    if (in_array($shiftId, $shift)) {
+                        $isExist = true;
+                    } else {
+                        if (!empty($meta) && $meta) {
+                            if (in_array($id, $meta)) {
+                                $isExist = true;
+                            }
+                        }
+                    }
+                } else {
+                    if (!empty($meta) && $meta) {
+                        if (in_array($id, $meta)) {
+                            $isExist = true;
+                        }
+                    }
+                }
+
+            }
+
+            if (!$isExist) {
+                $query = $this->db->insert($this->tbl_timesheet_customized_shift_schedule, $data);
+
+                if ($query) {
+                    if ($timesheetId && $timesheetId > 0) {
+                        $this->db->where('id', $timesheetId);
+                        $this->db->update($this->tbl_timesheet, array('has_shift' => 0));
+                    }
+
+                    $result['state'] = true;
+                    $result['msg'] = 'Successfully added rest day.';
+
+                    $logMessage = "User added tagged rest day for employee `<b>{$empName}</b>` on date <b>{$_date}</b>. Reason: {$reason}";
+                    $this->core_layout->setEventLog($logMessage, "create", "success", "gcctimeutility", "user");
+                } else {
+                    $result['state'] = false;
+                    $result['msg'] = 'Failed to add rest day.';
+
+                    $logMessage = "User failed to add tagged rest day for employee `<b>{$empName}</b>` on date <b>{$_date}</b>. Reason: {$reason}";
+                    $this->core_layout->setEventLog($logMessage, "create", "failed", "gcctimeutility", "system");
+                }
+            } else {
+                $result['state'] = false;
+                $result['msg'] = 'Employee already exists in custom shift schedule';
+            }
+
+        }
+
+        if ($timesheetId && $timesheetId > 0) {
+            $result["row"] = $this->getTimesheetRow($timesheetId, $id);
+        }
+
+        return $result;
+    }
+
+    public function get_shift_id ($id = null) {
+        $shiftId = 0;
+        if ($id) {
+            $shift_id = $this->db->select("resource.shift_id")
+                ->join($this->tbl_personnel . " personnel", "personnel.shift_id = resource.shift_id", "INNER")
+                ->join($this->tbl_employees . " emp", "emp.biometricno = personnel.biometricno", "INNER")
+                ->where("emp.id", $id)
+                ->get($this->tbl_shift_schedule_resource . " resource")
+                ->row("shift_id");
+            
+            if ($shift_id) {
+                $shiftId = $shift_id;
+            }
+        }
+
+        return $shiftId;
+    }
+
+    public function undoRestday() {
+        $post = $this->input->post();
+        $date = isset($post['date']) && $post['date'] ? date('Y-m-d', strtotime($post['date'])) : date('Y-m-d');
+        $id = isset($post['id']) && $post['id'] ? $post['id'] : 0;
+        $has_shift = isset($post['has_shift']) ? $post['has_shift'] : 0;
+        $reason = isset($post['reason']) && $post['reason'] ? trim($post['reason']) : null;
+        $timesheetId = isset($post['timesheetId']) && $post['timesheetId'] ? $post['timesheetId'] : 0;
+        $weekDay = date('l', strtotime($date));
+        $empName = $this->getEmployeeNameById($id);
+        $_date = date('F d, Y', strtotime($date));
+
+        $result = array();
+        if ($id) {
+            $this->db->select('id, employee_id, shift_id');
+            $this->db->where('DATE(scheduled_date)', $date);
+            $this->db->where('set_in', 'timesheet');
+            $this->db->from($this->tbl_timesheet_customized_shift_schedule);
+            $_query = $this->db->get();
+
+            if ($_query->num_rows() > 0) {
+                $row = $_query->row();
+
+                $query = $this->db->delete($this->tbl_timesheet_customized_shift_schedule, array('id' => $row->id));
+
+                if ($query) {
+                    if ($timesheetId && $timesheetId > 0) {
+                        $this->db->where('id', $timesheetId);
+                        $this->db->update($this->tbl_timesheet, array('has_shift' => 1));
+                    }
+
+                    $result['state'] = true;
+                    $result['msg'] = 'Successfully removed rest day.';
+
+                    $logMessage = "User removed tagged rest day for employee `<b>{$empName}</b>` on date <b>{$_date}</b>. Reason: {$reason}";
+                    $this->core_layout->setEventLog($logMessage, "delete", "success", "gcctimeutility", "user");
+                } else {
+                    $result['state'] = false;
+                    $result['msg'] = 'Failed to remove rest day.';
+
+                    $logMessage = "User failed to remove tagged rest day for employee `<b>{$empName}</b>` on date <b>{$_date}</b>. Reason: {$reason}";
+                    $this->core_layout->setEventLog($logMessage, "delete", "failed", "gcctimeutility", "system");
+                }
+            } else {
+                $result['state'] = false;
+                $result['msg'] = 'No tagged rest day found for the employee on the specified date.';
+            }
+        } else {
+            $result['state'] = false;
+            $result['msg'] = 'Invalid employee ID.';
+        }
+
+        if ($timesheetId && $timesheetId > 0) {
+            $result["row"] = $this->getTimesheetRow($timesheetId, $id);
+        }
+
+        return $result;
+    }
+
+    protected function getEmployeeNameById($id=0){
+        $this->db->select("UPPER(CONCAT(lastname, ', ', firstname,
+            CASE WHEN UPPER(TRIM(middlename)) != 'N/A' AND UPPER(TRIM(middlename)) != 'NONE' AND
+                    TRIM(middlename) !='' AND middlename IS NOT NULL
+                THEN CONCAT(' ', SUBSTR(middlename, 1, 1), '.') ELSE ''
+            END,'',
+            CASE WHEN UPPER(TRIM(suffix)) != 'N/A' AND
+                UPPER(TRIM(suffix !='NONE')) AND suffix !='' AND
+                suffix IS NOT NULL THEN CONCAT(' ', suffix) ELSE ''
+            END)) as employee_name");
+        $qTemp = $this->db->get_where($this->tbl_employees, array('id' => $id));
+        return $qTemp->num_rows() === 1 ? $qTemp->row()->employee_name : $id;
     }
 }

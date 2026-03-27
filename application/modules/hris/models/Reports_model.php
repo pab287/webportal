@@ -88,6 +88,18 @@ class Reports_model extends CI_Model{
             )) as manager';
         }
 
+        
+        if (in_array('personnel.is_flexi', $post->fields)) {
+            $key = array_search("personnel.is_flexi", $post->fields);
+            $post->fields[$key] = 'CASE
+                WHEN personnel.is_flexi = 0 THEN "Regular - 2 IN AND 2 OUT"
+                WHEN personnel.is_flexi = 1 THEN "Flexi - 1 IN AND 1 OUT"
+                WHEN personnel.is_flexi = 2 THEN "Drivers - 1 IN AND 1 OUT"
+                WHEN personnel.is_flexi = 3 THEN "Super Flexi - 1 IN OR 1 OUT"
+                WHEN personnel.is_flexi = 4 THEN "Default - NO TIME IN OR OUT"
+                END as is_flexi';
+        }
+
         $select = implode(", ", $post->fields);
 
         $order_field = $post->order_field;

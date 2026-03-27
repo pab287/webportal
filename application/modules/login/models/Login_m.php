@@ -1,10 +1,7 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
-
-Class Login_m extends CI_Model
-{
+Class Login_m extends CI_Model{
     private $directAccess;
-    function __construct()
-    {
+    function __construct(){
         parent::__construct();
         $this->load->helper('string');
         $tempDate = date("Ymd");
@@ -15,8 +12,7 @@ Class Login_m extends CI_Model
         $this->load->model("sms/services/Gateway_model","sms_gateway");
     }
 
-    function login($username, $password)
-    {
+    function login($username, $password){
         $this->db->select('tblusers.*,tblemployees.id as emp_id ,tblemployees.firstname,tblemployees.lastname, tblemployees.middlename, tblemployees.suffix, tblemployees.company_id, tblemployees.department_id');
         $this->db->from('tblusers');
         $this->db->join('tblemployees', 'tblemployees.id = tblusers.emp_id');
@@ -51,8 +47,7 @@ Class Login_m extends CI_Model
 		}
 	}
 
-    function loginUsingRememberToken($remember_token)
-    {
+    function loginUsingRememberToken($remember_token){
         $this->db->select('tblusers.*,tblemployees.id as emp_id ,tblemployees.firstname,tblemployees.lastname, tblemployees.middlename, tblemployees.suffix, tblemployees.company_id, tblemployees.department_id');
         $this->db->from('tblusers');
         $this->db->join('tblemployees', 'tblemployees.id = tblusers.emp_id');
@@ -70,14 +65,12 @@ Class Login_m extends CI_Model
         return false;
     }
 
-    function update_log($where, $data)
-    {
+    function update_log($where, $data){
         $this->db->update('tblusers', $data, $where);
         return $this->db->affected_rows();
     }
 
-    function get_privileges_by_id($id)
-    {
+    function get_privileges_by_id($id){
         $this->db->select('tblprivilegeusers.privilege_id, tblprivileges.privilege_name');
         $this->db->from('tblprivilegeusers');
         $this->db->join('tblprivileges', 'tblprivileges.id = tblprivilegeusers.privilege_id');
@@ -88,18 +81,15 @@ Class Login_m extends CI_Model
         return $query->result();
     }
 
-    public function get_by_uname($uname)
-    {
+    public function get_by_uname($uname){
         $this->db->from('tblusers');
         $this->db->where('username', $uname);
         $query = $this->db->get();
         return $query->row();
     }
 
-    public function checkkey($key)
-	{
+    public function checkkey($key){
 		$query = $this->crud->load(array("redirectlink"=>$key,"status"=>1),"gccmaster.passwordrequest");
-
 		return $query;
 	}
 
@@ -120,7 +110,7 @@ Class Login_m extends CI_Model
 						$loginUrl = $redirectLink;
 					}
 				}
-			}		
+			}
         }
         
         return $loginUrl;
@@ -701,4 +691,178 @@ Class Login_m extends CI_Model
         return $maskedLocalPart . '@' . $domain;
     }
 
+    public function __authenticate($username, $password, $remember){
+        $user = $this->login($username, $password);
+        if (!$user) {
+            return [
+                'status' => 'INVALID',
+                'message' => 'Invalid username or password'
+            ];
+        }
+        $user = $user[0];
+        if ($user->is_suspended) {
+            return [
+                'status' => 'SUSPENDED',
+                'message' => 'This user account is suspended.'
+            ];
+        }
+        if ($user->lockout) {
+            return [
+                'status' => 'LOCKED',
+                'message' => 'This user account is locked. Please contact IT Support'
+            ];
+        }
+        $privileges = $this->get_privileges_by_id($user->id);
+        $session = [
+            'id' => $user->id,
+            'emp_id' => $user->emp_id,
+            'username' => $user->username,
+            'firstname' => $user->firstname,
+            'middlename' => $user->middlename,
+            'lastname' => $user->lastname,
+            'suffix' => $user->suffix,
+            'privileges' => $privileges,
+            'TwoFactorAuth' => $user->auth,
+            'group_id' => $user->group_id,
+            'email' => $user->email,
+            'company' => $user->company_id,
+            'department' => $user->department_id,
+            'next_update' => $user->next_update,
+            'waive_count' => $user->waive_password_update,
+            'is_important' => $user->is_important
+        ];
+
+        if ($remember) {
+            $token = random_string('alnum', 60);
+            set_cookie('remember_me', $token, 0);
+            $this->db->update('gccmaster.tblusers', ['remember_token'=>$token], ['id'=>$user->id]);
+        }
+
+        if ($user->auth) {
+            return [
+                'status' => '2FA',
+                'session' => [
+                    'auth' => 'show',
+                    'emp_id' => $user->emp_id,
+                    'username' => $username,
+                    'password' => $password
+                ]
+            ];
+        }
+
+        return [
+            'status' => 'SUCCESS',
+            'session' => $session
+        ];
+    }
+
+    public function authenticate($username, $password, $remember){
+        $user = $this->login($username, $password);
+        if (!$user) {
+            return $this->authResponse('INVALID', 'Invalid username or password');
+        }
+        $user = $user[0];
+        if ($user->is_suspended) {
+            return $this->authResponse('SUSPENDED', 'This user account is suspended.');
+        }
+
+        if ($user->lockout) {
+            return $this->authResponse('LOCKED', 'This user account is locked. Please contact IT Support');
+        }
+
+        $privileges = $this->get_privileges_by_id($user->id);
+        // ✅ Force auth if important
+        $requires2FA = ($user->auth == 1 || $user->is_important == 1);
+        // ✅ Check trusted device
+        $isTrustedDevice = $this->isTrustedDevice($user->emp_id);
+        // ✅ Remember me
+        if ($remember) { $this->setRememberMe($user->id); }
+        // ✅ If 2FA required and NOT trusted
+        if ($requires2FA && !$isTrustedDevice) {
+            $contacts = $this->getUserContacts($user->emp_id);
+            return [
+                'status' => '2FA',
+                'session' => [
+                    'auth' => 'show',
+                    'emp_id' => $user->emp_id,
+                    'username' => $username,
+                    'password' => $password,
+                    'contacts' => $contacts,
+                    'is_trusted_device' => false
+                ]
+            ];
+        }
+
+        // ✅ Normal login OR trusted device bypass
+        $session = $this->buildUserSession($user, $privileges);
+
+        return [
+            'status' => 'SUCCESS',
+            'session' => $session
+        ];
+    }
+
+    private function isTrustedDevice($emp_id){
+        $token = $this->input->cookie('device_trust_token', TRUE);
+        if (!$token) { return false; }
+        $query = $this->db->select('id')
+            ->from('gccmaster.trusted_devices')
+            ->where('trust_token', $token)
+            ->where('emp_id', $emp_id)
+            ->where('expiry >', date('Y-m-d H:i:s'))
+            ->get();
+
+        return ($query->num_rows() === 1);
+    }
+
+    private function getUserContacts($emp_id){
+        $data = $this->db->select('u.email, u.telegram_chat_id, e.mobile_no')
+            ->from('gccmaster.tblusers u')
+            ->join('gccmaster.tblemployees e', 'u.emp_id = e.id', 'left')
+            ->where('u.emp_id', $emp_id)
+            ->get()
+            ->row_array();
+
+        return array_map(function ($value) {
+            return is_null($value) ? '' : $value;
+        }, $data ?? []);
+    }
+
+    private function setRememberMe($userId){
+        $token = random_string('alnum', 60);
+        set_cookie('remember_me', $token, 0);
+        $this->db->update(
+            'gccmaster.tblusers',
+            ['remember_token' => $token],
+            ['id' => $userId]
+        );
+    }
+
+    private function buildUserSession($user, $privileges){
+        return [
+            'id' => $user->id,
+            'emp_id' => $user->emp_id,
+            'username' => $user->username,
+            'firstname' => $user->firstname,
+            'middlename' => $user->middlename,
+            'lastname' => $user->lastname,
+            'suffix' => $user->suffix,
+            'privileges' => $privileges,
+            'TwoFactorAuth' => $user->auth,
+            'group_id' => $user->group_id,
+            'email' => $user->email,
+            'company' => $user->company_id,
+            'department' => $user->department_id,
+            'next_update' => $user->next_update,
+            'waive_count' => $user->waive_password_update,
+            'is_important' => $user->is_important
+        ];
+    }
+
+    private function authResponse($status, $message){
+        return [
+            'status' => $status,
+            'message' => $message
+        ];
+    }
 }
