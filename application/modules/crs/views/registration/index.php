@@ -255,7 +255,7 @@
                                     </div>
                                 </div>
                                 <template>
-                                    <div v-for="(reference, index) in references" v-for="(reference, index) in references" :key="'reference_' + index">
+                                    <div v-for="(reference, index) in references" :key="'reference_' + index">
                                         <div class="row mt-2">
                                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                                 <div class="form-group">
