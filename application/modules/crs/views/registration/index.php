@@ -254,9 +254,16 @@
                                         </div>
                                     </div>
                                 </div>
-                                <template>
-                                    <div v-for="(reference, index) in references" :key="'reference_' + index">
-                                        <div class="row mt-2">
+                                <div v-for="(reference, index) in references" :key="'reference_' + index" class="card border mb-3">
+                                    <div class="card-header d-flex align-items-center py-2">
+                                        <span class="rounded-circle bg-light border d-flex align-items-center justify-content-center mr-2"
+                                            style="width:28px; height:28px; font-size:12px; font-weight:500;">
+                                            {{ index + 1 }}
+                                        </span>
+                                        <span style="font-size:13px; font-weight:500;">REFERENCE {{ index + 1 }}</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
                                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                                 <div class="form-group">
                                                     <label :for="`full_name_${index + 1}`" class="form-control-label required">Full Name</label>
@@ -266,7 +273,9 @@
                                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                                 <div class="form-group">
                                                     <label :for="`contact_no_${index + 1}`" class="form-control-label required">Contact Number</label>
-                                                    <input :id="`contact_no_${index + 1}`" v-model="reference.ref_contact_no" :name="`references[${index}][ref_contact_no]`" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="12" autocomplete="off" data-validation="required" class="form-control m-input" @input="reference.ref_contact_no = $event.target.value.replace(/\D/g, '')"></div>
+                                                    <input :id="`contact_no_${index + 1}`" v-model="reference.ref_contact_no" :name="`references[${index}][ref_contact_no]`" placeholder="ENTER CONTACT NUMBER" type="text" maxlength="11" autocomplete="off" data-validation="required" class="form-control m-input"
+                                                        @input="reference.ref_contact_no = $event.target.value.replace(/\D/g, '')"/>
+                                                </div>
                                             </div>
                                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                                 <div class="form-group">
@@ -283,7 +292,7 @@
                                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                                 <div class="form-group">
                                                     <label :for="`position_${index + 1}`" class="form-control-label required">Position</label>
-                                                    <input :id="`position_${index + 1}`" v-model="reference.ref_position" :name="`references[${index}][ref_position]`" placeholder="ENTER POSITION" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input" />
+                                                    <input :id="`position_${index + 1}`" v-model="reference.ref_position" :name="`references[${index}][ref_position]`" placeholder="ENTER POSITION" type="text" maxlength="200" autocomplete="off" data-validation="required" class="form-control m-input"/>
                                                 </div>
                                             </div>
                                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
@@ -293,9 +302,8 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <hr />
                                     </div>
-                                </template>
+                                </div>
                             </form>
                         </div>
                         <div id="work_experience" class="tab-pane">
