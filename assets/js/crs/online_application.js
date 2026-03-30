@@ -128,6 +128,12 @@ let application_vue = new Vue({
     methods: {
         formatDate(date) {
             return moment(date).format('MMMM D, YYYY');
+        },
+        renderRecruitment(recruitment) {
+            const source = recruitmentSources.find(
+                item => item.id == recruitment
+            );
+            return source ? source.text : '---';
         }
     }
 });
@@ -162,7 +168,7 @@ let tblCandidates = $("#candidates_table").DataTable({
             render: function (data, type, row) {
                 let content = `
                     Applied on: ${moment(data).format('MMM D, YYYY')}<br>
-                    Recruitment: ${row.recruitment}`;
+                    Recruitment: ${application_vue.renderRecruitment(row.recruitment)}`;
         
                 if (row.recruitment === 'REFERRAL' && row.referral_name) {
                     content += `<br>Referral by: ${row.referral_name}`;
@@ -261,7 +267,6 @@ let tblCandidates = $("#candidates_table").DataTable({
             orderable: false,
             render: function (data, type, row, meta) {
                 return itemDatatableActions(row.id, row.status);
-                // return "asd";
             },
         },
     ]
@@ -333,13 +338,13 @@ function onViewApplication(id){
 
 function deleteApplication(id) {
     Swal.fire({
-        title: 'Delete Application?',
+        title: 'Archive Application?',
         text: "This action cannot be undone.",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Yes, delete it'
+        confirmButtonText: 'Yes, archive it'
     }).then((result) => {
         if (result.isConfirmed) {
             $.ajax({

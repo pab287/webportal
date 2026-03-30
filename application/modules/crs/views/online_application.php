@@ -467,7 +467,7 @@
                                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12">
                                                 <div class="form-group">
                                                     <span for="recruitment" class="form-control-label mb-2">Recruitment Source</span>
-                                                    <div class="form-control" v-text="selectedApplication.recruitment || '-'"></div>
+                                                    <div class="form-control" v-text="renderRecruitment(selectedApplication.recruitment)"></div>
                                                 </div>
                                             </div>
                                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-12 referral" v-show="selectedApplication.recruitment == 'referral'">
