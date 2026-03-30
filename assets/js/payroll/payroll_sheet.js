@@ -60,6 +60,7 @@ const exportOptions = {
 };
 
 let globalFilterOptions = {};
+let postedPayrollSheetId = [];
 
 const vmPsFilterHistory = new Vue({
     el: "#tempFilterHistory",
@@ -816,7 +817,8 @@ let dtPayrollSheet = _tblPayrollSheet
                 d.payout_sequence = $("#payroll_sequence", form).val();
                 d.pay_date = $("input[name='pay_date']", form).val();
                 d.show_posted = showPosted;
-
+                d.posted_payroll_group = postedPayrollSheetId.length > 0;
+                d.posted_payroll_id = postedPayrollSheetId;
                 return d;
             },
             dataType: "JSON",
@@ -3944,10 +3946,10 @@ const checkPayrollSheetData = function(date_range, employees, company, payout_sc
 
                 if(existing_group_history.length > 0){
                     let tempHtml = `<div class='row swal--custom-list'>`;
-                    let _arrIds = [];
+                    postedPayrollSheetId = [];
                     existing_group_history.forEach((row, _index) => {
                         tempHtml += `<div class='col-6 col-md-6 col-lg-6 col-sm-12'><span class='m--font-bolder text-left ml-1'>${row.employee_name}</span></div>`;
-                        _arrIds.push(row.id);
+                        postedPayrollSheetId.push(row.id);
                     });
                     tempHtml += `</div>`;                    
 
@@ -3964,11 +3966,10 @@ const checkPayrollSheetData = function(date_range, employees, company, payout_sc
                         allowOutsideClick: false,
                         allowEscapeKey: false,
                     }).then((result) => {
-                        if (result.isConfirmed) {
-                            console.log(_arrIds);
-                        }
+                        if (result.isConfirmed) { dtPayrollSheet.ajax.reload(); }
 
                         if (result.dismiss === Swal.DismissReason.cancel) {
+                            postedPayrollSheetId = [];
                             if(json.data.length > 0){ proceedRender(json); }
                             else{ generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date); }
                         }

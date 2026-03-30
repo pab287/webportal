@@ -3432,6 +3432,7 @@ class Payroll_m extends CI_Model{
         $payout_sched = $posted_data["payout_schedule"];
         $payout_sequence = isset($posted_data["payout_sequence"]) && $posted_data["payout_sequence"] ? $posted_data["payout_sequence"]: null;
 
+        $postedPayrollGroupFilter = isset($posted_data["posted_payroll_group"]) && $posted_data["posted_payroll_group"] ? json_decode($posted_data["posted_payroll_group"]): false;
         $settings = $this->getSettings();
         
         $dir = "ASC";
@@ -3450,17 +3451,7 @@ class Payroll_m extends CI_Model{
 
         $this->db->select($sqlSelect);
         /*** updated filtering by employee ids ***/
-        if (empty($employee_ids)) {
-            $this->db->where("ps.date_start", $start);
-            $this->db->where("ps.date_end", $end);
-        }
-        /*** updated filtering by employee ids ***/
-        $this->db->where("ps.pay_date", $paydate);
-        $this->db->where("ps.payroll_sched", $payout_sched);
-        
-        if($payout_sequence){
-            $this->db->where("ps.payroll_seq", $payout_sequence);
-        }
+
         /*** show all generated ***/
         if(isset($settings->enable_zero_netpay) && intval($settings->enable_zero_netpay->setting_value) == 0){ $this->db->where("ps.no_of_days !=", 0);  }
         /*** show all generated ***/
@@ -3469,21 +3460,41 @@ class Payroll_m extends CI_Model{
         $this->db->where("ps.is_bonus", 0);
         $this->db->where("ps.ewd !=", 0);
         /*** end bonus filter ***/
+
+        if($postedPayrollGroupFilter){
+            if(is_array($posted_data["posted_payroll_id"]) && !empty($posted_data["posted_payroll_id"])){
+                $this->db->where_in("ps.id", $posted_data["posted_payroll_id"]);
+            }
+        }else{
+            if (empty($employee_ids)) {
+                $this->db->where("ps.date_start", $start);
+                $this->db->where("ps.date_end", $end);
+            }
+            /*** updated filtering by employee ids ***/
+            $this->db->where("ps.pay_date", $paydate);
+            $this->db->where("ps.payroll_sched", $payout_sched);
+            
+            if($payout_sequence){
+                $this->db->where("ps.payroll_seq", $payout_sequence);
+            }
+            
+            
+            $isPosted = null;
+            switch ($show_posted) {
+                case 'posted': $isPosted = 1; break;
+                case 'unposted': $isPosted = 0; break;
+                default: $isPosted = null; break;
+            }
+
+            if(is_null($isPosted) === false && is_numeric($isPosted)){
+                $this->db->where("ps.posted", $isPosted);
+            }
+
+            if (!empty($company)) {
+                $this->db->where("ps.company_id", $company->id);
+            }
+        }
         
-        $isPosted = null;
-        switch ($show_posted) {
-            case 'posted': $isPosted = 1; break;
-            case 'unposted': $isPosted = 0; break;
-            default: $isPosted = null; break;
-        }
-
-        if(is_null($isPosted) == false && is_numeric($isPosted)){
-            $this->db->where("ps.posted", $isPosted);
-        }
-
-        if (!empty($company)) {
-            $this->db->where("ps.company_id", $company->id);
-        }
         /*** if (!empty($company)) {
             $this->db->group_start();
             $this->db->where_in("company_id", array($company->id, $company->description, $company->code));
@@ -8045,6 +8056,14 @@ class Payroll_m extends CI_Model{
         $pgHistoryRecords = [];
         $employeeId = explode(',', $existingEmployees);
         if(is_array($employeeId) && !empty($employeeId)){
+            $this->db->where_in("emp_id", $employeeId);
+            $this->db->get_where($this->tbl_payroll_history,
+                array("pgh.date_start"=>$dateStart,
+                    "pgh.date_end"=>$dateEnd,
+                    "pgh.pay_date"=>$payDate,
+                    "pgh.company_id"=>$companyId,
+                    "ps.posted"=>1));
+
             $this->db->select("pgh.payroll_sheet_id as id,  UPPER(TRIM(CONCAT(emp.firstname, ' ',
                 CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
                         TRIM(emp.middlename) !='' AND emp.middlename IS NOT NULL
