@@ -3908,7 +3908,7 @@
                 'is_commute' => $commute,
                 'is_personal' => $personal,
                 'is_others' => $other,
-                'others_remarks' => $post['remark'],
+                'others_remarks' =>  $other == 1 ? $post['remark'] : "",
                 'last_edited_by' => $edited_by,
                 'last_edited_dt' => $current_date,
                 'last_edited_id' => $user_id,
