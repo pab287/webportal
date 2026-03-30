@@ -689,13 +689,9 @@ const CalendarBasic = function () {
                     },
 
                     eventRender: function(event, element) {
-                        console.log(event);
-                    
                         element.find('.fc-time').remove();
-                    
                         const speakers = event.speakers || [];
                         let title = event.title.length > 20 ? event.title.slice(0, 20) + '...' : event.title;
-                    
                         let now = new Date();
                         let start = new Date(event.start);
                         let end = new Date(event.end);
