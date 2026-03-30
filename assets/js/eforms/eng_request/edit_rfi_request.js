@@ -6,6 +6,7 @@ let _reply_attachments = [];
 let informationEditor;
 let id = null;
 let reply_id = null;
+let fileStore = {};
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(_tempContentData.request && Object.keys(_tempContentData.request).length > 0){
@@ -46,7 +47,7 @@ let edit_rfi = new Vue ({
     data: {
         activity_logs: {},
         isImage: false,
-        noFile: false,
+        attachmentsToUpload: [],
         content: _request,
         req_types: _req_types,
         selectedType: null,
@@ -79,6 +80,13 @@ let edit_rfi = new Vue ({
         }
     },
     computed: {
+        hasFile() {
+            if(this.replyAttachments.length > 0 && this.replyAttachments !== undefined){
+                return true;
+            }else{
+                return false;
+            }
+        },
         reqNoted(){
             if(this.reply.status == "noted"){
                 return true;
@@ -131,11 +139,12 @@ let edit_rfi = new Vue ({
     methods: {
         onFileChange(event) {
             const files = event.target.files;
-            edit_rfi.replyAttachments = [];
             handleFiles(files);     
             this.checkChanges();
         },
         fileDelete(index){
+            const file = this.replyAttachments[index];
+            delete fileStore[file.id];
             this.replyAttachments.splice(index,1);
             this.replyAttachments.count = this.replyAttachments.length;
             this.checkChanges();
@@ -160,6 +169,7 @@ let edit_rfi = new Vue ({
             const replyNames = replyFiles.map(f => f.name);
             const currentNames = currentFiles.map(f => f.name);
             this.attachmentsToAdd = replyFiles.filter(f => !currentNames.includes(f.name)).map(f => f.original.filename || f.original.name);
+            this.attachmentsToUpload = replyFiles.filter(f => !currentNames.includes(f.name)).map(f => f.original.id || f.original.id);
             this.attachmentsToRemove = currentFiles.filter(f => !replyNames.includes(f.name)).map(f => f.original.filename || f.original.name);
             this.changes.attachment = this.attachmentsToAdd.length > 0 || this.attachmentsToRemove.length > 0;
         },
@@ -357,13 +367,15 @@ function validateFile(file) {
 }
 
 function addFile(file) {
+    const id = 'f' + Math.floor(1000 + Math.random() * 9000);
     let fileObj = {
-        id: 'f' + Math.floor(1000 + Math.random() * 9000),
+        id: id,
         filename: cleanName(file.name),
         type: file.type,
         size: file.size,
         url: URL.createObjectURL(file),
     };
+    fileStore[id] = file;
     edit_rfi.replyAttachments.push(fileObj);
 }
 
@@ -417,6 +429,23 @@ $.validate({
     form: "#edit_reply_form",
     lang: "en",
     scrollToTopOnError: false,
+    onValidate: function (form) {
+
+        if (informationEditor) {
+            const data = informationEditor.getData();
+            const plainText = data.replace(/<[^>]*>/g, '').trim();
+            $('#reply_needed').val(data);
+            if (!plainText) {
+                $('#reply_needed-error').show();
+                $('.ck-editor__editable').addClass('is-invalid');
+                return false;
+            } else {
+                $('#reply_needed-error').hide();
+                $('.ck-editor__editable').removeClass('is-invalid');
+            }
+        }
+        return true;
+    },
     onSuccess: function () {
         if (informationEditor) {
             const data = informationEditor.getData();
@@ -431,13 +460,25 @@ $.validate({
                 $('.ck-editor__editable').removeClass('is-invalid');
             }
         }
+        if (!(edit_rfi.replyAttachments.length >= 0)) {
+            $('#fileupload-error').show();
+            return false;
+        }
         const form = $('#edit_reply_form');
         const formData = new FormData(form[0]);
+        const toUpload = edit_rfi.attachmentsToUpload;
         formData.append('attachmentsToAdd',JSON.stringify(edit_rfi.attachmentsToAdd));
         formData.append('attachmentsToRemove',JSON.stringify(edit_rfi.attachmentsToRemove));
         formData.append('csrf_token', _csrf_hash);
         formData.append('rfi_id', id);
         formData.append('reply_id', reply_id);
+        toUpload.forEach(fileObj => {
+            const rawFile = fileStore[fileObj];
+            if (rawFile) {
+                formData.append('files[]', rawFile, fileObj.name);
+            }
+        });
+
         $.ajax({
             url: siteUrl("eforms/engineering_request_forms/update_reply"),
             type: "POST",

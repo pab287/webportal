@@ -261,6 +261,22 @@ $.validate({
     form: "#new_rfi_form",
     lang: "en",
     scrollToTopOnError: false,
+    onValidate: function (form) {
+        if (informationEditor) {
+            const data = informationEditor.getData();
+            const plainText = data.replace(/<[^>]*>/g, '').trim();
+            $('#information_needed').val(data);
+            if (!plainText) {
+                $('#information_needed-error').show();
+                $('.ck-editor__editable').addClass('is-invalid');
+                return false;
+            } else {
+                $('#information_needed-error').hide();
+                $('.ck-editor__editable').removeClass('is-invalid');
+            }
+        }
+        return true;
+    },
     onSuccess: function () {
 
         if (informationEditor) {

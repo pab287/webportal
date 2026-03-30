@@ -641,7 +641,7 @@ class Eng_req_m extends CI_Model {
         if ($code) {
             $prefix .= strtolower($code) . "-";
         }
-        $this->db->where('request_type', $code);
+        $this->db->where('request_type_code', $code);
         $count = $this->db->count_all_results($this->rfiTable);
         $sequence = $count + 1;
         $numberPart = str_pad($sequence, 4, '0', STR_PAD_LEFT);

@@ -134,7 +134,7 @@
                                 <span class="btn btn-success fileinput-button">
                                     <i class="glyphicon glyphicon-plus"></i>
                                     <span>SELECT FILE</span>
-                                    <input type="file" id="fileupload" data-validation-length="min1" accept=".pdf, .docx, application/pdf, .jpg" multiple>
+                                    <input type="file" id="fileupload" accept=".pdf, .docx, application/pdf, .jpg" multiple>
                                 </span>
                             </div>
                         </div>
