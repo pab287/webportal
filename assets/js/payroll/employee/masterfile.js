@@ -606,7 +606,6 @@ function changeEmployeeCompany(_form) {
 }
 
 /* --START-- SALARY HISTORY */
-console.log(tblSalaryHistory);
 if (typeof tblSalaryHistory !== "undefined" && tblSalaryHistory.length != 0) {
     var dtSalaryHistory = tblSalaryHistory.DataTable({
         dom: '<"toolbar dt-toolbar-salary-history">frtlip',

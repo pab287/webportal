@@ -260,7 +260,7 @@
                     </li>
                 </ul>
                 <div class="tab-content" style="border: 1px solid #dddddd; border-top: 0; padding: 15px">
-                    <div class="tab-pane active" id="tab_deductions">
+                    <div class="tab-pane active show" id="tab_deductions">
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="row align-items-center">
@@ -279,8 +279,7 @@
                                     </div>
                                 </div>
                                 <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
-                                    <table id="tbl-loans" class="table display table-bordered table-striped dataTable no-footer"
-                                        width="100%">
+                                    <table id="tbl-loans" class="table display table-bordered table-striped dataTable no-footer" style="width: 100%">
                                         <thead>
                                         <th>Loan Name</th>
                                         <th>Loaned Amount</th>
@@ -326,7 +325,7 @@
                                 </div>
                             </div>
                         </div>
-                        <table id="tbl-deduction-history" class="table display table-bordered table-striped dataTable no-footer" width="100%">
+                        <table id="tbl-deduction-history" class="table display table-bordered table-striped dataTable no-footer" style="width:100%;">
                             <thead>
                                 <th>Loan Name</th>
                                 <th>Loaned Amount</th>
@@ -369,7 +368,7 @@
                                 </div>
                             </div>
                         </div>
-                        <table id="tbl-deduction-cancelled" class="table display table-bordered table-striped dataTable no-footer" width="100%">
+                        <table id="tbl-deduction-cancelled" class="table display table-bordered table-striped dataTable no-footer" style="width:100%;">
                             <thead>
                                 <th>Loan Name</th>
                                 <th>Loaned Amount</th>
@@ -429,8 +428,7 @@
                     </div>
                 </div>
                 <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
-                    <table id="tbl-payroll_history" class="table display table-bordered table-striped dataTable no-footer"
-                           width="100%">
+                    <table id="tbl-payroll_history" class="table display table-bordered table-striped dataTable no-footer" style="width:100%">
                         <thead>
                             <th>Logs</th>
                             <th>Action</th>
@@ -840,14 +838,14 @@
                             <div class="m-portlet__head-caption">
                                 <div class="m-portlet__head-title">
                                     <h3 class="m-portlet__head-text">Mergeable Loan/s</h3>
-                                </div>			
+                                </div>
                             </div>
                         </div>
                         <div class="m-portlet__body pt-0">
                             <div class="m-widget4">
                                 <div class="m-widget4__item pb-1 pt-1" v-for="loan in row.to_merge_loans">
                                     <input type="hidden" :name="'balance_amt['+loan.id+']'" :value="loan.balance_amt" />
-                                    <div class="m-widget4__ext">							 
+                                    <div class="m-widget4__ext">
                                         <span class="m-widget4__icon m--font-brand">
                                             <i class="flaticon-coins"></i>
                                         </span>
@@ -858,7 +856,7 @@
                                     </p>
                                     <p class="m-widget4__sub m--font-danger m--font-bolder m--marginless">
                                         Deduction: <span>{{ loan.deduction_type == 0 ? loan.percentage +' ( % )':loan.fixed_deduction_amt + 'Fixed Amount' }}</span>
-                                    </p>						 		 
+                                    </p>
                                     </div>
                                     <div class="m-widget4__ext">
                                         <span class="m-switch m-switch--sm">
@@ -896,7 +894,7 @@
             </div>
             <div class="modal-body">
                 <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
-                    <table id="tbl-approval_history" class="table display table-bordered table-striped dataTable no-footer" width="100%">
+                    <table id="tbl-approval_history" class="table display table-bordered table-striped dataTable no-footer" style="width: 100%">
                         <colgroup>
                             <col width="*">
                             <col width="20%">
@@ -1140,7 +1138,7 @@
             searching:false,
             width: "100%",
             ajax: {
-                url: "<?php echo base_url("payroll/employee/get_employee_loans");?>",
+                url: "<?php echo base_url("payroll/employee/get_employee_loans"); ?>",
                 type: "post",
                 dataType: "json",
                 global: false,
@@ -1285,6 +1283,21 @@
                                 </li>`;
                                 ctrActions++;
                             }
+                            
+                            btn += `<button title="SET AS PAID LOAN"
+                                class="btn btn-default m-btn m-btn--icon m-btn--icon-only btn-sm m-btn--pill m-btn--hover-primary eventSetAsPaidLoan"
+                                data-raw="${encodeURIComponent(rawData)}">
+                            <i class="fa fa-tags"></i>
+                            </button> `;
+
+                            listActions += `<li class="m-nav__item">
+                                    <a href="javascript:void(0)" class="m-nav__link eventSetAsPaidLoan"
+                                    data-raw="${encodeURIComponent(rawData)}">
+                                        <i class="m-nav__link-icon fa fa-tags"></i>
+                                        <span class="m-nav__link-text">SET AS PAID LOAN</span>
+                                    </a>
+                                </li>`;
+                                ctrActions++;
                         }
                         
                         if (typeof _currentActions != "undefined" && _currentActions.includes("edit") && (isPaid !== 1 && tempIsPaid === false)) {
@@ -1940,6 +1953,10 @@
 
     loanPaymentHistoryModal.on("show.bs.modal", function () {
         const id = $(this).attr("data-id");
+        const portletBody = $(".m-portlet__body", this);
+        portletBody.find("#_for_remarks").text("Loading...");
+        portletBody.find(".m-widget1").remove();
+
         $("#tab_payments table", this)
             .DataTable({
                 dom: "frtlp",
@@ -2067,7 +2084,47 @@
             type: "GET",
             dataType: "JSON",
             success: function(response){
-                $("#_for_remarks").text(response.remarks);
+                portletBody.find("#_for_remarks").text(response.remarks && response.remarks != "" ? response.remarks : "No Remarks Found!");
+                portletBody.find(".m-widget1").remove();
+                
+                if(Number.parseInt(response.tagged_paid) > 0){
+                    const amountFormatted = numberFormat(response.paid_amount);
+                    const formattedDate = moment(response.tagged_at).format("LLLL");
+                    const tempHtml = `<div class="m-widget1 p-0 pt-4">
+                        <div class="m-widget1__item">
+                            <div class="row m-row--no-padding align-items-center">
+                                <div class="col">
+                                    <h3 class="m-widget1__title">
+                                        Tagged As Paid Loan
+                                    </h3>
+                                    <span class="m-widget1__desc mb-2">
+                                        <small>
+                                            Tagged By: ${response.tagged_by}<br>
+                                            ${formattedDate}
+                                        </small>
+                                    </span>
+                                    <p class="m-widget1__sub mb-0">
+                                        Debit Note: ${response.debit_note}
+                                    </p>
+                                    <p class="m-widget1__sub mb-0">
+                                        Reason: ${response.tagged_reason}
+                                    </p>
+                                </div>
+                                <div class="col m--align-right">
+                                    <span class="m-widget1__number m--font-brand">
+                                        ${amountFormatted}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                    if(portletBody.find(".m-widget1").length > 0){
+                        portletBody.find(".m-widget1").remove();
+                        portletBody.append(tempHtml);
+                    } else {
+                        portletBody.append(tempHtml);
+                    }
+                }
             }
         });
     });
@@ -2111,6 +2168,81 @@
 
         }
     }
+    $(document).on('click', '.eventSetAsPaidLoan', function () {
+        const rawData = JSON.parse(decodeURIComponent($(this).data('raw')));
+        setAsPaidLoan(rawData);
+    });
+    
+    function setAsPaidLoan(rawData){
+        console.log(rawData);
+        const loanName = rawData.loan_name;
+        const debitNote = rawData.debit_note;
+        const remainingBalance = rawData.tempbalance;
+        const balanceFormatted = numberFormat(remainingBalance);
+        const tempHtml = debitNote && debitNote != null ? `<span class='m--font-primary m--font-boldest m--margin-left-15 m--regular-font-size-lg1'>${debitNote.toUpperCase()}</span>` : '';
+        Swal.fire({
+            title: 'Set As Paid Loan?',
+            html: `
+                <p>Are you sure you want to set this loan as paid? You won't be able to revert this!</p>
+                <p class='mb-1'><span class="m--font-bolder">Remaining Balance:</span> ${balanceFormatted}</p>
+                <span class='m--font-boldest'>${loanName.toUpperCase()}</span>
+                ${tempHtml}
+                <div class='row m-1 mt-3'>
+                    <div class='col-12 p-0'>
+                        <input id="swal-debit-note" class="form-control m-input" placeholder="Debit Note" maxlength="12" value="${debitNote && debitNote != null ? debitNote : ""}" required>
+                    </div>
+                    <div class='col-12 p-0 mt-2'>
+                        <textarea id="swal-remarks" class="form-control m-input" placeholder="Reason for set as paid" required></textarea>
+                    </div>
+                </div>
+            `,
+            icon: 'question',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, Set As Paid!',
+            preConfirm: () => {
+                const debitNote = document.getElementById('swal-debit-note').value.trim();
+                const remarks = document.getElementById('swal-remarks').value.trim();
+
+                if (!debitNote || !remarks) {
+                    Swal.showValidationMessage('Both Debit Note and Reason are required');
+                    return false;
+                }
+
+                return {
+                    debit_note: debitNote,
+                    remarks: remarks
+                };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const data = result.value;
+                $.ajax({
+                    url: baseUrl(`payroll/employee/set_as_paid_loan`),
+                    type: "POST",
+                    dataType: "JSON",
+                    data: {
+                        csrf_token: _csrf_hash,
+                        id: rawData.id,
+                        paid_amount: remainingBalance,
+                        debit_note: data.debit_note,
+                        remarks: data.remarks
+                    },
+                    success: function (json) {
+                        if (json.response) {
+                            toastr.success(json.toastr_msg, "Set As Paid Loan Successfully");
+                            dtLoans.ajax.reload();
+                        }else{
+                            toastr.error(json.toastr_msg, "Set As Paid Loan Failed");
+                        }
+                    }
+                });
+            }
+        });
+    }
+
 
     function openEditEmployeeLoanModal(id) {
         $.ajax({
@@ -2752,7 +2884,7 @@
             }
         });
 
-    $(".nav-link").on('click', function(){
+    /*** $(".nav-link").on('click', function(){
         var item = $(this).attr('id');
         if(item == 'tab_deduction'){
             $("#tab_deductions").addClass('active');
@@ -2778,7 +2910,30 @@
             $("#tab_interest_charges").addClass('active');
             $("#tab_payments").removeClass('active');
         }
+    }); ***/
+
+    $(document).on('click', '.nav-tabs .nav-link', function (e) {
+        e.preventDefault();
+
+        let $this = $(this);
+        let target = $this.attr('href');
+
+        let $tabContainer = $this.closest('.nav-tabs');
+        let $content = $tabContainer.next('.tab-content');
+
+        // nav
+        $tabContainer.find('.nav-link').removeClass('active');
+        $this.addClass('active');
+
+        // content
+        $content.find('.tab-pane').removeClass('active show');
+        $content.find(target).addClass('active show');
     });
+
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function () {
+        $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+    });
+
     var imagesPreview = function(input, placeToInsertImagePreview) {
 
         if (input.files) {

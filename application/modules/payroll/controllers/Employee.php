@@ -606,4 +606,11 @@
             ->set_content_type('json')
             ->set_output(json_encode($data));
         }
+
+        public function set_as_paid_loan() {
+            $data = $this->employee->setAsPaidLoan();
+            $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+        }
     }
