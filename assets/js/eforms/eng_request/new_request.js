@@ -8,6 +8,7 @@ let informationEditor;
 let person_in_charge = null;
 let request_type_id = null;
 let request_type_code = null;
+let fileStore = {};
 
 const maxFileSize = 50 * 1024 * 1024; // 50MB
 const allowedTypes = [
@@ -115,6 +116,8 @@ let rfi_vue = new Vue({
             return classMap[extension] || "m-widget4 m-widget2__item m-widget2__item--default col-lg-4 col-md-12 col-sm-12";
         },
         fileDelete: function(index){
+            const file = this.attachments.uploadedFiles[index];
+            delete fileStore[file.id];
             this.attachments.uploadedFiles.splice(index,1);
             this.attachments.count = this.attachments.uploadedFiles.length;
         },
@@ -136,8 +139,6 @@ let rfi_vue = new Vue({
                 return l.toUpperCase();
             });
         },
-        clearForm: function () {
-        }
     }
 });
 
@@ -148,6 +149,10 @@ $('#requested_by').select2({
     placeholder: 'Select requestor',
     allowClear: true,
     data: _employee
+}).on('select2:select', function () {
+    $(this).closest('.form-group').find('.form-error').hide();
+    $(this).removeAttr('data-validation-error');
+    $(this).closest('.form-group').removeClass('has-error');
 });
 
 // $('#consultant').select2({
@@ -168,6 +173,12 @@ $('#project_name').select2({
 $("#project_name").on("select2:select", function (e) {
     const data = e.params.data;
     $('#project_location').val(data.project_location);
+    $("#project_location").closest('.form-group').find('.form-error').hide();
+    $("#project_location").removeAttr('data-validation-error');
+    $("#project_location").closest('.form-group').removeClass('has-error');
+    $(this).closest('.form-group').find('.form-error').hide();
+    $(this).removeAttr('data-validation-error');
+    $(this).closest('.form-group').removeClass('has-error');
 }).on("select2:unselect", function () {
     $('#project_location').val('');
 });
@@ -206,6 +217,7 @@ $('#reply_needed').daterangepicker({
 
 $('#reply_needed').on('apply.daterangepicker', function (ev, picker) {
     $(this).val(picker.startDate.format('MMM DD, YYYY'));
+    // $('#new_rfi_form').get(0).reset();
 });
 
 $('#reply_needed').on('cancel.daterangepicker', function () {
@@ -249,24 +261,23 @@ $.validate({
     form: "#new_rfi_form",
     lang: "en",
     scrollToTopOnError: false,
-    onValidate: function () {
+    onSuccess: function () {
+
         if (informationEditor) {
             const data = informationEditor.getData();
             const plainText = data.replace(/<[^>]*>/g, '').trim();
             $('#information_needed').val(data);
+
             if (!plainText) {
                 $('#information_needed-error').show();
-                $('.ck-editor__editable')
-                    .addClass('is-invalid');
+                $('.ck-editor__editable').addClass('is-invalid');
                 return false;
             } else {
                 $('#information_needed-error').hide();
                 $('.ck-editor__editable').removeClass('is-invalid');
             }
         }
-        return true;
-    },
-    onSuccess: function () {
+
         const form = $('#new_rfi_form');
         const formData = new FormData(form[0]);
         const requestedByName = $('#requested_by').select2('data')[0]?.text || '';
@@ -277,6 +288,12 @@ $.validate({
         formData.append('request_type_code', request_type_code);
         formData.append('requested_by_name', requestedByName);
         formData.append('project_name_text', projectName);
+        rfi_vue.attachments.uploadedFiles.forEach(fileObj => {
+            const rawFile = fileStore[fileObj.id];
+            if (rawFile) {
+                formData.append('files[]', rawFile, fileObj.name);  // ✅ Appends all files
+            }
+        });
         $.ajax({
             url: siteUrl("eforms/engineering_request_forms/save_rfi"),
             type: "POST",
@@ -341,11 +358,17 @@ function validateFile(file) {
 }
 
 function addFile(file) {
+    const id = 'f' + Math.floor(1000 + Math.random() * 9000);
     let fileObj = {
-        id: 'f' + Math.floor(1000 + Math.random() * 9000),
-        name: file.name,
+        id: id,
+        name: cleanName(file.name),
         type: file.type,
         size: file.size,
     };
+    fileStore[id] = file;
     rfi_vue.attachments.uploadedFiles.push(fileObj);
 }
+
+function cleanName(name){
+    return name.trim().replace(/[()]/g, '').replace(/\s+/g, '') .toLowerCase();
+};

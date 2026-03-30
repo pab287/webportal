@@ -53,7 +53,7 @@
                                 <label for="project_name" class="form-control-label required">
                                     Project Location
                                 </label>
-                                <input type="text" id="project_location" name="project_location" class="form-control m-input" data-validation="required"  autocomplete="off" readonly>
+                                <input type="text" id="project_location" name="project_location" class="form-control m-input"  autocomplete="off" readonly>
                             </div>
                         </div>
                     </div>
@@ -134,7 +134,7 @@
                                 <span class="btn btn-success fileinput-button">
                                     <i class="glyphicon glyphicon-plus"></i>
                                     <span>SELECT FILE</span>
-                                    <input type="file" id="fileupload" name="files[]" accept=".pdf, .docx, application/pdf, .jpg" multiple>
+                                    <input type="file" id="fileupload" data-validation-length="min1" accept=".pdf, .docx, application/pdf, .jpg" multiple>
                                 </span>
                             </div>
                         </div>
@@ -168,9 +168,6 @@
                     <div class="m-separator m-separator--xl"></div>
                     <div class="row mt-3">
                         <div class="col-12 text-right">
-                            <button type="button" class="btn btn-secondary mr-2" @click="clearForm">
-                                Clear
-                            </button>
                             <button type="submit" class="btn btn-primary btnSave">
                                 Submit
                             </button>

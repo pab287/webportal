@@ -29,6 +29,27 @@
         text-decoration: underline;
     }
 
+    .file-viewer {
+        height: 75vh;
+        background: #111;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .file-frame {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    .preview-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
 </style>
 <div class="m-content" id="edit_rfi_content">
     <div class="row">
@@ -160,7 +181,7 @@
                                                                     <div class="m-widget4__img m-widget4__img--icon">
                                                                         <img v-bind:src="getExtension(item.filename)" alt="" height="50" width="50">
                                                                     </div>
-                                                                    <div class="m-widget2__desc file-link" @click="openFile(item.filename)">
+                                                                    <div class="m-widget2__desc file-link" @click="openFile(item)">
                                                                         <span class="m-widget4__text">{{ item.filename.length > 30 ? item.filename.slice(0, 30) + '...' : item.filename }}</span>
                                                                     </div>
                                                                 </div>
@@ -208,13 +229,17 @@
                                                     <label for="fileupload" class="form-control-label m--font-bold">
                                                         ATTACHMENTS
                                                     </label>
-                                                    <div class="form-group" v-if="showUpdate">
+                                                    <div class="form-group mb-0" v-if="showUpdate">
                                                         <span class="btn btn-success fileinput-button">
                                                             <i class="glyphicon glyphicon-plus"></i>
                                                             <span>SELECT FILE</span>
                                                             <input type="file" id="fileupload" name="files[]" accept=".pdf, .docx, application/pdf, .jpg" multiple @change="onFileChange($event)">
                                                         </span>
                                                     </div>
+                                                   
+                                                </div>
+                                                <div class="col-12" v-if="showUpdate">
+                                                    <span id="fileupload-error" class="help-block form-error" style="display: none;">This is a required field</span>
                                                 </div>
                                             </div>
                                             <template v-if="replyAttachments.length >= 1">
@@ -225,7 +250,7 @@
                                                                 <div class="m-widget4__img m-widget4__img--icon">
                                                                     <img v-bind:src="getExtension(item.filename)" alt="" height="50" width="50">
                                                                 </div>
-                                                                <div class="m-widget2__desc file-link" @click="openFile(item.filename,true)">
+                                                                <div class="m-widget2__desc file-link" @click="openFile(item,true)" dis>
                                                                     <span class="m-widget4__text">{{ item.filename.length > 50 ? item.filename.slice(0, 50) + '...' : item.filename }}</span>
                                                                 </div>
                                                                 <div class="m-widget2__actions ml-auto" v-if="showUpdate">
@@ -239,7 +264,7 @@
                                                 </div>
                                             </template>
                                             <template v-else>
-                                                <div class="row">
+                                                <div class="row mt-2">
                                                     <div class="col-12">
                                                         <strong><h5>NO ATTACHMENTS</h5></strong>
                                                     </div>
@@ -279,8 +304,9 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body p-0">
-                    <iframe :src="filePath" width="100%" height="600px" frameborder="0"></iframe>
+                <div class="modal-body p-0 file-viewer">
+                    <img v-if="isImage" :src="filePath" class="preview-img">
+                    <iframe v-else :src="filePath" class="file-frame"></iframe>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Close</button>

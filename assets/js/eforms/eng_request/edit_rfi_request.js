@@ -45,6 +45,8 @@ let edit_rfi = new Vue ({
     el: '#edit_rfi_content',
     data: {
         activity_logs: {},
+        isImage: false,
+        noFile: false,
         content: _request,
         req_types: _req_types,
         selectedType: null,
@@ -65,6 +67,7 @@ let edit_rfi = new Vue ({
     },
     mounted: function () {
         loadEditor(this.reply.reply);
+        $('#fileupload-error').hide();
         id = this.content.id;
         reply_id = this.reply.id;
         if (this.reply && this.reply.reply !== undefined) {
@@ -128,6 +131,7 @@ let edit_rfi = new Vue ({
     methods: {
         onFileChange(event) {
             const files = event.target.files;
+            edit_rfi.replyAttachments = [];
             handleFiles(files);     
             this.checkChanges();
         },
@@ -162,10 +166,9 @@ let edit_rfi = new Vue ({
         editReply() {
             this.showUpdate = !this.showUpdate;
             if (this.showUpdate) {
-                console.log("Allow Editing");
-                informationEditor.disableReadOnlyMode('reply-lock'); // allow editing
+                informationEditor.disableReadOnlyMode('reply-lock');
+
             } else {
-                console.log("Disalllow Editing");
                 informationEditor.enableReadOnlyMode('reply-lock');  // readonly
             }
         },
@@ -247,24 +250,47 @@ let edit_rfi = new Vue ({
             return classMap[extension] ||
                 "m-widget4 m-widget2__item m-widget2__item--default col-lg-4 col-md-12 col-sm-12";
         },
-        openFile(filename,reply = false) {
-            const rep = reply ? "reply" : "request";
+        openFile(file, reply = false) {
+            const filename = file.filename;
             const extension = filename.split('.').pop().toLowerCase();
+            const rep = reply ? "reply" : "request";
             const wordExtensions = ['doc', 'docx'];
+            const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
         
-            if (wordExtensions.includes(extension)) {
-                const encodedFilename = encodeURIComponent(filename);
-                const downloadPath = baseUrl() + `uploads/files/engineering_request/rfi_${id}/${rep}/${encodedFilename}`;
-                window.open(downloadPath, '_blank');
-                toastr.info('The document has been downloaded.');
+            const isWord = wordExtensions.includes(extension);
+            this.isImage = imageExtensions.includes(extension);
+        
+            if (file.url?.startsWith('blob:')) {
+                if (isWord) {
+                    window.open(file.url, '_blank');
+                } else {
+                    this.filePath = file.url;
+                    $("#fileViewModal").modal("show");
+                }
                 return;
             }
         
             const encodedFilename = encodeURIComponent(filename);
-            this.filePath = baseUrl() + `uploads/files/engineering_request/rfi_${id}/${rep}/${encodedFilename}`;
-            $("#fileViewModal").modal("show");
+            const fileUrl = baseUrl(`uploads/files/engineering_request/rfi_${id}/${rep}/${encodedFilename}`);
+        
+            $.ajax({
+                url: fileUrl,
+                type: 'HEAD',
+                global: false,
+                success: () => {
+                    if (isWord) {
+                        window.open(fileUrl, '_blank');
+                        toastr.info('The document has been downloaded.');
+                    } else {
+                        this.filePath = fileUrl;
+                        $("#fileViewModal").modal("show");
+                    }
+                },
+                error: () => {
+                    toastr.error('File not found or already removed.');
+                }
+            });
         },
-
         getAttachExtension(type) {
             let extension = mimeMap[type] || (type.includes('/') ? type.split('/').pop() : type);
             extension = extension.toLowerCase();
@@ -309,10 +335,6 @@ function cleanName(name){
 };
 
 function validateFile(file) {
-
-
-
-    console.log("Validate", file);
     if (file.size > maxFileSize) {
         toastr.error(`File "${file.name}" is too large. Maximum size is 10MB.`);
         return false;
@@ -337,9 +359,10 @@ function validateFile(file) {
 function addFile(file) {
     let fileObj = {
         id: 'f' + Math.floor(1000 + Math.random() * 9000),
-        filename: cleanName(file.name), //file.name,
+        filename: cleanName(file.name),
         type: file.type,
         size: file.size,
+        url: URL.createObjectURL(file),
     };
     edit_rfi.replyAttachments.push(fileObj);
 }
@@ -350,7 +373,8 @@ function addFile(file) {
 
 function loadEditor(reply){
     reply = reply ?? "";
-    ClassicEditor.create( document.querySelector('#reply_needed' ),{
+    let isReady = false;
+    ClassicEditor.create(document.querySelector('#reply_needed'), {
         toolbar: [
             'bold',
             'italic',
@@ -363,22 +387,6 @@ function loadEditor(reply){
     })
     .then(editor => {
         informationEditor = editor;
-        informationEditor.model.document.on('change:data', () => {
-            const data = informationEditor.getData();
-            const plainText = data.replace(/<[^>]*>/g, '').trim();
-            if (plainText) {
-                $('#reply_needed-error').hide();
-            }else{
-                $('#reply_needed-error').show();
-            }
-
-            if(data != edit_rfi.currentReply){
-                edit_rfi.changes.reply = true;
-            }else{
-                edit_rfi.changes.reply = false;
-            }
-        });
-
         editor.editing.view.change(writer => {
             writer.setStyle(
                 'min-height',
@@ -388,9 +396,20 @@ function loadEditor(reply){
         });
 
         editor.setData(reply);
+        isReady = true;
+
+        editor.model.document.on('change:data', () => {
+            if (!isReady) return;
+            const data = editor.getData();
+            const plainText = $('<div>').html(data).text().trim();
+            $('#reply_needed-error').toggle(!plainText);
+            edit_rfi.changes.reply = (data !== edit_rfi.currentReply);
+        });
+
         editor.enableReadOnlyMode('reply-lock');
     })
-    .catch( error => {
+    .catch(error => {
+        // console.error(error);
     });
 }
 
@@ -398,11 +417,11 @@ $.validate({
     form: "#edit_reply_form",
     lang: "en",
     scrollToTopOnError: false,
-    onValidate: function () {
+    onSuccess: function () {
         if (informationEditor) {
             const data = informationEditor.getData();
             const plainText = data.replace(/<[^>]*>/g, '').trim();
-            $('#information_needed').val(data);
+            $('#reply_needed').val(data);
             if (!plainText) {
                 $('#reply_needed-error').show();
                 $('.ck-editor__editable').addClass('is-invalid');
@@ -412,9 +431,6 @@ $.validate({
                 $('.ck-editor__editable').removeClass('is-invalid');
             }
         }
-        return true;
-    },
-    onSuccess: function () {
         const form = $('#edit_reply_form');
         const formData = new FormData(form[0]);
         formData.append('attachmentsToAdd',JSON.stringify(edit_rfi.attachmentsToAdd));

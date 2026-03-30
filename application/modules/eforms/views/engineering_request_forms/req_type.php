@@ -141,7 +141,7 @@
                         <div class="col-12">
                             <div class="form-group">
                                 <label for="edit_request_type" class="form-control-label required">
-                                    EditRequest Type
+                                    Request Type
                                 </label>
                                 <input type="text" class="form-control m-input" id="edit_request_type" name="request_type" placeholder="Enter request type" data-validation="required">
                             </div>
@@ -157,7 +157,7 @@
                         <div class="col-12">
                             <div class="form-group">
                                 <label for="edit_person_in_charge" class="form-control-label required">
-                                    Edit Person In Charge
+                                    Person In Charge
                                 </label>
                                 <select type="text" id="edit_person_in_charge" name="person_in_charge" class="form-control m-input" data-validation="required" autocomplete="off">
                                     <option></option>

@@ -649,7 +649,7 @@ class Eng_req_m extends CI_Model {
     }
 
     private function getRfiReply($id){
-        $this->db->select("a.id, a.rfi_id, a.status, a.reply, a.reply_remarks, a.created_by, a.created_at, c.description as company_name, d.name as position_name,
+        $this->db->select("a.id, a.rfi_id, a.status, a.reply, a.created_by, a.created_at, c.description as company_name, d.name as position_name,
             CONCAT(b.firstname, ' ', IF(b.middlename IS NOT NULL AND b.middlename != '', CONCAT(LEFT(b.middlename,1), '. '), ''), b.lastname) as created_by_name,
         ");
         $this->db->from($this->replyTable. ' as a');
@@ -765,6 +765,7 @@ class Eng_req_m extends CI_Model {
         
                     $resultset["file_upload"][] = [
                         "file_name" => $uploadedName,
+                        "fileType"   => $_FILES['file']['type'],
                         "status"    => "success"
                     ];
         
@@ -916,7 +917,7 @@ class Eng_req_m extends CI_Model {
     $msg .= "\n\n<b>Project:</b> " . strtoupper($data['project_name_text']);
     $msg .= "\n<b>Location:</b> " . strtoupper($data['project_location']);
     $msg .= "\n\n<b>ATTENTION:</b> " . strtoupper($data['attention']);
-    $msg .= "\n<b>RFI No:</b> " . strtoupper($data['rfi_no']);
+    $msg .= "\n<b>RFI Reference No:</b> " . strtoupper($data['rfi_no']);
     $msg .= "\n<b>Requested By:</b> {$data['requested_by_name']}";
     $msg .= "\n<b>Request Type:</b> ".strtoupper($data['request_type']);
     $msg .= "\n<b>Reply Needed By:</b> {$data['reply_needed']}";
