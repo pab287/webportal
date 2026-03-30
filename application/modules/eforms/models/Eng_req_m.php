@@ -918,8 +918,8 @@ class Eng_req_m extends CI_Model {
     $msg .= "\n\n<b>ATTENTION:</b> " . strtoupper($data['attention']);
     $msg .= "\n<b>RFI No:</b> " . strtoupper($data['rfi_no']);
     $msg .= "\n<b>Requested By:</b> {$data['requested_by_name']}";
-    $msg .= "\n<b>Request Type:</b> {$data['request_type']}";
-    $msg .= "\n<b>Reply Needed:</b> {$data['reply_needed']}";
+    $msg .= "\n<b>Request Type:</b> ".strtoupper($data['request_type']);
+    $msg .= "\n<b>Reply Needed By:</b> {$data['reply_needed']}";
     $msg .= "\n<b>Request Description:</b>\n{$needed_info}";
     return $msg;
 }
