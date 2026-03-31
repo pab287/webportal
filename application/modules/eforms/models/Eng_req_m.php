@@ -44,7 +44,7 @@ class Eng_req_m extends CI_Model {
     }
 
     private function getRFIsData($search, $limit, $offset, $sortBy, $sortOrder, $filterFields, $is_archive){
-        $this->db->select("a.*, d.status, d.status, d.reply_at, d.reply_by, 
+        $this->db->select("a.*, d.status, d.reply_at, d.reply_by, 
                     CONCAT(
                 b.firstname, ' ',
                 IF(
