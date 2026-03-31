@@ -453,7 +453,7 @@ let application_vue = new Vue({
                         toastr.success(res.message, "Success", 10000);
                         localStorage.clear();
                         document.cookie = "gcc_already_submitted=true;path=/;max-age=259200";
-                        window.location.href = "online_registration/thank_you";
+                        window.location.href = baseUrl + "crs/online_registration/thank_you";
                     }
                 },
                 error: function (err) {
