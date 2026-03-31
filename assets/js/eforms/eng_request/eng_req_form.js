@@ -15,7 +15,6 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
 
 
 $(document).ready(function () {
-
     rfiTable = $('#rfi_table').DataTable({
         serverSide: true,
         processing: true,
@@ -34,13 +33,65 @@ $(document).ready(function () {
         },
         columns: [
             { data: "id",visible : false, searchable: false },
-            { data: "rfi_no"},
-            { data: "project_name" },
-            { data: "project_location" },
-            {
-                data: "reply_needed",
+            { data: "rfi_no",
                 render: function (data, type, row) {
-                    return moment(data).format("MMMM DD, YYYY");
+            
+                    let badge = "";
+            
+                    switch (row.status) {
+                        case "pending":
+                            badge = `<span class="badge badge-success">PENDING</span>`;
+                            break;
+
+                        case "approved":
+                            badge = `<span class="badge badge-success">APPROVED</span>`;
+                            break;
+            
+                        // case "disapproved":
+                        //     badge = `<span class="badge badge-danger">DISAPPROVED</span>`;
+                        //     break;
+            
+                        case "for_approve":
+                            badge = `<span class="badge badge-warning">FOR APPROVAL</span>`;
+                            break;
+            
+                        case "noted":
+                            badge = `<span class="badge badge-primary">NOTED</span>`;
+                            break;
+            
+                        default:
+                            badge = `<span class="badge badge-secondary">${row.status ?? 'UNKNOWN'}</span>`;
+                    }
+            
+                    return `
+                        <div>
+                            <strong>Reference No:</strong> ${row.rfi_no}<br>
+                            ${badge}
+                        </div>
+                    `;
+                }
+            },
+            { data: "project_name",
+                render: function (data, type, row) {
+                    return `${row.project_name} - ${row.project_location}`;
+                }
+            },
+            { data: "reply_needed",
+                render: function (data, type, row) {
+                    if (type !== "display") return data;
+                    if (!data) return "";
+                    const formattedDate = moment(data).format("MMMM DD, YYYY");
+                    let badge = "";
+            
+                    if (row.status !== "noted") {
+                        const today = moment().startOf("day");
+                        const dueDate = moment(data).startOf("day");
+            
+                        if (dueDate.isBefore(today)) {
+                            badge = ` <span class="badge badge-danger ml-1">OVERDUE</span>`;
+                        }
+                    }
+                    return `${formattedDate}${badge}`;
                 }
             },
             {
@@ -80,9 +131,9 @@ $(document).ready(function () {
                             data-toggle="m-tooltip"
                             data-placement="bottom"
                             data-skin="dark"
-                            data-original-title="Edit"
+                            data-original-title="View Request"
                             data-delay='{"show":300}'>
-                            <i class="la la-edit"></i>
+                            <i class="la la-eye"></i>
                         </a>
                         <button class="btn btn-default m-btn m-btn--hover-brand 
                             m-btn--icon m-btn--icon-only m-btn--pill"

@@ -44,7 +44,7 @@ class Eng_req_m extends CI_Model {
     }
 
     private function getRFIsData($search, $limit, $offset, $sortBy, $sortOrder, $filterFields, $is_archive){
-        $this->db->select("a.*, 
+        $this->db->select("a.*, d.status, d.status, d.reply_at, d.reply_by, 
                     CONCAT(
                 b.firstname, ' ',
                 IF(
@@ -58,6 +58,7 @@ class Eng_req_m extends CI_Model {
         $this->db->from($this->rfiTable.' as a');
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.created_by", "LEFT");
         $this->db->join($this->projectTable." as c", "c.id = a.project_id", "LEFT");
+        $this->db->join($this->replyTable." as d", "d.rfi_id = a.id", "LEFT");
         $this->db->where("a.is_archive", $is_archive);
         if ($search) {
             $this->db->group_start();
@@ -815,14 +816,18 @@ class Eng_req_m extends CI_Model {
             $resultset['status'] = $status;
     
         } elseif ($status == "disapproved") {
+            $contacts = array(
+                "requestor" => $post['reply_by'],
+            );
             $success = $this->disapproveReply($status, $eng_rfi_id, $reply_id, $remarks);
             $resultset['success'] = $success;
             $resultset['message'] = $success ? "REPLY SET TO DISAPPROVED." : "Failed to update reply.";
+            $resultset['telegram'] = $this->sendTelegram($eng_rfi_id,$contacts, $remarks);
         } elseif ($status == "noted") {
             $success = $this->noteReply($status, $eng_rfi_id, $reply_id, $remarks);
             $resultset['success'] = $success;
             $resultset['message'] = $success ? "REPLY NOTED SUCCESSFULLY." : "Failed to note reply.";
-            $resultset['telegram'] = $this->sendTelegram($eng_rfi_id,$contacts, $remarks);
+            $resultset['telegram'] = $this->sendTelegram($eng_rfi_id,$contacts);
         } else {
             $resultset['message'] = "INVALID STATUS.";
         }
@@ -861,13 +866,18 @@ class Eng_req_m extends CI_Model {
         return $this->db->where('rfi_id', $eng_rfi_id)->where('id',$reply_id)->update($this->replyTable, $data);
     }
 
-    public function sendTelegram($eng_rfi_id, $contacts){
+    public function sendTelegram($eng_rfi_id, $contacts, $remarks = null){
         $telegram_details = $this->getTelegramBot("gcc notification bot");
         $emp_details      = $this->getEmpTelegramId($contacts);
         $bot_token        = $telegram_details->telegram_bot_token;
         $rfiUrl           = base_url("eforms/engineering_request_forms/view_rfi_request/" . $eng_rfi_id);
-    
-        $message = "<b>RFI Approved</b>\nRequest for Information has been approved.";
+        
+        if(!$remarks){
+            $message = "<b>RFI Approved</b>\nRequest for Information has been approved.";
+        }else{
+            $message = "<b>RFI Disapproved</b>\nRequest for Information has been disapproved.\nReason: {$remarks}";
+        }
+
     
         $keyboard = [
             'inline_keyboard' => [[

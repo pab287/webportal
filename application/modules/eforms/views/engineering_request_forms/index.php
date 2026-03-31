@@ -83,9 +83,8 @@
                         <thead>
                         <tr>
                             <th></th>
-                            <th>RFI NO</th>
+                            <th>RFI INFO</th>
                             <th>Project</th>
-                            <th>Location</th>
                             <th>Reply Needed</th>
                             <th>Created At</th>
                             <th>Created By</th>
