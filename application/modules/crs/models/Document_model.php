@@ -2,6 +2,7 @@
 
 class Document_model extends CI_Model{
     protected $resumeTable = "dbhrd.document_body";
+    protected $positionTable = "gcchris.tblposition";
     private $twoYearsDate, $checkDate;
     function __construct()
     {
@@ -3201,6 +3202,187 @@ class Document_model extends CI_Model{
         $post = $this->input->post();
         $this->core_layout->setEventLog($post['type']." Exported","export", "success", "dbhrd", "user");
         return true;
+    }
+
+    public function getCandidates(){
+        $resultset = array();
+        $post = $this->input->post();
+        $order_val = array(array("column"=>"0", "dir"=>"desc"));
+        $search = (isset($post["search"]['value']) && $post["search"]['value']) ? $post["search"]['value'] : false;
+        $limit = (isset($post["length"]) && $post["length"]) ? $post["length"] : 10;
+        $offset = (isset($post["start"]) && $post["start"]) ? $post["start"] : 0;
+        $sortBy =  (isset($post["columns"]) && $post["columns"])? $post["columns"]: 1;
+        $sortOrder = (isset($post["order"]) && $post["order"]) ? $post["order"] : $order_val;
+        $year = (isset($post["year"]) && $post["year"]) ? $post["year"] : date("Y");
+        $archive = (isset($post["archive"]) && $post["archive"]) ? $post["archive"] : 0;
+        $rowCount = 0;
+        $rowData = array();
+        $rowData = $this->getCandidatesData($search, $limit, $offset, $sortBy, $sortOrder, $year, $archive);
+        $rowCount = $this->getCandidatesDataCount($search,$year, $archive);
+        $resultset["recordsTotal"] = $rowCount;
+        $resultset["recordsFiltered"] = $rowCount;
+        $resultset["data"] = $rowData;
+  
+          return $resultset;
+    }
+
+    private function getCandidatesData($search, $limit, $offset, $sortBy, $sortOrder, $year, $archive){
+        $data = array();
+        $filterFields = array("a.status", "a.firstname", "a.lastname", "a.schools", "a.courses", "a.positions", "a.recruitment", "a.applied_dt", "a.contact_no", "a.remarks");
+        $sql = "a.*, a.resume as attachment, 
+          CONCAT(
+              LOWER(a.firstname),
+              IF(a.middlename IS NOT NULL AND a.middlename != '', 
+              CONCAT(' ', UPPER(LEFT(a.middlename, 1)), '.'), 
+              ''),
+              ' ',
+              LOWER(a.lastname)
+          ) AS name,
+          a.positions, a.recruitment, 
+          a.applied_dt, a.remarks, a.contact_no";
+          $this->db->select($sql);
+          $this->db->from("dbhrd.candidates a");
+          $this->db->where("a.is_archive", $archive);
+          $this->db->where("a.is_online", 1);
+            //$this->db->join("dbhrd.candidate_attachment b", "b.candidate_id = a.id", "left");
+            //$this->db->where('status != ', 'hired');
+            //$this->db->where('status != ', 'blacklisted');
+        if ($year && $year != 'All'){
+          $this->db->where("YEAR(a.applied_dt)", $year);
+        }
+  
+        if ($search) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+        if ($limit != -1) {
+            $this->db->limit($limit, $offset);
+        }
+        $i = $sortOrder[0]['column'];
+        $this->db->order_by($sortBy[$i]['data'], $sortOrder[0]['dir']);
+        $this->db->group_by("a.id");
+        $query = $this->db->get();
+        if ($query->num_rows() > 0) {
+            $arrData = array();
+
+            foreach ($query->result() as $key => $rs) {
+                if (!empty($rs->positions)) {
+                    $positions = explode(',', $rs->positions);
+                    $rs->positions = [];
+                    foreach ($positions as $position) {
+                        $posData = $this->getPositionData(trim($position));
+                        if ($posData) {
+                            $rs->positions[] = $posData;
+                        }
+                    }
+                }
+                $rs->resume = (!empty($rs->resume) && file_exists(FCPATH . "uploads/files/hrd/new_resume_{$rs->id}/{$rs->resume}")) ? base_url("uploads/files/hrd/new_resume_{$rs->id}/{$rs->resume}") : null;
+                $rs->education = $this->getEducationData($rs->id);
+                $rs->work_experience = $this->getWorkExperienceData($rs->id);
+                $rs->reference = $this->getReferenceData($rs->id);
+
+                $arrData[$key] = $rs;
+            }
+    
+            foreach ($arrData as $k => $v) {
+                $data[] = $v;
+            }
+
+        }
+        return $data;
+      }
+
+      private function getCandidatesDataCount($search,$year,$archive){
+        $filterFields = array("a.status", "a.firstname", "a.lastname", "a.schools", "a.courses", "a.positions", "a.recruitment", "a.applied_dt", "a.contact_no", "a.remarks");
+    //   $sql = "a.id, a.status, a.vacancy_status, CONCAT(a.firstname,' ',a.lastname) AS name, a.school, a.course, a.position, a.tag1, a.recruitment, a.applied_dt, b.filename, a.remarks, a.contact_no, a.description";
+    //   $this->db->select($sql);
+      $this->db->from("dbhrd.candidates a");
+      $this->db->where("a.is_archive", $archive);
+      $this->db->where("a.is_online", 1);
+    //   $this->db->join("dbhrd.file_attachment b", "a.id = b.body_id", "left");
+    //   $this->db->where('vacancy_status != ', 'resolved');
+    //   $this->db->where('vacancy_status != ', 'archived');
+    //   $this->db->where('status != ', 'hired');
+    //   $this->db->where('status != ', 'blacklisted');
+      if ($year && $year != 'All'){
+        $this->db->where("YEAR(a.applied_dt)", $year);
+      }
+
+          if ($search) {
+            $this->db->group_start();
+            foreach ($filterFields as $key => $field) {
+                if ($key == 0) {
+                    $this->db->like($field, $search, "both");
+                } else {
+                    $this->db->or_like($field, $search, "both");
+                }
+            }
+            $this->db->group_end();
+        }
+        $query = $this->db->get();
+        return $query->num_rows();
+    }
+
+    private function getPositionData($id) {
+        $this->db->select("name");
+        $this->db->from($this->positionTable);
+        $this->db->where('id', $id);
+        $row = $this->db->get()->row();
+        return $row ? $row->name : null;
+    }
+
+    private function getEducationData($id) {
+        $query = $this->db->select("id,educ_level_type, educ_school, educ_degree, educ_honors, educ_from, educ_to")
+            ->from("dbhrd.candidate_educations")
+            ->where('applicant_id', $id)
+            ->get();
+    
+        return $query->result_array(); 
+    }
+
+    private function getWorkExperienceData($id) {
+        $query = $this->db->select("id, work_company, work_position, work_from, work_to, work_status, work_reason")
+            ->from("dbhrd.candidate_work_exp")
+            ->where('applicant_id', $id)
+            ->get();
+    
+        return $query->result_array(); 
+    }
+
+    private function getReferenceData($id) {
+        $query = $this->db->select("id, ref_name, ref_contact_no, ref_address, ref_company, ref_position, ref_relationship")
+            ->from("dbhrd.candidate_references")
+            ->where('applicant_id', $id)
+            ->get();
+    
+        return $query->result_array(); 
+    }
+
+    public function deleteApplication(){
+        $resultArray = [];
+        $post = $this->input->post();
+        $id = (int) $post['id'];
+        $updated = $this->db->where('id', $id)->update('dbhrd.candidates', ['is_archive' => 1]);
+        $resultArray['success'] = $updated;
+        $resultArray['msg'] = $updated ? 'Application archived successfully.' : 'Failed to archive application.';
+        return $resultArray;
+    }
+
+    public function restoreApplication(){
+        $resultArray = [];
+        $post = $this->input->post();
+        $id = (int) $post['id'];
+        $updated = $this->db->where('id', $id)->update('dbhrd.candidates', ['is_archive' => 0]);
+        $resultArray['success'] = $updated;
+        $resultArray['msg'] = $updated ? 'Application restored successfully.' : 'Failed to restore application.';
+        return $resultArray;
     }
 
 }
