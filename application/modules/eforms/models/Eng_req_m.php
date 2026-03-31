@@ -8,6 +8,7 @@ class Eng_req_m extends CI_Model {
     protected $replyAttachmentTable = "gcceforms.eng_rfi_form_attachments";
     protected $telegramConfigTable = "gccmaster.telegram_config";
     protected $usersTable = "gccmaster.tblusers";
+    protected $employeesTable = "gccmaster.tblemployees";
     protected $user_data;
     public function __construct() {
         parent::__construct();
@@ -149,9 +150,12 @@ class Eng_req_m extends CI_Model {
     
         $attachments = $this->db->get()->result_array();
 
+        $assignatory = $this->getAssignatory($id);
+
         $resultset['reply'] = $this->getRfiReply($id);
         $resultset['data'] = $rfiData;
         $resultset['attachments'] = $attachments;
+        $resultset['assignatory'] = $assignatory;
         $resultset['reply_attachments'] = $this->getRFIAttachments($resultset['reply']);
         return $resultset;
     }
@@ -411,7 +415,6 @@ class Eng_req_m extends CI_Model {
                 "rfi_id" => $insert_id,
                 "reply"   => "",
                 "status"       => "pending",
-                "created_by" => $this->user_data['emp_id'],
             ]
         );
 
@@ -649,13 +652,8 @@ class Eng_req_m extends CI_Model {
     }
 
     private function getRfiReply($id){
-        $this->db->select("a.id, a.rfi_id, a.status, a.reply, a.created_by, a.created_at, c.description as company_name, d.name as position_name,
-            CONCAT(b.firstname, ' ', IF(b.middlename IS NOT NULL AND b.middlename != '', CONCAT(LEFT(b.middlename,1), '. '), ''), b.lastname) as created_by_name,
-        ");
+        $this->db->select("a.id, a.rfi_id, a.status, a.reply, a.reply_by, a.reply_by");
         $this->db->from($this->replyTable. ' as a');
-        $this->db->join("gccmaster.tblemployees as b", "b.id = a.created_by", "LEFT");
-        $this->db->join("gcchris.tblcompanies as c", "c.id = b.company_id", "LEFT");
-        $this->db->join("gcchris.tblposition as d", "d.id = b.position", "LEFT");
         $this->db->where("a.rfi_id", $id);
         $this->db->where("a.is_archived", 0);
         $query = $this->db->get();
@@ -681,6 +679,8 @@ class Eng_req_m extends CI_Model {
         $data = array(
             "reply"      => $post['reply'],
             "status" => "for_approve",
+            "reply_by" => $this->user_data['emp_id'],
+            "reply_at" => date("Y-m-d H:i:s"),
         );
         
         $eng_rfi_id = $post['rfi_id'];
@@ -801,6 +801,7 @@ class Eng_req_m extends CI_Model {
         $status     = $post['set_status'];
         $eng_rfi_id = $post['rfi_id'];
         $reply_id   = $post['id'];
+        $remarks = $post['remarks'];
         $contacts = array(
             "requestor" => $post['requestor'],
             "creator" => $post['creator'],
@@ -808,51 +809,54 @@ class Eng_req_m extends CI_Model {
         );
 
         if ($status == "approved") {
-            $success = $this->approveReply($status, $eng_rfi_id, $reply_id);
+            $success = $this->approveReply($status, $eng_rfi_id, $reply_id, $remarks);
             $resultset['success'] = $success;
-            $resultset['message'] = $success ? "Reply approved successfully." : "Failed to approve reply.";
+            $resultset['message'] = $success ? "REPLY APPROVED SUCCESSFULLY." : "FAILED TO APPROVE REPLY.";
             $resultset['status'] = $status;
     
-        } elseif ($status == "pending") {
-            $success = $this->disapproveReply($status, $eng_rfi_id, $reply_id);
+        } elseif ($status == "disapproved") {
+            $success = $this->disapproveReply($status, $eng_rfi_id, $reply_id, $remarks);
             $resultset['success'] = $success;
-            $resultset['message'] = $success ? "Reply set to pending." : "Failed to update reply.";
+            $resultset['message'] = $success ? "REPLY SET TO DISAPPROVED." : "Failed to update reply.";
         } elseif ($status == "noted") {
-            $success = $this->noteReply($status, $eng_rfi_id, $reply_id);
+            $success = $this->noteReply($status, $eng_rfi_id, $reply_id, $remarks);
             $resultset['success'] = $success;
-            $resultset['message'] = $success ? "Reply noted successfully." : "Failed to note reply.";
-            $resultset['telegram'] = $this->sendTelegram($eng_rfi_id,$contacts);
+            $resultset['message'] = $success ? "REPLY NOTED SUCCESSFULLY." : "Failed to note reply.";
+            $resultset['telegram'] = $this->sendTelegram($eng_rfi_id,$contacts, $remarks);
         } else {
-            $resultset['message'] = "Invalid status.";
+            $resultset['message'] = "INVALID STATUS.";
         }
         return $resultset;
     }
 
 
 
-    private function approveReply($status,$eng_rfi_id,$reply_id){
+    private function approveReply($status,$eng_rfi_id,$reply_id,$remarks){
         $data = array(
             'status' => $status,
             'approve_by' => $this->user_data['emp_id'],
             'approve_at' => date("Y-m-d H:i:s"),
+            'approve_remarks' => $remarks
         );
         return $this->db->where('rfi_id', $eng_rfi_id)->where('id',$reply_id)->update($this->replyTable, $data);
     }
 
-    public function disapproveReply($status,$eng_rfi_id,$reply_id){
+    public function disapproveReply($status,$eng_rfi_id,$reply_id,$remarks){
         $data = array(
             'status' => $status,
             'disapprove_by' => $this->user_data['emp_id'],
             'disapprove_at' => date("Y-m-d H:i:s"),
+            'disapprove_remarks' => $remarks
         );
         return $this->db->where('rfi_id', $eng_rfi_id)->where('id',$reply_id)->update($this->replyTable, $data);
     }
 
-    public function noteReply($status,$eng_rfi_id,$reply_id){
+    public function noteReply($status,$eng_rfi_id,$reply_id,$remarks){
         $data = array(
             'status' => $status,
             'note_by' => $this->user_data['emp_id'],
             'note_at' => date("Y-m-d H:i:s"),
+            'note_remarks' => $remarks
         );
         return $this->db->where('rfi_id', $eng_rfi_id)->where('id',$reply_id)->update($this->replyTable, $data);
     }
@@ -1023,6 +1027,70 @@ private function sendTelegramMessage($message, $rfiUrl, $bot_token, $telegram_ch
             $result[$role] = $lookup[$empId] ?? "";
         }
         return $result;
+    }
+
+    public function getAssignatory($id){
+        $this->db->select("
+            a.approve_remarks, a.disapprove_remarks, a.note_remarks, 
+            d.name AS reply_position,
+            f.name AS approve_position,
+            h.name AS disapprove_position,
+            j.name AS note_position,
+            CONCAT(
+                reply.firstname, ' ',
+                IF(reply.middlename IS NOT NULL AND reply.middlename != '',
+                    CONCAT(LEFT(reply.middlename,1), '. '),
+                    ''
+                ),
+                reply.lastname
+            ) AS reply_by_name,
+    
+            CONCAT(
+                approve.firstname, ' ',
+                IF(approve.middlename IS NOT NULL AND approve.middlename != '',
+                    CONCAT(LEFT(approve.middlename,1), '. '),
+                    ''
+                ),
+                approve.lastname
+            ) AS approve_by_name,
+    
+            CONCAT(
+                disapprove.firstname, ' ',
+                IF(disapprove.middlename IS NOT NULL AND disapprove.middlename != '',
+                    CONCAT(LEFT(disapprove.middlename,1), '. '),
+                    ''
+                ),
+                disapprove.lastname
+            ) AS disapprove_by_name,
+    
+            CONCAT(
+                note.firstname, ' ',
+                IF(note.middlename IS NOT NULL AND note.middlename != '',
+                    CONCAT(LEFT(note.middlename,1), '. '),
+                    ''
+                ),
+                note.lastname
+            ) AS note_by_name
+        ");
+    
+        $this->db->from($this->replyTable . ' AS a');
+        $this->db->where('a.rfi_id', $id);
+        $this->db->join($this->employeesTable . ' AS reply', 'reply.id = a.reply_by', 'LEFT');
+        $this->db->join('gcchris.tblcompanies AS c', 'c.id = reply.company_id', 'LEFT');
+        $this->db->join('gcchris.tblposition AS d', 'd.id = reply.position', 'LEFT');
+        $this->db->join($this->employeesTable . ' AS approve', 'approve.id = a.approve_by', 'LEFT');
+        $this->db->join('gcchris.tblcompanies AS e', 'e.id = approve.company_id', 'LEFT');
+        $this->db->join('gcchris.tblposition AS f', 'f.id = approve.position', 'LEFT');
+        $this->db->join($this->employeesTable . ' AS disapprove', 'disapprove.id = a.disapprove_by', 'LEFT');
+        $this->db->join('gcchris.tblcompanies AS g', 'g.id = disapprove.company_id', 'LEFT');
+        $this->db->join('gcchris.tblposition AS h', 'h.id = disapprove.position', 'LEFT');
+        $this->db->join($this->employeesTable . ' AS note', 'note.id = a.note_by', 'LEFT');
+        $this->db->join('gcchris.tblcompanies AS i', 'i.id = note.company_id', 'LEFT');
+        $this->db->join('gcchris.tblposition AS j', 'j.id = note.position', 'LEFT');
+    
+        $query = $this->db->get();
+    
+        return $query->row();
     }
 
 }

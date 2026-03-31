@@ -54,6 +54,42 @@
             $this->load->view('core/templates/footer');
         }
 
+        public function view_rfi_request($id){
+            $data = array();
+            $result = $this->eng_req->viewRFIRequest($id);
+            if($result['data'] == null){
+                redirect(base_url("eforms/engineering_request_forms/masterfile"), "refresh");
+            }
+            $data['request'] = $result['data'];
+            $data['attachments'] = $result['attachments'];
+            $data['reply'] = $result['reply'];
+            $data['reply_attachments'] = $result['reply_attachments'];
+            $data['req_types'] = $this->eng_req->getReqTypes();
+            $data['assignatory'] = $result['assignatory'];
+            $this->core_layout->setPageTitle("Request For Information");
+            $this->core_layout->setPrivilegeName("eng_req");
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+            $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload.css", true);
+            $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload-ui.css", true);
+            $this->core_layout->addJs("global/plugins/ckeditor/build/ckeditor.js", true);
+            $this->core_layout->addJs("js/eforms/eng_request/edit_rfi_request.js", true, $data);
+            $this->load->view('core/templates/header');
+            $this->load->view('eforms/engineering_request_forms/edit_rfi_request');
+            $this->load->view('core/templates/footer');
+        }
+
+        public function projects(){
+            $data = array();
+            $data['employee'] = $this->eng_req->select2Employee();
+            // $data['supervisor'] = $this->eng_req->select2Supervisor();
+            // $data['installer'] = $this->eng_req->select2Installer();
+            $this->core_layout->addJs("js/eforms/eng_request/projects.js", true, $data);
+            $this->load->view('core/templates/header');
+            $this->load->view('eforms/engineering_request_forms/projects');
+            $this->load->view('core/templates/footer');
+        }
+
         public function get_req_types(){
             $data = $this->eng_req->getReqType();
             $this->output->set_content_type('json')->set_output(json_encode($data));
@@ -74,28 +110,6 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
-        public function view_rfi_request($id){
-            $data = array();
-            $result = $this->eng_req->viewRFIRequest($id);
-            $data['request'] = $result['data'];
-            $data['attachments'] = $result['attachments'];
-            $data['reply'] = $result['reply'];
-            $data['reply_attachments'] = $result['reply_attachments'];
-            $data['req_types'] = $this->eng_req->getReqTypes();
-            // $data['actions'] = $this->core_layout->generatePrivilegeAction();
-
-            $this->core_layout->setPageTitle("Request For Information");
-            $this->core_layout->setPrivilegeName("eng_req");
-            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
-            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
-            $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload.css", true);
-            $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload-ui.css", true);
-            $this->core_layout->addJs("global/plugins/ckeditor/build/ckeditor.js", true);
-            $this->core_layout->addJs("js/eforms/eng_request/edit_rfi_request.js", true, $data);
-            $this->load->view('core/templates/header');
-            $this->load->view('eforms/engineering_request_forms/edit_rfi_request');
-            $this->load->view('core/templates/footer');
-        }
 
         public function archive_request(){
             $data = $this->eng_req->archiveRequest();
@@ -107,16 +121,6 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
-        public function projects(){
-            $data = array();
-            $data['employee'] = $this->eng_req->select2Employee();
-            // $data['supervisor'] = $this->eng_req->select2Supervisor();
-            // $data['installer'] = $this->eng_req->select2Installer();
-            $this->core_layout->addJs("js/eforms/eng_request/projects.js", true, $data);
-            $this->load->view('core/templates/header');
-            $this->load->view('eforms/engineering_request_forms/projects');
-            $this->load->view('core/templates/footer');
-        }
 
         public function get_projects(){
             $data = $this->eng_req->getProjects();
@@ -140,11 +144,6 @@
 
         public function save_rfi(){
             $data = $this->eng_req->createRFI();
-            $this->output->set_content_type('json')->set_output(json_encode($data));
-        }
-
-        public function save_reply(){
-            $data = $this->eng_req->saveReply();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 

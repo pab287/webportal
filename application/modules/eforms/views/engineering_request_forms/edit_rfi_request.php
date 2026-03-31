@@ -169,7 +169,7 @@
                                                 <div class="row">
                                                     <div class="col-12">
                                                         <label class="form-control-label">
-                                                            ATTACHMENTS
+                                                            REQUEST ATTACHMENTS
                                                         </label>
                                                     </div>
                                                 </div>
@@ -202,7 +202,7 @@
                                             <div class="row">
                                                 <div class="col-12">
                                                     <div class="form-group">
-                                                        <div class="form-control-label mb-2">
+                                                        <div class="form-control-label m--font-bold mb-2">
                                                             INFORMATION NEEDED
                                                         </div>
                                                         <div class="form-control textarea-view"
@@ -227,7 +227,7 @@
                                             <div class="row pb-2">
                                                 <div class="col-12">
                                                     <label for="fileupload" class="form-control-label m--font-bold required">
-                                                        ATTACHMENTS
+                                                        REPLY ATTACHMENTS
                                                     </label>
                                                     <div class="form-group mb-0" v-if="showUpdate">
                                                         <span class="btn btn-success fileinput-button">
@@ -270,18 +270,92 @@
                                                     </div>
                                                 </div>
                                             </template>
-                                            <div class="m-separator m-separator--dashed m-separator--md"></div>
+                                            <template v-if="reply.status != 'pending'">
+                                                <div class="m-separator m-separator--dashed m-separator--md"></div>
+                                                <div class="row justify-content-center">
+                                                    <div class="col-4" v-if="reply.status != 'pending'">
+                                                        <div class="card border text-center p-3 h-100">
+                                                            <div class="text-uppercase fw-semibold mb-3">REPLY FROM:</div>
+                                                            <div class="m--font-boldest text-uppercase" v-text="assignatory.reply_by_name"></div>
+                                                            <div class="text-muted small" v-text="assignatory.reply_position"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-4" v-if="reply.status != 'pending' && reply.status != 'for_approve' && reply.status != 'disapproved'">
+                                                        <div class="card border text-center p-3 h-100">
+                                                            <div class="text-uppercase fw-semibold mb-3">CHECKED BY:</div>
+                                                            <div class="m--font-boldest text-uppercase" v-text="assignatory.approve_by_name"></div>
+                                                            <div class="text-muted small" v-text="assignatory.approve_position"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-4" v-if="reply.status == 'disapproved'">
+                                                        <div class="card border text-center p-3 h-100">
+                                                            <div class="text-uppercase fw-semibold mb-3">DISAPPROVE BY:</div>
+                                                            <div class="m--font-boldest text-uppercase" v-text="assignatory.disapprove_by_name"></div>
+                                                            <div class="text-muted small" v-text="assignatory.disapprove_position"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-4" v-if="reply.status == 'noted'">
+                                                        <div class="card border text-center p-3 h-100">
+                                                            <div class="text-uppercase fw-semibold mb-3">NOTED BY:</div>
+                                                            <div class="m--font-boldest text-uppercase" v-text="assignatory.note_by_name"></div>
+                                                            <div class="text-muted small" v-text="assignatory.note_position"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <template>
+                                                <div class="m-separator m-separator--dashed m-separator--md"></div>
+                                                <div class="row justify-content-center">
+                                                    <div class="col-6" v-if="assignatory.approve_remarks && reply.status != 'disapproved'">
+                                                        <div class="form-group">
+                                                            <div class="form-control-label mb-2">
+                                                                APPROVE REMARKS
+                                                            </div>
+                                                            <div class="form-control textarea-view"
+                                                                v-html="assignatory.approve_remarks">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6" v-if="reply.status == 'disapproved'">
+                                                        <div class="form-group">
+                                                            <div class="form-control-label mb-2">
+                                                                DISAPPROVE REMARKS
+                                                            </div>
+                                                            <div class="form-control textarea-view"
+                                                                v-html="assignatory.disapprove_remarks">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6" v-if="assignatory.note_remarks && reply.status == 'noted'">
+                                                        <div class="form-group">
+                                                            <div class="form-control-label mb-2">
+                                                                NOTE REMARKS
+                                                            </div>
+                                                            <div class="form-control textarea-view"
+                                                                v-html="assignatory.note_remarks">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
                                             <hr/>
                                             <div class="row">
                                                 <div class="col-6">
-                                                    <button class="btn btn-info btnEdit" type="submit" v-show="showUpdate" :disabled="!changes.attachment && !changes.reply">SAVE REPLY</button>
-                                                    <button class="btn btn-warning text-light btnEdit" type="button" @click="editReply" v-show="reply.status == 'pending' && canEdit && !showUpdate">PROCESS REPLY</button>
-                                                    
+                                                    <button class="btn btn-info btnEdit" type="submit" v-show="showUpdate" :disabled="isSubmitting || (!changes.attachment && !changes.reply)">
+                                                        <span v-if="isSubmitting" class="d-flex align-items-center">
+                                                            <span class="spinner spinner-white spinner-sm mr-2"></span>
+                                                            SUBMITTING...
+                                                        </span>
+                                                        <span v-else>
+                                                            SUBMIT REPLY
+                                                        </span>
+                                                    </button>
+                                                    <button class="btn btn-warning text-light btnEdit" type="button" @click="editReply" v-show="(reply.status == 'disapproved' || reply.status == 'pending') && canEdit && !showUpdate">PROCESS REPLY</button>
                                                 </div>
                                                 <div class="col-6 text-right">
-                                                    <button class="btn btn-success btnApprove_action" type="button" @click="processReply('approved')" v-show="reply.status == 'for_approve' && reply.reply != ''">APPROVE</button>
-                                                    <button class="btn btn-danger btnDisapprove_action" type="button" @click="processReply('pending')" v-show="reply.status == 'for_approve' && reply.reply != ''">DISAPPROVE</button>
-                                                    <button class="btn btn-primary text-light btnApprove_action" type="button" @click="processReply('noted')"  v-show="reply.status == 'approved' && reply.reply != ''">NOTE</button>
+                                                    <button class="btn btn-success btnApprove_action" type="button" @click="processReply('approved')" v-show="reply.status == 'for_approve' && reply.reply != ''" :disabled="isProcessingReply">APPROVE</button>
+                                                    <button class="btn btn-danger btnDisapprove_action" type="button" @click="processReply('disapproved')" v-show="reply.status == 'for_approve' && reply.reply != ''" :disabled="isProcessingReply">DISAPPROVE</button>
+                                                    <button class="btn btn-primary text-light btnApprove_action" type="button" @click="processReply('noted')"  v-show="reply.status == 'approved' && reply.reply != ''" :disabled="isProcessingReply">MARK AS NOTED</button>
                                                 </div>
                                             </div>
                                         </form>

@@ -7,6 +7,7 @@ let informationEditor;
 let id = null;
 let reply_id = null;
 let fileStore = {};
+let _assignatory = null;
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(_tempContentData.request && Object.keys(_tempContentData.request).length > 0){
@@ -23,6 +24,9 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     }
     if(_tempContentData.reply_attachments && Object.keys(_tempContentData.reply_attachments).length > 0){
         _reply_attachments = _tempContentData.reply_attachments;
+    }
+    if(_tempContentData.assignatory && Object.keys(_tempContentData.assignatory).length > 0){
+        _assignatory = _tempContentData.assignatory;
     }
 }
 
@@ -42,9 +46,23 @@ const mimeMap = {
     "image/jpeg": "jpg"
 };
 
+const remarksMap = {
+    approved: 'approve_remarks',
+    pending: 'disapprove_remarks',
+    noted: 'note_remarks',
+};
+
+const messages = {
+    approved: "APPROVE THIS REPLY?",
+    disapproved: "DISAPPROVE THIS REPLY?",
+    noted: "MARK THIS REPLY AS NOTED?",
+};
+
 let edit_rfi = new Vue ({
     el: '#edit_rfi_content',
     data: {
+        isSubmitting: false,
+        isProcessingReply: false,
         activity_logs: {},
         isImage: false,
         attachmentsToUpload: [],
@@ -54,6 +72,7 @@ let edit_rfi = new Vue ({
         attachments: _attachments,
         filePath: null,
         reply : _replies,
+        assignatory : _assignatory,
         replyAttachments: _reply_attachments,
         currentReply: "",
         currentAttachment: null,
@@ -179,31 +198,38 @@ let edit_rfi = new Vue ({
                 informationEditor.disableReadOnlyMode('reply-lock');
 
             } else {
-                informationEditor.enableReadOnlyMode('reply-lock');  // readonly
+                informationEditor.enableReadOnlyMode('reply-lock');
             }
         },
         processReply(status) {
             const _this = this;
-            const messages = {
-                approved: "Approve this reply?",
-                pending: "Disapprove this reply?",
-                noted: "Mark this reply as noted?",
-            };
+            _this.isProcessingReply = true;
             Swal.fire({
-                text: "Are you sure?",
-                title: messages[status] || "Update reply status?",
+                title: messages[status] || "UPDATE REPLY STATUS?",
                 icon: "question",
+                input: "textarea",
+                inputLabel: "REMARKS",
                 showCancelButton: true,
-                confirmButtonText: "Yes!",
-                cancelButtonText: "Cancel"
+                confirmButtonText: "OK",
+                cancelButtonText: "CANCEL",
+                customClass: {
+                    input: "form-control",
+                },
+                inputValidator: (value) => {
+                    if (!value) return "THIS IS A REQUIRED FIELD";
+                  }
             }).then((result) => {
-                if (!result.isConfirmed) return;
+                if (!result.isConfirmed){
+                    _this.isProcessingReply = false;
+                    return;
+                } 
                 $.ajax({
                     url: baseUrl('eforms/engineering_request_forms/process_reply'),
                     method: "POST",
                     data: {
                         csrf_token: _csrf_hash,
                         set_status: status,
+                        remarks: result.value,
                         consultant: _this.content.consultant,
                         requestor: _this.content.requested_by,
                         creator: _this.content.created_by,
@@ -212,10 +238,17 @@ let edit_rfi = new Vue ({
                     success: function (res) {
                         if (res.success) {
                             toastr.success(res.message, "Success", { timeOut: 5000 });
-                            _this.reply.status = status;
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1500);
                         } else {
                             toastr.error(res.message);
+                            _this.isProcessingReply = false;
                         }
+                    },
+                    error: function () {
+                        toastr.error("Request failed.");
+                        _this.isProcessingReply = false;
                     }
                 });
             });
@@ -460,10 +493,11 @@ $.validate({
                 $('.ck-editor__editable').removeClass('is-invalid');
             }
         }
-        if (!(edit_rfi.replyAttachments.length >= 0)) {
+        if (edit_rfi.replyAttachments.length <= 0) {
             $('#fileupload-error').show();
             return false;
         }
+        edit_rfi.isSubmitting = true;
         const form = $('#edit_reply_form');
         const formData = new FormData(form[0]);
         const toUpload = edit_rfi.attachmentsToUpload;
@@ -496,7 +530,7 @@ $.validate({
             
                     setTimeout(function () {
                         window.location.reload();
-                    }, 5000);
+                    }, 1500);
                 }
             }
         });
