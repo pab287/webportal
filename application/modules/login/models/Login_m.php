@@ -770,6 +770,22 @@ Class Login_m extends CI_Model{
             return $this->authResponse('LOCKED', 'This user account is locked. Please contact IT Support');
         }
 
+        $this->resetLoginState($username);
+
+        if ((int) $user->force_update === 1) {
+            $this->session->unset_userdata('logged_in');
+            return [
+                'status' => 'FORCE_PASSWORD_CHANGE',
+                'session' => [
+                    'modal' => 'show',
+                    'post' => [
+                        'username' => $username,
+                        'password' => $password
+                    ]
+                ]
+            ];
+        }
+
         $privileges = $this->get_privileges_by_id($user->id);
         // ✅ Force auth if important
         $requires2FA = ($user->auth == 1 || $user->is_important == 1);
@@ -800,6 +816,13 @@ Class Login_m extends CI_Model{
             'status' => 'SUCCESS',
             'session' => $session
         ];
+    }
+
+    private function resetLoginState($username){
+        $this->db->where('username', $username);
+        $this->db->set('login_attempts', 0);
+        $this->db->set('lockout_dt', null);
+        $this->db->update('gccmaster.tblusers');
     }
 
     private function isTrustedDevice($emp_id){
