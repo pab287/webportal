@@ -10,7 +10,7 @@ class Notification extends MY_Controller {
 		$this->load->model("shift_management_model","sm");
 		
 		$this->load->library('email');
-		$this->load->library('session');
+		//$this->load->library('session');
 		$this->core_layout->setBodyClass("dashboard dashboard_notification");
 		$this->core_layout->setPrivilegeName("gcctime_attendance_nte");
 		

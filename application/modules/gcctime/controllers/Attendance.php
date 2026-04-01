@@ -15,7 +15,7 @@
             $this->load->model('core/upload_model', 'adm_upload');
             $this->core_layout->setPrivilegeName("gcctime_attendance");
             $this->load->library('email');
-            $this->load->library('session');
+            //$this->load->library('session');
 
 
             $this->core_layout->addJs("plugins/moment_js/moment.min.js");
