@@ -690,7 +690,7 @@ $(document).ready(function () {
                 plugin: 'select2',
                 plugin_config: {
                     placeholder: 'Select . . .',
-                    width: '110%',
+                    width: '300px',
                     dropdownParent: $("#modal-query-builder"),
                     ajax: {
                         url: baseUrl("eforms/Travel_order/driver"),
@@ -703,7 +703,28 @@ $(document).ready(function () {
                     }
                 },
                 operators: ['equal', 'not_equal']
-            },
+            }, {
+                id: 'vehicle_id',
+                label: 'Vehicle',
+                type: 'integer',
+                // operators: ['contains', 'equal']
+                input: 'select',
+                plugin: 'select2',
+                plugin_config: {
+                    placeholder: 'Select . . .',
+                    width: '500px',
+                    dropdownParent: $("#modal-query-builder"),
+                    ajax: {
+                        url: baseUrl("eforms/Travel_order/get_vehicle_collection"),
+                        dataType: "json",
+                        global: false,
+                        delay: 500,
+                        done: function (data) {
+                            return data;
+                        }
+                    }
+                }
+            }
         ],
     });
 

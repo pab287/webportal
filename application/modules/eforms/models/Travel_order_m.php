@@ -3885,6 +3885,19 @@
             $driver_name = isset($post['driver']) ? $this->getName($driver) : '';
             $is_emergency = isset($post['is_emergency']) && $post['is_emergency'] ? $post['is_emergency'] : 0;
 
+            if ($commute == 1 || $personal == 1 || $other == 1) {
+                $vehicle = 0;
+                $driver = 0;
+                $driver_name = '';
+            } else {
+                $commute = 0;
+                $personal = 0;
+                $other = 0;
+                $vehicle = isset($post['vehicle']) ? $post['vehicle'] : 0;
+                $driver = isset($post['driver']) ? $post['driver'] : 0;
+                $driver_name = isset($post['driver']) ? $this->getName($driver) : '';
+            }
+
             $data = array(
                 'company' => $post['company_id'],
                 'department' => $post['dep_id'],
@@ -3895,7 +3908,7 @@
                 'is_commute' => $commute,
                 'is_personal' => $personal,
                 'is_others' => $other,
-                'others_remarks' => $post['remark'],
+                'others_remarks' =>  $other == 1 ? $post['remark'] : "",
                 'last_edited_by' => $edited_by,
                 'last_edited_dt' => $current_date,
                 'last_edited_id' => $user_id,
