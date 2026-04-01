@@ -3852,7 +3852,9 @@
                 }
                 $this->delete_temp_all_destination($this->user_data['id']);
 
-                $this->travel_order->sendTelegram($to_last_id, 2);
+                if ($service == 1 || $hitch == 1) {
+                    $this->travel_order->sendTelegram($to_last_id, 2);
+                }
 
                 $resultarray['status'] = true;
                 $resultarray['msg'] = 'Travel order has been created successfully.';
@@ -4137,9 +4139,11 @@
             if ($query->num_rows() > 0) {
                 $row = $query->row();
                 if($row->is_service > 0){
-                    $vehicle_name = $this->vehicle_details($row->vehicle_id);
-                    $veh_name = $vehicle_name->gen_code." | ".$vehicle_name->plateno." | ".$vehicle_name->name;
-                    $vehicle_details = '<b>VEHICLE</b>: '.strtoupper($veh_name).chr(10).'<b>DRIVER</b>: '.strtoupper($row->driver).chr(10).chr(10);
+                    if ($row->vehicle_id != 0) {
+                        $vehicle_name = $this->vehicle_details($row->vehicle_id);
+                        $veh_name = $vehicle_name->gen_code." | ".$vehicle_name->plateno." | ".$vehicle_name->name;
+                        $vehicle_details = '<b>VEHICLE</b>: '.strtoupper($veh_name).chr(10).'<b>DRIVER</b>: '.strtoupper($row->driver).chr(10).chr(10);
+                    }
                 }
                 if($row->is_hitch > 0){
                     $vehicle_name = $this->vehicle_details($row->vehicle_id);
