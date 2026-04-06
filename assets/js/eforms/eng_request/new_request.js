@@ -344,6 +344,7 @@ $.validate({
 
 $('#fileupload').on('change', function(e) {
     handleFiles(e.target.files);
+    this.value = null;
 });
 
 function handleFiles(fileList) {
@@ -355,19 +356,20 @@ function handleFiles(fileList) {
 }
 
 function validateFile(file) {
+    const filename = cleanName(file.name);
     if (file.size > maxFileSize) {
-        toastr.error(`File "${file.name}" is too large. Maximum size is 10MB.`);
+        toastr.error(`File "${filename}" is too large. Maximum size is 10MB.`);
         return false;
     }
     
     if (!allowedTypes.includes(file.type)) {
-        toastr.error(`File "${file.name}" has an unsupported format. Only PDF and DOCX files are allowed.`, 'danger');
+        toastr.error(`File "${filename}" has an unsupported format. Only PDF and DOCX files are allowed.`, 'danger');
         return false;
     }
     
-    const exists = rfi_vue.attachments.uploadedFiles.some(f => f.name === file.name);
+    const exists = rfi_vue.attachments.uploadedFiles.some(f => f.name === filename);
     if (exists) {
-        toastr.error(`File "${file.name}" is already selected.`);
+        toastr.error(`File "${filename}" is already selected.`);
         return false;
     }
     return true;
