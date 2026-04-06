@@ -3439,7 +3439,11 @@ class Payroll_m extends CI_Model{
         $order = "emp.lastname, emp.firstname";
         $company = $this->db->where("id", $posted_data["company"])->get("gcchris.tblcompanies")->row();
 
-        if (!empty($employee_ids)) {
+        if ($postedPayrollGroupFilter && (is_array($posted_data["posted_payroll_id"]) && !empty($posted_data["posted_payroll_id"]))){
+            $this->db->group_start();
+            $this->db->where_in("ps.id", $posted_data["posted_payroll_id"]);
+            $this->db->group_end();
+        } elseif (!empty($employee_ids)) {
             $this->db->where_in("emp.id", $employee_ids);
         }
 
@@ -3461,11 +3465,7 @@ class Payroll_m extends CI_Model{
         $this->db->where("ps.ewd !=", 0);
         /*** end bonus filter ***/
 
-        if($postedPayrollGroupFilter){
-            if(is_array($posted_data["posted_payroll_id"]) && !empty($posted_data["posted_payroll_id"])){
-                $this->db->where_in("ps.id", $posted_data["posted_payroll_id"]);
-            }
-        }else{
+        if($postedPayrollGroupFilter == false){
             if (empty($employee_ids)) {
                 $this->db->where("ps.date_start", $start);
                 $this->db->where("ps.date_end", $end);
@@ -3477,22 +3477,21 @@ class Payroll_m extends CI_Model{
             if($payout_sequence){
                 $this->db->where("ps.payroll_seq", $payout_sequence);
             }
-            
-            
-            $isPosted = null;
-            switch ($show_posted) {
-                case 'posted': $isPosted = 1; break;
-                case 'unposted': $isPosted = 0; break;
-                default: $isPosted = null; break;
-            }
-
-            if(is_null($isPosted) === false && is_numeric($isPosted)){
-                $this->db->where("ps.posted", $isPosted);
-            }
 
             if (!empty($company)) {
                 $this->db->where("ps.company_id", $company->id);
             }
+        }
+
+        $isPosted = null;
+        switch ($show_posted) {
+            case 'posted': $isPosted = 1; break;
+            case 'unposted': $isPosted = 0; break;
+            default: $isPosted = null; break;
+        }
+
+        if(is_null($isPosted) === false && is_numeric($isPosted)){
+            $this->db->where("ps.posted", $isPosted);
         }
         
         /*** if (!empty($company)) {
@@ -3528,6 +3527,7 @@ class Payroll_m extends CI_Model{
         return array(
             "data" => $result,
             "sql" => $last_query,
+            "posted_payroll_group_filter" => $postedPayrollGroupFilter
         );
     }
 
@@ -8056,13 +8056,13 @@ class Payroll_m extends CI_Model{
         $pgHistoryRecords = [];
         $employeeId = explode(',', $existingEmployees);
         if(is_array($employeeId) && !empty($employeeId)){
-            $this->db->where_in("emp_id", $employeeId);
-            $this->db->get_where($this->tbl_payroll_history,
+            /*** $this->db->where_in("emp_id", $employeeId);
+            $this->db->get_where($this->tbl_ps_group_history,
                 array("pgh.date_start"=>$dateStart,
                     "pgh.date_end"=>$dateEnd,
                     "pgh.pay_date"=>$payDate,
                     "pgh.company_id"=>$companyId,
-                    "ps.posted"=>1));
+                    "ps.posted"=>1)); ***/
 
             $this->db->select("pgh.payroll_sheet_id as id,  UPPER(TRIM(CONCAT(emp.firstname, ' ',
                 CASE WHEN UPPER(TRIM(emp.middlename)) != 'N/A' AND UPPER(TRIM(emp.middlename)) != 'NONE' AND
@@ -8073,9 +8073,14 @@ class Payroll_m extends CI_Model{
                     UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
                     emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE ''
                 END))) as employee_name");
-            $this->db->where_in("pgh.emp_id", $employeeId);
             $this->db->join($this->tbl_payroll_sheet." ps", "ps.id = pgh.payroll_sheet_id");
             $this->db->join($this->tbl_employees." emp", "emp.id = pgh.emp_id", "left");
+            $this->db->group_start();
+                if(isset($post["payroll_group"]) && !empty($post["payroll_group"])){
+                    $this->db->where_in("pgh.payroll_group_id", $post["payroll_group"]);
+                }
+                $this->db->or_where_in("pgh.emp_id", $employeeId);
+            $this->db->group_end();
             $existingGroupHistory = $this->db->get_where($this->tbl_ps_group_history. " pgh",
                 array("pgh.date_start"=>$dateStart,
                 "pgh.date_end"=>$dateEnd,
@@ -8083,6 +8088,8 @@ class Payroll_m extends CI_Model{
                 "pgh.company_id"=>$companyId,
                 "ps.posted"=>1)
             );
+
+            //var_dump($this->db->last_query());
             
             $pgHistoryRecords = $existingGroupHistory->result_array();
         }
