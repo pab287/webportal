@@ -7830,6 +7830,7 @@ class Payroll_m extends CI_Model{
 
         $data["group_count"] = 0;
         $data["group_collection"] = array();
+
         if(isset($data["payroll_group"]) && is_array($data["payroll_group"]) && count($data["payroll_group"]) > 0){
             sort($data["payroll_group"]); 
             $this->db->select("id, description as text");
@@ -7893,6 +7894,7 @@ class Payroll_m extends CI_Model{
 
         $tempPsHistory[] = $data;
         $tempPsHistory = array_unique($tempPsHistory, SORT_REGULAR);
+
         $userData["ps_history"] = $tempPsHistory;
         $this->session->set_userdata('logged_in', $userData);
         return $this->session;

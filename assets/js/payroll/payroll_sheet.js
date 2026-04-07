@@ -1522,11 +1522,13 @@ let dtPayrollSheet = _tblPayrollSheet
                 const { posted_payroll_group_filter } = settings.json;
                 if(typeof posted_payroll_group_filter !== "undefined" && posted_payroll_group_filter === true && _show_swal_applied === false){
                     _show_swal_applied = true;
-                    Swal.fire({
-                        title: 'Posted Payroll Group Filter',
-                        text: 'Posted payroll group filter data has been applied.',
-                        icon: 'success',
-                    });
+                    setTimeout(() => {
+                        Swal.fire({
+                            title: 'Posted Payroll Group Filter',
+                            text: 'Posted payroll group filter data has been applied.',
+                            icon: 'success',
+                        });
+                    }, 750);
                 }
             }
 
@@ -2386,9 +2388,12 @@ var vmPsFilterHistoryModal = new Vue({
             $("#frm-filter #date-range").val(data.date_range);
 
             if(data.group_count > 0){
+                const tempArrValue = $("#frm-filter #payroll_group").val();
                 $.each(data.group_collection, function(_kx, vx){
-                    const newGroupOption = new Option(vx.text, vx.id, false, false);
-                    $("#frm-filter #payroll_group").append(newGroupOption);
+                    if((tempArrValue.length > 0 && tempArrValue.indexOf(vx.id) == -1) || tempArrValue.length == 0){
+                        const newGroupOption = new Option(vx.text, vx.id, false, false);
+                        $("#frm-filter #payroll_group").append(newGroupOption);
+                    }
                 });
                 $("#frm-filter #payroll_group").val(data.payroll_group).trigger("change");
             }
@@ -3918,7 +3923,7 @@ let dtTableExistingPsData = $("#tbl--existing_ps_data").DataTable({
 
 const checkPayrollSheetData = function(date_range, employees, company, payout_schedule, payout_sequence, pay_date){
     toastr.info("Please Wait, The system is checking for existing payroll sheet data!", "Checking Existing Payroll Sheet Data");
-    const payrllGroup = $("#payroll_group", '#frm-filter').val();
+    const payrollGroup = $("#payroll_group", '#frm-filter').val();
     $.ajax({
         url: baseUrl("payroll/checking_payroll_sheet_data"),
         type: "POST",
@@ -3930,7 +3935,7 @@ const checkPayrollSheetData = function(date_range, employees, company, payout_sc
             payout_schedule,
             payout_sequence,
             pay_date,
-            payroll_group: payrllGroup ?? 0
+            payroll_group: payrollGroup ?? 0
         },
         dataType: "JSON",
         success: function(json){
@@ -3973,18 +3978,19 @@ const checkPayrollSheetData = function(date_range, employees, company, payout_sc
                     Swal.fire({
                         icon: 'info',
                         title: 'Posted Payroll Group Found!',
-                        html: "A total of <strong>("+existing_group_history.length+")</strong> existing payroll sheet payroll group data found! for the following employee(s):<br/>"+ tempHtml,
+                        html: "A total of <strong>("+existing_group_history.length+")</strong> existing payroll sheet payroll group data found! for the following employee(s):<br/>"+ tempHtml +
+                            "<br/>" + "Do you want to proceed in the existing payroll sheet data?",
                         width: '800px',
                         showCancelButton: true,
                         confirmButtonColor: "#3085d6",
                         cancelButtonColor: "#d33",
                         confirmButtonText: "Yes",
-                        cancelButtonText: "Proceed Anyway!",
+                        cancelButtonText: "Proceed &amp; Generate!",
                         allowOutsideClick: false,
                         allowEscapeKey: false,
                     }).then((result) => {
                         _show_swal_applied = false;
-                        
+
                         if (result.isConfirmed) {
                             dtPayrollSheet.ajax.reload();
                         }
@@ -3992,12 +3998,12 @@ const checkPayrollSheetData = function(date_range, employees, company, payout_sc
                         if (result.dismiss === Swal.DismissReason.cancel) {
                             postedPayrollSheetId = [];
                             if(typeof json.data !== "undefined" && json.data.length > 0){ proceedRender(json); }
-                            else{ generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date); }
+                            else{ generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date, payrollGroup); }
                         }
                     });
                 }else{
                     if(typeof json.data !== "undefined" && json.data.length > 0){ proceedRender(json); }
-                    else{ generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date); }
+                    else{ generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date, payrollGroup); }
                 }
             }else{
                 if(jQuery.inArray("activate_loan", _currentActions) !== -1){
@@ -4022,11 +4028,11 @@ const checkPayrollSheetData = function(date_range, employees, company, payout_sc
                                     vmEmpLoans.tempLoansRows = Object.assign({}, json.results);
                                     $("#modal-ps--with-loans").modal();
                                     _md5_key_filter = json.md5_key_filter;
-                                }else{ generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date); }
-                            }else{ generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date); }
+                                }else{ generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date, payrollGroup); }
+                            }else{ generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date, payrollGroup); }
                         }
                     });
-                }else{ generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date); }
+                }else{ generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date, payrollGroup); }
             }
         }
     });
