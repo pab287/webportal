@@ -553,14 +553,14 @@ const dtNetPayReport = tableNetpay.DataTable({
         const intVal = function (i) { return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0; };
 
         const totalGrossPay = api
-            .column(16)
+            .column(17)
             .data()
             .reduce(function (a, b) {
                 return intVal(a) + intVal(b);
             }, 0);
 
         const totalNetPay = api
-            .column(17)
+            .column(18)
             .data()
             .reduce(function (a, b) {
                 return intVal(a) + intVal(b);
@@ -569,8 +569,8 @@ const dtNetPayReport = tableNetpay.DataTable({
 
         _globalNetPay = numberFormat(totalNetPay);
         _globalGrossPay = numberFormat(totalGrossPay);
-        $(api.column(16).footer()).html("<span class='m--font-boldest'>" + _globalGrossPay + "</span>");
-        $(api.column(17).footer()).html("<span class='m--font-boldest'>" + _globalNetPay + "</span>");
+        $(api.column(17).footer()).html("<span class='m--font-boldest'>" + _globalGrossPay + "</span>");
+        $(api.column(18).footer()).html("<span class='m--font-boldest'>" + _globalNetPay + "</span>");
     }
 });
 
