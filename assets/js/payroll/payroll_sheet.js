@@ -21,6 +21,7 @@ let globalWithLoans = null;
 // for show modal once
 let _show_modal_once = false;
 let _show_modal_loans_once = false;
+let _show_swal_applied = false;
 let _md5_key_filter = null;
 
 const _tblPayrollSheet = $("#table-payroll-sheet");
@@ -1517,14 +1518,18 @@ let dtPayrollSheet = _tblPayrollSheet
         drawCallback: function (settings) {
             let tempFooter = $(settings.nTableWrapper).find("tfoot");
             if (typeof tempFooter !== "undefined") { _globalFooterHtml = tempFooter[0].innerHTML; }
-            const { posted_payroll_group_filter } = settings.json;
-            if(posted_payroll_group_filter === true){
-                Swal.fire({
-                    title: 'Posted Payroll Group Filter',
-                    text: 'Posted payroll group filter data has been applied.',
-                    icon: 'success',
-                });
+            if(typeof settings.json !== "undefined"){
+                const { posted_payroll_group_filter } = settings.json;
+                if(typeof posted_payroll_group_filter !== "undefined" && posted_payroll_group_filter === true && _show_swal_applied === false){
+                    _show_swal_applied = true;
+                    Swal.fire({
+                        title: 'Posted Payroll Group Filter',
+                        text: 'Posted payroll group filter data has been applied.',
+                        icon: 'success',
+                    });
+                }
             }
+
         },
         footerCallback: function (row, data, start, end, display) {
             globalGrandTotal = {};
@@ -3978,7 +3983,11 @@ const checkPayrollSheetData = function(date_range, employees, company, payout_sc
                         allowOutsideClick: false,
                         allowEscapeKey: false,
                     }).then((result) => {
-                        if (result.isConfirmed) { dtPayrollSheet.ajax.reload(); }
+                        _show_swal_applied = false;
+                        
+                        if (result.isConfirmed) {
+                            dtPayrollSheet.ajax.reload();
+                        }
 
                         if (result.dismiss === Swal.DismissReason.cancel) {
                             postedPayrollSheetId = [];
