@@ -3988,10 +3988,10 @@
 
                     // prevents sending notification when approving a backlogs
                     if (date('Y-m-d', strtotime($date)) <= date('Y-m-d', strtotime($destinationFrom))) {
+                        $this->sendTelegram($id);
+                        
                         if ($travel_order->is_service == 1 || $travel_order->is_hitch == 1) {
                             $this->sendTelegram($id, 152);
-                        } else {
-                            $this->sendTelegram($id);
                         }
                     }
 
