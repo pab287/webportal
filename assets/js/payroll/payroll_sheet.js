@@ -3939,10 +3939,9 @@ const checkPayrollSheetData = function(date_range, employees, company, payout_sc
         },
         dataType: "JSON",
         success: function(json){
+            postedPayrollSheetId = [];
             if(json.response){
-                let renderOtherOptions = false;
                 const { existing_group_history } = json;
-
                 const proceedRender = (json) => {
                     toastr.warning(`A total of (${json.count}) existing payroll sheet data found!`, "Existing Payroll Sheet Data");
 
@@ -3968,7 +3967,6 @@ const checkPayrollSheetData = function(date_range, employees, company, payout_sc
 
                 if(existing_group_history.length > 0){
                     let tempHtml = `<div class='row swal--custom-list'>`;
-                    postedPayrollSheetId = [];
                     existing_group_history.forEach((row, _index) => {
                         tempHtml += `<div class='col-6 col-md-6 col-lg-6 col-sm-12'><span class='m--font-bolder text-left ml-1'>${row.employee_name}</span></div>`;
                         postedPayrollSheetId.push(row.id);
