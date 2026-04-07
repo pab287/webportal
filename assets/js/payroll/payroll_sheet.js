@@ -2390,7 +2390,8 @@ var vmPsFilterHistoryModal = new Vue({
             if(data.group_count > 0){
                 const tempArrValue = $("#frm-filter #payroll_group").val();
                 $.each(data.group_collection, function(_kx, vx){
-                    if((tempArrValue.length > 0 && tempArrValue.indexOf(vx.id) == -1) || tempArrValue.length == 0){
+                    const indexToStrong = vx.id.toString();
+                    if((tempArrValue.length > 0 && tempArrValue.indexOf(indexToStrong) == -1) || tempArrValue.length == 0){
                         const newGroupOption = new Option(vx.text, vx.id, false, false);
                         $("#frm-filter #payroll_group").append(newGroupOption);
                     }
