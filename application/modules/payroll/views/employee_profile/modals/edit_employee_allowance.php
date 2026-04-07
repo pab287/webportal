@@ -31,7 +31,7 @@
 
                         <div class="row">
                             <div class="col-12">
-                                <input type="number" name="rate" class="form-control"
+                                <input type="number" name="rate" class="form-control" step="0.01"
                                        data-validation="required" autocomplete="off"/>
                             </div>
                         </div>
