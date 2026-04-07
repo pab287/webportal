@@ -3982,13 +3982,17 @@
             if($this->checkAssignTravelType($id)){
                 $post = $this->update_travel_order(array('id' => $id), $data);
                 if ($post) {
-
+                    $travel_order = $this->db->select('is_service, is_hitch')->get_where('gcceforms.travel_order', array('id' => $id))->row();
                     $destinationFrom = $this->db->select('date_from')->get_where('gcceforms.travel_destination', array('travel_order_id' => $id))->row('date_from');
                     // $createdTO = $this->db->select('created_dt')->get_where('gcceforms.travel_destination', array('travel_order_id' => $id))->row('created_dt');
 
                     // prevents sending notification when approving a backlogs
                     if (date('Y-m-d', strtotime($date)) <= date('Y-m-d', strtotime($destinationFrom))) {
-                        $this->sendTelegram($id);
+                        if ($travel_order->is_service == 1 || $travel_order->is_hitch == 1) {
+                            $this->sendTelegram($id, 152);
+                        } else {
+                            $this->sendTelegram($id);
+                        }
                     }
 
                     $message = "View Travel Order - Approve travel order ".$this->getReferenceNo($id).".";

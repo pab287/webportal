@@ -1026,6 +1026,15 @@ class Travel_order extends MY_Controller
             $type = "success";
             $action = "update";
             $table = "user";
+
+            $travel_order = $this->db->select('is_service, is_hitch')->get_where('gcceforms.travel_order', array('id' => $id))->row();
+            $destinationFrom = $this->db->select('date_from')->get_where('gcceforms.travel_destination', array('travel_order_id' => $id))->row('date_from');
+
+            if (date('Y-m-d', strtotime($date)) <= date('Y-m-d', strtotime($destinationFrom))) {
+                if ($travel_order->is_service == 1 || $travel_order->is_hitch == 1) {
+                    $this->travel_order->sendTelegram($id, 157);
+                }
+            }
         }else{
             $message = "View Travel Order - Failed disapprove travel order ".$this->getReferenceNo($id).".";
             $type = "error";
@@ -1192,7 +1201,14 @@ class Travel_order extends MY_Controller
             $action = "update";
             $table = "user";
 
-            $this->travel_order->sendTelegram($id, 4);
+            $travel_order = $this->db->select('is_service, is_hitch')->get_where('gcceforms.travel_order', array('id' => $id))->row();
+            $destinationFrom = $this->db->select('date_from')->get_where('gcceforms.travel_destination', array('travel_order_id' => $id))->row('date_from');
+
+            if (date('Y-m-d', strtotime($date)) <= date('Y-m-d', strtotime($destinationFrom))) {
+                if ($travel_order->is_service == 1 || $travel_order->is_hitch == 1) {
+                    $this->travel_order->sendTelegram($id, 4);
+                }
+            }
         }else{
             $message = "View Travel Order - Failed cancel travel order ".$this->getReferenceNo($id).".";
             $type = "error";
