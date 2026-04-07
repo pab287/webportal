@@ -6916,7 +6916,108 @@ class Timesheet_model extends CI_Model{
         return $resultSet;
     }
 
-    public function importAndGenerateTimesheet()
+    public function importAndGenerateTimesheet() {
+        $logged_in_user_emp_id = $this->logged_in_user["emp_id"];
+        $post = $this->arrayToStdClass($this->input->post());
+        $inclusive_dates = explode("/", $post->inclusive_dates);
+        $start = date('Y-m-d', strtotime($inclusive_dates[0]));
+        $end = date('Y-m-d', strtotime($inclusive_dates[1]));
+        $file = $this->arrayToStdClass($_FILES['file_import']);
+        $non_existing = array();
+
+        $not_in_personnel = array();
+        $no_shifts = array();
+        $emp_id_to_generate = array();
+        $exist_in_timesheet = array();
+        $this->db_debug = $this->db->db_debug;
+        $possible_duplicate = array();
+
+        $import_data = array(
+            "filename" => $file->name,
+            "mime_type" => $file->type,
+            "start_date" => $start,
+            "end_date" => $end,
+            "remarks" => $post->remarks,
+            "created_by" => $logged_in_user_emp_id,
+            "import_type" => $post->type
+        );
+
+        $resultSet = array();
+        $invalidRecords = array();
+        $invalidCtr = 0;
+
+        $this->db->trans_begin();
+
+        // $this->db->insert($this->tbl_timesheet_imports, $import_data);
+        // $import_insert_id = $this->db->insert_id();
+        $import_insert_id = 69631;
+
+        $upload = $this->do_upload('./uploads/timesheet/imports/' . $import_insert_id, '*', 'file_import');
+        // if (!empty($upload->error)) {
+        //     return array("success" => false, "title" => "Upload Error", "message" => $upload->error);
+        // } else {
+        //     $resultSet["upload_data"] = $upload->upload_data;
+        //     $this->db->where("id", $import_insert_id);
+        //     $this->db->set("filename", $upload->upload_data->file_name);
+        //     $this->db->set("mime_type", $upload->upload_data->file_type);
+        //     $this->db->set("path", "uploads/timesheet/imports/" . $import_insert_id . "/" . $upload->upload_data->file_name);
+        //     $this->db->update($this->tbl_timesheet_imports);
+        //     $this->db->reset_query();
+        // }
+
+        if ($post->type === "attendance") {
+            $attendance = array();
+
+            if ($upload->upload_data->file_ext === ".dat" || $upload->upload_data->file_ext === ".txt") {
+                $contents = file_get_contents($upload->upload_data->full_path);
+                $lines = explode("\n", $contents);
+
+                foreach ($lines as $line) {
+                    $parts = preg_split("/[\t]/", trim($line));
+                    $_parts = array_filter($parts, function ($value) {
+                        return !is_null($value) && $value !== '';
+                    });
+                    
+                    if (!empty($_parts)) {
+                        $biometric_id = trim($parts[0]);
+                        $datetime = date('Y-m-d H:i:s', strtotime(trim($parts[1])));
+                        $tempTime = date('H:i', strtotime(trim($parts[1])));
+                        $date = date('Y-m-d', strtotime(trim($parts[1])));
+
+                        if($date >= $start && $date <= $end) {
+                            $data = array(
+                                'biometricno' => $biometric_id,
+                                'date' => $date,
+                                'time' => $tempTime,
+                                'device_id' => $post->device_id,
+                                'created_by' => $this->logged_in_user["emp_id"],
+                                'created_at' => date('Y-m-d H:i:s')
+                            );
+
+                            array_push($attendance, $data);
+                        }
+                    }
+                }
+
+                // var_dump($attendance);
+                // $this->db->insert_batch('gcctimeutility.temp_attendance_import', $attendance);
+                // $this->db->set_insert_batch($attendance);
+                // $sql = $this->db->get_compiled_insert('gcctimeutility.temp_attendance_import');
+                // $sql = str_replace('INSERT INTO', 'INSERT IGNORE INTO', $sql);
+                // $this->db->query($sql);
+                $this->db->set_insert_batch($attendance);
+                $sql = $this->db->get_compiled_insert('gcctimeutility.temp_attendance_import');
+            } elseif (in_array($upload->upload_data->file_ext, [".xls", ".xlsx"])) {
+
+            } elseif ($upload->upload_data->file_ext === ".csv") {
+
+            }
+        }
+
+        die;
+    }
+
+    public function importAndGenerateTimesheetv1()
     {
         $logged_in_user_emp_id = $this->logged_in_user["emp_id"];
         $post = $this->arrayToStdClass($this->input->post());
