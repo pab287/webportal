@@ -1036,7 +1036,9 @@ class Reports extends MY_Controller {
         $this->core_layout->setPageTitle("Payroll - Custom Payroll sheet Report");
         $this->core_layout->setPrivilegeName("payroll_custom_report");
         $this->core_layout->addJs("js/buttons.print.min.js", true);
-        $this->core_layout->addJs("js/payroll/reports/custom_payrollsheet_report.js", true, $tempData);
+
+        $version = filemtime(FCPATH.'assets/js/payroll/reports/custom_payrollsheet_report.js');
+        $this->core_layout->addJs("js/payroll/reports/custom_payrollsheet_report.js", true, $tempData, "?v={$version}");
 
         $this->load->view("core/templates/header");
         $this->load->view("payroll/reports/custom_payrollsheet_report");

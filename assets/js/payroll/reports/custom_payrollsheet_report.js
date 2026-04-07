@@ -473,13 +473,19 @@ const dtNetPayReport = tableNetpay.DataTable({
             }
         },
         { data: "employee_name", width: "*" },
-        { data: "company_description", width: "15%" },
+        { data: "company_description", width: "10%" },
         { data: "department_description", width: "10%" },
-        { data: "position", width: "16%" },
+        { data: "position", width: "10%" },
         { data: "work_status", visible: false },
         { data: "payroll_group", width: '14%',
             render: function (data) {
                 return data != null ? data : ' No group assigned ';
+            }
+        },
+        {
+            data: "station", width: "10%",
+            render: function (data) {
+                return data ? data : 'No assigned Station';
             }
         },
         { data: "rate", width: "*", visible: false,
