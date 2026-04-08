@@ -29,13 +29,16 @@
             $this->load->view('core/templates/footer');
         }
 
-        public function masterfile()
-        {
+        public function masterfile(){
+            $data['companies'] = $this->loa->getSelect2Company();
+            $data['departments'] = $this->loa->getSelect2Department();
+            $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
+            $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
             $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', TRUE);
             $this->core_layout->addJs('js/querybuilder/query-builder.standalone.min.js', TRUE);
             
             $this->core_layout->setPageTitle("Leave of Absence - Masterfile");
-            $this->core_layout->addJs("js/eforms/loa/loa.js", true);
+            $this->core_layout->addJs("js/eforms/loa/loa.js", true,$data);
             $this->core_layout->setPrivilegeName("eforms_loa");
             $this->load->view('core/templates/header');
             $this->load->view('eforms/loa/index');
