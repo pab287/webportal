@@ -1525,15 +1525,15 @@ class Payroll_m extends CI_Model{
                         $tempTotalRendered = intval($item->am_time_rendered) + intval($item->pm_time_rendered);
                         $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($item->am_time_rendered) > 0 || intval($item->pm_time_rendered) > 0);
                         $scheduledTimeRendered = $tempTotalTimeRendered;
-                        if($item->is_holiday && intval($item->paid_holiday) == 1){
+                        if($item->is_holiday && intval($item->paid_holiday) === 1){
                             $scheduledTimeRendered = $this->calculateTotalMinutes($item->schedule);
                         }
 
                         if($hasRenderedShift && $item->is_holiday && intval($item->paid_holiday) === 1){ $tempTotalTimeRendered = 0; }
 
-                        $tempMinutesDaily = (intval($item->paid_holiday) == 1) ? $scheduledTimeRendered : $item->minutes_daily;
+                        $tempMinutesDaily = (intval($item->paid_holiday) === 1) ? $scheduledTimeRendered : $item->minutes_daily;
                         $totalUndertime = $tempMinutesDaily - $tempTotalTimeRendered;
-                        $totalUndertime = $totalUndertime > 0 ? $totalUndertime: 0;
+                        $totalUndertime = $totalUndertime > 0 && intval($item->is_holiday) === 1 ? $totalUndertime: 0;
                         return $carry + $totalUndertime;
                     }, 0);
 
