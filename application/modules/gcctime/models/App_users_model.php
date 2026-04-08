@@ -222,7 +222,10 @@ class App_users_model extends CI_Model {
         if (!is_array($logs)) { return ["response" => false, "data" => []]; }
 
         usort($logs, function ($a, $b) {
-            return strtotime($b['app_time']) <=> strtotime($a['app_time']);
+            $timeA = strtotime($a['app_time'] ?? '') ?: 0;
+            $timeB = strtotime($b['app_time'] ?? '') ?: 0;
+            if ($timeA == $timeB) { return 0; }
+            return $timeB <=> $timeA;
         });
 
         return [ "response" => true, "data" => $logs ];

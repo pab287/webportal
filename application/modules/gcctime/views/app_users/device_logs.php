@@ -146,7 +146,7 @@
                                                         <div class="m-portlet__head">
                                                             <div class="m-portlet__head-caption">
                                                                 <div class="m-portlet__head-title">
-                                                                    <h3 class="m-portlet__head-text">{{ log.app_type }}</h3>
+                                                                    <h3 class="m-portlet__head-text">{{ log.app_type ?? 'No Data' }}</h3>
                                                                 </div>
                                                             </div>
                                                         </div>
