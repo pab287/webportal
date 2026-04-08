@@ -1525,15 +1525,15 @@ class Payroll_m extends CI_Model{
                         $tempTotalRendered = intval($item->am_time_rendered) + intval($item->pm_time_rendered);
                         $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($item->am_time_rendered) > 0 || intval($item->pm_time_rendered) > 0);
                         $scheduledTimeRendered = $tempTotalTimeRendered;
-                        if($item->is_holiday && intval($item->paid_holiday) == 1){
+                        if($item->is_holiday && intval($item->paid_holiday) === 1){
                             $scheduledTimeRendered = $this->calculateTotalMinutes($item->schedule);
                         }
 
                         if($hasRenderedShift && $item->is_holiday && intval($item->paid_holiday) === 1){ $tempTotalTimeRendered = 0; }
 
-                        $tempMinutesDaily = (intval($item->paid_holiday) == 1) ? $scheduledTimeRendered : $item->minutes_daily;
+                        $tempMinutesDaily = (intval($item->paid_holiday) === 1) ? $scheduledTimeRendered : $item->minutes_daily;
                         $totalUndertime = $tempMinutesDaily - $tempTotalTimeRendered;
-                        $totalUndertime = $totalUndertime > 0 ? $totalUndertime: 0;
+                        $totalUndertime = $totalUndertime > 0 && intval($item->is_holiday) === 1 ? $totalUndertime: 0;
                         return $carry + $totalUndertime;
                     }, 0);
 
@@ -1664,17 +1664,35 @@ class Payroll_m extends CI_Model{
                 $employee->days_worked = $days_worked;
 
                 if($isMonthlyPaid && $monthlyRate > 0 && $days_worked > 0){
+                    $tempMonthly = new stdClass();
+                    $tempMonthly->days_worked = $days_worked;
+                    $tempMonthly->total_unrendered_amount = $total_unrendered_amount;
+                    $tempMonthly->monthlyRate = $monthlyRate;
+                    $tempMonthly->monthly_paid_holiday_amount = $monthly_paid_holiday_amount;
+                    $tempMonthly->before_total_unrendered_minutes = $total_unrendered_minutes;
+                    
+                    $includeHolidayPay = true;
+                    if($total_unrendered_minutes >= $holiday_unrendered_minutes){
+                        $updated_unrendered_minutes = $total_unrendered_minutes - $holiday_unrendered_minutes;
+                        $tempMonthly->after_unrendered_minutes = $updated_unrendered_minutes;
+                        $total_unrendered_amount = $updated_unrendered_minutes * $per_minute;
+                        $includeHolidayPay = false;
+                    }
+
                     $basic_rate = $monthlyRate - $total_unrendered_amount;
                     $basic_rate_total = $monthlyRate - $total_unrendered_amount;
 
-                    $basic_rate += $monthly_paid_holiday_amount;
-                    $basic_rate_total += $monthly_paid_holiday_amount;
+                    if($includeHolidayPay){
+                        $basic_rate += $monthly_paid_holiday_amount;
+                        $basic_rate_total += $monthly_paid_holiday_amount;
+                    }
                     
                     /** for allowance holiday unrendered minutes **/
                     if($holiday_unrendered_minutes > 0 && $unrendered_minutes >= $holiday_unrendered_minutes && $total_unrendered_minutes >= $unrendered_minutes){
                         $total_unrendered_minutes -= $holiday_unrendered_minutes;
                     }
                     /** for allowance holiday unrendered minutes **/
+                    $employee->_monthly = $tempMonthly;
                 }
                 
                 $employee->basic_rate = $basic_rate;
