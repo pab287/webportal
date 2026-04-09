@@ -9082,9 +9082,13 @@ class Payroll_m extends CI_Model{
     }
 
     protected function calculateTotalMinutes($schedule){
+        if (!is_object($schedule)) { return 0; }
         $ranges = [];
         // Helper to normalize range (handles overnight)
         $normalizeRange = function ($start, $end) {
+            if (empty($start) || empty($end)) {
+                return null;
+            }
             $startMin = $this->timeToMinutes($start);
             $endMin   = $this->timeToMinutes($end);
             // Overnight shift (e.g., 18:00 → 06:00)
@@ -9099,13 +9103,13 @@ class Payroll_m extends CI_Model{
         };
 
         // Add AM range
-        $amRange = $normalizeRange($schedule->am_start, $schedule->am_end);
+        $amRange = $normalizeRange($schedule->am_start ?? null, $schedule->am_end ?? null);
         if ($amRange) {
             $ranges[] = $amRange;
         }
 
         // Add PM range
-        $pmRange = $normalizeRange($schedule->pm_start, $schedule->pm_end);
+        $pmRange = $normalizeRange($schedule->pm_start ?? null, $schedule->pm_end ?? null);
         if ($pmRange) {
             $ranges[] = $pmRange;
         }
