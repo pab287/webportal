@@ -3096,8 +3096,11 @@ class Timesheet_model extends CI_Model{
         $end = date("Y-m-d");
         $currentYear = intval(date('Y'));
         $currentMonth = intval(date('m'));
+        
+        if(intval($inclusive_filter) == 1){
+            $this->db->where("emp.employee_status", "Active");
+        }
 
-        $this->db->where("emp.employee_status", "Active");
         if (!empty($employees_filter)) {
             $this->db->where_in("emp.id", $employees_filter);
             if (!empty($excluded_employees)) {
@@ -3168,7 +3171,7 @@ class Timesheet_model extends CI_Model{
         $tempLoaRecord = array();
         $tempOvertimeRecord = array();
         $alteredShiftRecords = array();
-        $temp_lastQ = null;
+        $temp_lastQ = $sql;
 
         $tempPostedPayrollRecord = array();
         

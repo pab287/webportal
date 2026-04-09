@@ -154,10 +154,10 @@ class Payroll_m extends CI_Model{
         return $resultset;
     }
 
-    function selectEmployee($type=null)
-    {
+    function selectEmployee($type=null){
         $get = $this->input->get();
         $resultarray = array();
+        $employeeStatus = isset($get["employee_status"]) && $get["employee_status"] == "0" ? "Inactive": "Active";
         $companyIds = (isset($get["company_ids"]) && $get["company_ids"])? $get["company_ids"]: array();
         //$this->db->select("a.id, trim(a.firstname) as firstname, a.lastname, a.middlename, a.suffix");
 
@@ -174,7 +174,7 @@ class Payroll_m extends CI_Model{
         $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
         
         if($type !== 'all' && $type === null){
-            $this->db->where("a.employee_status", "Active");
+            $this->db->where("a.employee_status", $employeeStatus);
         } elseif ($type !== 'all' && $type !== null) {
             $this->db->where("a.employee_status", $type);
         }
@@ -185,19 +185,20 @@ class Payroll_m extends CI_Model{
         }
 
         $tempLimit = 10;
-        if (isset($get['q']) && $get['q']) {
+        if ((isset($get['q']) && $get['q']) || (isset($get['term']) && $get['term'])) {
+            $tempTerm = isset($get['term']) ? $get['term'] : $get['q'];
             $this->db->group_start();
-            $this->db->like("a.firstname", $get['q'], "both");
-            $this->db->or_like("a.lastname", $get['q'], "both");
-            $this->db->or_like("CONCAT(a.firstname, ' ', a.lastname)", $get['q'], "both");
-            $this->db->or_like("CONCAT(a.firstname, ' ', CONCAT(SUBSTR(a.middlename, 1, 1), '.'), ' ', a.lastname)", $get['q'], "both");
+            $this->db->like("a.firstname", $tempTerm, "both");
+            $this->db->or_like("a.lastname", $tempTerm, "both");
+            $this->db->or_like("CONCAT(a.firstname, ' ', a.lastname)", $tempTerm, "both");
+            $this->db->or_like("CONCAT(a.firstname, ' ', CONCAT(SUBSTR(a.middlename, 1, 1), '.'), ' ', a.lastname)", $tempTerm, "both");
             $this->db->group_end();
             $tempLimit = 20;
         }
         $this->db->limit($tempLimit);
         $this->db->order_by("trim(a.firstname)", "ASC");
         $query = $this->db->get();
-
+        $lastQ = $this->db->last_query();
         if ($query->num_rows() > 0) {
             /*** foreach ($query->result_array() as $_query) {
                 $data = array();
@@ -209,7 +210,11 @@ class Payroll_m extends CI_Model{
             } ***/
            $resultarray = $query->result();
         }
-        return array("results" => $resultarray);
+
+        return array(
+            "results" => $resultarray,
+           // "last_q"=> $lastQ
+        );
     }
 
     function selectCompany()
@@ -865,10 +870,11 @@ class Payroll_m extends CI_Model{
 
     public function generatePayrollSheet($start, $end, $posted_data){
         $this->storeGeneratedPsHistory($start, $end, $posted_data);
+        $employeeStatus = isset($posted_data["employee_status"]) ? $posted_data["employee_status"] : 'active';
         $employee_ids = isset($posted_data["employees"]) ? $posted_data["employees"] : null;
         $payout_sched = $posted_data["payout_schedule"];
         $company = $this->db->where("id", $posted_data["company"])->get("gcchris.tblcompanies")->row();
-        $employees = $this->getEmployees($payout_sched, 'active', $employee_ids, $company);
+        $employees = $this->getEmployees($payout_sched, $employeeStatus, $employee_ids, $company);
         
         $arrMonthlyEmployeeIds = array();
         if(is_array($employee_ids) && count($employee_ids) > 0){

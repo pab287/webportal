@@ -129,6 +129,13 @@ $("#reload_dtTbl").on("click", function () {
     tblPayrollSheet.ajax.reload();
 });
 
+$(document).on("change", "#active_employees", function () {
+    setTimeout(() => {
+        $("#employees").prop("disabled", false);
+        $("#employees, #payroll_group").val([]).trigger("change");
+    }, 250);
+});
+
 const select2Employees = function () {
     $("#employees")
         .select2({
@@ -139,6 +146,10 @@ const select2Employees = function () {
                 dataType: "json",
                 delay: 250,
                 global: false,
+                data: function (params) {
+                    params.employee_status = $("form#frm-filter #active_employees").prop("checked") ? "1" : "0";
+                    return params;
+                },
                 processResults: function (data) {
                     return data;
                 }
@@ -1869,6 +1880,7 @@ $("#modal-ps--with-loans").on("shown.bs.modal", function(){
 // for generation of payroll sheet
 function generate_ps(date_range, employees, company, payout_schedule, payout_sequence, pay_date, payroll_group, emp_with_loans = null){
     // original source code
+    const employee_status = $("#active_employees", '#frm-filter').prop("checked") ? "active" : "inactive";
     toastr.info("Please wait, The system is generating payroll sheet data!", "Generating Payroll Sheet Data");
     $.ajax({
         url: baseUrl("payroll/generate_payroll_sheet"),
@@ -1882,7 +1894,8 @@ function generate_ps(date_range, employees, company, payout_schedule, payout_seq
             payout_sequence,
             pay_date,
             payroll_group,
-            emp_with_loans
+            emp_with_loans,
+            employee_status
         },
         dataType: "JSON",
         success: function (response) {
