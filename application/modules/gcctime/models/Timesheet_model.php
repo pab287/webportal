@@ -68,7 +68,7 @@ class Timesheet_model extends CI_Model{
         $attendance_params = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "TS_OT_PARAMS"))->row();
         $night_diff_cfg = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "NIGHT_DIFF_PARAMS"))->row();
         $tempEmployeeIds = array();
-        
+
         $tempOvertimeRecords = $this->getOvertimeRecordByDateRange($date, $emp);
         if (sizeof($employees) >= 1) {
             $this->db->trans_begin();
@@ -7257,6 +7257,50 @@ class Timesheet_model extends CI_Model{
 
             $this->db->trans_rollback();
             $this->db->db_debug = $this->db_debug;
+        } else {
+            $file_path = $upload->upload_data->full_path;
+            $objPHPExcel = PHPExcel_IOFactory::load($file_path);
+            $rows = $objPHPExcel->getActiveSheet()->toArray(null, true, true, true);
+            $rows_count = count($rows);
+            $timesheet = array();
+            $tempAttendanceData = array();
+            $attendance = array();
+
+            $night_diff_cfg = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "NIGHT_DIFF_PARAMS"))->row();
+            $this->db->reset_query();
+
+            if (intval($rows_count) >= 2) {
+                for ($i = 2; $i <= $rows_count; $i++) {
+                    if(isset($rows[$i]["A"], $rows[$i]["B"]) && ($rows[$i]["A"] && $rows[$i]["B"])){
+                        $biometric = $rows[$i]["A"];
+                        $date = date('Y-m-d', strtotime($rows[$i]["B"]));
+                        $am_in = (isset($rows[$i]["C"]) && $rows[$i]["C"])? $rows[$i]["C"]: null;
+                        $am_out = (isset($rows[$i]["D"]) && $rows[$i]["D"])? $rows[$i]["D"]: null;
+                        $pm_in = (isset($rows[$i]["E"]) && $rows[$i]["E"])? $rows[$i]["E"]: null;
+                        $pm_out = (isset($rows[$i]["F"]) && $rows[$i]["F"])? $rows[$i]["F"]: null;
+                        $ot = (isset($rows[$i]["G"]) && $rows[$i]["G"])? $rows[$i]["G"]: 0;
+                        $ndot = (isset($rows[$i]["H"]) && $rows[$i]["H"])? $rows[$i]["H"]: 0;
+
+                        $maxPayrollDate = $this->getPayrollMaxDate($biometric);
+                        $isValidDate = $maxPayrollDate !== false ? strtotime($date) > strtotime($maxPayrollDate) : false;
+
+                        $date_check = $date;
+                        $weekday = strtolower(date('l', strtotime($date)));
+                        $ot = floatval($ot);
+                        $ndot = floatval($ndot);
+
+                        $tempAmIn = ($am_in)? date("H:i:s", strtotime($am_in)): null;
+                        $tempAmOut = ($am_out)? date("H:i:s", strtotime($am_out)): null;
+                        $tempPmIn = ($pm_in)? date("H:i:s", strtotime($pm_in)): null;
+                        $tempPmOut = ($pm_out)? date("H:i:s", strtotime($pm_out)): null;
+
+                        //here
+                        $data = array(
+
+                        );
+                    }
+                }
+            }
         }
 
         $this->db->trans_rollback();
@@ -10982,5 +11026,27 @@ class Timesheet_model extends CI_Model{
             $jsonPath,
             json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
         ) !== false;
+    }
+
+    public function generate_timesheet_imported_record(){
+        $result = array();
+        $exist_in_timesheet = array();
+        $post = $this->input->post();
+        $state = false;
+
+        session_write_close();
+
+        if (isset($post['ids']) && $post['ids']) {
+            $date = date('Y-m-d');
+            $create = $this->create($date, 1, $post['ids'], $post['import_id']);
+            if (sizeof($create["updatedTimesheets"]) >= 1) {
+                $exist_in_timesheet = array_unique(array_merge($create["updatedTimesheets"], $exist_in_timesheet));
+            }
+            $state = true;
+        }
+        
+        $result['state'] = $state;
+        $result['exist_in_timesheet'] = $exist_in_timesheet;
+        return $result;
     }
 }

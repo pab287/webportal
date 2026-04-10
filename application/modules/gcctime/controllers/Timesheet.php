@@ -337,5 +337,9 @@ class Timesheet extends MY_Controller {
     public function undo_restday() {
         echo json_encode($this->ts_model->undoRestday());
     }
+
+    public function generate_timesheet_imported_record(){
+        echo json_encode($this->ts_model->generate_timesheet_imported_record());
+    }
 }
 /* End of file Timesheet.php */
