@@ -6923,7 +6923,10 @@ class Timesheet_model extends CI_Model{
         $start = date('Y-m-d', strtotime($inclusive_dates[0]));
         $end = date('Y-m-d', strtotime($inclusive_dates[1]));
         $file = $this->arrayToStdClass($_FILES['file_import']);
+        $device_id = $post->device_id;
         $non_existing = array();
+
+        session_write_close();
 
         $not_in_personnel = array();
         $no_shifts = array();
@@ -6931,6 +6934,9 @@ class Timesheet_model extends CI_Model{
         $exist_in_timesheet = array();
         $this->db_debug = $this->db->db_debug;
         $possible_duplicate = array();
+        $not_found_hris = array();
+        $no_shifts_name = array();
+        $state = false;
 
         $import_data = array(
             "filename" => $file->name,
@@ -6946,24 +6952,42 @@ class Timesheet_model extends CI_Model{
         $invalidRecords = array();
         $invalidCtr = 0;
 
+        $tempRs = $this->core_layout->getDisplayName($this->logged_in_user);
+        $tempName = (object) $tempRs;
+        $tempName = (isset($tempName->display_name_1) && $tempName->display_name_1)? $tempName->display_name_1: "No Assigned Name";
+
         $this->db->trans_begin();
 
-        // $this->db->insert($this->tbl_timesheet_imports, $import_data);
-        // $import_insert_id = $this->db->insert_id();
-        $import_insert_id = 69631;
+        $this->db->insert($this->tbl_timesheet_imports, $import_data);
+        $import_insert_id = $this->db->insert_id();
+
+        $devices = array();
+
+        $this->db->select('id, device_name');
+        $this->db->from('gcctimeutility.devices');
+        $_q = $this->db->get();
+
+        if($_q->num_rows() > 0) { $devices = $_q->result(); }
+        $filtered = array_filter($devices, function ($device) use ($device_id) {
+            return (int)$device->id === (int)$device_id;
+        });
+
+        $deviceName = !empty($filtered) ? reset($filtered)->device_name : 'No Device Name';
+
+        $this->db->reset_query();
 
         $upload = $this->do_upload('./uploads/timesheet/imports/' . $import_insert_id, '*', 'file_import');
-        // if (!empty($upload->error)) {
-        //     return array("success" => false, "title" => "Upload Error", "message" => $upload->error);
-        // } else {
-        //     $resultSet["upload_data"] = $upload->upload_data;
-        //     $this->db->where("id", $import_insert_id);
-        //     $this->db->set("filename", $upload->upload_data->file_name);
-        //     $this->db->set("mime_type", $upload->upload_data->file_type);
-        //     $this->db->set("path", "uploads/timesheet/imports/" . $import_insert_id . "/" . $upload->upload_data->file_name);
-        //     $this->db->update($this->tbl_timesheet_imports);
-        //     $this->db->reset_query();
-        // }
+        if (!empty($upload->error)) {
+            return array("success" => false, "title" => "Upload Error", "message" => $upload->error);
+        } else {
+            $resultSet["upload_data"] = $upload->upload_data;
+            $this->db->where("id", $import_insert_id);
+            $this->db->set("filename", $upload->upload_data->file_name);
+            $this->db->set("mime_type", $upload->upload_data->file_type);
+            $this->db->set("path", "uploads/timesheet/imports/" . $import_insert_id . "/" . $upload->upload_data->file_name);
+            $this->db->update($this->tbl_timesheet_imports);
+            $this->db->reset_query();
+        }
 
         if ($post->type === "attendance") {
             $attendance = array();
@@ -6989,9 +7013,9 @@ class Timesheet_model extends CI_Model{
                                 'biometricno' => $biometric_id,
                                 'date' => $date,
                                 'time' => $tempTime,
+                                'datetime' => $datetime,
                                 'device_id' => $post->device_id,
-                                'created_by' => $this->logged_in_user["emp_id"],
-                                'created_at' => date('Y-m-d H:i:s')
+                                'import_id' => $import_insert_id
                             );
 
                             array_push($attendance, $data);
@@ -6999,22 +7023,288 @@ class Timesheet_model extends CI_Model{
                     }
                 }
 
-                // var_dump($attendance);
-                // $this->db->insert_batch('gcctimeutility.temp_attendance_import', $attendance);
-                // $this->db->set_insert_batch($attendance);
-                // $sql = $this->db->get_compiled_insert('gcctimeutility.temp_attendance_import');
-                // $sql = str_replace('INSERT INTO', 'INSERT IGNORE INTO', $sql);
-                // $this->db->query($sql);
-                $this->db->set_insert_batch($attendance);
-                $sql = $this->db->get_compiled_insert('gcctimeutility.temp_attendance_import');
             } elseif (in_array($upload->upload_data->file_ext, [".xls", ".xlsx"])) {
+                $file_path = $upload->upload_data->full_path;
+                $objPHPExcel = PHPExcel_IOFactory::load($file_path);
+                $allDataInSheet = $objPHPExcel->getActiveSheet()->toArray(null, true, true, true);
+                $arrayCount = count($allDataInSheet);
 
+                if (intval($arrayCount) >= 1) {
+                    for ($i = 2; $i <= $arrayCount; $i++) {
+                        $biometric_id = $allDataInSheet[$i]["A"];
+                        $datetime = date('Y-m-d H:i:s', strtotime($allDataInSheet[$i]["D"]));
+                        $tempTime = date('H:i', strtotime($allDataInSheet[$i]["D"]));
+                        $date = date('Y-m-d', strtotime($allDataInSheet[$i]["D"]));
+
+                        if($date >= $start && $date <= $end) {
+                            $data = array(
+                                'biometricno' => $biometric_id,
+                                'date' => $date,
+                                'time' => $tempTime,
+                                'datetime' => $datetime,
+                                'device_id' => $post->device_id,
+                                'import_id' => $import_insert_id
+                            );
+
+                            array_push($attendance, $data);
+                        }
+                    }
+                }
             } elseif ($upload->upload_data->file_ext === ".csv") {
+                $file_path = $upload->upload_data->full_path;
+                $contents = file_get_contents($file_path);
+                $lines = explode("\n", $contents);
 
+                if (sizeof($lines) >= 2) {
+                    array_splice($lines, 0, 1);
+                    foreach ($lines as $line) {
+                        if (empty($line)) { continue; }
+                        $parts = explode(",", trim($line));
+
+                        if (!empty($parts)) {
+                            $biometric_id = trim($parts[0]);
+                            $datetime = date('Y-m-d H:i:s', strtotime(trim($parts[3])));
+                            $tempTime = date('H:i', strtotime(trim($parts[3])));
+                            $date = date('Y-m-d', strtotime(trim($parts[3])));
+
+                            if($date >= $start && $date <= $end) {
+                                $data = array(
+                                    'biometricno' => $biometric_id,
+                                    'date' => $date,
+                                    'time' => $tempTime,
+                                    'datetime' => $datetime,
+                                    'device_id' => $post->device_id,
+                                    'import_id' => $import_insert_id
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!empty($attendance) && $attendance) {
+                $tempTableName = "empcode_" . (int)$this->logged_in_user["emp_id"] . "_temporary_import";
+                $isTemporary = $this->createTemporaryTable($tempTableName);
+    
+                if ($isTemporary) {
+                    $insert = $this->insert_ignore_batch($tempTableName, $attendance);
+    
+                    if ($insert && $this->db->trans_status() == true) {
+                        $this->db->where('import_id', $import_insert_id);
+                        $this->db->from($tempTableName);
+                        $query = $this->db->get();
+
+                        if ($query->num_rows() > 0) {
+                            $result = array();
+                            $tempAttendance = array();
+
+                            foreach ($query->result() as $key => $rs) {
+                                $maxPayrollDate = $this->getPayrollMaxDate($rs->biometricno);
+                                $isValidDate = $maxPayrollDate !== false ? strtotime($rs->date) > strtotime($maxPayrollDate) : false;
+                                $employee = $this->getExistingEmployeeePersonnel($rs->biometricno);
+                                $device_name = null;
+                                $datetime = date('Y-m-d H:i:s', strtotime($rs->datetime));
+
+                                if ($isValidDate) {
+                                    if ($employee->num_rows() == 1) {
+                                        $empRow = $employee->row();
+
+                                        $attendanceStart = $rs->date . ' ' . $rs->time;
+                                        $attendanceEnd = date('Y-m-d H:i:s', strtotime($attendanceStart . ' +1 minute'));
+
+                                        $attendanceExist = $this->db
+                                            ->where('biometric_id', $empRow->biometric_id)
+                                            ->where('datetime >=', $attendanceStart)
+                                            ->where('datetime <', $attendanceEnd)
+                                            ->get($this->tbl_attendance);
+
+                                        if ($attendanceExist->num_rows() <= 0) {
+                                            $_data = array(
+                                                'biometric_id' => $empRow->biometric_id,
+                                                'state' => 1,
+                                                'device_id' => $rs->device_id,
+                                                'longtitude' => '',
+                                                'latitude' => '',
+                                                'temp_id' => 0,
+                                                'is_custom' => 1,
+                                                'is_custom_by' => $this->logged_in_user["emp_id"],
+                                                'approved_by' => 0,
+                                                'approval_status' => 0,
+                                                'datetime' => $datetime,
+                                                'timesheet_imports_id' => $rs->import_id,
+                                            );
+
+                                            array_push($tempAttendance, $_data);
+                                        }
+                                    }
+
+                                    $employeeCount = isset($employee) ? $employee->num_rows() : 0;
+                                    $attendanceCount = isset($attendanceExist) ? $attendanceExist->num_rows() : 0;
+
+                                    $resultKey = 'invalid_entries';
+                                    $resultEntry = (object) [
+                                        'emp_id' => isset($empRow) ? $empRow->emp_id : null,
+                                        'biometric_id' => isset($empRow) ? $empRow->biometric_id : $rs->biometricno,
+                                        'employee_name' => isset($empRow) ? $empRow->employee_name : null,
+                                        'date' => $datetime,
+                                        'is_valid_payrolldate' => $isValidDate,
+                                        'shift_id' => isset($empRow) ? $empRow->shift_id : 0
+                                    ];
+
+                                    if ($isValidDate && $employeeCount == 1 && $attendanceCount == 0) {
+                                        $resultKey = 'valid_entries';
+                                    } elseif ($employeeCount != 1) {
+                                        $resultKey = 'invalid_employees';
+                                        $resultEntry = (object) [
+                                            'biometric_id' => $rs->biometricno,
+                                            'device_id' => $rs->device_id,
+                                            'date' => $datetime,
+                                        ];
+                                    }
+
+                                    $result[$resultKey][] = $resultEntry;
+                                } else {
+                                    $empRow = $employee->row();
+                                    $resultEntry = (object) [
+                                        'emp_id' => isset($empRow) ? $empRow->emp_id : null,
+                                        'biometric_id' => isset($empRow) ? $empRow->biometric_id : $rs->biometricno,
+                                        'employee_name' => isset($empRow) ? $empRow->employee_name : null,
+                                        'date' => $datetime,
+                                        'payroll_max_date' => $maxPayrollDate,
+                                        'is_valid_payrolldate' => $isValidDate,
+                                        'shift_id' => isset($empRow) ? $empRow->shift_id : 0
+                                    ];
+
+                                    $result['invalid_entries'][] = $resultEntry;
+                                }
+                            }
+
+                            if (!empty($tempAttendance) && $tempAttendance) {
+                                $insert_attendance = $this->db->insert_batch($this->tbl_attendance, $tempAttendance);
+    
+                                if ($insert_attendance && $this->db->trans_status() === true) {
+                                    $this->createImportResultJson(
+                                        $file->name,
+                                        $deviceName,
+                                        $tempName,
+                                        $result,
+                                        './uploads/logs'
+                                    );
+                                    $this->db->trans_commit();
+                                    $this->db->db_debug = $this->db_debug;
+
+                                    if (!empty($result) && isset($result['valid_entries'])) {
+                                        foreach($result['valid_entries'] as $k => $v) {
+                                            if (isset($v->shift_id) && $v->shift_id > 0) {
+                                                if (!in_array($v->emp_id, $emp_id_to_generate)) { array_push($emp_id_to_generate, $v->emp_id); }
+                                            } else {
+                                                if (!in_array($v->biometric_id, $no_shifts)) { array_push($no_shifts, $v->biometric_id); }
+                                            }
+                                        }
+                                    } elseif (!empty($result) && isset($result['invalid_entries'])) {
+                                        foreach($result['invalid_entries'] as $k => $v) {
+                                            $invalidRecords[$v->emp_id]['biometric_id'] = $v->biometric_id;
+                                            $invalidRecords[$v->emp_id]['employee_name'] = $v->employee_name;
+                                            if(!isset($invalidRecords[$v->emp_id]["dates"])){ $invalidRecords[$v->emp_id]["dates"] = array(); }
+                                            $invalidRecords[$v->emp_id]["dates"][] = date("Y/m/d H:i", strtotime($v->datetime));
+                                            $invalidCtr++;
+                                        }
+                                    } elseif(!empty($result) && isset($result['invalid_employees'])) {
+                                        foreach($result['invalid_employees'] as $k => $v) {
+                                            if (!in_array($v->biometric_id, $non_existing)) { array_push($non_existing, $v->biometric_id); }
+                                        }
+                                    }
+
+                                    $state = true;
+                                    $resultSet['message'] = 'Successfully imported attendance records.';
+                                    $resultSet["title"] = "Import & Generate Successful.";
+                                    $resultSet["invalid_records"] = $invalidRecords;
+                                    $resultSet["invalid_count"] = $invalidCtr;
+                                } else {
+                                    $this->db->trans_rollback();
+                                    $this->db->db_debug = $this->db_debug;
+
+                                    $state = false;
+                                    $resultSet['message'] = 'Failed to save the imported attendance records.';
+                                    $resultSet["title"] = "Import Attendance Records.";
+                                    $resultSet['debug_message'] = $this->db->error()["message"];
+                                }
+                            } else {
+                                $this->db->trans_rollback();
+                                $this->db->db_debug = $this->db_debug;
+
+                                $state = false;
+                                $resultSet['message'] = 'Failed to save the imported attendance records.';
+                                $resultSet["title"] = "Import Attendance Records.";
+                                $resultSet['debug_message'] = $this->db->error()["message"];
+                            }
+                        }
+                    } else {
+                        $this->db->trans_rollback();
+                        $this->db->db_debug = $this->db_debug;
+
+                        $state = false;
+                        $resultSet['message'] = 'No imported attendance records were found.';
+                        $resultSet["title"] = "Import Attendance Records.";
+                        $resultSet['debug_message'] = $this->db->error()["message"];
+                    }
+                }
+            } else {
+                $state = false;
+                $resultSet['message'] = 'No attendance records were found within the selected inclusive date range.';
+                $resultSet["title"] = "Import Attendance Records.";
+            }
+
+            $this->db->trans_rollback();
+            $this->db->db_debug = $this->db_debug;
+        }
+
+        $this->db->trans_rollback();
+        $this->db->db_debug = $this->db_debug;
+
+        $not_found_hris = array();
+        foreach ($non_existing as $biometric) {
+            $this->db->where('emp.biometricno', intval($biometric));
+            $this->db->from($this->tbl_employees.' emp');
+            $_q = $this->db->get();
+            array_push($not_found_hris, array("biometric" => $biometric, "in_employees" => $_q->num_rows()));
+        }
+
+        $no_shifts_name = array();
+        foreach ($no_shifts as $no_shift) {
+            $employee = $this->db
+                ->select("CONCAT(emp.firstname, ' ', emp.lastname) employee_name")
+                ->where("personnel.biometricno", $no_shift)
+                ->join($this->tbl_personnel . " personnel", "personnel.biometricno = emp.biometricno", "INNER")
+                ->get($this->tbl_employees . " emp")
+                ->row();
+            if (!empty($employee)) {
+                if (!in_array($employee->employee_name, $no_shifts_name)) {
+                    array_push($no_shifts_name, $employee->employee_name);
+                }
             }
         }
 
-        die;
+        if (sizeof($not_found_hris) <= 0 && sizeof($no_shifts) <= 0) {
+            $this->db->where("id", $import_insert_id);
+            $this->db->set("resolved", 1);
+            $this->db->update($this->tbl_timesheet_imports);
+            $this->db->reset_query();
+        }
+
+        $resultSet["success"] = $state;
+        $resultSet["non_existing"] = $not_found_hris;
+        $resultSet["no_shifts"] = $no_shifts;
+        $resultSet["no_shifts_name"] = $no_shifts_name;
+        $resultSet["not_in_personnel"] = $not_in_personnel;
+        $resultSet["emp_id_to_generate"] = $emp_id_to_generate;
+        $resultSet["exist_in_timesheet"] = $exist_in_timesheet;
+        $resultSet["timesheet_imports_id"] = $import_insert_id;
+        $resultSet["start"] = $start;
+        $resultSet["end"] = $end;
+        $resultSet["possible_duplicate"] = $possible_duplicate;
+        $resultSet["type"] = $post->type;
+        return $resultSet;
     }
 
     public function importAndGenerateTimesheetv1()
@@ -10624,5 +10914,73 @@ class Timesheet_model extends CI_Model{
         }
 
         return $grouped;
+    }
+    
+    private function insert_ignore_batch($table_name, $rows) {
+        if (empty($rows)) {
+            return false;
+        }
+
+        $table = $this->db->protect_identifiers($table_name, true, null, false);
+        $columns = array_keys(reset($rows));
+        $escapedColumns = array_map(array($this->db, 'protect_identifiers'), $columns);
+        $values = array();
+
+        foreach ($rows as $row) {
+            $rowValues = array();
+
+            foreach ($columns as $column) {
+                $rowValues[] = array_key_exists($column, $row)
+                    ? $this->db->escape($row[$column])
+                    : 'NULL';
+            }
+
+            $values[] = '(' . implode(', ', $rowValues) . ')';
+        }
+
+        $sql = 'INSERT IGNORE INTO ' . $table
+            . ' (' . implode(', ', $escapedColumns) . ') VALUES '
+            . implode(', ', $values);
+
+        return $this->db->query($sql);
+    }
+
+    protected function createTemporaryTable($tableName) {
+        $tableName = $this->db->escape_str($tableName);
+        $this->db->query("DROP TEMPORARY TABLE IF EXISTS `{$tableName}`");
+
+        $sql = "CREATE TEMPORARY TABLE IF NOT EXISTS `" . $tableName . "` (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `biometricno` INT(11) DEFAULT 0,
+            `date` DATE DEFAULT NULL,
+            `time` CHAR(5) DEFAULT '00:00',
+            `datetime` DATETIME NULL DEFAULT NULL,
+            `device_id` INT(11) NOT NULL DEFAULT 0,
+            `import_id` INT(11) NOT NULL DEFAULT 0,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `unique_bio_datetime` (`biometricno`, `date`, `time`, `device_id`) USING BTREE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+        return $this->db->query($sql);
+    }
+
+    protected function createImportResultJson($filename, $deviceName, $uploadedBy, $result, $directory = './uploads/logs') {
+        if (!is_dir($directory)) {
+            @mkdir($directory, 0777, true);
+        }
+
+        $jsonFilename = $this->logged_in_user['emp_id'] . '-' . date('YmdHis') . '.json';
+        $jsonPath = rtrim($directory, '/\\') . DIRECTORY_SEPARATOR . $jsonFilename;
+
+        $payload = array(
+            'filename' => strtoupper($filename),
+            'device_name' => strtoupper($deviceName),
+            'uploaded_by' => strtoupper($uploadedBy),
+            'result' => $result
+        );
+
+        return file_put_contents(
+            $jsonPath,
+            json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+        ) !== false;
     }
 }

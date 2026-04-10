@@ -4247,6 +4247,8 @@ $.validate({
                         $('#device-id', importModal).val(null);
                         $('.custom-file-control', importModal).html('CHOOSE FILE...');
                         $('#device-id', importModal).val(null).trigger('change');
+
+                        //here
                     } else {
                         const toast = response.success ? 'success' : 'error';
                         toastr[toast](response.message, response.title, { timeOut: 10000 });
