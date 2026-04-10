@@ -272,30 +272,30 @@
                                             </template>
                                             <template v-if="reply.status != 'pending'">
                                                 <div class="m-separator m-separator--dashed m-separator--md"></div>
-                                                <div class="row justify-content-center">
+                                                <div class="row">
                                                     <div class="col-4" v-if="reply.status != 'pending'">
-                                                        <div class="card border text-center p-3 h-100">
+                                                        <div class="card border-0 text-center p-3 h-100">
                                                             <div class="text-uppercase fw-semibold mb-3">REPLY FROM:</div>
                                                             <div class="m--font-boldest text-uppercase" v-text="assignatory.reply_by_name"></div>
                                                             <div class="text-muted small" v-text="assignatory.reply_position"></div>
                                                         </div>
                                                     </div>
                                                     <div class="col-4" v-if="reply.status != 'pending' && reply.status != 'for_approve' && reply.status != 'disapproved'">
-                                                        <div class="card border text-center p-3 h-100">
+                                                        <div class="card border-0 text-center p-3 h-100">
                                                             <div class="text-uppercase fw-semibold mb-3">CHECKED BY:</div>
                                                             <div class="m--font-boldest text-uppercase" v-text="assignatory.approve_by_name"></div>
                                                             <div class="text-muted small" v-text="assignatory.approve_position"></div>
                                                         </div>
                                                     </div>
                                                     <div class="col-4" v-if="reply.status == 'disapproved'">
-                                                        <div class="card border text-center p-3 h-100">
+                                                        <div class="card border-0 text-center p-3 h-100">
                                                             <div class="text-uppercase fw-semibold mb-3">DISAPPROVE BY:</div>
                                                             <div class="m--font-boldest text-uppercase" v-text="assignatory.disapprove_by_name"></div>
                                                             <div class="text-muted small" v-text="assignatory.disapprove_position"></div>
                                                         </div>
                                                     </div>
-                                                    <div class="col-4" v-if="reply.status == 'noted'">
-                                                        <div class="card border text-center p-3 h-100">
+                                                    <div class="col-4"  v-if="reply.status == 'noted'">
+                                                        <div class="card border-0 text-center p-3 h-100">
                                                             <div class="text-uppercase fw-semibold mb-3">NOTED BY:</div>
                                                             <div class="m--font-boldest text-uppercase" v-text="assignatory.note_by_name"></div>
                                                             <div class="text-muted small" v-text="assignatory.note_position"></div>
@@ -305,10 +305,10 @@
                                             </template>
                                             <template>
                                                 <div class="m-separator m-separator--dashed m-separator--md"></div>
-                                                <div class="row justify-content-center">
+                                                <div class="row justify-content-left">
                                                     <div class="col-6" v-if="assignatory.approve_remarks && reply.status != 'disapproved'">
                                                         <div class="form-group">
-                                                            <div class="form-control-label mb-2">
+                                                            <div class="form-control-label m--font-bold mb-2">
                                                                 APPROVE REMARKS
                                                             </div>
                                                             <div class="form-control textarea-view"
@@ -318,7 +318,7 @@
                                                     </div>
                                                     <div class="col-6" v-if="reply.status == 'disapproved'">
                                                         <div class="form-group">
-                                                            <div class="form-control-label mb-2">
+                                                            <div class="form-control-label m--font-bold mb-2">
                                                                 DISAPPROVE REMARKS
                                                             </div>
                                                             <div class="form-control textarea-view"
@@ -328,7 +328,7 @@
                                                     </div>
                                                     <div class="col-6" v-if="assignatory.note_remarks && reply.status == 'noted'">
                                                         <div class="form-group">
-                                                            <div class="form-control-label mb-2">
+                                                            <div class="form-control-label m--font-bold mb-2">
                                                                 NOTE REMARKS
                                                             </div>
                                                             <div class="form-control textarea-view"
