@@ -55,7 +55,7 @@ var tblLoa = $("#table-loa").DataTable({
             d.status = param_status,
             d.company = company,
             d.department = department,    
-            d.date = {...dateRange};
+            d.date = dateRange
         }
     },
     aaSorting: [],
@@ -822,7 +822,6 @@ $.validate({
     onSuccess: function() {
         company = $("#company").val();
         department = $("#department").val();
-        dateRange = $("#m_daterangepicker").val();
 
         tblLoa.ajax.reload();
         $("#modal-advance-search").modal("hide");
