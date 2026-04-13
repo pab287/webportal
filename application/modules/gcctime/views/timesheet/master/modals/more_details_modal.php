@@ -396,7 +396,7 @@
             }
 
             .site_item.col-12 { flex: 100% 0 0; max-width: max-content; }
-            .site_item.col-6 { flex: 50% 0 0; }
+            .site_item.col-6 { flex: 50% 0 0; max-width: 48.5%;}
             .site_item.col-4-3 {flex: 31.5% 0 0;}
             .site_item.col-4 { flex: 23% 0 0; }
         </style>
@@ -421,7 +421,8 @@
                     }
 
                     foreach ($devices as $site => $entry) : ?>
-                        <div class="site_item <?= $class; ?>">
+                        <!-- <div class="site_item <?//= $class; ?>"> -->
+                        <div class="site_item">
                             <h6 class="site_title"><?= $site; ?></h6>
 
                             <div class="punch_wrap">
