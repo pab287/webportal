@@ -7940,6 +7940,7 @@ class Payroll_m extends CI_Model{
 
     public function checkingPayrollSheetData($filterOption=array()){
         $post = is_array($filterOption) && count($filterOption) > 0 ? $filterOption: $this->input->post();
+        $pGroup = isset($post["payroll_group"]) && $post["payroll_group"] ? $post["payroll_group"]: null;
 
         $resultset = array();
         $arrExistingPs = array();
@@ -8057,7 +8058,7 @@ class Payroll_m extends CI_Model{
 
         $pgHistoryRecords = [];
         $employeeId = explode(',', $existingEmployees);
-        if(is_array($employeeId) && !empty($employeeId)){
+        if(is_array($employeeId) && !empty($employeeId) && $pGroup != null){
             /*** $this->db->where_in("emp_id", $employeeId);
             $this->db->get_where($this->tbl_ps_group_history,
                 array("pgh.date_start"=>$dateStart,
@@ -8090,9 +8091,6 @@ class Payroll_m extends CI_Model{
                 "pgh.company_id"=>$companyId,
                 "ps.posted"=>1)
             );
-
-            //var_dump($this->db->last_query());
-            
             $pgHistoryRecords = $existingGroupHistory->result_array();
         }
 
