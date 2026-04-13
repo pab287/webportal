@@ -421,8 +421,8 @@
                     }
 
                     foreach ($devices as $site => $entry) : ?>
-                        <!-- <div class="site_item <?//= $class; ?>"> -->
-                        <div class="site_item">
+                        <div class="site_item <?= $class; ?>">
+                        <!-- <div class="site_item"> -->
                             <h6 class="site_title"><?= $site; ?></h6>
 
                             <div class="punch_wrap">
