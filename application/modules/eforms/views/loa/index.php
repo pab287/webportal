@@ -43,7 +43,7 @@
                                         <span>
                                             <i class="la la-plus"></i>
                                             <span>
-                                                New 
+                                                NEW 
                                             </span>
                                         </span>
                                     </a>
@@ -51,7 +51,7 @@
                                         <span>
                                             <i class="fa fa-search"></i>
                                             <span>
-                                                Advance Search
+                                                ADVANCE SEARCH
                                             </span>
                                         </span>
                                     </a>
@@ -85,8 +85,8 @@
                                         <div class="align-items-right col-md-12">
                                             <select class="form-control" id="choice" data-validation="false">
                                                 <option></option>
-                                                <option value="1">Approve</option>
-                                                <option value="2">Disapprove</option>
+                                                <option value="1">Approve Selected</option>
+                                                <option value="2">Disapprove Selected</option>
                                             </select>
                                         </div>
                                     </div>
