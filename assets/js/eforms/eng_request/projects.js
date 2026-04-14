@@ -34,8 +34,19 @@ projectTable = $('#project_table').DataTable({
             sortable: false,
             className: "text-center",
             render: function (data, type, row, meta) {
-                if (is_archive) {
-                    return '---'; 
+                if (row.is_archive == 1) {
+                    return `
+                        <button type="button"
+                            class="btn btn-default m-btn m-btn--hover-success m-btn--icon m-btn--icon-only m-btn--pill btnRestore"
+                            data-toggle="m-tooltip"
+                            data-placement="bottom"
+                            data-skin="dark"
+                            data-original-title="Restore"
+                            data-delay='{"show":300}'
+                            onclick="restoreRow(${row.id})">
+                            <i class="la la-refresh"></i>
+                        </button>
+                    `;
                 }
         
                 return `
@@ -134,3 +145,84 @@ function editRow(id){
 $('#generalSearch').donetyping(function () {
     projectTable.ajax.reload();
 });
+
+
+function archiveRow(id) {
+    Swal.fire({
+        title: 'Archive this project?',
+        text: "This action cannot be undone!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, archive it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: siteUrl("eforms/engineering_request_forms/archive_project"),
+                type: "POST",
+                dataType: "json",
+                data: {
+                    id: id,
+                    archive: 1,
+                    csrf_token: _csrf_hash
+                },
+                success: function (response) {
+
+                    if (response.success) {
+                        toastr.success(response.message, 'Success');
+                    } else {
+                        toastr.error(response.message, 'Error');
+                    }
+
+                    projectTable.ajax.reload(null, false);
+                },
+                error: function () {
+                    toastr.error('Something went wrong.', 'Error');
+                }
+            });
+
+        }
+    });
+}
+
+function restoreRow(id) {
+    Swal.fire({
+        title: 'Restore this project?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, restore it'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: siteUrl("eforms/engineering_request_forms/restore_project"),
+                type: "POST",
+                dataType: "json",
+                data: {
+                    id: id,
+                    archive: 0,
+                    csrf_token: _csrf_hash
+                },
+                success: function (response) {
+
+                    if (response.success) {
+                        toastr.success(response.message, 'Success');
+                    } else {
+                        toastr.error(response.message, 'Error');
+                    }
+
+                    projectTable.ajax.reload(null, false);
+                }
+            });
+
+        }
+    });
+}
+
+function archiveRecordShow() {
+    is_archive = is_archive === 1 ? 0 : 1;
+    $('#header').text(is_archive === 1 ? 'Projects Archive' : 'Projects Masterfile');
+    $('#archiveLabel').text(is_archive === 1 ? 'Back to Masterfile' : 'Archive');
+    projectTable.ajax.reload();
+}

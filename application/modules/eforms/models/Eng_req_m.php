@@ -304,6 +304,50 @@ class Eng_req_m extends CI_Model {
         }
     }
 
+    public function archiveProject(){
+        $post = $this->input->post();
+        $id = $post['id'];
+    
+        $this->db->where('id', $id);
+        $this->db->update($this->projectTable, array(
+            'is_archive' => 1
+        ));
+    
+        if ($this->db->affected_rows() > 0) {
+            return array(
+                "success" => true,
+                "message" => "Project archived successfully."
+            );
+        } else {
+            return array(
+                "success" => false,
+                "message" => "Failed to archive project."
+            );
+        }
+    }
+    
+    public function restoreProject(){
+        $post = $this->input->post();
+        $id = $post['id'];
+    
+        $this->db->where('id', $id);
+        $this->db->update($this->projectTable, array(
+            'is_archive' => 0
+        ));
+    
+        if ($this->db->affected_rows() > 0) {
+            return array(
+                "success" => true,
+                "message" => "Project restored successfully."
+            );
+        } else {
+            return array(
+                "success" => false,
+                "message" => "Failed to restore project."
+            );
+        }
+    }
+
     public function updateProject(){
         $post = $this->input->post();
         $data = array(

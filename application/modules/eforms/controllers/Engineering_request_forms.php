@@ -84,6 +84,8 @@
             $data['employee'] = $this->eng_req->select2Employee();
             // $data['supervisor'] = $this->eng_req->select2Supervisor();
             // $data['installer'] = $this->eng_req->select2Installer();
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
             $this->core_layout->addJs("js/eforms/eng_request/projects.js", true, $data);
             $this->load->view('core/templates/header');
             $this->load->view('eforms/engineering_request_forms/projects');
@@ -129,6 +131,16 @@
 
         public function save_project(){
             $data = $this->eng_req->saveProject();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function archive_project(){
+            $data = $this->eng_req->archiveProject();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function restore_project(){
+            $data = $this->eng_req->restoreProject();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
