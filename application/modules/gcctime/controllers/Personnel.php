@@ -25,7 +25,9 @@ class Personnel extends MY_Controller {
 		$tempData["company"] = $this->payroll->select2CompanyData();
 		$this->core_layout->setPageTitle("Gcctime - Employee Group");
 		$this->core_layout->setPrivilegeName("gcctime_employee_group");
-		$this->core_layout->addJs("js/payroll/employee/payroll.group.js", true, $tempData);
+
+		$version = filemtime(FCPATH.'assets/js/payroll/employee/payroll.group.js');
+		$this->core_layout->addJs("js/payroll/employee/payroll.group.js", true, $tempData, "?v=$version");
 
 		$this->load->view('core/templates/header');
 		$this->load->view('payroll/payroll/employee_group');
