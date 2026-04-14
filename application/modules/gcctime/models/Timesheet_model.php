@@ -7183,13 +7183,7 @@ class Timesheet_model extends CI_Model{
                                 $insert_attendance = $this->db->insert_batch($this->tbl_attendance, $tempAttendance);
     
                                 if ($insert_attendance && $this->db->trans_status() === true) {
-                                    $this->createImportResultJson(
-                                        $file->name,
-                                        $deviceName,
-                                        $tempName,
-                                        $result,
-                                        './uploads/logs'
-                                    );
+                                    $this->createImportResultJson( $file->name, $deviceName, $tempName, $result, './uploads/logs');
 
                                     if (!empty($result) && isset($result['valid_entries'])) {
                                         foreach($result['valid_entries'] as $k => $v) {
