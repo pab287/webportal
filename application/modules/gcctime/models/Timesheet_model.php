@@ -7190,8 +7190,6 @@ class Timesheet_model extends CI_Model{
                                         $result,
                                         './uploads/logs'
                                     );
-                                    $this->db->trans_commit();
-                                    $this->db->db_debug = $this->db_debug;
 
                                     if (!empty($result) && isset($result['valid_entries'])) {
                                         foreach($result['valid_entries'] as $k => $v) {
@@ -7221,9 +7219,6 @@ class Timesheet_model extends CI_Model{
                                     $resultSet["invalid_records"] = $invalidRecords;
                                     $resultSet["invalid_count"] = $invalidCtr;
                                 } else {
-                                    $this->db->trans_rollback();
-                                    $this->db->db_debug = $this->db_debug;
-
                                     $state = false;
                                     $resultSet['message'] = 'Failed to save the imported attendance records.';
                                     $resultSet["title"] = "Import Attendance Records.";
@@ -7240,9 +7235,6 @@ class Timesheet_model extends CI_Model{
                             }
                         }
                     } else {
-                        $this->db->trans_rollback();
-                        $this->db->db_debug = $this->db_debug;
-
                         $state = false;
                         $resultSet['message'] = 'No imported attendance records were found.';
                         $resultSet["title"] = "Import Attendance Records.";
@@ -7254,17 +7246,14 @@ class Timesheet_model extends CI_Model{
                 $resultSet['message'] = 'No attendance records were found within the selected inclusive date range.';
                 $resultSet["title"] = "Import Attendance Records.";
             }
-
-            $this->db->trans_rollback();
-            $this->db->db_debug = $this->db_debug;
         } else {
+            // import timesheet function from excel template
             $file_path = $upload->upload_data->full_path;
             $objPHPExcel = PHPExcel_IOFactory::load($file_path);
             $rows = $objPHPExcel->getActiveSheet()->toArray(null, true, true, true);
             $rows_count = count($rows);
             $timesheet = array();
             $tempAttendanceData = array();
-            $attendance = array();
 
             $night_diff_cfg = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "NIGHT_DIFF_PARAMS"))->row();
             $this->db->reset_query();
@@ -7294,17 +7283,266 @@ class Timesheet_model extends CI_Model{
                         $tempPmIn = ($pm_in)? date("H:i:s", strtotime($pm_in)): null;
                         $tempPmOut = ($pm_out)? date("H:i:s", strtotime($pm_out)): null;
 
-                        //here
-                        $data = array(
+                        /*** attendance rework ***/
+                        $next_day = new DateTime($date);
+                        $next_day->modify("+1 day");
+                        $tempAlteredDate = $next_day->format("Y-m-d");
+                        $isNextDay = false;
 
-                        );
+                        $_am_in = $tempAmIn ? date("Y-m-d H:i:s", strtotime($date . " " . $tempAmIn)): null;
+                        $_am_out = $tempAmOut ? date("Y-m-d H:i:s", strtotime($date . " " . $tempAmOut)): null;
+                        $_pm_in = $tempPmIn ? date("Y-m-d H:i:s", strtotime($date . " " . $tempPmIn)): null;
+                        $_pm_out = $tempPmOut ? date("Y-m-d H:i:s", strtotime($date . " " . $tempPmOut)): null;
+
+                        if(($tempAmIn && $tempAmOut) && (strtotime($tempAmOut) < strtotime($tempAmIn))){
+                            $_am_out = date("Y-m-d H:i", strtotime($tempAlteredDate . " " . $tempAmOut));
+                            $isNextDay = true;
+                        }
+                        
+                        if(($tempAmOut && $tempPmIn) && (strtotime($tempPmIn) < strtotime($tempAmOut)) || $isNextDay === true){
+                            $_pm_in = date("Y-m-d H:i", strtotime($tempAlteredDate . " " . $tempPmIn));
+                            $isNextDay = true;
+                        }
+                        
+                        if(($tempPmIn && $tempPmOut) && (strtotime($tempPmOut) < strtotime($tempPmIn)) || $isNextDay === true){
+                            $_pm_out = date("Y-m-d H:i", strtotime($tempAlteredDate . " " . $tempPmOut));
+                            $isNextDay = true;
+                        }
+                        /*** attendance rework ***/
+
+                        $currentDateTime = array();
+                        if($tempAmIn && $tempAmIn !== null){  $currentDateTime[] = date("Y-m-d H:i:s", strtotime($_am_in)); }
+                        if($tempAmOut && $tempAmOut !== null){ $currentDateTime[] = date("Y-m-d H:i:s", strtotime($_am_out)); }
+                        if($tempPmIn && $tempPmIn !== null){ $currentDateTime[] = date("Y-m-d H:i:s", strtotime($_pm_in)); }
+                        if($tempPmOut && $tempPmOut !== null){ $currentDateTime[] = date("Y-m-d H:i:s", strtotime($_pm_out)); }
+
+                        if (!(strtotime($date) >= strtotime($start) && strtotime($date) <= strtotime($end))) { continue; }
+
+                        $employee = $this->getExistingEmployeeePersonnel($biometric);
+                        if($employee !== false && $employee->num_rows() == 1){
+                            $empRow = $employee->row();
+                            $alteredShifts = $this->getCustomizedShiftScheduleByDate($date, $empRow->emp_id);
+                            $getHourlyTimeSheet = $this->getEmployeePerHourShashPartimer($empRow->emp_id);
+
+                            $timesheet_exist = $this->db
+                            ->where("emp_id", $empRow->emp_id)
+                            ->where("date", $date_check)
+                            ->get($this->tbl_timesheet)
+                            ->row();
+
+                            $overtime = $this->db
+                                ->get_where($this->tbl_overtime,
+                                array(
+                                    "employee" => $empRow->emp_id,
+                                    "DATE(date_from)" => $date,
+                                    "status" => "Approved"
+                                    )
+                                )->result();
+
+                            $hasOT = sizeof($overtime) >= 1 ? 1 : 0;
+                            $this->db->reset_query();
+
+                            $flexible = intval($empRow->is_flexi) == 1 ? 1: 0;
+                            $shift_id = $empRow->shift_id;
+                            $no_shift_schedule = false;
+
+                            $tempHoliday = (object) $this->getCurrentDateIsHoliday($date);
+                            $isHoliday = $tempHoliday->is_holiday ? 1: 0;
+                            $payRateId = $tempHoliday->is_holiday && $tempHoliday->payrate_id ? $tempHoliday->payrate_id: 0;
+
+                            $employee_time_sheet = new StdClass();
+                            $employee_time_sheet->emp_id = $empRow->emp_id;
+                            $employee_time_sheet->date = $date;
+                            $employee_time_sheet->weekday = $weekday;
+                            
+                            $employee_time_sheet->is_holiday = $isHoliday;
+                            $employee_time_sheet->payrate_id = $payRateId;
+
+                            $employee_time_sheet->am_in = $tempAmIn;
+                            $employee_time_sheet->am_out = $tempAmOut;
+                            $employee_time_sheet->am_late = 0;
+                            $employee_time_sheet->am_ut = 0;
+                            $employee_time_sheet->am_time_rendered = 0;
+
+                            $employee_time_sheet->pm_in = $tempPmIn;
+                            $employee_time_sheet->pm_out = $tempPmOut;
+                            $employee_time_sheet->pm_late = 0;
+                            $employee_time_sheet->pm_ut = 0;
+                            $employee_time_sheet->pm_time_rendered = 0;
+
+                            $employee_time_sheet->total_late = 0;
+                            $employee_time_sheet->total_ut = 0;
+                            $employee_time_sheet->total_time_rendered = 0;
+
+                            $employee_time_sheet->is_flexi = $flexible;
+                            $employee_time_sheet->scrub_status = 0;
+                            $employee_time_sheet->comments = null;
+
+                            $employee_time_sheet->has_shift = 1;
+                            $employee_time_sheet->shift_am_start = null;
+                            $employee_time_sheet->shift_am_end = null;
+                            $employee_time_sheet->shift_pm_start = null;
+                            $employee_time_sheet->shift_pm_end = null;
+
+                            $employee_time_sheet->timesheet_imports_id = $import_insert_id;
+                            $employee_time_sheet->has_overtime = $hasOT;
+
+                            $employee_time_sheet->is_manual = 1;
+                            $employee_time_sheet->manual_mode = "import";
+                            $employee_time_sheet->manual_by = $logged_in_user_emp_id;
+
+                            $employee_time_sheet->total_accredited_ot_hrs = empty($ot) ? 0 : $ot;
+                            $employee_time_sheet->total_accredited_ndiff_ot_hrs = empty($ndot) ? 0 : $ndot;
+
+                            $tempResource = array();
+                            $shift_resource_array = array();
+
+                            $shift_resource = $this->getShiftResource($shift_id);
+                            if(isset($shift_resource->shift_resource) && $shift_resource->shift_resource){
+                                $tempResource = $shift_resource->shift_resource;
+                                $tempResource = unserialize($tempResource);
+
+                                $shift_resource_array = array_map(function ($item) {
+                                    return intval($item);
+                                }, $tempResource);
+                            }
+
+                            $schedule = $this->getScheduleList($weekday, $shift_resource_array);
+                            /*** altered shift schedule from custom shift `start` ***/
+                            /*** $tempAlteredIndexId = "shift-id_{$shift_id}"; ***/
+                            $alteredCustomShiftId = 0;
+                            $alteredHasShiftSchedule = 1;
+
+                            if(isset($alteredShifts) && $alteredShifts && count(get_object_vars($alteredShifts)) > 0 && isset($alteredShifts->has_shift)){
+                                $ctrAlteredSchedule = false;
+                                $tempHasShift = $alteredShifts->has_shift;
+                                $alteredHasShiftSchedule = intval($tempHasShift);
+
+                                foreach ($alteredShifts->schedule as $kkx => $vvx) {
+                                    if(isset($schedule->{$kkx}) && $schedule->{$kkx} && $schedule->{$kkx} !== $vvx && $vvx !== null && intval($tempHasShift) == 1){
+                                        $schedule->{$kkx} = $vvx;
+                                        $ctrAlteredSchedule = true;
+                                    }
+                                    if(intval($tempHasShift) == 0){
+                                        $schedule->{$kkx} = null;
+                                        $ctrAlteredSchedule = true;
+                                    }
+                                }
+                                if($ctrAlteredSchedule === true && $alteredShifts->custom_shift_id !== "0"){
+                                    $alteredCustomShiftId = $alteredShifts->custom_shift_id;
+                                }
+                            }
+
+                            $_has_shift = $alteredCustomShiftId !== 0? intval($alteredHasShiftSchedule): 1;
+                            $employee_time_sheet->has_shift = $_has_shift;
+                            $employee_time_sheet->custom_shift_id = $alteredCustomShiftId;
+
+                            $employee_time_sheet->overtime_in = null;
+                            $employee_time_sheet->overtime_out = null;
+                            $employee_time_sheet->paid_holiday = 0;
+                            /*** altered shift schedule from custom shift `end` ***/
+
+                            $am_start = !empty($schedule) ? $schedule->am_start : null;
+                            $am_end = !empty($schedule) ? $schedule->am_end : null;
+                            $pm_start = !empty($schedule) ? $schedule->pm_start : null;
+                            $pm_end = !empty($schedule) ? $schedule->pm_end : null;
+
+                            if (($am_start === null && $am_end === null && $pm_start === null && $pm_end === null) || empty($schedule)) {
+                                $no_shift_schedule = true;
+                            }
+
+                            if ($no_shift_schedule === true) {
+                                $employee_time_sheet->scrub_status = 3;
+                                $employee_time_sheet->has_shift = 0;
+                                $employee_time_sheet->comments = "[System Generated]: No shift schedule detected.";
+                            } else {
+                                $employee_time_sheet->shift_am_start = $am_start;
+                                $employee_time_sheet->shift_am_end = $am_end;
+                                $employee_time_sheet->shift_pm_start = $pm_start;
+                                $employee_time_sheet->shift_pm_end = $pm_end;
+                            }
+
+                            $toArray = (array) $getHourlyTimeSheet;
+                            if(is_array($toArray) && count($toArray) > 0){ $employee_time_sheet->is_tagged_hourly = true; }
+
+                            $updatedTimeSheet = $this->updateTimesheetShiftComputation($employee_time_sheet, false, $night_diff_cfg);
+                            if(is_array($toArray) && count($toArray) > 0){
+                                if(isset($employee_time_sheet->is_tagged_hourly)){ unset($employee_time_sheet->is_tagged_hourly); }
+                                $updatedTimeSheet = array_merge((array) $updatedTimeSheet, $toArray);
+                            }
+
+                            $tempMergedTimeSheet = array_merge((array) $employee_time_sheet, (array) $updatedTimeSheet);
+                            $employee_time_sheet = (object) $tempMergedTimeSheet;
+
+                            if (sizeof((array) $timesheet_exist) >= 1 && $isValidDate === true){
+                                $tempEmployeeData = (object) $this->core_layout->getEmployeeData($empRow->emp_id);
+                                $tempName = isset($tempEmployeeData->display_name_1) && $tempEmployeeData->display_name_1 ? $tempEmployeeData->display_name_1: "No assigned name";
+                                $timesheet_exist->emp_name = $tempName;
+                                $employee_time_sheet->emp_name = $tempName;
+
+                                array_push($possible_duplicate, array(
+                                    "current" => $timesheet_exist,
+                                    "changes" => $employee_time_sheet,
+                                    "changes_str" => json_encode($employee_time_sheet)
+                                ));
+                            }else{
+                                if(sizeof((array) $employee_time_sheet) >= 1 && !empty($currentDateTime)){
+                                    $this->db->from($this->tbl_timesheet);
+                                    $this->db->where("emp_id", $employee_time_sheet->emp_id);
+                                    $this->db->where("date", $employee_time_sheet->date);
+                                    foreach ($currentDateTime as $datetime) {
+                                        $this->db->group_start();
+                                        $timeAttendance = date("H:i:s", strtotime($datetime));
+                                        $this->db->where("am_in", $timeAttendance);
+                                        $this->db->or_where("am_out", $timeAttendance);
+                                        $this->db->or_where("pm_in", $timeAttendance);
+                                        $this->db->or_where("pm_out", $timeAttendance);
+                                        $this->db->group_end();
+                                    }
+                                    $tempQuery = $this->db->get();
+                                    if($tempQuery->num_rows() == 0 && $isValidDate === true){
+                                        array_push($timesheet, $employee_time_sheet);
+                                    }elseif($tempQuery->num_rows() == 0 && $isValidDate === false){
+                                        $invalidRecords[$employee_time_sheet->emp_id]["biometric_id"] = $empRow->biometric_id;
+                                        $invalidRecords[$employee_time_sheet->emp_id]["employee_name"] = $empRow->employee_name;
+                                        $invalidRecords[$employee_time_sheet->emp_id]["dates"][] = date("Y/m/d", strtotime($date));
+                                        $invalidCtr++;
+                                    }
+                                }
+                            }
+
+                            if(!empty($currentDateTime)){
+                                foreach ($currentDateTime as $value) {
+                                    $tempRow = new stdClass();
+                                    $tempRow->biometric_id = $empRow->biometric_id;
+                                    $tempRow->datetime = $value;
+                                    $tempAttendanceData[] = $tempRow;
+                                }
+                            }
+                        }
                     }
                 }
             }
+
+            if (!empty($timesheet)) {
+                $this->db->insert_batch($this->tbl_timesheet, $timesheet);
+            }
+
+            $resultSet["success"] = true;
+            $resultSet["message"] = "Timesheet was successfully imported.";
+            $resultSet["title"] = "Import Successful.";
+            $resultSet["invalid_records"] = $invalidRecords;
+            $resultSet["invalid_count"] = $invalidCtr;
         }
 
-        $this->db->trans_rollback();
-        $this->db->db_debug = $this->db_debug;
+        if ($this->db->trans_status() === true) {
+            $this->db->trans_commit();
+        } else {
+            $this->db->trans_rollback();
+            $resultSet["success"] = false;
+            $resultSet["message"] = $this->db->error()["message"];
+            $resultSet["title"] = "An error occurred.";
+        }
 
         $not_found_hris = array();
         foreach ($non_existing as $biometric) {
@@ -11029,24 +11267,450 @@ class Timesheet_model extends CI_Model{
     }
 
     public function generate_timesheet_imported_record(){
-        $result = array();
-        $exist_in_timesheet = array();
         $post = $this->input->post();
-        $state = false;
-
         session_write_close();
 
-        if (isset($post['ids']) && $post['ids']) {
-            $date = date('Y-m-d');
-            $create = $this->create($date, 1, $post['ids'], $post['import_id']);
-            if (sizeof($create["updatedTimesheets"]) >= 1) {
-                $exist_in_timesheet = array_unique(array_merge($create["updatedTimesheets"], $exist_in_timesheet));
-            }
-            $state = true;
+        $result = array(
+            'state' => false,
+            'exist_in_timesheet' => array()
+        );
+
+        if (!isset($post['ids']) || empty($post['ids']) || !isset($post['start']) || !isset($post['end'])) {
+            return $result;
         }
-        
-        $result['state'] = $state;
-        $result['exist_in_timesheet'] = $exist_in_timesheet;
+
+        $startTimestamp = strtotime($post['start']);
+        $endTimestamp = strtotime($post['end']);
+
+        if ($startTimestamp === false || $endTimestamp === false) {
+            return $result;
+        }
+
+        if ($startTimestamp > $endTimestamp) {
+            $tempTimestamp = $startTimestamp;
+            $startTimestamp = $endTimestamp;
+            $endTimestamp = $tempTimestamp;
+        }
+
+        $employeeIds = is_array($post['ids']) ? array_values(array_unique($post['ids'])) : array($post['ids']);
+        $employeeIdChunks = array_chunk($employeeIds, 300);
+        $updatedTimesheetMap = array();
+
+        for ($currentTimestamp = $startTimestamp; $currentTimestamp <= $endTimestamp; $currentTimestamp = strtotime('+1 day', $currentTimestamp)) {
+            $createDate = date('Y-m-d', $currentTimestamp);
+
+            foreach ($employeeIdChunks as $employeeIdChunk) {
+                $create = $this->generate_timesheet_by_attendance_table($createDate, 1, $employeeIds, $post['import_id']);
+
+                if (isset($create['updatedTimesheets']) && is_array($create['updatedTimesheets'])) {
+                    foreach ($create['updatedTimesheets'] as $timesheetId) {
+                        $updatedTimesheetMap[$timesheetId] = $timesheetId;
+                    }
+                }
+            }
+        }
+
+        $result['state'] = true;
+        $result['exist_in_timesheet'] = array_values($updatedTimesheetMap);
         return $result;
+    }
+
+    public function generate_timesheet_by_attendance_table($date, $is_custom, $emp = array(), $timesheet_imports_id = null, $generated_manually = 0) {
+        $is_custom = ($is_custom == "null")? null: $is_custom;
+        $this->db->db_debug = false;
+
+        $employees = $this->getEmployeesWithAttendance($date, $is_custom, $emp);
+        $this->db->reset_query();
+
+        $weekday = strtolower(date("l", strtotime($date)));
+        $resultSet = array();
+        $hasOT = 0;
+        $updatedTimesheets = array();
+        $logged_in_user_emp_id = $this->logged_in_user["emp_id"];
+        $attendance_params = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "TS_OT_PARAMS"))->row();
+        $night_diff_cfg = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "NIGHT_DIFF_PARAMS"))->row();
+        $tempEmployeeIds = array();
+
+        $tempOvertimeRecords = $this->getOvertimeRecordByDateRange($date, $emp);
+        $this->db->last_query();
+
+        $tempHoliday = (object) $this->getCurrentDateIsHoliday($date);
+        $isHoliday = ($tempHoliday->is_holiday === true)? 1: 0;
+        $payRateId = ($tempHoliday->is_holiday === true && $tempHoliday->payrate_id)? $tempHoliday->payrate_id: 0;
+        $this->db->last_query();
+
+        if (sizeof($employees) >= 1) {
+            $this->db->trans_begin();
+
+            foreach ($employees as $employee) {
+                $hasOvertimeRecords = array();
+                $hasOvertimeRequest = false;
+                $tempKeySearch = "emp_id_{$employee->id}";
+                if(isset($tempOvertimeRecords[$tempKeySearch]) && is_array($tempOvertimeRecords[$tempKeySearch]) && count($tempOvertimeRecords[$tempKeySearch]) > 0){
+                    $hasOvertimeRecords = $tempOvertimeRecords[$tempKeySearch];
+                }
+
+                if(is_array($hasOvertimeRecords) && count($hasOvertimeRecords) > 0){
+                    foreach ($hasOvertimeRecords as $otValue) {
+                        $otRecord = explode("::", $otValue);
+                        if(is_array($otRecord) && count($otRecord) == 2){
+                            $tempOtRecord = explode("__", $otRecord[1]);
+                            $tempOtDateFrom = strtotime(date("Y-m-d", strtotime($tempOtRecord[0])));
+                            $tempOtDateTo = strtotime(date("Y-m-d", strtotime($tempOtRecord[1])));
+                            $currentOTDate = strtotime(date("Y-m-d", strtotime($date)));
+
+                            if($currentOTDate >= $tempOtDateFrom && $currentOTDate <= $tempOtDateTo){
+                                $hasOvertimeRequest = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                $updatedSchedule = $this->getCurrentShiftSchedule($date, $employee);
+                $schedule = $updatedSchedule->schedule;
+
+                $activeSchedule = [];
+                $schedule_props = array("am_start", "am_end", "pm_start", "pm_end");
+                foreach ($schedule_props as $nKey => $sProps) {
+                    if(isset($schedule->{$sProps}) && $schedule->{$sProps}){
+                        if($nKey > 0){
+                            $prevKey = $schedule_props[$nKey - 1];
+                            if($prevKey && $schedule->{$prevKey}){
+                                $prevTime = date("H:i:s", strtotime($schedule->{$prevKey}));
+                                $tempTime = date("H:i:s", strtotime($schedule->{$sProps}));
+                                if(strtotime($prevTime) > strtotime($tempTime)){
+                                    $nextDate = date("Y-m-d", strtotime("+1 day", strtotime($date)));
+                                    $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($nextDate ." ".$schedule->{$sProps}));
+                                }else{
+                                    $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($date ." ".$schedule->{$sProps}));
+                                }
+                            }
+                        }else{
+                            $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($date ." ".$schedule->{$sProps}));
+                        }
+                    }
+                }
+
+                $tempActiveSchedule = array();
+                foreach ($activeSchedule as $sched) { $tempActiveSchedule[] = $sched; }
+
+                $nightShiftLastRecord = null;
+                $isNightShift = $this->checkNightShiftSchedule($date, $tempActiveSchedule);
+                $nshiftParams = $this->nightshiftParams($date);
+
+                if($isNightShift){
+                    $prevDate = date("Y-m-d", strtotime("-1 day", strtotime($date)));
+                    $prev_attendance = array_map(function ($_attendance) {
+                        return date("Y-m-d H:i", strtotime($_attendance->datetime));
+                    }, $this->getAttendance($prevDate, $employee->id, $nshiftParams["start"]));
+                    $nightShiftLastRecord = end($prev_attendance);
+                }
+
+                $payrollType = $employee->payroll_type;
+
+                $ts_exist = $this->db
+                ->where("emp_id", $employee->id)
+                ->where("date", $date)
+                ->get($this->tbl_timesheet);
+
+                if($ts_exist->num_rows() == 1 && !in_array($employee->id, $tempEmployeeIds)){ $tempEmployeeIds[] = $employee->id; }
+                $is_timesheet_exist = $ts_exist->num_rows > 0 ? 1 : 0;
+                $timesheet_exist = $ts_exist->row();
+
+                $_overtime = $this->db
+                    ->get_where($this->tbl_overtime,
+                        array(
+                            "employee" => $employee->id,
+                            "DATE(date_from)" => $date,
+                            "status" => "Approved"
+                        )
+                    );
+                
+                $hasOT = $_overtime->num_rows() > 0 ? 1 : 0;
+                $overtime = $hasOT > 1 ? $_overtime->result() : array();
+                $flexible = intval($employee->is_flexi) !== 0;
+                $flexibleEmployee = intval($employee->is_flexi) === 1;
+                $shift_id = $employee->shift_id;
+                
+                $att_curr_day = date('Y-m-d H:i:s', strtotime($date . " " . $attendance_params->start_time));
+
+                $_date = new DateTime($date);
+                $att_next_day = $_date->modify("+1 day");
+                $att_next_day = date('Y-m-d H:i:s', strtotime($att_next_day->format('Y-m-d') . " " . $attendance_params->end_time));
+                /* END CONCATENATE DATE */
+                
+                /*** nextday shift schedule checker ***/
+                $att_next_day = $this->nextDayShiftCheker($date, $employee, $att_next_day);
+                /*** nextday shift schedule checker ***/
+                
+                $att_next_day = $isNightShift ? date("Y-m-d H:i:s", strtotime("+1 day", strtotime($nshiftParams["start"]))) : $att_next_day;
+                $attendance = array_map(function ($_attendance) {
+                    return date("Y-m-d H:i", strtotime($_attendance->datetime));
+                }, $this->getAttendance($att_curr_day, $employee->id, $att_next_day, $nightShiftLastRecord));
+                $attendance = array_values(array_unique($attendance));
+
+                $am_start = !empty($schedule) ? $schedule->am_start : null;
+                $am_end = !empty($schedule) ? $schedule->am_end : null;
+                $pm_start = !empty($schedule) ? $schedule->pm_start : null;
+                $pm_end = !empty($schedule) ? $schedule->pm_end : null;
+
+                $no_shift_schedule = false;
+                if (($am_start === null && $am_end === null && $pm_start === null && $pm_end === null) || empty($schedule)) {
+                    $no_shift_schedule = true;
+                }
+
+                $am_shift_only = (($am_start !== null && $am_end !== null) && (($pm_start === null || $pm_start == "00:00:00") && ($pm_end === null || $pm_end == "00:00:00")) && $no_shift_schedule === false);
+                $pm_shift_only = ((($am_start === null || $am_start == "00:00:00") && ($am_end === null || $am_end == "00:00:00")) && ($pm_start !== null && $pm_end !== null) && $no_shift_schedule === false);
+                $isWholeDay = ($am_shift_only === false && $pm_shift_only === false && $no_shift_schedule === false);
+
+                $employee_time_sheet = new StdClass();
+                $employee_time_sheet->emp_id = $employee->id;
+                $employee_time_sheet->date = $date;
+                $employee_time_sheet->weekday = $weekday;
+                $employee_time_sheet->is_holiday = $isHoliday;
+                $employee_time_sheet->payrate_id = $payRateId;
+                $employee_time_sheet->custom_shift_id = $updatedSchedule->custom_shift_id;
+
+                $employee_time_sheet->am_in = null;
+                $employee_time_sheet->am_out = null;
+                $employee_time_sheet->am_late = 0;
+                $employee_time_sheet->am_ut = 0;
+                $employee_time_sheet->am_time_rendered = 0;
+
+                $employee_time_sheet->pm_in = null;
+                $employee_time_sheet->pm_out = null;
+                $employee_time_sheet->pm_late = 0;
+                $employee_time_sheet->pm_ut = 0;
+                $employee_time_sheet->pm_time_rendered = 0;
+
+                $employee_time_sheet->total_late = 0;
+                $employee_time_sheet->total_ut = 0;
+                $employee_time_sheet->total_time_rendered = 0;
+                
+                $employee_time_sheet->is_flexi = $flexible;
+                $employee_time_sheet->scrub_status = 0;
+                $employee_time_sheet->comments = null;
+
+                $employee_time_sheet->has_shift = $updatedSchedule->has_shift;
+                $employee_time_sheet->shift_am_start = null;
+                $employee_time_sheet->shift_am_end = null;
+                $employee_time_sheet->shift_pm_start = null;
+                $employee_time_sheet->shift_pm_end = null;
+                $employee_time_sheet->timesheet_imports_id = $timesheet_imports_id;
+
+                $employee_time_sheet->has_overtime = $hasOT;
+
+                if (intval($generated_manually) === 1) {
+                    $employee_time_sheet->is_manual = 1;
+                    $employee_time_sheet->manual_mode = "generated";
+                    $employee_time_sheet->manual_by = $logged_in_user_emp_id;
+                }
+
+                $props = ["am_in", "am_out", "pm_in", "pm_out"];
+                $timesheet_id = null;
+
+                if ($is_timesheet_exist >= 1 && intval($generated_manually) === 1) {
+                    $time_adjustments = $this->db
+                        ->where("timesheet_id", $timesheet_exist->id)
+                        ->where_in("status", [0, 1])
+                        ->get($this->tbl_time_adjustments);
+
+                    if ($time_adjustments->num_rows() >= 1) { continue; }
+                    if (intval($timesheet_exist->is_manual) === 1 && $timesheet_exist->manual_mode === "import") { continue; }
+                    if (intval($timesheet_exist->verified) === 1) { continue; }
+
+                    $hasShiftUpdate = false;
+                    $tempShiftProps = array("am_start", "am_end", "pm_start", "pm_end");
+
+                    if($isWholeDay){
+                        if($am_start !== $timesheet_exist->shift_am_start){ $hasShiftUpdate = true; }
+                        if($am_end !== $timesheet_exist->shift_am_end){ $hasShiftUpdate = true; }
+                        if($pm_start !== $timesheet_exist->shift_pm_start){ $hasShiftUpdate = true; }
+                        if($pm_end !== $timesheet_exist->shift_pm_end){ $hasShiftUpdate = true; }
+                    }elseif ($am_shift_only){
+                        if($am_start !== $timesheet_exist->shift_am_start){ $hasShiftUpdate = true; }
+                        if($am_end !== $timesheet_exist->shift_am_end){ $hasShiftUpdate = true; }
+                    }elseif ($pm_shift_only){
+                        if($pm_start !== $timesheet_exist->shift_pm_start){ $hasShiftUpdate = true; }
+                        if($pm_end !== $timesheet_exist->shift_pm_end){ $hasShiftUpdate = true; }
+                    }
+
+                    if($hasShiftUpdate && intval($timesheet_exist->verified) !== 1){
+                        $timesheet_exist->has_shift = $updatedSchedule->has_shift;
+                        foreach($tempShiftProps as $vv){
+                            $shiftRecord = ${$vv};
+                            $tempShiftKey = "shift_{$vv}";
+                            if(isset($timesheet_exist->$tempShiftKey) && $timesheet_exist->$tempShiftKey){
+                                $timesheet_exist->$tempShiftKey = $shiftRecord;
+                            }
+                        }
+                    }
+
+                    $timesheetUpdate = $this->generateTimesheetComputation($timesheet_exist, $employee_time_sheet, $updatedTimesheets, $attendance, $date,
+                    $no_shift_schedule, $am_start, $am_end, $pm_start, $pm_end, $am_shift_only, $pm_shift_only, $props, $flexibleEmployee, $payrollType);
+
+                    if(isset($timesheetUpdate["updated_timesheets"]) && $timesheetUpdate["updated_timesheets"]){
+                        $updatedTimesheets = $timesheetUpdate["updated_timesheets"];
+                    }
+                    if(isset($timesheetUpdate["timesheet_id"]) && $timesheetUpdate["timesheet_id"]){
+                        $timesheet_id = $timesheetUpdate["timesheet_id"];
+                    }
+
+                    $noBreakOvertime = intval($timesheet_exist->has_overtime) == 2;
+                    if(intval($timesheet_exist->has_overtime) == 1 || ($hasOvertimeRequest && $noBreakOvertime === false)){
+                        $total_accredited_ot_hrs = 0;
+                        $ot_night_diff = 0;
+                        $overtime_start = null;
+                        $overtime_end = null;
+
+                        $response = $this->generateTimesheetOvertime($timesheet_exist, $generated_manually, $overtime, $date, $am_end, $pm_end, $am_shift_only, $attendance, $night_diff_cfg);
+                        $allowOvertimeRequest = $response["allow_overtime_request"] ?? false;
+
+                        if(isset($response["total_accredited_ot_hrs"]) && $response["total_accredited_ot_hrs"]){
+                            $total_accredited_ot_hrs = floatval($response["total_accredited_ot_hrs"]);
+                        }
+                        if(isset($response["ot_night_diff"]) && $response["ot_night_diff"]){
+                            $ot_night_diff = floatval($response["ot_night_diff"]);
+                        }
+                        if(isset($response["overtime_in"]) && $response["overtime_in"]){
+                            $overtime_start = $response["overtime_in"];
+                        }
+                        if(isset($response["overtime_out"]) && $response["overtime_out"]){
+                            $overtime_end = $response["overtime_out"];
+                        }
+
+                        $this->db->where("id", $timesheet_exist->id);
+                        $this->db->where("verified", 0);
+
+                        if($allowOvertimeRequest && intval($timesheet_exist->has_overtime) == 0){ $this->db->set("has_overtime", 1); }
+                        $tempHasOvertime = $allowOvertimeRequest ? 1 : 0;
+                        $tempHasOvertime = ($overtime_start && $overtime_end) && strtotime($overtime_end) > strtotime($overtime_start) ? 1 : $tempHasOvertime;
+
+                        $this->db->set("has_overtime", $tempHasOvertime);
+                        $this->db->set("total_accredited_ot_hrs", $total_accredited_ot_hrs);
+                        $this->db->set("total_accredited_ndiff_ot_hrs", $ot_night_diff);
+                        $this->db->set("overtime_in", $overtime_start);
+                        $this->db->set("overtime_out", $overtime_end);
+
+                        $this->db->update($this->tbl_timesheet);
+                        $this->db->reset_query();
+                    }
+                    
+                    if($timesheet_id){
+                        $tempTblTimesheet = $this->db->get_where($this->tbl_timesheet, array("id"=>$timesheet_id));
+                        if($tempTblTimesheet->num_rows() == 1){
+                            $tempRow = $tempTblTimesheet->row();
+                            $tempRowId = $tempRow->id;
+
+                            $timesheetHourlyPartimer = $this->generatePerHourSlashPartimer($tempRowId);
+                            $toArray = (array) $timesheetHourlyPartimer;
+                            if(is_array($toArray) && count($toArray) > 0){ $tempRow->is_tagged_hourly = true; }
+                            
+                            $updatedRow = $this->updateTimesheetShiftComputation($tempRow, false, $night_diff_cfg);
+                            $updatedTimesheet = (array) $updatedRow;
+                            if(is_array($toArray) && count($toArray) > 0){
+                                $updatedTimesheet = array_merge($updatedTimesheet, $toArray);
+                            }
+                            
+                            $this->db->update($this->tbl_timesheet, $updatedTimesheet, array("id" => $tempRowId));
+                            $this->db->reset_query();
+                        }
+                    }
+                } /*** end timesheet_exist ***/
+
+                if (intval($shift_id) === 0) { continue; }
+
+                if($is_timesheet_exist == 0){
+                    $timesheetUpdate = $this->generateTimesheetComputation($timesheet_exist, $employee_time_sheet, $updatedTimesheets, $attendance, $date, $no_shift_schedule, $am_start, $am_end, $pm_start, $pm_end, $am_shift_only, $pm_shift_only, $props, $flexibleEmployee, $payrollType);
+
+                    if(isset($timesheetUpdate["updated_timesheets"]) && $timesheetUpdate["updated_timesheets"]){
+                        $updatedTimesheets = $timesheetUpdate["updated_timesheets"];
+                    }
+                    if(isset($timesheetUpdate["timesheet_id"]) && $timesheetUpdate["timesheet_id"]){
+                        $timesheet_id = $timesheetUpdate["timesheet_id"];
+                    }
+
+                    if($timesheet_id){
+                        $this->db->where("id", $timesheet_id);
+                        $this->db->where("verified", 0);
+                        $queryTimesheet = $this->db->get($this->tbl_timesheet);
+                        if($queryTimesheet->num_rows() == 1){
+                            $timesheet_exist = $queryTimesheet->row();
+
+                            $total_accredited_ot_hrs = 0;
+                            $ot_night_diff = 0;
+                            $overtime_start = null;
+                            $overtime_end = null;
+                            
+                            $noBreakOvertime = intval($timesheet_exist->has_overtime) == 2;
+                            if (intval($timesheet_exist->has_overtime) == 1 || ($hasOvertimeRequest && $noBreakOvertime === false)) {
+                                $response = $this->generateTimesheetOvertime($timesheet_exist, $generated_manually, $overtime, $date, $am_end, $pm_end, $am_shift_only, $attendance, $night_diff_cfg);
+                                if(isset($response["total_accredited_ot_hrs"]) && $response["total_accredited_ot_hrs"]){
+                                    $total_accredited_ot_hrs = floatval($response["total_accredited_ot_hrs"]);
+                                }
+                                if(isset($response["ot_night_diff"]) && $response["ot_night_diff"]){
+                                    $ot_night_diff = floatval($response["ot_night_diff"]);
+                                }
+                                if(isset($response["overtime_in"]) && $response["overtime_in"]){
+                                    $overtime_start = $response["overtime_in"];
+                                }
+                                if(isset($response["overtime_out"]) && $response["overtime_out"]){
+                                    $overtime_end = $response["overtime_out"];
+                                }
+
+                                $this->db->where("id", $timesheet_exist->id);
+                                $this->db->where("verified", 0);
+                                if(intval($timesheet_exist->has_overtime) == 0){ $this->db->set("has_overtime", 1); }
+                                $this->db->set("total_accredited_ot_hrs", $total_accredited_ot_hrs);
+                                $this->db->set("total_accredited_ndiff_ot_hrs", $ot_night_diff);
+                                $this->db->set("overtime_in", $overtime_start);
+                                $this->db->set("overtime_out", $overtime_end);
+                                $this->db->update($this->tbl_timesheet);
+                                $this->db->reset_query();
+                            }
+
+                            if($timesheet_id){
+                                $tempTblTimesheet = $this->db->get_where($this->tbl_timesheet, array("id"=>$timesheet_id));
+                                if($tempTblTimesheet->num_rows() == 1){
+                                    $tempRow = $tempTblTimesheet->row();
+                                    $tempRowId = $tempRow->id;
+
+                                    $timesheetHourlyPartimer = $this->generatePerHourSlashPartimer($tempRowId);
+                                    $toArray = (array) $timesheetHourlyPartimer;
+                                    if(is_array($toArray) && count($toArray) > 0){ $tempRow->is_tagged_hourly = true; }
+                                    
+                                    $updatedRow = $this->updateTimesheetShiftComputation($tempRow, false, $night_diff_cfg);
+                                    $updatedTimesheet = (array) $updatedRow;
+                                    if(is_array($toArray) && count($toArray) > 0){
+                                        $updatedTimesheet = array_merge($updatedTimesheet, $toArray);
+                                    }
+                                    
+                                    $this->db->update($this->tbl_timesheet, $updatedTimesheet, array("id" => $tempRowId));
+                                    $this->db->reset_query();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if ($this->db->trans_status() === true) {
+                $resultSet["success"] = true;
+                $resultSet["message"] = "Timesheet for $date successfully created.";
+                $resultSet["title"] = "Timesheet created.";
+                $resultSet["k"] = 1;
+                $this->db->trans_commit();
+            } else {
+                $resultSet["success"] = false;
+                $resultSet["message"] = $this->db->error()["message"];
+                $resultSet["title"] = "DB Error occurred.";
+                $resultSet["k"] = 2;
+                $this->db->trans_rollback();
+            }
+        }
+
+        $resultSet["updatedTimesheets"] = $updatedTimesheets;
+        return $resultSet;
     }
 }

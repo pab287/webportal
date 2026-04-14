@@ -232,7 +232,6 @@ $(".btnUpdateTsNoBreak").on("click", function(){
 
 $(document)
     .ready(function () {
-        // generateImportTimesheet(["2669","519","420","175","172","46","3833","612","164","3437","3835","3837","3836","2690","2697","902"], 69762);
         const defaultDate = moment().subtract('1', 'days');
         $('#cut-offs')
             .select2({
@@ -1202,54 +1201,54 @@ $(document)
                                 _arrIds.push(row.emp_id);
                             });
                             tempHtml += `</div>`;
-                            // Swal.fire({
-                            //     title: 'Default Shift Record/s?',
-                            //     html: `A TOTAL OF <b>${ctr}</b> DEFAULT SHIFT RECORD/s FOUND!<br>${tempHtml}<br>WOULD YOU LIKE TO GENERATE TIMESHEET RECORD/s?`,
-                            //     icon: 'question',
-                            //     width: '800px',
-                            //     showCloseButton: true,
-                            //     showCancelButton: true,
-                            //     confirmButtonColor: '#3085d6',
-                            //     cancelButtonColor: '#d33',
-                            //     confirmButtonText: 'Yes, Generate it!',
-                            //     timer: 10000,
-                            //     timerProgressBar: true,
-                            //     didOpen: () => {
-                            //         setTimeout(() => {
-                            //             const popup = Swal.getPopup();
-                            //             popup.classList.add('swal2-fade-out');
-                            //         }, 9500);
+                            Swal.fire({
+                                title: 'Default Shift Record/s?',
+                                html: `A TOTAL OF <b>${ctr}</b> DEFAULT SHIFT RECORD/s FOUND!<br>${tempHtml}<br>WOULD YOU LIKE TO GENERATE TIMESHEET RECORD/s?`,
+                                icon: 'question',
+                                width: '800px',
+                                showCloseButton: true,
+                                showCancelButton: true,
+                                confirmButtonColor: '#3085d6',
+                                cancelButtonColor: '#d33',
+                                confirmButtonText: 'Yes, Generate it!',
+                                timer: 10000,
+                                timerProgressBar: true,
+                                didOpen: () => {
+                                    setTimeout(() => {
+                                        const popup = Swal.getPopup();
+                                        popup.classList.add('swal2-fade-out');
+                                    }, 9500);
 
-                            //         const confirmBtn = Swal.getConfirmButton();
-                            //         confirmBtn.addEventListener('click', () => {
-                            //         const popup = Swal.getPopup();
-                            //         popup.classList.add('swal2-fade-out');
-                            //             setTimeout(Swal.close(), 500);
-                            //         });
-                            //     }, willClose: () => {
-                            //         return new Promise((resolve) => {
-                            //         setTimeout(resolve, 500);
-                            //         });
-                            //     }
-                            // }).then((result) => {
-                            //     if (result.dismiss === Swal.DismissReason.timer) {
-                            //         toastr.info("Default shift record/s automatic generation has closed.", "Default Shift Record/s");
-                            //     } else if (result.isConfirmed) {
-                            //         $.ajax({
-                            //             url: siteUrl("gcctime/timesheet/generate_default_timesheet"),
-                            //             type: "POST",
-                            //             dataType: "JSON",
-                            //             data: {
-                            //                 [_csrf_token]: _csrf_hash,
-                            //                 emp_id: _arrIds,
-                            //                 dates: $('#date-range').val(),
-                            //             }, success: function (response) {
-                            //                 if(response.success){ toastr.success(response.message, "Default Timesheet Record(s)"); }
-                            //                 else{ toastr.error(response.message, "Default Timesheet Record(s)"); }
-                            //             }
-                            //         });
-                            //     }
-                            // });
+                                    const confirmBtn = Swal.getConfirmButton();
+                                    confirmBtn.addEventListener('click', () => {
+                                    const popup = Swal.getPopup();
+                                    popup.classList.add('swal2-fade-out');
+                                        setTimeout(Swal.close(), 500);
+                                    });
+                                }, willClose: () => {
+                                    return new Promise((resolve) => {
+                                    setTimeout(resolve, 500);
+                                    });
+                                }
+                            }).then((result) => {
+                                if (result.dismiss === Swal.DismissReason.timer) {
+                                    toastr.info("Default shift record/s automatic generation has closed.", "Default Shift Record/s");
+                                } else if (result.isConfirmed) {
+                                    $.ajax({
+                                        url: siteUrl("gcctime/timesheet/generate_default_timesheet"),
+                                        type: "POST",
+                                        dataType: "JSON",
+                                        data: {
+                                            [_csrf_token]: _csrf_hash,
+                                            emp_id: _arrIds,
+                                            dates: $('#date-range').val(),
+                                        }, success: function (response) {
+                                            if(response.success){ toastr.success(response.message, "Default Timesheet Record(s)"); }
+                                            else{ toastr.error(response.message, "Default Timesheet Record(s)"); }
+                                        }
+                                    });
+                                }
+                            });
                         }
                     }
 
@@ -4054,7 +4053,7 @@ $.validate({
                                 $('#biometric_no_array', noEmployeeBiometricModal).val(JSON.stringify(response.non_existing));
                                 $('#no_shifts_array', noEmployeeBiometricModal).val(JSON.stringify(response.no_shifts));
                                 $('#timesheet-imports-id', noEmployeeBiometricModal).val(response.timesheet_imports_id);
-                                noEmployeeBiometricModal.modal('show');
+                                noEmployeeBiometricModal.data('importPayload', response).modal('show');
                             } else {
                                 const toast = response.success ? 'success' : 'error';
                                 toastr[toast](response.message, response.title, { timeOut: 10000 });
@@ -4230,7 +4229,7 @@ $.validate({
                                         }).draw();
                                     }
                                 });
-                                tsPossibleDuplicatesModal.modal("show");
+                                tsPossibleDuplicatesModal.data('importPayload', response).modal("show");
                             } else {
                                 const toast = response.success ? 'success' : 'error';
                                 toastr[toast](response.message, response.title, { timeOut: 10000 });
@@ -4239,7 +4238,9 @@ $.validate({
 
                         vmInvalidImport.rows = response.invalid_records;
                         vmInvalidImport.count = response.invalid_count;
-                        if(response.invalid_count > 0){ importInvalidModal.modal('show'); }
+                        if(response.invalid_count > 0){ 
+                            importInvalidModal.data('importPayload', response).modal('show'); 
+                        }
 
                         btnSubmit.removeClass('m-btn--custom m-loader m-loader--light m-loader--left');
                         $(':input', form).prop('disabled', false);
@@ -4250,7 +4251,9 @@ $.validate({
                         $('#device-id', importModal).val(null).trigger('change');
 
                         if (response.invalid_count == 0 && response.possible_duplicate == 0 && response.no_shifts == 0 && response.non_existing == 0) {
-                            generateImportTimesheet(response.emp_id_to_generate, response.timesheet_imports_id);
+                            if (response.emp_id_to_generate.length > 0) {
+                                generateImportTimesheet(response.emp_id_to_generate, response.start, response.end, response.timesheet_imports_id);
+                            }
                         }
                     } else {
                         const toast = response.success ? 'success' : 'error';
@@ -5830,7 +5833,7 @@ const undoRestDay = function (e, date, has_shift, id, tsId, dtRowIndex) {
 
 
 
-const generateImportTimesheet = function (arr = [], import_id){
+const generateImportTimesheet = function (arr = [], start, end, import_id){
     Swal.fire({
         icon: 'question',
         title: 'Generate Timesheet',
@@ -5850,6 +5853,8 @@ const generateImportTimesheet = function (arr = [], import_id){
                 data: {
                     csrf_token: _csrf_hash,
                     ids: arr,
+                    start,
+                    end,
                     import_id: import_id
                 },
                 dataType: 'json',
@@ -5867,3 +5872,24 @@ const generateImportTimesheet = function (arr = [], import_id){
         }
     });
 }
+
+importInvalidModal.on('hidden.bs.modal', function () {
+    const payload = $(this).data('importPayload');
+    if(payload.emp_id_to_generate.length > 0) {
+        generateImportTimesheet(payload.emp_id_to_generate, payload.start, payload.end, payload.timesheet_imports_id);
+    }
+});
+
+noEmployeeBiometricModal.on('hidden.bs.modal', function() {
+    const payload = $(this).data('importPayload');
+    if(payload.emp_id_to_generate.length > 0) {
+        generateImportTimesheet(payload.emp_id_to_generate, payload.start, payload.end, payload.timesheet_imports_id);
+    }
+});
+
+tsPossibleDuplicatesModal.on('hidden.bs.modal', function() {
+    const payload = $(this).data('importPayload');
+    if(payload.emp_id_to_generate.length > 0) {
+        generateImportTimesheet(payload.emp_id_to_generate, payload.start, payload.end, payload.timesheet_imports_id);
+    }
+});
