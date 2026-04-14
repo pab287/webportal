@@ -397,7 +397,7 @@ $("#reload_dtTbl").on("click", function () {
 });
 
 $("#choice").select2({
-    width: '200px',
+    width: '250px',
     placeholder: 'Select an Option'
 }).on("select2:select", function (e) {
     var type = $("#choice option:selected").val();
