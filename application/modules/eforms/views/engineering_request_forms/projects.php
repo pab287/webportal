@@ -10,7 +10,7 @@
             </div>
             <div class="m-portlet__head-tools">
                 <a href="javascript:void(0);" class="m-nav__link btnArchive" onclick="archiveRecordShow();">
-                    <span class="m-nav__link-text">
+                    <span class="m-nav__link-text" id="archiveLabel">
                         Archive
                     </span>
                 </a>
