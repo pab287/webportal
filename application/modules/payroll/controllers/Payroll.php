@@ -848,4 +848,12 @@ class Payroll extends MY_Controller {
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
+
+    public function update_weekly_count($year = null, $weekday = null, $monthIndex = null){
+        $weekIndex = $this->payroll->normalizeWeekday($weekday);
+        $data = $this->payroll->generatePayrollMonthlyWeekCountUpdated($year, $weekIndex, $monthIndex);
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 }

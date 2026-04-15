@@ -1596,7 +1596,7 @@ class Payroll_m extends CI_Model{
                     $tempUnrenderedMinutes->holiday_unrendered_minutes = $arr_holiday_unrendered_minutes;
                     $employee->_unrendered_minutes = $tempUnrenderedMinutes;
                     /*** unrendered minutes checker ***/
-                    
+
                     $holiday_minutes = array_reduce($timesheet, function ($carry, $item) {
                         return $carry + $item->holiday_minutely;
                     }, 0);
@@ -7721,7 +7721,8 @@ class Payroll_m extends CI_Model{
                     }
                 }
 
-                $qTempRecord = $this->db->get_where($this->tbl_ps_week_counter, array("year"=>$year, "month_name"=>$monthName, "week_count"=>$ctrWeeks));
+                $qTempRecord = $this->db->get_where($this->tbl_ps_week_counter, array("year"=>$year, "month_name"=>$monthName));
+                /*** $qTempRecord = $this->db->get_where($this->tbl_ps_week_counter, array("year"=>$year, "month_name"=>$monthName, "week_count"=>$ctrWeeks)); ***/
                 if($qTempRecord->num_rows() == 0){
                     $added = $this->db->insert($this->tbl_ps_week_counter, array("year"=>$year, "month_name"=>$monthName, "week_count"=>$ctrWeeks, "weeks"=>serialize($tempWeeks)));
                     if($added){
@@ -7756,6 +7757,168 @@ class Payroll_m extends CI_Model{
             }
         }
         return $weeks;
+    }
+
+    function get_weeks_updated($year, $month, $startWeekday = 0){
+        $daysInMonth = date("t", mktime(0, 0, 0, $month, 1, $year));
+        $weeks = array();
+        $weekIndex = 1;
+
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $weekDay = (int) date("w", mktime(0, 0, 0, $month, $day, $year));
+
+            // Start a new week when we hit the configured start weekday,
+            // except for the very first day already in week 1
+            if ($day > 1 && $weekDay == $startWeekday) {
+                $weekIndex++;
+            }
+
+            $weeks[$weekIndex][$weekDay] = $day;
+        }
+
+        return $weeks;
+    }
+
+    function generatePayrollMonthlyWeekCountUpdated($year = null, $startWeekday = 0, $monthIndex = null){
+        $resultset = array(
+            "response" => false,
+            "data" => array()
+        );
+
+        if (empty($year)) { return $resultset; }
+
+        // validate month input
+        if (!empty($monthIndex)) {
+            $monthIndex = (int) $monthIndex;
+            if ($monthIndex < 1 || $monthIndex > 12) {
+                $resultset["message"] = "Invalid month index.";
+                return $resultset;
+            }
+            $monthsToProcess = array($monthIndex);
+        } else {
+            $monthsToProcess = range(1, 12);
+        }
+
+        $temp_record = array();
+
+        foreach ($monthsToProcess as $i) {
+            $nData = array();
+            $monthName = strtolower(date('F', mktime(0, 0, 0, $i, 1, $year)));
+
+            $weeks = $this->get_weeks_updated($year, $i, $startWeekday);
+
+            $_prevIndex = $i - 1;
+            $prevMonthIndex = $_prevIndex >= 1 ? $_prevIndex : 12;
+            $prevYearIndex = $_prevIndex >= 1 ? (int) $year : ((int) $year - 1);
+
+            $prevMonthWeeks = $this->get_weeks_updated($prevYearIndex, $prevMonthIndex, $startWeekday);
+            $endPreviousMonthCount = count(end($prevMonthWeeks));
+
+            $_nextIndex = $i + 1;
+            $nextMonthIndex = $_nextIndex <= 12 ? $_nextIndex : 1;
+            $nextYearIndex = $_nextIndex <= 12 ? (int) $year : ((int) $year + 1);
+
+            $nextMonthWeeks = $this->get_weeks_updated($nextYearIndex, $nextMonthIndex, $startWeekday);
+            $firstNextMonthCount = count(current($nextMonthWeeks));
+
+            $tempKeys = array_keys($weeks);
+            $nthKeyFirst = current($tempKeys);
+            $nthKeyLast = end($tempKeys);
+
+            $ctrWeeks = 0;
+            $tempWeeks = array();
+
+            foreach ($weeks as $key => $value) {
+                if ($key == $nthKeyFirst) {
+                    $currentKey0 = count($weeks[$key]);
+                    if ($currentKey0 >= $endPreviousMonthCount) {
+                        $tempWeeks[$key] = $value;
+                        $ctrWeeks++;
+                    }
+                } else if ($key == $nthKeyLast) {
+                    $currentKey1 = count($weeks[$key]);
+                    if ($currentKey1 >= $firstNextMonthCount) {
+                        $tempWeeks[$key] = $value;
+                        $ctrWeeks++;
+                    }
+                } else {
+                    $tempWeeks[$key] = $value;
+                    $ctrWeeks++;
+                }
+            }
+
+            $saveData = array(
+                "year" => $year,
+                "month_name" => $monthName,
+                "week_count" => $ctrWeeks,
+                "weeks" => serialize($tempWeeks)
+            );
+
+            // find existing record by year + month only
+            $qTempRecord = $this->db->get_where(
+                $this->tbl_ps_week_counter,
+                array(
+                    "year" => $year,
+                    "month_name" => $monthName
+                )
+            );
+
+            if ($qTempRecord->num_rows() > 0) {
+                $existing = $qTempRecord->row();
+
+                $needsUpdate =
+                    (int) $existing->week_count !== (int) $ctrWeeks ||
+                    $existing->weeks !== serialize($tempWeeks);
+
+                if ($needsUpdate) {
+                    $this->db->where("id", $existing->id);
+                    $updated = $this->db->update($this->tbl_ps_week_counter, array(
+                        "week_count" => $ctrWeeks,
+                        "weeks" => serialize($tempWeeks)
+                    ));
+
+                    $nData["type"] = $updated ? "updated" : "update_failed";
+                } else {
+                    $nData["type"] = "unchanged";
+                }
+            } else {
+                $added = $this->db->insert($this->tbl_ps_week_counter, $saveData);
+                $nData["type"] = $added ? "added" : "add_failed";
+            }
+
+            $nData["month_index"] = $i;
+            $nData["month_name"] = $monthName;
+            $nData["year"] = $year;
+            $nData["week_count"] = $ctrWeeks;
+            $nData["weeks"] = $tempWeeks;
+
+            $temp_record[] = $nData;
+        }
+
+        $resultset["response"] = true;
+        $resultset["data"] = $temp_record;
+
+        return $resultset;
+    }
+    
+    function normalizeWeekday($weekday){
+        if (is_numeric($weekday)) {
+            $weekday = (int) $weekday;
+            return ($weekday >= 0 && $weekday <= 6) ? $weekday : 0;
+        }
+
+        $map = array(
+            'sunday'    => 0,
+            'monday'    => 1,
+            'tuesday'   => 2,
+            'wednesday' => 3,
+            'thursday'  => 4,
+            'friday'    => 5,
+            'saturday'  => 6,
+        );
+
+        $weekday = strtolower(trim($weekday));
+        return isset($map[$weekday]) ? $map[$weekday] : 0;
     }
 
     function updatePayrollsheetPrintedStatus(){
