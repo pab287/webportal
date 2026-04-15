@@ -1273,7 +1273,7 @@ class Payroll_m extends CI_Model{
                             
                             $ts->schedule = $_temp_ploted_schedule;
     
-                            $minutesDaily = $this->getTotalMunitesDaily($ts);
+                            $minutesDaily = $this->getTotalMinutesDaily($ts);
                             $ts->minutes_daily = $minutesDaily;
     
                             $payrateRegular = isset($payrate_setting->regular_rate) && $payrate_setting->regular_rate ? $payrate_setting->regular_rate : 1;
@@ -1536,6 +1536,66 @@ class Payroll_m extends CI_Model{
                         $totalUndertime = $totalUndertime > 0 && intval($item->is_holiday) === 1 ? $totalUndertime: 0;
                         return $carry + $totalUndertime;
                     }, 0);
+                    
+                    /*** unrendered minutes checker ***/
+                    $arr_unrendered_minutes = array_reduce($timesheet, function ($carry, $item) {
+                        $tempTotalTimeRendered = intval($item->total_time_rendered);
+
+                        $scheduledTimeRendered = $tempTotalTimeRendered;
+                        if($item->is_holiday && intval($item->paid_holiday) == 1){
+                            $scheduledTimeRendered = $this->calculateTotalMinutes($item->schedule);
+                        }
+                        
+                        $tempMinutesDaily = (intval($item->paid_holiday) == 1) ? $scheduledTimeRendered : $item->minutes_daily;
+                        $totalUndertime = $tempMinutesDaily - $tempTotalTimeRendered;
+                        $totalUndertime = $totalUndertime > 0 ? $totalUndertime: 0;
+
+                        $carry[] = array(
+                            "date" => $item->date,
+                            "total_minutes" => $totalUndertime,
+                            "is_holiday" => $item->is_holiday,
+                            "paid_holiday" => $item->paid_holiday,
+                            "minutes_daily" => $item->minutes_daily,
+                            "total_time_rendered" => $item->total_time_rendered,
+                            "altered_time_rendered" => $scheduledTimeRendered,
+                            "schedule" => $item->schedule,
+                        );
+                        return $carry;
+                    }, []);
+
+                    $arr_holiday_unrendered_minutes = array_reduce($timesheet, function ($carry, $item) {
+                        $tempTotalTimeRendered = intval($item->total_time_rendered);
+                        $tempTotalRendered = intval($item->am_time_rendered) + intval($item->pm_time_rendered);
+                        $hasRenderedShift = intval($tempTotalRendered) > 0 && (intval($item->am_time_rendered) > 0 || intval($item->pm_time_rendered) > 0);
+                        $scheduledTimeRendered = $tempTotalTimeRendered;
+                        if($item->is_holiday && intval($item->paid_holiday) === 1){
+                            $scheduledTimeRendered = $this->calculateTotalMinutes($item->schedule);
+                        }
+
+                        if($hasRenderedShift && $item->is_holiday && intval($item->paid_holiday) === 1){ $tempTotalTimeRendered = 0; }
+
+                        $tempMinutesDaily = (intval($item->paid_holiday) === 1) ? $scheduledTimeRendered : $item->minutes_daily;
+                        $totalUndertime = $tempMinutesDaily - $tempTotalTimeRendered;
+                        $totalUndertime = $totalUndertime > 0 && intval($item->is_holiday) === 1 ? $totalUndertime: 0;
+
+                        $carry[] = array(
+                            "date" => $item->date,
+                            "total_minutes" => $totalUndertime,
+                            "is_holiday" => $item->is_holiday,
+                            "paid_holiday" => $item->paid_holiday,
+                            "minutes_daily" => $item->minutes_daily,
+                            "total_time_rendered" => $item->total_time_rendered,
+                            "altered_time_rendered" => $scheduledTimeRendered,
+                            "schedule" => $item->schedule,
+                        );
+                        return $carry;
+                    }, []);
+
+                    $tempUnrenderedMinutes = new stdClass();
+                    $tempUnrenderedMinutes->unrendered_minutes = $arr_unrendered_minutes;
+                    $tempUnrenderedMinutes->holiday_unrendered_minutes = $arr_holiday_unrendered_minutes;
+                    $employee->_unrendered_minutes = $tempUnrenderedMinutes;
+                    /*** unrendered minutes checker ***/
 
                     $holiday_minutes = array_reduce($timesheet, function ($carry, $item) {
                         return $carry + $item->holiday_minutely;
@@ -3161,7 +3221,7 @@ class Payroll_m extends CI_Model{
         return $timesheet;
     }
 
-    protected function getTotalMunitesDaily($ts=array(), $date=null){
+    protected function __getTotalMunitesDaily($ts=array(), $date=null){
         $total_minutes = 0;
         if($ts && count(get_object_vars($ts)) > 0){
             $amMinutes = 0;
@@ -3241,7 +3301,38 @@ class Payroll_m extends CI_Model{
         return $total_minutes;
     }
 
-    function getTotalUnrenderedMinutes($schedules_obj=array(), $tempAlteredDates=array(), $tempDates=array()){
+    protected function getTotalMinutesDaily($ts = null, $date = null){
+        if (!$ts || !is_object($ts)) { return 0; }
+        $date = $date ?: $ts->date;
+        $isValidTime = function ($time) { return !empty($time) && $time !== '00:00:00'; };
+        $calculateMinutes = function ($startTime, $endTime, $baseDate) use ($isValidTime) {
+            if (!$isValidTime($startTime) || !$isValidTime($endTime)) {
+                return 0;
+            }
+            $start = new DateTime($baseDate . ' ' . $startTime);
+            $end   = new DateTime($baseDate . ' ' . $endTime);
+            if ($end < $start) { $end->modify('+1 day'); }
+            return (int)(($end->getTimestamp() - $start->getTimestamp()) / 60);
+        };
+
+        $amMinutes = $calculateMinutes($ts->shift_am_start ?? null, $ts->shift_am_end ?? null, $date);
+        $pmBaseDate = $date;
+
+        if ($isValidTime($ts->shift_am_start ?? null) && $isValidTime($ts->shift_am_end ?? null)) {
+            $amStart = new DateTime($date . ' ' . $ts->shift_am_start);
+            $amEnd   = new DateTime($date . ' ' . $ts->shift_am_end);
+
+            if ($amEnd < $amStart) {
+                $amEnd->modify('+1 day');
+                $pmBaseDate = $amEnd->format('Y-m-d');
+            }
+        }
+
+        $pmMinutes = $calculateMinutes($ts->shift_pm_start ?? null, $ts->shift_pm_end ?? null, $pmBaseDate);
+        return $amMinutes + $pmMinutes;
+    }
+
+    function ___getTotalUnrenderedMinutes($schedules_obj=array(), $tempAlteredDates=array(), $tempDates=array()){
         $arrData = array();
         $total_minutes = 0;
         $absent_days = 0;
@@ -3399,6 +3490,157 @@ class Payroll_m extends CI_Model{
         $arrData["unpaid_holiday"] = $unpaid_holiday;
         return $arrData;
     }
+
+    /*** refactored function for getTotalUnrenderedMinutes ***/
+    protected function getTotalUnrenderedMinutes($schedules_obj = array(), $tempAlteredDates = array(), $tempDates = array()){
+        $arrData = array(
+            "total_minutes" => 0,
+            "absent_days" => 0,
+            "unpaid_holiday" => array(),
+        );
+
+        if (empty($tempDates)) { return $arrData; }
+
+        foreach ($tempDates as $tempDatex) {
+            $dailyResult = $this->processUnrenderedDate($tempDatex, $schedules_obj, $tempAlteredDates);
+            $arrData["total_minutes"] += $dailyResult["total_row_minutes"];
+            if ((float) $dailyResult["total_row_minutes"] >= 480) {
+                $arrData["absent_days"]++;
+            }
+            if (!empty($dailyResult["holiday_data"])) {
+                $arrData["unpaid_holiday"][] = $dailyResult["holiday_data"];
+            }
+        }
+
+        return $arrData;
+    }
+
+    protected function processUnrenderedDate($tempDatex, $schedules_obj, $tempAlteredDates = array()){
+        $result = array(
+            "total_row_minutes" => 0,
+            "holiday_data" => null,
+        );
+
+        $dtx = new DateTime($tempDatex);
+        $weekday = strtolower($dtx->format("l"));
+        $tempDate = $dtx->format("Y-m-d");
+        $md5Date = md5($tempDate);
+
+        if (!isset($schedules_obj[$weekday]) || !$schedules_obj[$weekday]) {
+            return $result;
+        }
+
+        $_schedule = $schedules_obj[$weekday];
+        if (!$_schedule || count(get_object_vars($_schedule)) <= 0) {
+            return $result;
+        }
+
+        $holidayResponse = (object) $this->ts_model->getCurrentDateIsHoliday($tempDate);
+        $isHoliday = !empty($holidayResponse->is_holiday);
+
+        $scheduleSource = $this->getScheduleSource($_schedule, $tempAlteredDates, $md5Date);
+
+        $amMinutes = $this->calculateSessionMinutes(
+            $tempDate,
+            $scheduleSource->am_start ?? null,
+            $scheduleSource->am_end ?? null
+        );
+
+        $pmBaseDate = $this->getPmBaseDate(
+            $tempDate,
+            $scheduleSource->am_start ?? null,
+            $scheduleSource->am_end ?? null
+        );
+
+        $pmMinutes = $this->calculateSessionMinutes(
+            $pmBaseDate,
+            $scheduleSource->pm_start ?? null,
+            $scheduleSource->pm_end ?? null
+        );
+
+        $totalRowMinutes = $amMinutes + $pmMinutes;
+        $actualTotalRowMinutes = $totalRowMinutes;
+
+        if ($isHoliday && $totalRowMinutes > 480) {
+            $totalRowMinutes = 480;
+        }
+
+        $result["total_row_minutes"] = $totalRowMinutes;
+
+        if ($isHoliday) {
+            $result["holiday_data"] = array(
+                "date" => $tempDate,
+                "total_minutes" => $totalRowMinutes,
+                "actual_minutes" => $actualTotalRowMinutes,
+            );
+        }
+
+        return $result;
+    }
+
+    protected function getScheduleSource($_schedule, $tempAlteredDates, $md5Date){
+        $scheduleSource = (object) array(
+            'am_start' => $_schedule->am_start ?? null,
+            'am_end'   => $_schedule->am_end ?? null,
+            'pm_start' => $_schedule->pm_start ?? null,
+            'pm_end'   => $_schedule->pm_end ?? null,
+        );
+
+        if (
+            isset($tempAlteredDates->$md5Date) &&
+            $tempAlteredDates->$md5Date &&
+            !empty($tempAlteredDates->$md5Date->altered_shift) &&
+            !empty($tempAlteredDates->$md5Date->shift_schedule)
+        ) {
+            $scheduleSource = $tempAlteredDates->$md5Date->shift_schedule;
+        }
+
+        return $scheduleSource;
+    }
+
+    protected function calculateSessionMinutes($baseDate, $startTime, $endTime){
+        if (!$this->isValidTime($startTime) || !$this->isValidTime($endTime)) {
+            return 0;
+        }
+
+        $start = $this->buildDateTime($baseDate, $startTime);
+        $end = $this->buildDateTime($baseDate, $endTime);
+
+        if (!$start || !$end) { return 0; }
+        if ($end < $start) { $end->modify('+1 day'); }
+        return (int) (($end->getTimestamp() - $start->getTimestamp()) / 60);
+    }
+
+    protected function getPmBaseDate($baseDate, $amStartTime, $amEndTime){
+        if (!$this->isValidTime($amStartTime) || !$this->isValidTime($amEndTime)) {
+            return $baseDate;
+        }
+
+        $amStart = $this->buildDateTime($baseDate, $amStartTime);
+        $amEnd = $this->buildDateTime($baseDate, $amEndTime);
+
+        if (!$amStart || !$amEnd) { return $baseDate; }
+        if ($amEnd < $amStart) {
+            $amEnd->modify('+1 day');
+        }
+
+        return $amEnd->format('Y-m-d');
+    }
+
+    protected function isValidTime($time){
+        return !empty($time) && !in_array($time, array('00:00', '00:00:00'), true);
+    }
+
+    protected function buildDateTime($baseDate, $time){
+        if (!$this->isValidTime($time)) { return null; }
+        if ($time === '24:00' || $time === '24:00:00') {
+            $dt = new DateTime($baseDate . ' 00:00:00');
+            $dt->modify('+1 day');
+            return $dt;
+        }
+        return new DateTime($baseDate . ' ' . $time);
+    }
+    /*** refactored function for getTotalUnrenderedMinutes ***/
 
     private function getPayrateSetting($particular)
     {
@@ -7479,7 +7721,8 @@ class Payroll_m extends CI_Model{
                     }
                 }
 
-                $qTempRecord = $this->db->get_where($this->tbl_ps_week_counter, array("year"=>$year, "month_name"=>$monthName, "week_count"=>$ctrWeeks));
+                $qTempRecord = $this->db->get_where($this->tbl_ps_week_counter, array("year"=>$year, "month_name"=>$monthName));
+                /*** $qTempRecord = $this->db->get_where($this->tbl_ps_week_counter, array("year"=>$year, "month_name"=>$monthName, "week_count"=>$ctrWeeks)); ***/
                 if($qTempRecord->num_rows() == 0){
                     $added = $this->db->insert($this->tbl_ps_week_counter, array("year"=>$year, "month_name"=>$monthName, "week_count"=>$ctrWeeks, "weeks"=>serialize($tempWeeks)));
                     if($added){
@@ -7514,6 +7757,196 @@ class Payroll_m extends CI_Model{
             }
         }
         return $weeks;
+    }
+
+    function get_weeks_updated($year, $month, $startWeekday = 0){
+        $daysInMonth = date("t", mktime(0, 0, 0, $month, 1, $year));
+        $weeks = array();
+        $weekIndex = 1;
+
+        for ($day = 1; $day <= $daysInMonth; $day++) {
+            $weekDay = (int) date("w", mktime(0, 0, 0, $month, $day, $year));
+
+            // Start a new week when we hit the configured start weekday,
+            // except for the very first day already in week 1
+            if ($day > 1 && $weekDay == $startWeekday) {
+                $weekIndex++;
+            }
+
+            $weeks[$weekIndex][$weekDay] = $day;
+        }
+
+        return $weeks;
+    }
+
+    function generatePayrollMonthlyWeekCountUpdated($year = null, $startWeekday = 0, $monthIndex = null, $toYear = null, $toMonthIndex = null){
+        $resultset = array(
+            "response" => false,
+            "data" => array()
+        );
+
+        if (empty($year)) {
+            return $resultset;
+        }
+
+        $year = (int) $year;
+
+        // Default start month
+        $fromMonth = !empty($monthIndex) ? (int) $monthIndex : 1;
+        if ($fromMonth < 1 || $fromMonth > 12) {
+            $resultset["message"] = "Invalid start month index.";
+            return $resultset;
+        }
+
+        // Default end range
+        $endYear = !empty($toYear) ? (int) $toYear : $year;
+        $endMonth = !empty($toMonthIndex) ? (int) $toMonthIndex : 12;
+
+        if ($endMonth < 1 || $endMonth > 12) {
+            $resultset["message"] = "Invalid end month index.";
+            return $resultset;
+        }
+
+        // Prevent invalid reversed ranges
+        $startStamp = strtotime(sprintf('%04d-%02d-01', $year, $fromMonth));
+        $endStamp   = strtotime(sprintf('%04d-%02d-01', $endYear, $endMonth));
+
+        if ($startStamp === false || $endStamp === false || $startStamp > $endStamp) {
+            $resultset["message"] = "Invalid year/month range.";
+            return $resultset;
+        }
+
+        $temp_record = array();
+
+        $currentYear = $year;
+        $currentMonth = $fromMonth;
+
+        while ($currentYear < $endYear || ($currentYear == $endYear && $currentMonth <= $endMonth)) {
+            $nData = array();
+            $monthName = strtolower(date('F', mktime(0, 0, 0, $currentMonth, 1, $currentYear)));
+
+            $weeks = $this->get_weeks_updated($currentYear, $currentMonth, $startWeekday);
+
+            $_prevIndex = $currentMonth - 1;
+            $prevMonthIndex = $_prevIndex >= 1 ? $_prevIndex : 12;
+            $prevYearIndex = $_prevIndex >= 1 ? $currentYear : ($currentYear - 1);
+
+            $prevMonthWeeks = $this->get_weeks_updated($prevYearIndex, $prevMonthIndex, $startWeekday);
+            $endPreviousMonthCount = count(end($prevMonthWeeks));
+
+            $_nextIndex = $currentMonth + 1;
+            $nextMonthIndex = $_nextIndex <= 12 ? $_nextIndex : 1;
+            $nextYearIndex = $_nextIndex <= 12 ? $currentYear : ($currentYear + 1);
+
+            $nextMonthWeeks = $this->get_weeks_updated($nextYearIndex, $nextMonthIndex, $startWeekday);
+            $firstNextMonthCount = count(current($nextMonthWeeks));
+
+            $tempKeys = array_keys($weeks);
+            $nthKeyFirst = current($tempKeys);
+            $nthKeyLast = end($tempKeys);
+
+            $ctrWeeks = 0;
+            $tempWeeks = array();
+
+            foreach ($weeks as $key => $value) {
+                if ($key == $nthKeyFirst) {
+                    $currentKey0 = count($weeks[$key]);
+                    if ($currentKey0 >= $endPreviousMonthCount) {
+                        $tempWeeks[$key] = $value;
+                        $ctrWeeks++;
+                    }
+                } else if ($key == $nthKeyLast) {
+                    $currentKey1 = count($weeks[$key]);
+                    if ($currentKey1 >= $firstNextMonthCount) {
+                        $tempWeeks[$key] = $value;
+                        $ctrWeeks++;
+                    }
+                } else {
+                    $tempWeeks[$key] = $value;
+                    $ctrWeeks++;
+                }
+            }
+
+            $serializedWeeks = serialize($tempWeeks);
+
+            $saveData = array(
+                "year" => $currentYear,
+                "month_name" => $monthName,
+                "week_count" => $ctrWeeks,
+                "weeks" => $serializedWeeks
+            );
+
+            $qTempRecord = $this->db->get_where(
+                $this->tbl_ps_week_counter,
+                array(
+                    "year" => $currentYear,
+                    "month_name" => $monthName
+                )
+            );
+
+            if ($qTempRecord->num_rows() > 0) {
+                $existing = $qTempRecord->row();
+
+                $needsUpdate =
+                    (int) $existing->week_count !== (int) $ctrWeeks ||
+                    $existing->weeks !== $serializedWeeks;
+
+                if ($needsUpdate) {
+                    $this->db->where("id", $existing->id);
+                    $updated = $this->db->update($this->tbl_ps_week_counter, array(
+                        "week_count" => $ctrWeeks,
+                        "weeks" => $serializedWeeks
+                    ));
+
+                    $nData["type"] = $updated ? "updated" : "update_failed";
+                } else {
+                    $nData["type"] = "unchanged";
+                }
+            } else {
+                $added = $this->db->insert($this->tbl_ps_week_counter, $saveData);
+                $nData["type"] = $added ? "added" : "add_failed";
+            }
+
+            $nData["month_index"] = $currentMonth;
+            $nData["month_name"] = $monthName;
+            $nData["year"] = $currentYear;
+            $nData["week_count"] = $ctrWeeks;
+            $nData["weeks"] = $tempWeeks;
+
+            $temp_record[] = $nData;
+
+            // move to next month
+            $currentMonth++;
+            if ($currentMonth > 12) {
+                $currentMonth = 1;
+                $currentYear++;
+            }
+        }
+
+        $resultset["response"] = true;
+        $resultset["data"] = $temp_record;
+
+        return $resultset;
+    }
+    
+    function normalizeWeekday($weekday){
+        if (is_numeric($weekday)) {
+            $weekday = (int) $weekday;
+            return ($weekday >= 0 && $weekday <= 6) ? $weekday : 0;
+        }
+
+        $map = array(
+            'sunday'    => 0,
+            'monday'    => 1,
+            'tuesday'   => 2,
+            'wednesday' => 3,
+            'thursday'  => 4,
+            'friday'    => 5,
+            'saturday'  => 6,
+        );
+
+        $weekday = strtolower(trim($weekday));
+        return isset($map[$weekday]) ? $map[$weekday] : 0;
     }
 
     function updatePayrollsheetPrintedStatus(){
