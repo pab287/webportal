@@ -7779,44 +7779,64 @@ class Payroll_m extends CI_Model{
         return $weeks;
     }
 
-    function generatePayrollMonthlyWeekCountUpdated($year = null, $startWeekday = 0, $monthIndex = null){
+    function generatePayrollMonthlyWeekCountUpdated($year = null, $startWeekday = 0, $monthIndex = null, $toYear = null, $toMonthIndex = null){
         $resultset = array(
             "response" => false,
             "data" => array()
         );
 
-        if (empty($year)) { return $resultset; }
+        if (empty($year)) {
+            return $resultset;
+        }
 
-        // validate month input
-        if (!empty($monthIndex)) {
-            $monthIndex = (int) $monthIndex;
-            if ($monthIndex < 1 || $monthIndex > 12) {
-                $resultset["message"] = "Invalid month index.";
-                return $resultset;
-            }
-            $monthsToProcess = array($monthIndex);
-        } else {
-            $monthsToProcess = range(1, 12);
+        $year = (int) $year;
+
+        // Default start month
+        $fromMonth = !empty($monthIndex) ? (int) $monthIndex : 1;
+        if ($fromMonth < 1 || $fromMonth > 12) {
+            $resultset["message"] = "Invalid start month index.";
+            return $resultset;
+        }
+
+        // Default end range
+        $endYear = !empty($toYear) ? (int) $toYear : $year;
+        $endMonth = !empty($toMonthIndex) ? (int) $toMonthIndex : 12;
+
+        if ($endMonth < 1 || $endMonth > 12) {
+            $resultset["message"] = "Invalid end month index.";
+            return $resultset;
+        }
+
+        // Prevent invalid reversed ranges
+        $startStamp = strtotime(sprintf('%04d-%02d-01', $year, $fromMonth));
+        $endStamp   = strtotime(sprintf('%04d-%02d-01', $endYear, $endMonth));
+
+        if ($startStamp === false || $endStamp === false || $startStamp > $endStamp) {
+            $resultset["message"] = "Invalid year/month range.";
+            return $resultset;
         }
 
         $temp_record = array();
 
-        foreach ($monthsToProcess as $i) {
+        $currentYear = $year;
+        $currentMonth = $fromMonth;
+
+        while ($currentYear < $endYear || ($currentYear == $endYear && $currentMonth <= $endMonth)) {
             $nData = array();
-            $monthName = strtolower(date('F', mktime(0, 0, 0, $i, 1, $year)));
+            $monthName = strtolower(date('F', mktime(0, 0, 0, $currentMonth, 1, $currentYear)));
 
-            $weeks = $this->get_weeks_updated($year, $i, $startWeekday);
+            $weeks = $this->get_weeks_updated($currentYear, $currentMonth, $startWeekday);
 
-            $_prevIndex = $i - 1;
+            $_prevIndex = $currentMonth - 1;
             $prevMonthIndex = $_prevIndex >= 1 ? $_prevIndex : 12;
-            $prevYearIndex = $_prevIndex >= 1 ? (int) $year : ((int) $year - 1);
+            $prevYearIndex = $_prevIndex >= 1 ? $currentYear : ($currentYear - 1);
 
             $prevMonthWeeks = $this->get_weeks_updated($prevYearIndex, $prevMonthIndex, $startWeekday);
             $endPreviousMonthCount = count(end($prevMonthWeeks));
 
-            $_nextIndex = $i + 1;
+            $_nextIndex = $currentMonth + 1;
             $nextMonthIndex = $_nextIndex <= 12 ? $_nextIndex : 1;
-            $nextYearIndex = $_nextIndex <= 12 ? (int) $year : ((int) $year + 1);
+            $nextYearIndex = $_nextIndex <= 12 ? $currentYear : ($currentYear + 1);
 
             $nextMonthWeeks = $this->get_weeks_updated($nextYearIndex, $nextMonthIndex, $startWeekday);
             $firstNextMonthCount = count(current($nextMonthWeeks));
@@ -7847,18 +7867,19 @@ class Payroll_m extends CI_Model{
                 }
             }
 
+            $serializedWeeks = serialize($tempWeeks);
+
             $saveData = array(
-                "year" => $year,
+                "year" => $currentYear,
                 "month_name" => $monthName,
                 "week_count" => $ctrWeeks,
-                "weeks" => serialize($tempWeeks)
+                "weeks" => $serializedWeeks
             );
 
-            // find existing record by year + month only
             $qTempRecord = $this->db->get_where(
                 $this->tbl_ps_week_counter,
                 array(
-                    "year" => $year,
+                    "year" => $currentYear,
                     "month_name" => $monthName
                 )
             );
@@ -7868,13 +7889,13 @@ class Payroll_m extends CI_Model{
 
                 $needsUpdate =
                     (int) $existing->week_count !== (int) $ctrWeeks ||
-                    $existing->weeks !== serialize($tempWeeks);
+                    $existing->weeks !== $serializedWeeks;
 
                 if ($needsUpdate) {
                     $this->db->where("id", $existing->id);
                     $updated = $this->db->update($this->tbl_ps_week_counter, array(
                         "week_count" => $ctrWeeks,
-                        "weeks" => serialize($tempWeeks)
+                        "weeks" => $serializedWeeks
                     ));
 
                     $nData["type"] = $updated ? "updated" : "update_failed";
@@ -7886,13 +7907,20 @@ class Payroll_m extends CI_Model{
                 $nData["type"] = $added ? "added" : "add_failed";
             }
 
-            $nData["month_index"] = $i;
+            $nData["month_index"] = $currentMonth;
             $nData["month_name"] = $monthName;
-            $nData["year"] = $year;
+            $nData["year"] = $currentYear;
             $nData["week_count"] = $ctrWeeks;
             $nData["weeks"] = $tempWeeks;
 
             $temp_record[] = $nData;
+
+            // move to next month
+            $currentMonth++;
+            if ($currentMonth > 12) {
+                $currentMonth = 1;
+                $currentYear++;
+            }
         }
 
         $resultset["response"] = true;
