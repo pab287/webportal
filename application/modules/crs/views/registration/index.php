@@ -239,18 +239,12 @@
                                             <input type="text" v-model="contactFormData.permanent_address" name="permanent_address" id="permanent_address" placeholder="ENTER YOUR PERMANENT ADDRESS" class="form-control" data-validation="required" autocomplete="off">
                                         </div>
                                     </div>
-                                    <!-- <div class="col-12">
-                                        <div class="form-group">
-                                            <label class="form-control-label">Map Coordinates</label>
-                                            <input type="text" name="long_lat_coordinates" id="long_lat_coordinates" class="form-control" placeholder="(OPTIONAL)" autocomplete="off">
-                                        </div>
-                                    </div> -->
                                 </div>
                                 <div class="m-separator m-separator--dashed d-xl-12"></div>
                                 <div class="row mt-2">
                                     <div class="col">
                                         <div class="m-portlet__head-title">
-                                            <h5 class="m-portlet__head-text">REFERENCES </h5>
+                                            <h5 class="m-portlet__head-text">CHARACTER REFERENCES </h5>
                                         </div>
                                     </div>
                                 </div>
@@ -258,7 +252,7 @@
                                     <div class="card-header d-flex align-items-center py-2">
                                         <span class="rounded-circle bg-light border d-flex align-items-center justify-content-center mr-2"
                                             style="width:28px; height:28px; font-size:12px; font-weight:500;">
-                                            {{ index + 1 }}
+                                            <i class="la la-user"></i>
                                         </span>
                                         <span style="font-size:13px; font-weight:500;">REFERENCE {{ index + 1 }}</span>
                                     </div>
