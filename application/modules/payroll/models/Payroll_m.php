@@ -2882,6 +2882,7 @@ class Payroll_m extends CI_Model{
 
     function generatePayrollSheetIncentive($start, $end, $posted_data)
     {
+        $employeeStatus = isset($posted_data["employee_status"]) ? $posted_data["employee_status"] : 'active';
         /***  date range checker ***/
         $bonusCode = isset($posted_data["bonus_code"]) && $posted_data["bonus_code"] ? strtoupper($posted_data["bonus_code"]): null;
         if($bonusCode){ $bonusCode = str_replace("_", " ", $bonusCode); }
@@ -2910,7 +2911,7 @@ class Payroll_m extends CI_Model{
         $employee_ids = isset($posted_data["employees"]) ? $posted_data["employees"] : null;
         $payout_sched = $posted_data["payout_schedule"];
         $company = $this->db->where("id", $posted_data["company"])->get("gcchris.tblcompanies")->row();
-        $employees = $this->getEmployees($payout_sched, 'active', $employee_ids, $company);
+        $employees = $this->getEmployees($payout_sched, $employeeStatus, $employee_ids, $company);
         $month_name = strtolower(date('F', strtotime($posted_data["pay_date"])));
         
         $year = date('Y', strtotime($start));

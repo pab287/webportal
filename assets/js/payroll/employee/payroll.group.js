@@ -347,6 +347,7 @@ btnNewEmployeeGroup.on("click", function () {
                 const companyAllFilter = documentModal.find("input#all_company_filter");
                 const allowView = documentModal.find("input#allow_view");
                 const assignSelect = documentModal.find('select#assign_employee_id');
+                const activeEmployeeFilter = documentModal.find("input#active_employees");
 
                 if (typeof companyAllFilter !== "undefined" && companyAllFilter.length == 1) {
                     companyAllFilter.on("change", function (e) {
@@ -393,6 +394,7 @@ btnNewEmployeeGroup.on("click", function () {
                             data: function (params) {
                                 params.company_id = companySelect2.val();
                                 params.all_filter = propAllFilter;
+                                params.employee_status = activeEmployeeFilter.is(":checked") ? 1 : 0;
                                 return params;
                             }
                         },
@@ -433,6 +435,12 @@ btnNewEmployeeGroup.on("click", function () {
                                 return params;
                             }
                         }
+                    });
+                }
+
+                if(typeof activeEmployeeFilter !== "undefined" && activeEmployeeFilter.length == 1){
+                    activeEmployeeFilter.on("change", function () {
+                        employeeSelect2.val([]).trigger("change");
                     });
                 }
 

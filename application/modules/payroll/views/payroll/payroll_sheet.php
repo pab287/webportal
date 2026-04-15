@@ -222,7 +222,7 @@
                                         <div class="m-form__group form-group row pt-0">
                                             <label class="col-8 col-form-label text-left" style="font-weight: 600;">
                                                 Active Employees<br>
-                                                <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">Filter Employee Status</span>
+                                                <span class="m-form__help p-0" style="text-transform: none; font-weight: 600;">Filter Employee Status</span>
                                             </label>
                                             <div class="col-3">
                                                 <span class="m-switch m-switch--outline m-switch--sm m-switch--icon m-switch--success">

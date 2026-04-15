@@ -1234,6 +1234,7 @@
             $tempIds = array();
             $allFilter = isset($get["all_filter"]) && $get["all_filter"] == "true" ? true: false;
             $hasCompanySearch = isset($get["company_id"]) && $get["company_id"] ? true: false;
+            $activeEmployeeFilter = isset($get["employee_status"]) && intval($get["employee_status"]) == 1 ? "Active": "All";
 
             $idx = array();
             $empIds = array();
@@ -1286,7 +1287,9 @@
             $this->db->select("a.id, a.lastname, a.firstname, a.middlename, a.suffix");
             $this->db->from($this->employeeTable." a");
             $this->db->join($this->companyTable." b", "b.id = a.company_id OR b.description = a.company_id OR b.code = a.company_id");
-            $this->db->where("a.employee_status", "Active");
+            if($activeEmployeeFilter !== "All"){
+                $this->db->where("a.employee_status", $activeEmployeeFilter);
+            }
             if(isset($get["company_id"]) && $get["company_id"]){
                 $this->db->where("b.id", $get["company_id"]);
             }
@@ -1333,7 +1336,9 @@
             }else{
                 $this->db->select("a.id, a.lastname, a.firstname, a.middlename, a.suffix");
                 $this->db->from($this->employeeTable." a");
-                $this->db->where("a.employee_status", "Active");
+                if($activeEmployeeFilter !== "All"){
+                    $this->db->where("a.employee_status", $activeEmployeeFilter);
+                }
                 if(isset($get["company_id"]) && $get["company_id"]){
                     $this->db->where("a.company_id", $get["company_id"]);
                 }
