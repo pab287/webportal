@@ -239,18 +239,12 @@
                                             <input type="text" v-model="contactFormData.permanent_address" name="permanent_address" id="permanent_address" placeholder="ENTER YOUR PERMANENT ADDRESS" class="form-control" data-validation="required" autocomplete="off">
                                         </div>
                                     </div>
-                                    <!-- <div class="col-12">
-                                        <div class="form-group">
-                                            <label class="form-control-label">Map Coordinates</label>
-                                            <input type="text" name="long_lat_coordinates" id="long_lat_coordinates" class="form-control" placeholder="(OPTIONAL)" autocomplete="off">
-                                        </div>
-                                    </div> -->
                                 </div>
                                 <div class="m-separator m-separator--dashed d-xl-12"></div>
                                 <div class="row mt-2">
                                     <div class="col">
                                         <div class="m-portlet__head-title">
-                                            <h5 class="m-portlet__head-text">REFERENCES </h5>
+                                            <h5 class="m-portlet__head-text">CHARACTER REFERENCES </h5>
                                         </div>
                                     </div>
                                 </div>
@@ -258,7 +252,7 @@
                                     <div class="card-header d-flex align-items-center py-2">
                                         <span class="rounded-circle bg-light border d-flex align-items-center justify-content-center mr-2"
                                             style="width:28px; height:28px; font-size:12px; font-weight:500;">
-                                            {{ index + 1 }}
+                                            <i class="la la-user"></i>
                                         </span>
                                         <span style="font-size:13px; font-weight:500;">REFERENCE {{ index + 1 }}</span>
                                     </div>
@@ -624,29 +618,94 @@
     </div>
 
     <div class="modal fade" id="modalConsent" tabindex="-1" data-backdrop="static" data-keyboard="false">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">Data Privacy Consent</h5>
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <div>
+                    <h5 class="modal-title mb-1">Data Privacy Consent</h5>
+                    <small class="text-light">Please review and confirm before proceeding.</small>
                 </div>
-                <div class="modal-body">
-                    <p>
-                        By continuing, you agree to the collection and processing of
-                        your personal information for recruitment and application
-                        purposes in accordance with the Data Privacy Act.
+            </div>
+
+            <div class="modal-body bg-light p-4">
+                <div class="bg-white border rounded p-4 mb-4 overflow-auto">
+                    <h6 class="font-weight-bold text-primary mb-3">Privacy Statement</h6>
+                    <p class="text-muted">
+                        In compliance with the Data Privacy Act of 2012 (Republic Act No. 10173),
+                        GC&amp;C Group of Companies is committed to protecting your personal data.
+                        By submitting your application, you consent to the collection, recording,
+                        storage, processing, and use of your personal information through the
+                        Company’s Recruitment System (CRS) for application processing, evaluation,
+                        and record management.
                     </p>
+
+                    <p class="text-muted">
+                        Access to your personal data is strictly limited to authorized Human Resource
+                        personnel for legitimate business purposes. Your information will be handled
+                        with appropriate security measures and retained only for as long as necessary
+                        or as required by applicable laws and company policies.
+                    </p>
+
+                    <hr>
+
+                    <h6 class="font-weight-bold text-primary mb-3">Data Privacy Notice and Consent</h6>
+                    <p class="text-muted">
+                        By accomplishing this application and providing your personal information,
+                        you hereby:
+                    </p>
+
+                    <ol class="pl-3 text-muted mb-4">
+                        <li class="mb-2">
+                            Authorize the organization to collect, record, store, process, and use
+                            your personal data for application, evaluation, processing, verification,
+                            and documentation within the Company’s CRS.
+                        </li>
+                        <li class="mb-2">
+                            Consent to the encoding and inclusion of your personal information in the
+                            CRS database, including your name, contact details, address, employment
+                            information, and other relevant data necessary for your application.
+                        </li>
+                        <li class="mb-2">
+                            Acknowledge that your personal data will be handled with strict
+                            confidentiality and accessed only by authorized personnel for legitimate
+                            business and administrative purposes.
+                        </li>
+                        <li class="mb-2">
+                            Understand that your data may be retained only as long as necessary or
+                            as required by applicable laws, regulations, or company policies.
+                        </li>
+                        <li class="mb-2">
+                            Agree that your personal data may be accessed and processed exclusively
+                            by authorized Human Resource personnel of GC&amp;C Group of Companies.
+                        </li>
+                    </ol>
+
+                    <div class="alert alert-light border mb-0 text-dark">
+                        <strong>By proceeding,</strong> you confirm that you have read, understood,
+                        and voluntarily given your consent to the collection and processing of your
+                        personal data as described above.
+                    </div>
                 </div>
-                <div class="modal-footer justify-content-center">
-                    <button class="btn btn-success" @click="acceptConsent">
-                        I Agree
-                    </button>
-                    <button class="btn btn-danger" @click="declineConsent">
-                        Cancel
-                    </button>
+
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="consentCheck" v-model="consentAccepted">
+                    <label class="custom-control-label font-weight-bold" for="consentCheck">
+                        I have read and agree to the Privacy Statement, Notice, and Consent.
+                    </label>
                 </div>
+            </div>
+
+            <div class="modal-footer bg-white">
+                <button type="button" class="btn btn-danger" @click="declineConsent">
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-primary" @click="acceptConsent" :disabled="!consentAccepted">
+                    Continue Application
+                </button>
             </div>
         </div>
     </div>
+</div>
 
     <div class="modal fade" id="modalExisting" tabindex="-1" role="dialog">
         <div class="modal-dialog">

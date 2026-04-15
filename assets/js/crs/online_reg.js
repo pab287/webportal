@@ -72,6 +72,7 @@ function formatDate(input) {
 let application_vue = new Vue({
     el: "#m_content",
     data: {
+        consentAccepted: false,
         isFreshGraduate: false,
         contactFormData: {
             contact_no: "", email: "", tel_no: "", address: "", permanent_address: "",
@@ -262,18 +263,14 @@ let application_vue = new Vue({
             }
         },
         acceptConsent() {
-            localStorage.clear();
             localStorage.setItem('gcc_data_consent', '1');
-            document.cookie ="gcc_data_consent=1;path=/;max-age=" + (60 * 60 * 24 * 30);
+            this.consentAccepted = true;
+            document.cookie = "gcc_data_consent=1; path=/; max-age=" + (60 * 60 * 24 * 30);
             $('#modalConsent').modal('hide');
         },
         declineConsent() {
-            localStorage.clear();
-            document.cookie.split(";").forEach(function(c) {
-                document.cookie =
-                    c.replace(/^ +/, "")
-                     .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-            });
+            localStorage.removeItem('gcc_data_consent');
+            document.cookie = "gcc_data_consent=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
             window.location.href = "https://www.facebook.com/gcandcgroup";
         },
         getCookie(name) {
