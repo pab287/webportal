@@ -191,6 +191,7 @@ let edit_rfi = new Vue ({
             this.attachmentsToUpload = replyFiles.filter(f => !currentNames.includes(f.name)).map(f => f.original.id || f.original.id);
             this.attachmentsToRemove = currentFiles.filter(f => !replyNames.includes(f.name)).map(f => f.original.filename || f.original.name);
             this.changes.attachment = this.attachmentsToAdd.length > 0 || this.attachmentsToRemove.length > 0;
+            document.getElementById('fileupload').value = '';
         },
         editReply() {
             this.showUpdate = !this.showUpdate;

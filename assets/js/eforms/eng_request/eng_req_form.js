@@ -40,7 +40,7 @@ $(document).ready(function () {
             
                     switch (row.status) {
                         case "pending":
-                            badge = `<span class="badge badge-success">PENDING</span>`;
+                            badge = `<span class="badge badge-warning">PENDING</span>`;
                             break;
 
                         case "approved":
