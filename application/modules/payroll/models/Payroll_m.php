@@ -3157,7 +3157,7 @@ class Payroll_m extends CI_Model{
             $timesheet->ot_ndiff_minutely = floatval($tempNightDiffHours) > 0 ? floatval($tempNightDiffHours) * $ot_ndiff_minutely: 0;
             $timesheet->total_accredited_ndiff_ot_hrs_amount = ($tempNightDiffHours * 60) * $ot_ndiff_minutely;
 
-            if($tempTotalOvertimeHours >= 1 && ($timesheet->is_rest_day == 1 || $timesheet->has_shift == 0 || $timesheet->is_holiday == 1)){
+            if($tempTotalOvertimeHours >= 1 && ($timesheet->is_rest_day == 1 || $timesheet->has_shift == 0 || ($timesheet->is_holiday == 1 && $timesheet->paid_holiday == 1))){
                 $timesheet->total_allowance_ot_hrs_minutes = $tempTotalOvertimeHours * 60;
             }
         }
