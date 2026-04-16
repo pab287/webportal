@@ -1619,12 +1619,14 @@ class Curl_request extends MY_Controller {
 		$resultset = array();
 
 		if($token === $currentDate){
-			$this->db->select("biometricno, UPPER(lastname) as lastname, UPPER(firstname) as firstname, UPPER(middlename) as middlename, UPPER(suffix) as suffix, pic_filename, mobile_no as mobileno, id as employee_id");
-			$this->db->from("gccmaster.tblemployees");
-			$this->db->where("biometricno !=", "N/A");
-			$this->db->where("biometricno !=", "NONE");
-			$this->db->where("biometricno !=", NULL);
-			$this->db->where("biometricno >", 0);
+			$this->db->select("emp.biometricno, UPPER(emp.lastname) as lastname, UPPER(emp.firstname) as firstname, UPPER(emp.middlename) as middlename, UPPER(emp.suffix) as suffix,
+			emp.pic_filename, emp.mobile_no as mobileno, emp.id as employee_id, IFNULL(user.telegram_chat_id, '') as telegram_chat_id");
+			$this->db->from("gccmaster.tblemployees as emp");
+			$this->db->join("gccmaster.tblusers as user", "user.emp_id = emp.id", "left");
+			$this->db->where("emp.biometricno !=", "N/A");
+			$this->db->where("emp.biometricno !=", "NONE");
+			$this->db->where("emp.biometricno !=", NULL);
+			$this->db->where("emp.biometricno >", 0);
 			$query = $this->db->get();
 
 			$resultset["response"] = true;
