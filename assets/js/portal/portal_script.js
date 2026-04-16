@@ -28,12 +28,28 @@ if(typeof getAcctgcount !== "undefined" && typeof getAcctgcount == "function"){
 
 if(window.location == siteUrl("portal/index")){
     document.addEventListener('DOMContentLoaded', function () {
-        msnry = new Masonry('.row', {
+        msnry = new Masonry('.row.second-section', {
             itemSelector: '.grid-item',
             columnWidth: '.grid-sizer',
             percentPosition: true,
             resize: true
         });
+    });
+
+    $(document).on("click", "#attendanceLegendToggle", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const menu = $("#attendance-legend-options");
+        menu.toggleClass("show");
+        $(this).attr("aria-expanded", menu.hasClass("show") ? "true" : "false");
+    });
+
+    $(document).on("click", function (e) {
+        if (!$(e.target).closest("#attendanceLegendToggle, #attendance-legend-options").length) {
+            $("#attendance-legend-options").removeClass("show");
+            $("#attendanceLegendToggle").attr("aria-expanded", "false");
+        }
     });
 
     var vmTab1 = new Vue({
@@ -48,10 +64,29 @@ if(window.location == siteUrl("portal/index")){
             vm_shipping : {show:false,},
             vm_ca : {show:false,},
             payslip: {show:false,data:[]},
-            is_loading: true
+            is_loading: true,
+            attendance: [],
+            table: null
         },
         mounted(){
             this.getPayslip();
+            this.getTimesheetAttendance();
+        },
+        watch: {
+            is_loading(value) {
+                if (!value) {
+                    this.$nextTick(() => {
+                        this.timesheetTable();
+                    });
+                }
+            },
+            attendance() {
+                if (!this.is_loading) {
+                    this.$nextTick(() => {
+                        this.timesheetTable();
+                    });
+                }
+            }
         }, methods: {
             styles: {
                 width: '50%',
@@ -250,8 +285,6 @@ if(window.location == siteUrl("portal/index")){
                             vmTab1.updateMasonryLayout();
                         }
 
-                        console.log(json.data);
-
                         vmTab1.is_loading = false;
                     }
                 });
@@ -280,6 +313,306 @@ if(window.location == siteUrl("portal/index")){
                 }).observe(document.querySelector('.row'));
             }, isEmpty(arr) {
                 return jQuery.isEmptyObject(arr);
+            }, formatTimesheetTime(time, has_shift = 1) {
+                if (has_shift == 0 || !has_shift) {
+                    return '';
+                }
+
+                if (!time || time === "00:00:00") {
+                    return "--:--";
+                }
+
+                const parsed = moment(time, ["HH:mm:ss", "HH:mm", "YYYY-MM-DD HH:mm:ss"], true);
+                if (parsed.isValid()) {
+                    return parsed.format("hh:mm A");
+                }
+
+                return time;
+            }, formatTimesheetNumber(value) {
+                if (value === null || value === undefined || value === "") {
+                    return "0";
+                }
+
+                const numeric = parseFloat(value);
+                return Number.isNaN(numeric) ? "0" : numeric.toFixed(2).replace(/\.00$/, "");
+            }, attendanceMobileStatusText(row) {
+                const scrub_status = typeof row.scrub_status != 'undefined' && row.scrub_status !== null ? parseInt(row.scrub_status) : 0;
+                const verified = (typeof row.verified !== "undefined" && row.verified !== null) ? parseInt(row.verified) : 0;
+                const hasShift = typeof row.has_shift !== "undefined" ? parseInt(row.has_shift) : 0;
+                const isHoliday = typeof row.is_holiday !== "undefined" ? parseInt(row.is_holiday) : 0;
+                const paidHoliday = (typeof row.paid_holiday !== "undefined" && row.paid_holiday !== null) ? parseInt(row.paid_holiday) : 0;
+                const totalLate = typeof row.total_late !== "undefined" && row.total_late !== null ? parseFloat(row.total_late) : 0;
+                const { am_in, am_out, pm_in, pm_out, total_time_rendered } = row;
+                const hasLOA = (typeof row.has_LOA !== "undefined" && row.has_LOA !== null) ? parseInt(row.has_LOA) : 0;
+                const hasOvertime = (typeof row.has_overtime !== "undefined" && row.has_overtime !== null) ? parseInt(row.has_overtime) : 0;
+                const hasTO = (typeof row.has_TO !== "undefined" && row.has_TO !== null) ? parseInt(row.has_TO) : 0;
+                const hasWholeDayLoa = (typeof row.has_whole_day_LOA !== "undefined" && row.has_whole_day_LOA !== null) ? parseInt(row.has_whole_day_LOA) : 0;
+                const completeAttendance = row.complete_attendance_count;
+                
+                let text = 'On Time';
+                let hasRendered = typeof total_time_rendered !== "undefined" && total_time_rendered !== null && parseFloat(total_time_rendered) > 0;
+                if (isHoliday == 1 && paidHoliday == 0) { hasRendered = false; }
+                if (scrub_status == 1 || scrub_status == 2) { hasRendered = true; }
+                if (isHoliday == 1 && hasRendered > 0) { hasRendered = true; }
+                hasRendered = am_in || am_out || pm_in || pm_out;
+
+                if (hasRendered) {
+                    console.log(row._date, scrub_status, completeAttendance);
+                    if ((scrub_status === 1 && verified === 0) || ((hasLOA >= 1 && hasWholeDayLoa <= 0) || (hasTO >= 1 && completeAttendance === false))) {
+                        text =  'Lacking Entries';
+                    }
+                    
+                    if (scrub_status === 2){
+                        text = 'Multiple Entries';
+                    }
+                } else if(!hasRendered && hasShift === 1 && isHoliday === 0) {
+                    text =  "Absent";
+                }
+
+                if (((hasShift === 0 && (hasOvertime === 0 || hasOvertime === 1)) && (verified === 0 || !verified))
+                    || ((!hasShift && !hasOvertime) && (verified === 0 || !verified))
+                    || (isHoliday == 1 && row.allow_paid_holiday === false)) {
+                    text = "Rest Day";
+                }
+
+                if (totalLate > 0) {
+                    text = `${this.formatTimesheetNumber(totalLate)} min(s) late`;
+                }
+
+                if (isHoliday === 1) {
+                    text = "Holiday";
+                }
+
+                return text;
+            }, attendanceMobileHasTime(row) {
+                return !!(row.am_in || row.am_out || row.pm_in || row.pm_out);
+            }, attendanceMobileDate(row) {
+                if (!row || !row._date) {
+                    return "---";
+                }
+                return moment(row._date).format("dddd, MMM DD");
+            }, attendanceMobileRenderedHours(row) {
+                if (!row || row.total_time_rendered === null || typeof row.total_time_rendered === "undefined" || row.total_time_rendered === "") {
+                    return "0h 00m";
+                }
+
+                const raw = parseFloat(row.total_time_rendered);
+                if (Number.isNaN(raw)) {
+                    return "0h 00m";
+                }
+
+                const totalMinutes = raw > 24 ? Math.round(raw) : Math.round(raw * 60);
+                const hours = Math.floor(totalMinutes / 60);
+                const mins = totalMinutes % 60;
+                return `${hours}h ${String(mins).padStart(2, "0")}m`;
+            }, attendanceMobileStatusClass(row) {
+                const status = this.attendanceMobileStatusText(row);
+
+                console.log(row);
+
+                if (status === "Holiday") return "is-holiday";
+                if (status === "Rest Day") return "is-restday";
+                if (status === "Absent") return "is-absent";
+                if (status === "On Time") return "is-ontime";
+                if (status === "Lacking Entries") return "is-lacking";
+                if (status === "Multiple Entries") return "is-multiple";
+                if (status.indexOf("late") > -1) return "is-late";
+
+                return "";
+            }, attendanceMobileCardClass(row) {
+                const statusClass = this.attendanceMobileStatusClass(row);
+                if (statusClass === "is-late") return "is-late";
+                if (statusClass === "is-absent") return "is-absent";
+                if (statusClass === "is-ontime") return "is-ontime";
+                if (statusClass === 'is-lacking') return 'is-lacking';
+                if (statusClass === 'is-multiple') return 'is-multiple';
+                return "";
+            }, attendanceMobileTimeClass(row, timeKey) {
+                const statusClass = this.attendanceMobileStatusClass(row);
+                if (statusClass === "is-late" && timeKey === "am_in") {
+                    return "is-late";
+                }
+                if (statusClass === "is-ontime" && timeKey === "am_in") {
+                    return "is-accent";
+                }
+                return "";
+            }, timesheetTableShow() {
+                this.$nextTick(() => {
+                    this.updateMasonryLayout();
+                });
+            }, bindTimesheetTableEvents() {
+                const tableEl = $("#timesheet-table");
+                if (!tableEl.length) {
+                    return;
+                }
+
+                tableEl.off("length.dt.portal");
+                tableEl.on("length.dt.portal", () => {
+                    this.timesheetTableShow();
+                });
+            }, timesheetTable() {
+                const self = this;
+                const tableEl = $("#timesheet-table");
+                const rows = Array.isArray(this.attendance) ? this.attendance : [];
+
+                if (!tableEl.length) {
+                    return;
+                }
+
+                if ($.fn.DataTable.isDataTable("#timesheet-table")) {
+                    this.table = tableEl.DataTable();
+                    this.table.clear();
+                    this.table.rows.add(rows);
+                    this.table.draw();
+                    this.bindTimesheetTableEvents();
+                    return;
+                }
+
+                this.table = tableEl.DataTable({
+                    dom: '<"toolbar">frtlip',
+                    data: rows,
+                    searching: false,
+                    processing: false,
+                    serverSide: false,
+                    order: [[0, "desc"]],
+                    pageLength: 5,
+                    lengthMenu: [[5, 10, -1], [5, 10, "All"]],
+                    columns: [
+                        {
+                            data: "_date",
+                            render: function (data, type, row, meta) {
+                                let html = ``;
+                                html = self.formatDate(data);
+
+                                if (row.is_holiday == 1) {
+                                    const paid_holiday = row.paid_holiday ? 'text-success' : '';
+                                    html += ` <span class="fa fa-flag ${paid_holiday}" data-original-title="${row.holiday_classification.toUpperCase()}" data-toggle="m-tooltip" data-skin="dark" data-delay='{"show": 300}'></span>`;
+                                }
+
+                                if (row.has_loa == 1) {
+                                    html += ` <span class="flaticon-event-calendar-symbol"></span>`;
+                                }
+
+                                return html;
+                            }
+                        },
+                        { data: "_weekday", defaultContent: "---", className: 'text-center', orderable: false, render: (data) => `<span class="m--font-bolder">${data}</span>` },
+                        { data: "am_in", orderable: false, className: 'text-center', 
+                            render: function (data, type, row, meta) {
+                                return self.formatTimesheetTime(data, row.has_shift);
+                            }
+                        },
+                        { data: "am_out", orderable: false, className: 'text-center', 
+                            render: function (data, type, row, meta) {
+                                return self.formatTimesheetTime(data, row.has_shift);
+                            }
+                        },
+                        { data: "pm_in", orderable: false, className: 'text-center', 
+                            render: function (data, type, row, meta) {
+                                return self.formatTimesheetTime(data, row.has_shift);
+                            }
+                        },
+                        { data: "pm_out", orderable: false, className: 'text-center', 
+                            render: function (data, type, row, meta) {
+                                return self.formatTimesheetTime(data, row.has_shift);
+                            }
+                        },
+                        { data: "total_late", className: 'text-center', orderable: false, 
+                            render: function (data, type, row, meta) {
+                                let html = ``;
+                                const { am_in, am_out, pm_in, pm_out, total_time_rendered } = row;
+                                let hasRendered = typeof total_time_rendered !== "undefined" && total_time_rendered !== null && parseFloat(total_time_rendered) > 0;
+                                hasRendered = am_in || am_out || pm_in || pm_out;
+
+                                if (row.is_holiday) {
+                                    return 'Holiday';
+                                }
+
+                                if (!row.has_shift || row.has_shift == 0) {
+                                    return 'Rest Day';
+                                }
+
+                                if (hasRendered) {
+                                    if (data == 0) {
+                                        html = `<span class="m-badge m-badge--success m-badge--wide">On Time</span>`;
+                                    } else {
+                                        if (row.has_shift == 0 || !row.has_shift) {
+                                            html = '';
+                                        } else {
+                                            const time = self.formatTimesheetNumber(data);
+                                            html = data ? `<span class="m-badge m-badge--warning m-badge--wide">${time}min(s) late</span>` : ' --- ';
+                                        }
+                                    }
+                                } else {
+                                    return '<p class="text-white m-0">Absent</p>';
+                                }
+
+                                return html;
+                            }
+                        },
+                    ],
+                    rowCallback: function (row, data) {
+                        if ($(row).hasClass('lacking')) {
+                            $(row).find('.m-badge').removeClass('m-badge').removeClass('m-badge--success');
+                        }
+                    },
+                    createdRow: function (rowEl, rowData, _index) {
+                        const scrub_status = (typeof rowData.scrub_status !== "undefined" && rowData.scrub_status !== null) ? parseInt(rowData.scrub_status) : 0;
+                        const verified = (typeof rowData.verified !== "undefined" && rowData.verified !== null) ? parseInt(rowData.verified) : 0;
+                        const isHoliday = (typeof rowData.is_holiday !== "undefined" && rowData.is_holiday !== null) ? parseInt(rowData.is_holiday) : 0;
+                        const paidHoliday = (typeof rowData.paid_holiday !== "undefined" && rowData.paid_holiday !== null) ? parseInt(rowData.paid_holiday) : 0;
+                        const hasShift = (typeof rowData.has_shift !== "undefined" && rowData.has_shift !== null) ? parseInt(rowData.has_shift) : 0;
+                        const completeAttendance = rowData.complete_attendance_count;
+                        const hasOvertime = (typeof rowData.has_overtime !== "undefined" && rowData.has_overtime !== null) ? parseInt(rowData.has_overtime) : 0;
+                        const hasTO = (typeof rowData.has_TO !== "undefined" && rowData.has_TO !== null) ? parseInt(rowData.has_TO) : 0;
+                        const hasLOA = (typeof rowData.has_LOA !== "undefined" && rowData.has_LOA !== null) ? parseInt(rowData.has_LOA) : 0;
+                        const hasWholeDayLoa = (typeof rowData.has_whole_day_LOA !== "undefined" && rowData.has_whole_day_LOA !== null) ? parseInt(rowData.has_whole_day_LOA) : 0;
+                        const { am_in, am_out, pm_in, pm_out, total_time_rendered } = rowData;
+
+                        let currentRowClass = null;
+                        let hasRendered = typeof total_time_rendered !== "undefined" && total_time_rendered !== null && parseFloat(total_time_rendered) > 0;
+                        if (isHoliday == 1 && paidHoliday == 0) { hasRendered = false; }
+                        if (scrub_status == 1 || scrub_status == 2) { hasRendered = true; }
+                        if (isHoliday == 1 && hasRendered > 0) { hasRendered = true; }
+                        hasRendered = am_in || am_out || pm_in || pm_out;
+
+                        if (hasRendered) {
+                            if ((scrub_status === 1 && verified === 0) || ((hasLOA >= 1 && hasWholeDayLoa <= 0) || (hasTO >= 1 && completeAttendance === false))) {
+                                currentRowClass = 'lacking lacking--contrast';
+                            } else if (scrub_status === 2 && verified === 0) {
+                                currentRowClass = 'multiple';
+                            }
+                        } else {
+                            currentRowClass = 'absent absent--contrast';
+                        }
+
+                        if (((hasShift === 0 && (hasOvertime === 0 || hasOvertime === 1)) && (verified === 0 || !verified))
+                            || ((!hasShift && !hasOvertime) && (verified === 0 || !verified))
+                            || (isHoliday == 1 && rowData.allow_paid_holiday === false)) {
+                            currentRowClass = 'no-shift';
+                        }
+
+                        if (isHoliday == 1 && paidHoliday == 1) {
+                            currentRowClass = '';
+                        }
+
+                        if (currentRowClass) { $(rowEl).addClass(currentRowClass); }
+                    }
+                });
+                this.bindTimesheetTableEvents();
+            }, getTimesheetAttendance() {
+                $.ajax({
+                    url:  siteUrl("portal/get_timesheet_attendance"),
+                    type: "get",
+                    dataType: "json",
+                    success: function (json) {
+                        vmTab1.attendance = json && Array.isArray(json.data) ? json.data : [];
+                        vmTab1.updateMasonryLayout();
+                    },
+                    error: function () {
+                        vmTab1.attendance = [];
+                    }
+                });
             }
         }
     });

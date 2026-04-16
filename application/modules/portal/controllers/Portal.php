@@ -113,11 +113,11 @@ class Portal extends MY_Controller {
 			->set_content_type('json')
 			->set_output(json_encode($data));
 	}
-  public function get_company_collection()
-  {
-      $data = $this->portal_model->getCompanyCollection();
-      echo json_encode($data);
-  }
+
+	public function get_company_collection()	{
+		$data = $this->portal_model->getCompanyCollection();
+		echo json_encode($data);
+	}
 
 	function get_borrowing(){
 		$data = $this->portal_model->getBorrowing();
@@ -152,6 +152,13 @@ class Portal extends MY_Controller {
 
 	public function get_payslip(){
 		$data = $this->portal_model->getPayslip();
+		$this->output
+			->set_content_type('json')
+			->set_output(json_encode($data));
+	}
+	
+	public function get_timesheet_attendance(){
+		$data = $this->portal_model->get_timesheet_attendance();
 		$this->output
 			->set_content_type('json')
 			->set_output(json_encode($data));

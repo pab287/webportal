@@ -2,6 +2,17 @@
 class Portal_model extends CI_Model{
     private $userRoleTable = "user_role_acl";
     private $moduleTable = "modules";
+    protected $tbl_timesheet_customized_shift_schedule = "gcctimeutility.time_customized_shift_schedule";
+    protected $tbl_personnel = "gcctimeutility.personnel";
+    protected $tbl_shift_schedule = "gcctimeutility.shift_schedule";
+    protected $tbl_shift_schedule_resource = "gcctimeutility.shift_schedule_resource";
+    protected $tbl_shift_schedule_list = "gcctimeutility.shift_schedule_list";
+    protected $tbl_employees = "gccmaster.tblemployees";
+    protected $tbl_tblcompanies = "gcchris.tblcompanies";
+    protected $tbl_tbldepartments = "gcchris.tbldepartments";
+    protected $tbl_tblposition = "gcchris.tblposition";
+    protected $tbl_tblholidays = "gcchris.tblholidays";
+    protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
 
 	function __construct(){
         parent::__construct();
@@ -1248,6 +1259,286 @@ class Portal_model extends CI_Model{
         }
 
         return $arrData;
+    }
+
+    public function get_timesheet_attendance(){
+        $result = array();
+        $userData = $this->session->userdata('logged_in');
+        $empId = $userData['emp_id'];
+
+        $end = date('Y-m-d', strtotime('-1days'));
+        $start = date("Y-m-d", strtotime($end.' -10days'));
+
+        $alteredShiftRecords = $this->getAlteredShiftRecordByDateRange($start, $end);
+
+        $arrMonthlyEmployeeIds = array();
+        $this->db->select("emp_id");
+        $this->db->from($this->tbl_timesheet_monthly_employees);
+        $this->db->where("emp_id", $empId);
+        $qMonthlyEmployees = $this->db->get();
+        if($qMonthlyEmployees->num_rows() > 0){
+            foreach ($qMonthlyEmployees->result() as $employee) {
+                $arrMonthlyEmployeeIds[] = $employee->emp_id;
+            }
+        }
+
+        $query = "SELECT
+            ts.id AS tsID,
+            ADDDATE('$start', numlist.id) AS _date,
+            DATE_FORMAT(ADDDATE('$start', numlist.id), '%a') AS _weekday,
+            LCASE(DATE_FORMAT(ADDDATE('$start', numlist.id), '%W')) AS _weekday_full,
+            ts.am_in,
+            ts.am_out,
+            ts.pm_in,
+            ts.pm_out,
+            ts.total_late,
+            ts.total_ut,
+            ts.has_shift,
+            ts.paid_holiday,
+            ts.scrub_status,
+            ts.shift_am_start,
+            ts.shift_am_end,
+            ts.shift_pm_start,
+            ts.shift_pm_end,
+            ts.total_time_rendered,
+            ts.verified,
+            emp.payroll_type,
+            emp.id AS _emp_id,
+            _resource.shift_resource
+        FROM gccmaster.tblemployees emp
+        CROSS JOIN (
+            SELECT n1.i + n10.i * 10 + n100.i * 100 AS id
+            FROM gcctimeutility.num n1
+            CROSS JOIN gcctimeutility.num n10
+            CROSS JOIN gcctimeutility.num n100
+        ) AS numlist
+        LEFT JOIN gcctimeutility.timesheet ts
+            ON ts.emp_id = emp.id
+        AND ts.date = ADDDATE('$start', numlist.id)
+        LEFT JOIN gcctimeutility.personnel personnel
+            ON personnel.biometricno = emp.biometricno
+        LEFT JOIN gcctimeutility.shift_schedule_resource _resource
+            ON _resource.shift_id = personnel.shift_id
+        WHERE emp.id = $empId
+        AND ADDDATE('$start', numlist.id) <= '$end'
+        ORDER BY ADDDATE('$start', numlist.id) DESC";
+
+        $q = $this->db->query($query);
+
+        if ($q->num_rows() > 0) {
+            foreach($q->result() as $key => $rs) {
+                $shiftResource = array();
+                $id = $rs->_emp_id;
+                $isMonthlyPaidEmployee = in_array($id, $arrMonthlyEmployeeIds);
+
+                $schedule_resource = @unserialize($rs->shift_resource);
+                $this->db->where_in("id", $schedule_resource);
+                $queryShift = $this->db->get($this->tbl_shift_schedule_list);
+                if($queryShift->num_rows() > 0){
+                    $props = array("am_start", "am_end", "pm_start", "pm_end");
+                    foreach ($queryShift->result() as $k => $value) {
+                        $tempWeekday = strtolower(trim($value->weekday));
+                        $tempRecord = array();
+                        foreach ($props as $i => $vx) {
+                            $tempRecord[$vx] = $value->$vx;
+                        }
+                        $empRow = "emp_id_{$rs->_emp_id}";
+                        $shiftResource[$empRow][$tempWeekday] = $tempRecord;
+                    }
+                }
+
+                $tempResponse = (object) $this->getCurrentDateIsHoliday($rs->_date);
+                $allowPaidEmployee = $rs->payroll_type == "monthly" || $rs->payroll_type == "daily" || $rs->payroll_type == "project based";
+                $rs->allow_paid_holiday = false;
+                $rs->has_loa = $this->getLoa($start, $end, $rs->_emp_id);
+
+                $propAttx = ["am_in", "am_out", "pm_in", "pm_out"];
+                $propSchedule = ["shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end"];
+
+                $ctrAttx = 0;
+                $ctrSchedx = 0;
+                $nArr = (array) $rs;
+
+                foreach ($propSchedule as $scx) { if(isset($nArr[$scx]) && $nArr[$scx]){ $ctrSchedx++; } }
+                foreach ($propAttx as $atx) { if(isset($nArr[$atx]) && $nArr[$atx]){ $ctrAttx++; } }
+
+                $rs->complete_attendance_count = $ctrSchedx == $ctrAttx;
+                $rs->is_holiday = (isset($tempResponse->is_holiday) && $tempResponse->is_holiday === true) ? 1: 0;
+                $rs->holiday_classification = isset($tempResponse->classification) && $tempResponse->classification ? $tempResponse->classification : null;
+                $rs->holiday_description = isset($tempResponse->description) && $tempResponse->description ? $tempResponse->description : null;
+                $rs->paid_holiday = (isset($rs->paid_holiday) && $rs->paid_holiday == null) ? 0 : intval($rs->paid_holiday);
+
+                $schedule_list = isset($shiftResource["emp_id_{$id}"][$rs->_weekday_full]) && $shiftResource["emp_id_{$id}"][$rs->_weekday_full] ? 
+                        $shiftResource["emp_id_{$id}"][$rs->_weekday_full]: array();
+
+                if (!empty($schedule_list)) {
+                    $schedule_list = (object) $schedule_list;
+                    $rs->has_shift = ($schedule_list->am_start === null && $schedule_list->am_end === null
+                        && $schedule_list->pm_start === null && $schedule_list->pm_end === null) ? 0 : 1;
+                    
+                    if($isMonthlyPaidEmployee && intval($rs->has_shift) === 1){
+                        $tempArrSchedule = array("am_start"=>"am_in", "am_end"=>"am_out", "pm_start"=>"pm_in", "pm_end"=>"pm_out");
+                        $tempArrShiftSchedule = array("am_start"=>"shift_am_start", "am_end"=>"shift_am_end", "pm_start"=>"shift_pm_start", "pm_end"=>"shift_pm_end");
+                        foreach ($tempArrSchedule as $k => $value) {
+                            if(isset($schedule_list->{$k}) && $schedule_list->{$k} && $schedule_list->{$k} != "00:00:00"){
+                                $rs->{$value} = $schedule_list->{$k};
+                            } 
+                            if(isset($schedule_list->{$k}) && $schedule_list->{$k} && $schedule_list->{$k} != "00:00:00"){
+                                if(isset($tempArrShiftSchedule[$k]) && $tempArrShiftSchedule[$k]){
+                                    $tempShiftValue = $tempArrShiftSchedule[$k];
+                                    $rs->{$tempShiftValue} = $schedule_list->{$k};
+                                }
+                            }
+                        }
+                    }
+                }
+
+                $tempMd5Date = md5($rs->_date);
+                $tempAlteredShift = isset($alteredShiftRecords[$rs->_emp_id][$tempMd5Date]) && $alteredShiftRecords[$rs->_emp_id][$tempMd5Date] ? 
+                    $alteredShiftRecords[$rs->_emp_id][$tempMd5Date]: array();
+
+                if(is_array($tempAlteredShift) && count($tempAlteredShift) > 0){
+                    $_tempAlteredShift = (object) $tempAlteredShift;
+                    if(isset($_tempAlteredShift->schedule) && $_tempAlteredShift->schedule){
+                        foreach ($_tempAlteredShift->schedule as $k => $value) {
+                            $rs->$k = $value;
+                        }
+                    }
+                    $rs->has_shift = $_tempAlteredShift->has_shift;
+                }
+
+                if (isset($tempResponse->classification) && strtolower($tempResponse->classification) == "special non-working holiday" && $rs->payroll_type == "monthly"){
+                    $rs->allow_paid_holiday = true;
+                } elseif (isset($tempResponse->classification) && strtolower($tempResponse->classification) == "regular holiday" && $allowPaidEmployee){
+                    $rs->allow_paid_holiday = true;
+                }
+
+                $result[$key] = $rs;
+            }
+        }
+
+        return array(
+            "response" => true,
+            "data" => $result
+        );
+    }
+
+    public function getCurrentDateIsHoliday($date=null){
+        $resultset = array();
+
+        if($date){
+            $tempCurrentDate = date("Y-m-d", strtotime($date));
+            $tempYear = date("Y", strtotime($date));
+            $tempYearMonth = date("Y-m", strtotime($date));
+
+            $this->db->select('classification, description');
+            $this->db->from('gcchris.tblholidays');
+            $this->db->where("year", $tempYear);
+            $this->db->where("start_date", $tempCurrentDate);
+            $this->db->where("end_date", $tempCurrentDate);
+            $qTemp = $this->db->get();
+            if($qTemp->num_rows() > 0){
+                $row = $qTemp->row();
+                $resultset['is_holiday'] = true;
+                $resultset['classification'] = strtolower($row->classification);
+                $resultset['description'] = strtolower($row->description);
+            } else {
+                $resultset['is_holiday'] = false;
+            }
+        }
+
+        return $resultset;
+    }
+
+    private function getAlteredShiftRecordByDateRange($startDate=null, $endDate=null){
+        $results = array();
+        if($startDate && $endDate){
+            $this->db->from($this->tbl_timesheet_customized_shift_schedule);
+            $this->db->where("DATE(scheduled_date) >=", $startDate);
+            $this->db->where("DATE(scheduled_date) <=", $endDate);
+            $this->db->order_by("scheduled_date", "ASC");
+            $qAltered = $this->db->get();
+            if($qAltered->num_rows() > 0){
+                foreach ($qAltered->result() as $kkkx => $vvvx) {
+                    $hasShift = intval($vvvx->has_shift) == 1;
+                    $_currentxDate = $vvvx->scheduled_date;
+                    $_md5Date = md5($_currentxDate);
+                    $_tag = $vvvx->set_in ?? null;
+    
+                    $weekDay = date("l", strtotime($_currentxDate));
+                    $shiftIndexes = array("shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end");
+                    $alterShiftIndexes = array("am_start", "am_end", "pm_start", "pm_end");
+                    $shifts = @unserialize($vvvx->shift_id);
+                    $_xemployees = @unserialize($vvvx->employee_id);
+    
+                    if(is_array($shifts) && count($shifts) > 0){
+                        $this->db->select("b.id");
+                        $this->db->from($this->tbl_personnel." a");
+                        $this->db->join($this->tbl_employees." b", "b.biometricno = a.biometric_id OR b.biometricno = a.biometricno");
+                        $this->db->where_in("a.shift_id", $shifts);
+                        $qtempEmps = $this->db->get();
+                        if($qtempEmps->num_rows() > 0){
+                            foreach ($qtempEmps->result() as $keyzc => $valuezc) {
+                                if(!in_array($valuezc, $_xemployees)){ $_xemployees[] = $valuezc->id; }
+                            }
+                        }
+                    }
+                    
+                    if(is_array($_xemployees) && count($_xemployees) > 0){
+                        $this->db->select("a.shift_resource, c.id");
+                        $this->db->from($this->tbl_shift_schedule_resource." a");
+                        $this->db->join($this->tbl_personnel." b", "b.shift_id = a.id");
+                        $this->db->join($this->tbl_employees." c", "c.biometricno = b.biometric_id OR c.biometricno = b.biometricno");
+                        $this->db->where_in("c.id", $_xemployees);
+                        $qResource = $this->db->get();
+                        if($qResource->num_rows() > 0){
+                            foreach ($qResource->result() as $kxxa => $vxxa) {
+                                $_shiftResource = @unserialize($vxxa->shift_resource);
+                                if(is_array($_shiftResource) && count($_shiftResource) > 0){
+                                    $this->db->select(implode("," ,$alterShiftIndexes));
+                                    $this->db->from($this->tbl_shift_schedule_list);
+                                    $this->db->where("weekday", strtolower($weekDay));
+                                    $this->db->where_in("id", $_shiftResource);
+                                    $qshifts = $this->db->get();
+                                    if($qshifts->num_rows() > 0){
+                                        foreach ($qshifts->result() as $ssx => $ssv) {
+                                            $nRowData = array();
+                                            foreach ($alterShiftIndexes as $kx1 => $vx1) {
+                                                $tempCustomKey = $shiftIndexes[$kx1];
+                                                if(isset($vvvx->$tempCustomKey) && $vvvx->$tempCustomKey && $vvvx->$tempCustomKey !== null && $hasShift){
+                                                    $nRowData[$tempCustomKey] = $vvvx->$tempCustomKey;
+                                                }else{
+                                                    $nRowData[$tempCustomKey] = null;
+                                                }
+                                            }
+                                            $results[$vxxa->id][$_md5Date]["schedule"] = $nRowData;
+                                            $results[$vxxa->id][$_md5Date]["has_shift"] = intval($vvvx->has_shift);
+                                            $results[$vxxa->id][$_md5Date]["altered_date"] = $_currentxDate;
+                                            $results[$vxxa->id][$_md5Date]["tag"] = $_tag;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    
+        return $results;
+    }
+
+    private function getLoa($start, $end, $id = 0) {
+        $has_loa = false;
+
+        $this->db->select('id');
+        $this->db->where('DATE(date_from) >=', $start);
+        $this->db->where('DATE(date_to) >=', $end);
+        $this->db->where('employee', $id);
+        $this->db->from('gcceforms.loa');
+        $query = $this->db->get();
+
+        return $query->num_rows() > 0 ? 1 : 0;
     }
 
 }
