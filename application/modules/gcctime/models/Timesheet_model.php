@@ -6923,7 +6923,7 @@ class Timesheet_model extends CI_Model{
         $start = date('Y-m-d', strtotime($inclusive_dates[0]));
         $end = date('Y-m-d', strtotime($inclusive_dates[1]));
         $file = $this->arrayToStdClass($_FILES['file_import']);
-        $device_id = $post->device_id;
+        $device_id = isset($post->device_id) && $post->device_id ? $post->device_id : 0;
         $non_existing = array();
 
         session_write_close();
