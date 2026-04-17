@@ -1223,8 +1223,18 @@ class Attendance_model extends CI_Model {
             "device_state"=>"state",
             "date"=>"datetime");
 
-            $attendanceTable = $tempAttendance ? "zktime_logs.attendance_temp_receiver": "zktime_logs.attendance";
-            $added = $this->db->insert($attendanceTable, $post);
+            /*** $attendanceTable = $tempAttendance ? "zktime_logs.attendance_temp_receiver": "zktime_logs.attendance";
+            $added = $this->db->insert($attendanceTable, $post); ***/
+
+            $attendanceTable = $tempAttendance
+                ? "zktime_logs.attendance_temp_receiver"
+                : "zktime_logs.attendance";
+
+            // Insert raw log with IGNORE
+            $sql = $this->db->set($post)->get_compiled_insert($attendanceTable);
+            $sql = preg_replace('/^INSERT INTO/i', 'INSERT IGNORE INTO', $sql);
+            $this->db->query($sql);
+            $added = ($this->db->affected_rows() > 0);
             if($added){
                 if($tempAttendance == false){
                     $data = array();
