@@ -7085,10 +7085,10 @@ class Timesheet_model extends CI_Model{
             if (!empty($attendance) && $attendance) {
                 $tempTableName = "empcode_" . (int)$this->logged_in_user["emp_id"] . "_temporary_import";
                 $isTemporary = $this->createTemporaryTable($tempTableName);
-    
+
                 if ($isTemporary) {
                     $insert = $this->insert_ignore_batch($tempTableName, $attendance);
-    
+
                     if ($insert && $this->db->trans_status() == true) {
                         $this->db->where('import_id', $import_insert_id);
                         $this->db->from($tempTableName);
@@ -7181,7 +7181,7 @@ class Timesheet_model extends CI_Model{
 
                             if (!empty($tempAttendance) && $tempAttendance) {
                                 $insert_attendance = $this->db->insert_batch($this->tbl_attendance, $tempAttendance);
-    
+
                                 if ($insert_attendance && $this->db->trans_status() === true) {
                                     $this->createImportResultJson( $file->name, $deviceName, $tempName, $result, './uploads/logs');
 
