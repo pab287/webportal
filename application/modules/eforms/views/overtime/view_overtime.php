@@ -21,6 +21,14 @@
             max-width: 100%;
         }
     }
+
+    #modal-import-overtime .modal-content.dimmed > * {
+        position: relative;
+        z-index: 11;
+    }
+    #modal-import-overtime .modal-content.dimmed {
+        filter: blur(2px) brightness(0.7);
+    }
 </style>
 
 <div class="m-content">
@@ -256,6 +264,11 @@
                                 Print
                             </button>
                         <?php endif; ?>
+                        <?php if(in_array('print', $current_action)): ?>
+                            <button type="button" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnPrint btnApproved text-white" onclick="printSignatory()">
+                                Print Overtime Summary
+                            </button>
+                        <?php endif; ?>
                         <?php if(in_array("back", $current_action)): ?>
                             <a href="<?=(isset($_GET['page']) && $_GET['page']) ? $_GET['page'] : 'masterfile' ?>" class="btn btn-metal m-btn m-btn--custom m-btn--icon m-btn--air m-btn--uppercase btnBack text-white">
                                 Back
@@ -477,6 +490,176 @@
                     <button type="submit" class="btn btn-submit btn-primary btnSave">Save</button>
                     <button type="button" class="btn text-white btn-metal btnCancel" data-dismiss="modal">Close</button>
                 </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-import-overtime" tabindex="-1" aria-labelledby="exampleModalLabel">
+    <div class="modal-dialog modal-xl">
+        <form id="print-import_overtime" method="post">
+            <input type="hidden" name="csrf_token" value="<?php echo $this->security->get_csrf_hash(); ?>">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">
+                        Overtime Summary
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">
+                            ×
+                        </span>
+                    </button>
+                </div>
+                <div class="col-12 modal-body" id="signatory-content">
+                    <div id="signatory-section" class="row mt-3 align-items-end align-items-center">
+                        <input type="hidden" name="approvedIds" v-model="approvedIds">
+                        <div class="col-md-3 pr-0">
+                            <label for="signatory" class="required m-0">Signatory Filter</label>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-0">
+                                <select id="signatory" name="signatory" class="form-control" data-validation="required">
+                                    <option></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-5 p-0">
+                            <button type="button" class="btn btn-warning btn-sm btnEdit m-btn m-btn--pill m-btn--air d-none mr-2" id="editSignatory" @click="editSignatory" title="Edit Signatory" data-toggle="m-tooltip" data-original-title="Edit Signatory" data-skin="dark">
+                                <i class="la la-pencil"></i> Edit Signatory
+                            </button>
+                            <button type="button" class="btn btn-accent btn-sm btnEdit m-btn m-btn--pill m-btn--air d-none" id="resetSignatory" @click="resetModalSignatory" title="Reset Signatory" data-toggle="m-tooltip" data-original-title="Edit Signatory" data-skin="dark">
+                                <i class="la la-rotate-left"></i> Reset Signatory
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row mt-4 justify-content-start align-items-center">
+                        <template v-if="signatory.count > 0"> 
+                            <template v-for="(item, index) in signatory.meta">
+                                <div class="col-md-4 mb-2" v-if="item.is_active === true">
+                                    <p style="font-weight: bold; margin-left: 10px;">{{ item.label }}</p>
+                                    <p class="signatory-value" style="font-weight: 600; margin-left: 10px; margin-right: 50px; margin-top: 50px; padding-top: 10px; border-top: 1px solid rgb(0, 0, 0);">
+                                        {{ item.value }}
+                                    </p>
+                                </div>
+                            </template>
+                        </template>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-submit btn-primary btnSave">Print Summary</button>
+                    <button type="button" class="btn text-white btn-metal btnCancel" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" tabindex="-1" role="dialog" id="modal-ot--signatory">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content" id="signatory--content">
+            <div class="modal-header">
+                <h5 class="modal-title">Overtime Signatories</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="updatePrintableSignatories" method="post" action="<?php echo site_url("eforms/overtime/update_printable_signatories"); ?>">
+                <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
+                <input type="hidden" name="id" v-model="row.tempId" />
+                <input type="hidden" name="signatory_id" v-model="row.signatory_id" />
+                <div class="modal-body">
+                    <template v-if="count > 0">
+                        <template v-for="(item, index) in row.meta">
+                        <div id="parent" class="form-group m-form__group row">
+                            <label class="col-3 col-form-label">{{item.label}}</label>
+                            <div class="col-8">
+                                <select class="form-control m-input select2--value" 
+                                    data-validation="required" 
+                                    :name="'value['+index+']'" 
+                                    :disabled="item.is_active === false">
+                                    <option :value="item.value" selected>{{item.value}}</option>
+                                </select>
+                            </div>
+                            <div class="col-1 text-right">
+                                <span class="m-switch m-switch--sm">
+                                    <label>
+                                        <input type="checkbox" :checked="item.is_active === true" @click="activeSignatory(event)" />
+                                        <span></span>
+                                    </label>
+                                </span>
+                            </div>
+                        </div>
+                        </template>
+                    </template>
+                    <template v-else>
+                        <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
+                            <div class="m-alert__icon">
+                                <i class="flaticon-exclamation-1"></i>
+                                <span></span>
+                            </div>
+                            <div class="m-alert__text">
+                                <strong>
+                                    NO ASSIGNED SIGNATORIES!
+                                </strong>
+                                Please add/update the signatory.
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <template v-if="count > 0">
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary btnSave">Update</button>
+                        <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Cancel</button>
+                    </div>
+                </template>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" tabindex="-1" role="dialog" id="modal-ot--reset-signatory">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" id="reset-signatory--content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reset - Overtime Signatories</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="resetPrintableSignatories" method="post" action="<?php echo site_url("eforms/overtime/reset_printable_signatories"); ?>">
+                <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
+                <input type="hidden" name="id" v-model="row.tempId" />
+                <div class="modal-body">
+                    <h4>Are you sure you want to reset the current signatories?</h4>
+                    <template v-if="count > 0">
+                        <template v-for="(item, index) in row.meta">
+                        <div class="form-group m-form__group row m--marginless" v-if="item.is_active === true">
+                            <label class="col-4 col-form-label">{{item.label}}</label>
+                            <label class="col-8 col-form-label m--font-bolder">{{item.value}}</label>
+                        </div>
+                        </template>
+                    </template>
+                    <template v-else>
+                        <div class="m-alert m-alert--icon m-alert--icon-solid m-alert--outline alert alert-danger alert-dismissible fade show" role="alert">
+                            <div class="m-alert__icon">
+                                <i class="flaticon-exclamation-1"></i>
+                                <span></span>
+                            </div>
+                            <div class="m-alert__text">
+                                <strong>
+                                    NO ASSIGNED SIGNATORIES!
+                                </strong>
+                                Please add/update the signatory.
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <template v-if="count > 0">
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary btnSave">Reset</button>
+                        <button type="button" class="btn btn-danger btnClose" data-dismiss="modal">Cancel</button>
+                    </div>
+                </template>
             </form>
         </div>
     </div>
