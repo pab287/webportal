@@ -391,8 +391,8 @@
                 letter-spacing: 0.5px;
             }
 
-            .punch_wrap span:not(:last-child) {
-                margin: 0 0 3px;
+            .punch_wrap span {
+                margin: 2px;
             }
 
             .site_item.col-12 { flex: 100% 0 0; max-width: max-content; }
