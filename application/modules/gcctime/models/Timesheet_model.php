@@ -10397,12 +10397,16 @@ class Timesheet_model extends CI_Model{
         $weekDay = date('l', strtotime($date));
         $empName = $this->getEmployeeNameById($id);
         $_date = date('F d, Y', strtotime($date));
+        $idx = 0;
 
         $result = array();
         if ($id) {
+            $patternCore = 'i:' . $idx . ';s:' . strlen($id) . ':"' . $id . '";';
+
             $this->db->select('id, employee_id, shift_id');
             $this->db->where('DATE(scheduled_date)', $date);
             $this->db->where('set_in', 'timesheet');
+            $this->db->LIKE('employee_id', $patternCore, 'both');
             $this->db->from($this->tbl_timesheet_customized_shift_schedule);
             $_query = $this->db->get();
 
