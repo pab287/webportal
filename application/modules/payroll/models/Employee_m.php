@@ -1403,7 +1403,8 @@
                 $post["created_at"] = date("Y-m-d H:i:s");
                 $post['is_allow_view'] = isset($post['is_allow_view']) && $post['is_allow_view'] ? 1: 0;
                 $post['assigned_employee_id'] = isset($post['is_allow_view']) && $post['is_allow_view'] == 1 ? serialize($post['assigned_employee_id']) : serialize(array());
-                
+                $post["active_only"] = isset($post["active_only"]) && $post["active_only"] == "1" ? 1: 0;
+
                 $logDescription = strtoupper($post['description']);
                 $added = $this->db->insert($this->payrollGroupTable, $post);
                 if($added){
