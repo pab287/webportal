@@ -3,6 +3,7 @@ let _projects = null;
 let rfiTable = null;
 let rfaTable = null;
 let is_archive = 0;
+var search_val = "";
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.employee !== "undefined" && _tempContentData.employee.length > 0){
@@ -29,6 +30,7 @@ $(document).ready(function () {
             data: function (d) {
                 d.csrf_token = _csrf_hash;
                 d.is_archive = is_archive;
+                d.search['value'] = search_val;
             }
         },
         columns: [
@@ -342,3 +344,8 @@ function restoreRow(id) {
         }
     });
 }
+
+$('#generalSearch').donetyping(function (callback) {
+    search_val = $(this).val();
+    rfiTable.ajax.reload(null, false);
+});

@@ -28,11 +28,14 @@ class Eng_req_m extends CI_Model {
         $is_archive =  (isset($post["is_archive"]) && $post["is_archive"])? $post["is_archive"]: '';
         $date_range = (isset($post["date_range"]) && $post["date_range"])? $post["date_range"]: false;
         $filterFields = array(
-            "project_name","project_location",
+            "project_name","project_location", "rfi_no", "needed_info",
             "b.firstname","b.middlename","b.lastname",
             "CONCAT(b.firstname, ' ', IF(b.middlename IS NOT NULL AND b.middlename != '', CONCAT(LEFT(b.middlename,1), '. '), ''), b.lastname)",
             "CONCAT(b.firstname, ' ', b.lastname)",
-            "CONCAT(b.lastname, ' ', b.firstname)"
+            "CONCAT(b.lastname, ' ', b.firstname)",
+            "CONCAT(e.firstname, ' ', IF(e.middlename IS NOT NULL AND e.middlename != '', CONCAT(LEFT(e.middlename,1), '. '), ''), e.lastname)",
+            "CONCAT(e.firstname, ' ', e.lastname)",
+            "CONCAT(e.lastname, ' ', e.firstname)"
         );
 
         $rowData = $this->getRFIsData($search, $limit, $offset, $sortBy, $sortOrder, $filterFields, $is_archive);
@@ -54,9 +57,19 @@ class Eng_req_m extends CI_Model {
                 ),
                 b.lastname
             ) as created_by_name,
-        c.project_name, c.project_location");
+                    CONCAT(
+                e.firstname, ' ',
+                IF(
+                    e.middlename IS NOT NULL AND e.middlename != '',
+                    CONCAT(LEFT(b.middlename,1), '. '),
+                    ''
+                ),
+                e.lastname
+            ) as requested_by_name,
+        c.project_name as project_name, c.project_location as project_location");
         $this->db->from($this->rfiTable.' as a');
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.created_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees as e", "b.id = a.requested_by", "LEFT");
         $this->db->join($this->projectTable." as c", "c.id = a.project_id", "LEFT");
         $this->db->join($this->replyTable." as d", "d.rfi_id = a.id", "LEFT");
         $this->db->where("a.is_archive", $is_archive);
@@ -84,9 +97,31 @@ class Eng_req_m extends CI_Model {
     }
 
     private function getRFIsDataCount($search,$filterFields, $is_archive){
-        $this->db->select("a.*");
+        $this->db->select("a.*, d.status, d.reply_at, d.reply_by, 
+                    CONCAT(
+                b.firstname, ' ',
+                IF(
+                    b.middlename IS NOT NULL AND b.middlename != '',
+                    CONCAT(LEFT(b.middlename,1), '. '),
+                    ''
+                ),
+                b.lastname
+            ) as created_by_name,
+                    CONCAT(
+                e.firstname, ' ',
+                IF(
+                    e.middlename IS NOT NULL AND e.middlename != '',
+                    CONCAT(LEFT(b.middlename,1), '. '),
+                    ''
+                ),
+                e.lastname
+            ) as requested_by_name,
+        c.project_name as project_name, c.project_location as project_location");
         $this->db->from($this->rfiTable.' as a');
         $this->db->join("gccmaster.tblemployees as b", "b.id = a.created_by", "LEFT");
+        $this->db->join("gccmaster.tblemployees as e", "b.id = a.requested_by", "LEFT");
+        $this->db->join($this->projectTable." as c", "c.id = a.project_id", "LEFT");
+        $this->db->join($this->replyTable." as d", "d.rfi_id = a.id", "LEFT");
         $this->db->where("a.is_archive", $is_archive);
         if ($search) {
             $this->db->group_start();
