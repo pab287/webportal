@@ -33,6 +33,7 @@
                         <th>Shift Out</th>
                         <th>Assigned Shift</th>
                         <th>Included Employee(s)</th>
+                        <th>Assigned Employee(s)</th>
                         <th>Shift</th>
                         <th></th>
                     </tr>
