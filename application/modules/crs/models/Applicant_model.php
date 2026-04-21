@@ -1015,9 +1015,5 @@
         //     var_dump( $updates ); die;
         // }
 
-        public function getApplicantInfo($id){
-            
-        }
-
 
     }

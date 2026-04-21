@@ -5,8 +5,11 @@
         public function __construct()
         {
             parent::__construct();
+            $this->authenticate->setModuleAccess("crs");
+            $this->authenticate->doRedirect();
             $this->load->model("Registration_model", "registration");
             $this->load->model("Applicant_model", "applicant");
+            $this->load->model("document_model", "document");
         }
 
         public function index()
@@ -22,7 +25,19 @@
 
         public function hire($id){
             $data = array();
-            $data['applicant'] = $this->applicant->getApplicantInfo($id);
+            $data['candidate_information'] = $this->applicant->getCandidateInformation($id);
+            $data['position'] = $this->document->select2PositionData();
+            $data['employee'] = $this->document->select2RefferalData();
+            $this->core_layout->addCss("global/plugins/uploadui/css/blueimp/blueimp-gallery.min.css", true);
+            $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload.css", true);
+            $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload-ui.css", true);
+            $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
+            $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
+            $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
+            $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
+            $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
             $this->core_layout->addJs("js/crs/new_hire.js", true, $data);
             $this->load->view('core/templates/header');
             $this->load->view('crs/new_online_hire');
