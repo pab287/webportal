@@ -285,6 +285,18 @@ function itemDatatableActions(id, status) {
                         title="View Application">
                         <i class="la la-eye"></i>
                     </a>
+
+                    <button 
+                        type="button" 
+                        class="btn btn-default m-btn m-btn--hover-success m-btn--icon m-btn--icon-only m-btn--pill btnHire" 
+                        onclick="hireApplication(${id})" 
+                        data-toggle="m-tooltip" 
+                        data-placement="bottom" 
+                        title="Hire Applicant" 
+                        data-skin="dark">
+                        <i class="la la-check"></i>
+                    </button>
+
                     <button 
                         type="button" 
                         class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
@@ -292,7 +304,8 @@ function itemDatatableActions(id, status) {
                         data-toggle="m-tooltip" data-placement="bottom" title="Archive Application" 
                         data-skin="dark">
                         <i class="la la-file-archive-o"></i>
-                    </button>`
+                    </button>
+                    `;
     } else {
          _actionButton += `                  
                     <button 
@@ -432,4 +445,20 @@ function openArchive(){
         $('#newOption').show();
     }
     tblCandidates.ajax.reload();
+}
+
+function hireApplication(id) {
+    Swal.fire({
+        title: 'Hire Applicant?',
+        text: 'This will change the status of the application to HIRED.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, hire applicant'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = baseUrl("crs/online_application/hire/" + id);
+        }
+    });
 }

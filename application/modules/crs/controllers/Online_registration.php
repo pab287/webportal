@@ -18,6 +18,16 @@
             $this->load->view("crs/registration/index");
             $this->load->view("core/templates/external/footer",$tempData);
         }
+
+        public function hire($id){
+            $data = array();
+            $data['applicant'] = $this->registration->getApplicantInfo($id);
+            $this->core_layout->addJs("js/crs/new_hire.js", true, $data);
+            $this->load->view('core/templates/header');
+            $this->load->view('crs/nwe_hire');
+            $this->load->view('core/templates/footer');
+        }
+
         public function backup()
         {
             $this->load->view("core/templates/external/header");
