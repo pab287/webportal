@@ -570,4 +570,45 @@ class User_role_model extends CI_Model{
 			else{ return false; }
 		}else{ return false; }
 	}
+
+	public function cloneUserRole(){
+		$post = $this->input->post();
+		$result = array();
+		$post["name"] = strtolower($post["name"]."_".date("dYmHis"));
+		$post["description"] = strtolower($post["description"]);
+		$this->db->select("module_resource, role_resource, privilege_resource");
+		$role = $this->db->get_where($this->roleAclTable, array("role_id"=>$post["id"]));
+		if($role->num_rows() === 1){
+			$rowAcl = $role->row_array();
+			unset($post["id"]);
+
+			$aclName = $this->checkAclName($post);
+			if($aclName){
+				if(!isset($post["role_code"])){ $post["role_code"] = $this->core_layout->generateCode(); }
+				$post["is_active"] = 1;
+				$post["status"] = 1;
+				$insert = $this->db->insert($this->roleTable, $post);
+				if($insert && $this->db->affected_rows() > 0){
+					$lastId = $this->db->insert_id();
+					$rowAcl["role_id"] = $lastId;
+					$rowAcl["name"] = $post["name"];
+					$rowAcl["is_active"] = 1;
+					$this->db->insert($this->roleAclTable, $rowAcl);
+					$result["response"] = true; 
+					$result["toastr_msg"] = "User role has been clone successfully.";
+				}else{
+					$result["response"] = false;
+					$result["toastr_msg"] = "Error in saving user role, user role description `".$post["description"]."`!!";
+				}
+			}else{
+				$result["response"] = false;
+				$result["toastr_msg"] = "Error in saving user role, user role `".$post["name"]."` already exist!";
+			}
+		}else{
+			$result["response"] = false;
+			$result["toastr_msg"] = "Error in saving user role, user role role description `".$post["description"]."` already exist!";
+		}
+
+		return $result;
+	}
 }
