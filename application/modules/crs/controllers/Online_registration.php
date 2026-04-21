@@ -24,6 +24,7 @@
         }
 
         public function hire($id){
+            $this->core_layout->setPrivilegeName("crs_resume");
             $data = array();
             $data['candidate_information'] = $this->applicant->getCandidateInformation($id);
             $data['position'] = $this->document->select2PositionData();
@@ -38,7 +39,7 @@
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
             $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
             $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
-            $this->core_layout->addJs("js/crs/new_hire.js", true, $data);
+            $this->core_layout->addJs("js/crs/new_online_hire.js", true, $data);
             $this->load->view('core/templates/header');
             $this->load->view('crs/new_online_hire');
             $this->load->view('core/templates/footer');

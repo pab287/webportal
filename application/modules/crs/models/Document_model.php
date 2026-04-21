@@ -3204,6 +3204,29 @@ class Document_model extends CI_Model{
         return true;
     }
 
+        public function select2PositionData(){
+        $this->db->select('id, name as text');
+        $this->db->from('gcchris.tblposition');
+        $this->db->where('is_archived', 0);
+        $this->db->where('name !=', '');
+        $this->db->order_by('name', 'ASC');
+        $results = $this->db->get()->result();
+        return $results;
+    }
+    
+    public function select2RefferalData(){
+        $query = $this->db->query("SELECT  c.id, CONCAT(c.firstname,' ',c.lastname) as emp_name FROM gccmaster.tblusers b, gccmaster.tblemployees c WHERE b.emp_id=c.id AND c.employee_status = 'Active' group by c.id ORDER BY c.firstname ASC ");
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $data = array();
+                $data["id"] = $_query["id"];
+                $data["text"] = $_query["emp_name"];
+                $resultarray[] = $data;
+            }
+        }
+        return  $resultarray;
+    }
+
     public function getCandidates(){
         $resultset = array();
         $post = $this->input->post();
