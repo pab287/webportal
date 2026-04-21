@@ -449,16 +449,27 @@ function openArchive(){
 
 function hireApplication(id) {
     Swal.fire({
-        title: 'Hire Applicant?',
-        text: 'This will change the status of the application to HIRED.',
+        title: 'HIRE APPLICANT?',
+        text: 'Are you sure you want to hire this applicant? You will be redirected to the applicant hire page.',
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#28a745',
         cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Yes, hire applicant'
+        cancelButtonText: 'CANCEL',
+        confirmButtonText: 'YES, HIRE APPLICANT'
     }).then((result) => {
         if (result.isConfirmed) {
-            window.location.href = baseUrl("crs/online_registration/hire/" + id);
+            Swal.fire({
+                title: 'Redirecting...',
+                text: 'You will now be redirected to applicant hire page.',
+                icon: 'info',
+                timer: 2000,
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false
+            }).then(() => {
+                window.location.href = baseUrl("crs/online_registration/hire/" + id);
+            });
         }
     });
 }

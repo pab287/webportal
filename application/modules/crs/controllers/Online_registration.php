@@ -464,4 +464,9 @@
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
+        public function hire_candidate(){
+            $data = $this->applicant->hireCandidate();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
     }

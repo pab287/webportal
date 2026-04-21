@@ -1008,12 +1008,66 @@
             ];
         }
 
-        // public function updateCandidateContactInformation(){
-        //     $resultset = array();
-        //     $id = $this->input->post('id');
-        //     $updates = $this->input->post('update');
-        //     var_dump( $updates ); die;
-        // }
+        public function hireCandidate(){
+            $ressultset = array();
+            $post = $this->input->post();
+            $data = array(
+                'employee_status' => 'Active',
+                'add_date' => date('Y-m-d H:i:s'),
+                'add_by' => $this->user_data['emp_id'],
+                'is_incomplete' => 1,
+                'firstname' => $post['applicant_data']['firstname'],
+                'middlename' => $post['applicant_data']['middlename'],
+                'lastname' => $post['applicant_data']['lastname'],
+                'suffix' => $post['applicant_data']['suffix'],
+                'gender' => $post['applicant_data']['gender'],
+                'civil_status' => $post['applicant_data']['civil_status'],
+                'religion' => $post['applicant_data']['religion'],
+                'height' => $post['applicant_data']['height'],
+                'weight' => $post['applicant_data']['weight'],
+                'bday' =>  date('Y-m-d', strtotime($post['applicant_data']['birthdate'])),
+                'citizenship' => $post['applicant_data']['citizenship'],
+                'mobile_no' => $post['applicant_data']['contact_no'],
+                'email' => $post['applicant_data']['email'],
+                'tel_no' => $post['applicant_data']['tel_no'],
+                'address' => $post['applicant_data']['curr_addr'],
+                'prov_addr' => $post['applicant_data']['permanent_address'],
+            );
+
+            $this->db->trans_start();
+            
+            $save = $this->db->insert('gccmaster.tblemployees', $data);
+            var_dump($post);
+            if($save){
+                $employee_id = $this->db->insert_id();
+                $references = $post['applicant_data']['references'] ?? [];
+
+                if (!empty($references)) {
+                    $reference_data = array();
+
+                    foreach ($references as $ref) {
+                        $reference_data[] = array(
+                            'emp_id'       => $employee_id,
+                            'ref_name'          => $ref['ref_name'] ?? '',
+                            'ref_contact_no'    => $ref['ref_contact_no'] ?? '',
+                            'ref_address'       => $ref['ref_address'] ?? '',
+                            'add_date'          => date('Y-m-d H:i:s'),
+                            'add_by'            => $this->user_data['emp_id'],
+                        );
+                    }
+
+                    $this->db->insert_batch('gccmaster.tbl_employee_references', $reference_data);
+                }
+
+            }
+            $this->db->trans_complete();
+
+            if ($this->db->trans_status() === FALSE) {
+                
+            } else {
+                
+            }
+        }
 
 
     }

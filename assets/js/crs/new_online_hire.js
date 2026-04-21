@@ -27,20 +27,6 @@ const mimeMap = {
     // "image/jpeg": "jpg"
 };
 
-const interviewLocationOptions = [
-    { id: 'office', text: 'Office Interview' },
-    { id: 'zoom', text: 'Zoom Meeting' },
-    { id: 'teams', text: 'Microsoft Teams' },
-    { id: 'phone', text: 'Phone Interview' },
-    { id: 'other', text: 'Other' }
-];
-
-const interviewTypeOptions = [
-    {id: 'initial', text: 'Initial Interview'},
-    {id: 'skill_test', text: 'Skill Test'},
-    {id: 'final', text: 'Final Interview'}
-];
-
 const recruitmentSources = [
     { id: 'mynimo', text: 'MYNIMO' },
     { id: 'jobstreet', text: 'JOBSTREET' },
@@ -76,11 +62,6 @@ const genderOptions = [
     { id: 'female', text: 'FEMALE' },
 ];
 
-const assesmentData = [
-    { id: 'pass', text: 'Pass' },
-    { id: 'fail', text: 'Fail' }
-];
-
 const maxFileSize = 50 * 1024 * 1024; // 50MB
 const allowedTypes = [
     'application/pdf',
@@ -95,35 +76,20 @@ let application_vue = new Vue({
         attachUpdate: false,
         to_remove_work_exp: [],
         to_remove_educ_info: [],
-        to_remove_assessment_attachments: [],
         originalApplication: null,
         selected_form: '#personal_information_form',
-        interviews: {},
-        isEditable:false,
         can_edit_candidate: false,
         selectedApplication: candidate_information.candidate,
         isFreshGraduate: false,
         references: candidate_information.references,
-        isSubmitting: false, 
         className: "",
         count: 0,
         uploadedFile: candidate_information.candidate.resume,
         workExperiences: candidate_information && candidate_information.work_exp && candidate_information.work_exp.length > 0 ? candidate_information.work_exp : [{ work_company: '', work_position: '', work_from: '', work_to: '', work_status: '', work_reason: '' }],
         educInfo: candidate_information.education,
-        manpower_request: candidate_information.manpower_request,
-        assigned_manpower_request: candidate_information.assigned_manpower_req,
-        selectedInterview: null,
-        assessment: {
-            interview_id: '',
-            status: '',
-            remarks: '',
-            attachments:[],
-        },
-        edit_attachments: [],
     },
     mounted: function () {
         let vm = this;
-
         $('#applied_dt').datepicker({
             endDate: new Date(),
             todayHighlight: true,
@@ -215,48 +181,7 @@ let application_vue = new Vue({
         }else{
             vm.isFreshGraduate = false;
         }
-
-        this.getInterviews();
         this.initValidations();
-        $('#assessInterviewModal').on('shown.bs.modal', function () {
-            if (!$('#assessmentResult').hasClass('select2-hidden-accessible')) {
-                $('#assessmentResult').select2({
-                    width: '100%',
-                    placeholder: 'Select Result',
-                    data: assesmentData,
-                    dropdownParent: $('#assessInterviewModal')
-                }).on('change', function () {
-                    vm.assessment.status = $(this).val();
-                });
-            }
-        
-            $('#assessmentResult').val(vm.assessment.status).trigger('change').prop('disabled', true);
-            $('#assessmentResult').trigger('change.select2');
-        });
-
-        $('#assessInterviewModal').on('hidden.bs.modal', function () {
-            $('#assessmentResult').prop('disabled', false).trigger('change.select2');
-        });
-
-        $('#viewInterviewModal').on('shown.bs.modal', function () {
-            if (!$('#edit_assessmentResult').hasClass('select2-hidden-accessible')) {
-                $('#edit_assessmentResult').select2({
-                    width: '100%',
-                    placeholder: 'Select Result',
-                    data: assesmentData,
-                    dropdownParent: $('#viewInterviewModal')
-                }).on('change', function () {
-                    vm.assessment.status = $(this).val();
-                });
-            }
-        
-            $('#edit_assessmentResult').val(vm.selectedInterview.status).trigger('change').prop('disabled', true);
-            $('#edit_assessmentResult').trigger('change.select2');
-        });
-
-        $('#viewInterviewModal').on('hidden.bs.modal', function () {
-            vm.isEditable = false;
-        });
     },
     computed: {
         fullName() {
@@ -267,6 +192,50 @@ let application_vue = new Vue({
         },
     },
     methods: {
+        hireToHr: function() {
+            const vm = this;
+
+            const payload = {
+                csrf_token: _csrf_hash,
+                applicant_data: {
+                    ...this.selectedApplication,
+                    references: this.references,
+                    workExperiences: this.workExperiences,
+                    isFreshGraduate: this.isFreshGraduate,
+                    educInfo: this.educInfo,
+                    uploadedFile: this.uploadedFile
+                }
+            };
+
+            Swal.fire({
+                title: 'HIRE CANDIDATE?',
+                text: 'This applicant will be added to HRIS.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'YES, HIRE CANDIDATE',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: baseUrl("crs/online_registration/hire_candidate"),
+                        type: 'POST',
+                        data: payload,
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.success) {
+                                toastr.success(response.toastr_msg, 'Success');
+                            } else {
+                                toastr.error(response.toastr_msg, 'Error');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            toastr.error('Something went wrong', 'Error');
+                        }
+                    });
+                }
+            });
+        },
         initValidations: function(){
             vm = this;
             $.validate({
@@ -480,118 +449,6 @@ let application_vue = new Vue({
             const vm = this;
             $(vm.selected_form).submit();
         },
-        hasAssessmentChanges: function(){
-            const current = {
-                status: this.assessment.status,
-                assessment_remarks: this.selectedInterview.assessment.assessment_remarks,
-                attachments: this.selectedInterview.assessment.assessment_attachments
-            }
-        },
-        deleteInterview: function(id) {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: 'This action cannot be undone.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, delete it',
-                cancelButtonText: 'Cancel',
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#6c757d'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: baseUrl("crs/delete_candidate_interview"),
-                        type: 'POST',
-                        data: { id: id, csrf_token: _csrf_hash },
-                        dataType: 'json',
-                        success: (res) => {
-
-                            if (res.success) {
-                                this.getInterviews();
-                                toastr.success(res.toastr_msg, 'Success', 3000);
-                            }
-                        },
-
-                    });
-                }
-            });
-        },
-        passInterview: function(item){
-            this.selectedInterview = item;
-            this.assessment.interview_id = item.id;
-            this.assessment.status = 'pass';
-            this.assessment.remarks = '';
-            $('#assessInterviewModal').modal('show');
-
-        },
-        failInterview: function(item){
-            this.selectedInterview = item;
-            this.assessment.interview_id = item.id;
-            this.assessment.status = 'fail';
-            this.assessment.remarks = '';
-            $('#assessInterviewModal').modal('show');
-        },
-        viewInterview: function(item){
-            this.selectedInterview = JSON.parse(JSON.stringify(item));
-            oldAssessment = JSON.parse(JSON.stringify(item.assessment));
-        
-            oldAssessment.attachments = item.assessment.assessment_attachments
-                ? item.assessment.assessment_attachments.split(',').map(file => {
-                    const trimmedFile = file.trim();
-                    const parts = trimmedFile.split('.');
-                    const ext = parts.length > 1 ? parts.pop().toLowerCase() : '';
-        
-                    return {
-                        uploaded: true,
-                        name: trimmedFile,
-                        type: ext
-                    };
-                })
-                : [];
-        
-            delete oldAssessment.assessment_attachments;
-        
-            this.edit_attachments = JSON.parse(JSON.stringify(oldAssessment.attachments));
-            $('#viewInterviewModal').modal('show');
-        },
-        editInterview: function(){
-            this.isEditable = true;
-        },
-        cancelEditInterview: function() {
-            this.isEditable = false;
-            $('#edit_assessmentResult').val(oldAssessment.status).trigger('change');
-            this.selectedInterview.assessment.assessment_remarks = JSON.parse(JSON.stringify(oldAssessment.assessment_remarks));
-            this.edit_attachments = JSON.parse(JSON.stringify(oldAssessment.attachments));
-            this.to_remove_assessment_attachments = [];
-        },
-        formatDateTime(datetime) {
-            if (!datetime || datetime === "0000-00-00 00:00:00") return "-";
-            return moment(datetime).format("MMM DD, YYYY hh:mm A");
-        },
-        formatPlatform(platformId) {
-            const platform = interviewLocationOptions.find(item => item.id === platformId);
-            return platform ? platform.text : "-";
-        },
-        getInterviews: function() {
-            let vm = this;
-            $.ajax({
-                global: false,
-                url: baseUrl("crs/get_candidate_interview"),
-                type: "POST",
-                dataType: "json",
-                data: {
-                    csrf_token: _csrf_hash,
-                    candidate_id: candidate_id
-                },
-                success: function (res) {
-                    if(res){
-                        vm.interviews = res;
-                    }
-                },
-                error: function (xhr) {
-                }
-            })
-        },
         getClass: function(filename) {
             if (!filename) {
                 return "m-widget4 m-widget2__item m-widget2__item--default col-12";
@@ -703,184 +560,8 @@ let application_vue = new Vue({
                 });
             });
         },
-        assessmentFileDelete: function(index) {
-            this.assessment.attachments.splice(index, 1);
-        },
-        interviewfileDelete: function(index) {
-            const file = this.edit_attachments[index];
-
-            if (file && file.uploaded === true) {
-                this.to_remove_assessment_attachments.push(file.name);
-            }
-        
-            this.edit_attachments.splice(index, 1);
-            // Swal.fire({
-            //     title: 'Are you sure?',
-            //     text: 'This action cannot be undone.',
-            //     icon: 'warning',
-            //     showCancelButton: true,
-            //     confirmButtonText: 'Yes, remove it',
-            //     cancelButtonText: 'Cancel',
-            //     confirmButtonColor: '#d33',
-            //     cancelButtonColor: '#6c757d'
-            // }).then((result) => {
-            //     if (result.isConfirmed) {
-                
-            //         let edit_attachments = this.edit_attachments.map(file => file.name).join(',');
-            //         $.ajax({
-            //             url: baseUrl("crs/update_interview_attachments"),
-            //             type: 'POST',
-            //             data: { id: this.selectedInterview.id, to_remove: edit_attachments, csrf_token: _csrf_hash },
-            //             dataType: 'json',
-            //             success: (res) => {
-            //                 if (res.success) {
-            //                     toastr.success(res.toastr_msg, 'Success', 3000);
-            //                     this.getInterviews();
-            //                 }
-            //             },
-            //         })
-            //     }
-            // });
-        },
     }
 });
-
-// $('a[href="#main_candidate_information"]').on('shown.bs.tab', function () {
-//     $('a[href="#candidate_personal_information"]').tab('show');
-// });
-
-$('#manpowerRequestModal').on('shown.bs.modal', function () {
-    if ($.fn.DataTable.isDataTable('#table-manpower_request')) {
-        mrf_table.ajax.reload(null, false);
-    } else {
-        mrf_table = $('#table-manpower_request').DataTable({
-                processing: true,
-                serverSide: true,
-                searching: false,
-                ajax: {
-                    global: false,
-                    url: baseUrl("crs/get_available_manpower_request"),
-                    type: "POST",
-                    data: function (d) {
-                        d.csrf_token = _csrf_hash;
-                        d.positions = positions;
-                        d.archive = archive;
-                    }
-                },
-                columns: [
-                    { data: "id", visible: false },
-                    { data: "mrf_reference_no", orderable: false },
-                    { data: null, orderable: false,
-                        render : function ( data, type, row ) {
-                            return `${row.position} <br> ${row.type}`;
-                        }
-                    },
-                    { data: null, orderable: false,
-                        render : function ( data, type, row ) {
-                            return `<button class="btn btn-sm btn-info" data-toggle="modal" data-target="#manpowerRequestModal" onclick="assignManpowerRequest(${row.id})">Assign</button>`;
-                        }
-                    }
-                ],
-            }
-        );
-    }
-});
-
-function assignManpowerRequest(id){
-    $.ajax({
-        url: baseUrl("crs/assign_manpower_request"),
-        type: "POST",
-        data: {id: id, csrf_token: _csrf_hash},
-        success: function (data) {
-            // $('#manpowerRequestModal').modal('hide');
-        }
-    });
-}
-
-$('#interviewModal').on('shown.bs.modal', function () {
-    $('#interviewDate').daterangepicker({
-        showDropdowns: true,
-        drops: 'auto',
-        opens: 'right',
-        singleDatePicker: true,
-        timePicker: true,
-        timePicker24Hour: true,
-        timePickerIncrement: 15,
-        autoUpdateInput: false, 
-        minDate: moment(),
-        parentEl: "#interviewModal .modal-content",
-        locale: {
-            format: 'MM/DD/YYYY HH:mm'
-        }
-    }).on('apply.daterangepicker', function(ev, picker) {
-        const formatted = picker.startDate.format('MM/DD/YYYY HH:mm');
-        $(this).val(formatted);
-    }).on('cancel.daterangepicker', function(ev, picker) {
-        $(this).val(''); // Clear the input if user cancels
-    });
-
-    $('#interviewLocation').select2({
-        width: '100%',
-        dropdownParent: $('#interviewModal'),
-        placeholder: 'Select an option',
-        data:interviewLocationOptions,
-    });
-
-    $('#interviewType').select2({
-        width: '100%',
-        dropdownParent: $('#interviewModal'),
-        placeholder: 'Select an option',
-        data:interviewTypeOptions,
-    });
-
-});
-
-$(document).ready(function () {
-    $('#mainTabNav').on('click', '.main-tab-link', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        let target = $(this).attr('href');
-        $('#mainTabNav .main-tab-link').removeClass('active');
-        $(this).addClass('active');
-        $('#content_candidate_info > .tab-pane').removeClass('active show').hide();
-        $(target).addClass('active show').show();
-    });
-});
-
-
-$.validate({
-    form: "#interviewForm",
-    scrollToTopOnError: false,
-    onSuccess: function () {
-        let form = $("#interviewForm")[0];
-        let formData = new FormData(form);
-        formData.append("csrf_token", _csrf_hash);
-        formData.append("candidate_id", candidate_id);
-        $.ajax({
-            url: baseUrl("crs/submit_interview_schedule"),
-            type: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function (res) {
-                if(res.success){
-                    toastr.success(res.toastr_msg, 'Success', 3000);
-                    application_vue.getInterviews();
-                    $('#interviewModal').modal('hide');
-                    $('#interviewForm')[0].reset();
-                }
-                else{
-                    toastr.error(res.toastr_msg, 'Error', 3000);
-                }
-            },
-            error: function (xhr) {
-            }
-        });
-
-        return false;
-    }
-});
-
 
 
 $(document).ready(function () {
@@ -931,169 +612,15 @@ $(document).ready(function () {
         application_vue.assessment.attachments.push(fileObj);
     }
 
-    $.validate({
-        form: "#interview_assessment",
-        scrollToTopOnError: false,
-        onSuccess: function () {
-            let formData = new FormData($('#interview_assessment')[0]);
-            let assessment_id = application_vue.assessment.interview_id;
-            formData.append('csrf_token', _csrf_hash);
-            formData.append('assessment_id', assessment_id);
-            formData.append('candidate_id', candidate_id);
-            formData.append('status', application_vue.assessment.status);
-    
-            (application_vue.assessment.attachments || []).forEach(file => {
-                if (file.raw) {
-                    formData.append('files[]', file.raw);
-                }
-            });
-    
-            $.ajax({
-                global: false,
-                url: baseUrl("crs/assess_candidate_interview"),
-                type: "POST",
-                dataType: "json",
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(res) {
-                    if (res.success) {
-                        toastr.success(res.toastr_msg, 'Success', 3000);
-                        application_vue.getInterviews();
-                        $('#assessInterviewModal').modal('hide');
-                        $('#interview_assessment')[0].reset();
-                    } else {
-                        toastr.error(res.toastr_msg, 'Error', 3000);
-                    }
-                }
-            });
-    
-            return false;
-        }
-    });
-
-    $.validate({
-        form: "#view_interview_assessment",
-        scrollToTopOnError: false,
-        onSuccess: function () {
-            let assessment_id = application_vue.selectedInterview.id;
-            const formData = {
-                assessment_remarks: $('#edit_assessmentRemarks').val(),
-                result: $('#edit_assessmentResult').val(),
-            };
-            const updates = getAssessmentUpdates(oldAssessment, formData);
-            const newAttachments = application_vue.edit_attachments.filter(
-                item => item.uploaded !== undefined && item.uploaded === false
-            );
-            console.log(newAttachments);
-            const payload = new FormData();
-            payload.append('csrf_token', _csrf_hash);
-            payload.append('assessment_id', assessment_id);
-            payload.append('candidate_id', candidate_id);
-    
-            Object.keys(updates).forEach(key => {
-                payload.append(key, updates[key]);
-            });
-    
-            newAttachments.forEach((item, index) => {
-                if (item.raw) {
-                    payload.append('files[]', item.raw);
-                }
-            });
-
-            if (application_vue.to_remove_assessment_attachments && application_vue.to_remove_assessment_attachments.length > 0) {
-                payload.append('to_remove', JSON.stringify(application_vue.to_remove_assessment_attachments));
-            }
-
-            $.ajax({
-                global: false,
-                url: baseUrl("crs/update_interview_assessment"),
-                type: "POST",
-                dataType: "json",
-                data: payload,
-                processData: false,
-                contentType: false,
-                success: function(res) {
-                    if (res.success) {
-                        toastr.success(res.toastr_msg, 'Success', 3000);
-                        application_vue.getInterviews();
-                    } else {
-                        toastr.error(res.toastr_msg, 'Error', 3000);
-                    }
-                    $('#viewInterviewModal').modal('hide');
-                }
-            });
-    
-            return false;
-        }
-    });
 
     $(document).on('change', '#resume-fileupload', function () {
         application_vue.uploadedFile = this.files[0].name;
         application_vue.attachUpdate = true;
     });
 
-    $(document).on('change', '#edit_assessment_fileupload', function () {
-        if (!this.files || !this.files.length) return;
-        const maxSize = 50 * 1024 * 1024; // 50 MB
-        application_vue.edit_attachments = application_vue.edit_attachments || [];
-        Array.from(this.files).forEach(file => {
-            const fileName = file.name.toLowerCase();
-            const isPdf = file.type === 'application/pdf' || fileName.endsWith('.pdf');
-            const isImage = file.type.startsWith('image/') ||
-                fileName.endsWith('.jpg') ||
-                fileName.endsWith('.jpeg') ||
-                fileName.endsWith('.png') ||
-                fileName.endsWith('.bmp') ||
-                fileName.endsWith('.webp');
-    
-            if (!isPdf && !isImage) {
-                toastr.error(`FILE "${file.name}" MUST BE A PDF OR IMAGE FILE.`);
-                return;
-            }
-    
-            if (file.size > maxSize) {
-                toastr.error(`FILE "${file.name}" EXCEEDS THE 50 MB MAXIMUM SIZE.`);
-                return;
-            }
-    
-            const alreadyExists = application_vue.edit_attachments.some(item =>
-                item.name === file.name &&
-                item.type === file.type &&
-                (
-                    (item.raw && item.raw.size === file.size && item.raw.lastModified === file.lastModified) ||
-                    (!item.raw)
-                )
-            );
-    
-            if (!alreadyExists) {
-                application_vue.edit_attachments.push({
-                    uploaded: false,
-                    name: file.name,
-                    type: file.type,
-                    raw: file,
-                });
-            } else {
-                toastr.error(`File "${file.name}" IS ALREADY SELECTED.`);
-            }
-        });
-    
-        $(this).val('');
-    });
 
 });
 
-function getAssessmentUpdates(currentAssessment, updatedAssessment) {
-    const updates = {};
-
-    Object.keys(updatedAssessment).forEach((key) => {
-        const currentKey = key === 'result' ? 'status' : key;
-        if (currentAssessment[currentKey] !== updatedAssessment[key]) {
-            updates[key] = updatedAssessment[key];
-        }
-    });
-    return updates;
-}
 
 function getAllUpdates(normalizedFormData, currentData) {
     const updates = {};
@@ -1308,6 +835,5 @@ function applyObjectUpdates(currentData, update) {
             currentData[key] = update[key];
         }
     });
-
     return currentData;
 }
