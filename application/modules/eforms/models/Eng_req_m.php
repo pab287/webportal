@@ -522,7 +522,7 @@ class Eng_req_m extends CI_Model {
                 $config = [
                     'upload_path'   => $filepath,
                     'allowed_types' => 'pdf|doc|docx|jpg|jpeg|png',
-                    'max_size'      => 51200,
+                    'max_size'      => 512000,
                     'file_name'     => $originalName,
                     'remove_spaces' => true
                 ];
@@ -800,7 +800,7 @@ class Eng_req_m extends CI_Model {
 
         
             foreach ($_FILES['files']['name'] as $i => $fileName) {
-                $currentFileName = str_replace(' ', '_', $fileName);
+                $currentFileName = strtolower(str_replace(' ', '', $fileName));
 
                 if (!in_array(strtolower($currentFileName), $filesToAdd)) {
                     continue;
@@ -815,7 +815,7 @@ class Eng_req_m extends CI_Model {
                 $config = [
                     'upload_path'   => $filepath,
                     'allowed_types' => 'pdf|doc|docx|jpg|jpeg|png',
-                    'max_size'      => 51200,
+                    'max_size'      => 512000,
                     'file_name'     => $currentFileName,
                     'remove_spaces' => true
                 ];
