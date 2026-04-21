@@ -6,6 +6,7 @@
         {
             parent::__construct();
             $this->load->model("Registration_model", "registration");
+            $this->load->model("Applicant_model", "applicant");
         }
 
         public function index()
@@ -21,10 +22,10 @@
 
         public function hire($id){
             $data = array();
-            $data['applicant'] = $this->registration->getApplicantInfo($id);
+            $data['applicant'] = $this->applicant->getApplicantInfo($id);
             $this->core_layout->addJs("js/crs/new_hire.js", true, $data);
             $this->load->view('core/templates/header');
-            $this->load->view('crs/nwe_hire');
+            $this->load->view('crs/new_online_hire');
             $this->load->view('core/templates/footer');
         }
 

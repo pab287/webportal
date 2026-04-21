@@ -458,7 +458,7 @@ function hireApplication(id) {
         confirmButtonText: 'Yes, hire applicant'
     }).then((result) => {
         if (result.isConfirmed) {
-            window.location.href = baseUrl("crs/online_application/hire/" + id);
+            window.location.href = baseUrl("crs/online_registration/hire/" + id);
         }
     });
 }
