@@ -591,11 +591,10 @@ $.validate({
             data: formData,
             success: function(json){
                 if(json.response){
-                    rebuildLateAbsenteeTable(vmLateAbsenteeReport.report_type, json.data);
-
                     totalEntries = dtTableLateAbsenteeReport.rows().count();
                     filterOptionsLateAbsentee = { ...json.filters };
                     globalLoaReference ={ ...json.loa_reference };
+                    rebuildLateAbsenteeTable(vmLateAbsenteeReport.report_type, json.data);
 
                     setTimeout(function () {
                         const rowCount = dtTableLateAbsenteeReport.rows().count();
@@ -674,6 +673,25 @@ function late_absentee_column_report(type) {
 
     if (type === "absentee") {
         cols.push({
+            title: "W-LOA",
+            data: null,
+            width: "8%",
+            className: "text-right",
+            render: function (data, type, row) {
+                const emp_id = row.emp_id;
+                const total_absent_w_loa = Object.keys(globalLoaReference[emp_id]).length;
+                console.log(total_absent_w_loa);
+            }
+        });
+
+        cols.push({
+            title: "WO-LOA",
+            data: null,
+            width: "8%",
+            className: "text-right"
+        });
+
+        cols.push({
             title: "Total Absent",
             data: "reports_total",
             width: "8%",
@@ -726,6 +744,7 @@ function late_absentee_column_report(type) {
 
                 objResponse = encodeURIComponent(JSON.stringify(row));
             } else {
+                // console.log(row);
                 for (let key in row) {
                     cleanedRow[key] = String(row[key]).replace(/[^\p{L}0-9 .,~\-_:\/]/gu, '');
                 }
