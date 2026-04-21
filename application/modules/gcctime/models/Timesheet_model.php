@@ -37,6 +37,8 @@ class Timesheet_model extends CI_Model{
     protected $tbl_ps_employee_regular_ndiff = "payroll.employee_regular_ndiff";
     protected $tbl_auto_overtime = 'payroll.employee_auto_overtime';
 
+    protected $tbl_devices = 'gcctimeutility.devices';
+
     private $db_debug;
     private $logged_in_user;
     private $today;
@@ -6766,6 +6768,7 @@ class Timesheet_model extends CI_Model{
         $this->db->where("ts.id", $timesheet_id);
         $timesheetRow = $this->db->get();
         $resultSet["timesheet"] = $timesheetRow->row();
+        $resultSet["devices"] = $this->get_ts_devices($employee_id, $date);
         $resultSet["employee"] = $this->db->select("CONCAT(emp.lastname,
             CASE WHEN emp.suffix != 'N/A' AND emp.suffix != 'NONE' AND emp.suffix != ''
             AND emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE '' END, ', ',
@@ -10461,5 +10464,38 @@ class Timesheet_model extends CI_Model{
             END)) as employee_name");
         $qTemp = $this->db->get_where($this->tbl_employees, array('id' => $id));
         return $qTemp->num_rows() === 1 ? $qTemp->row()->employee_name : $id;
+    }
+    
+    public function get_ts_devices($emp_id, $date) {
+        $logs = $this->db->select('attend.device_id, dev.device_name, attend.datetime')
+            ->from($this->tbl_employees . ' emp')
+            ->join($this->tbl_attendance . ' attend', 'attend.biometric_id = emp.biometricno', 'left')
+            ->join($this->tbl_devices . ' dev', 'dev.id = attend.device_id', 'left')
+            ->where('emp.id', $emp_id)
+            ->where('DATE(attend.datetime)', $date)
+            ->order_by('attend.datetime', 'ASC')
+            ->get()
+            ->result();
+
+        // Group by device_name
+        $grouped = [];
+
+        foreach($logs as $type => $entry) {
+            if (!$entry) continue;
+
+            $deviceName = $entry->device_name;
+
+            if (!isset($grouped[$deviceName])) {
+                $grouped[$deviceName] = [];
+            }
+
+            $grouped[$deviceName][] = [
+                'device_id' => $entry->device_id,
+                'datetime' => $entry->datetime,
+                'type' => $type
+            ];
+        }
+
+        return $grouped;
     }
 }
