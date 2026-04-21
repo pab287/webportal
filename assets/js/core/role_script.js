@@ -691,7 +691,7 @@ $(".clonableUserRole", _modalUserRoleEdit).on("click", function(){
                 _dtUserRole.ajax.reload(null, false);
                 $(_modalUserRoleEdit).modal("hide");
               }else{
-                toastr.success(json.toastr_msg, "Error - Clone User Role", 5000);
+                toastr.error(json.toastr_msg, "Error - Clone User Role", 5000);
               }
             }
           });
