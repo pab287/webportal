@@ -1,3 +1,14 @@
+<style>
+    @media print {
+        #print-counter {
+            display: block !important;
+        }
+    }
+    #print-counter {
+        display: none;
+    }
+</style>
+
 <div class="m-portlet">
     <div class="m-portlet__body">
         <div id="printArea" class="printable-content contribution_deduction-content">
@@ -14,37 +25,63 @@
                 </div>
             </div>
             <div id="font-size-header--column" class="row mb-4" v-if="count > 0">
-                <div class="col-12 col-md-12 col-sm-12 printable-width-12">
+                <div class="col-7 col-md-7 col-sm-12 printable-width-8">
                     <div class="row">
-                        <div class="col-2 col-md-2 col-lg-2 col-sm-12 printable-width-2">
+                        <div class="col-3 col-md-3 col-lg-3 col-sm-12 printable-width-2">
                             <p class="mb-0 m--font-bolder">PAY PERIOD:</p>
                         </div>
-                        <div class="col-2 col-md-2 col-lg-2 col-sm-12 printable-width-2">
+                        <div class="col-8 col-md-8 col-lg-8 col-sm-12 printable-width-2">
                             <p class="mb-0 m--font-bolder"><span>{{filter.pay_sequence}}</span></p>
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-2 col-md-2 col-lg-2 col-sm-12 printable-width-2">
+                        <div class="col-3 col-md-3 col-lg-3 col-sm-12 printable-width-2">
                             <p class="mb-0 m--font-bolder">PAY DATE:</p>
                         </div>
-                        <div class="col-2 col-md-2 col-lg-2 col-sm-12 printable-width-2">
+                        <div class="col-8 col-md-8 col-lg-8 col-sm-12 printable-width-2">
                             <p class="mb-0 m--font-bolder"><span>{{filter.pay_date}}</span></p>
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-2 col-md-2 col-lg-2 col-sm-12 printable-width-2">
+                        <div class="col-3 col-md-3 col-lg-3 col-sm-12 printable-width-2">
                             <p class="mb-0 m--font-bolder">PAY COVERAGE:</p>
                         </div>
-                        <div class="col-4 col-md-4 col-lg-4 col-sm-12 printable-width-4">
+                        <div class="col-8 col-md-8 col-lg-8 col-sm-12 printable-width-4">
                             <p class="mb-0 m--font-bolder"><span>{{filter.pay_coverage}}</span></p>
                         </div>
                     </div>
                     <div class="row" v-if="filter.payroll_group">
-                        <div class="col-2 col-md-2 col-lg-2 col-sm-12 printable-width-2">
+                        <div class="col-3 col-md-3 col-lg-3 col-sm-12 printable-width-2">
                             <p class="mb-0 m--font-bolder">PAYROLL GROUP:</p>
                         </div>
-                        <div class="col-10 col-md-10 col-lg-10 col-sm-12 printable-width-10">
+                        <div class="col-8 col-md-8 col-lg-8 col-sm-12 printable-width-10">
                             <p class="mb-0 m--font-bolder"><span>{{filter.payroll_group}}</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div id="print-counter" class="col-12 col-md-5 col-sm-5 printable-width-3">
+                    <div class="row">
+                        <div class="col-5 col-md-5 col-lg-5 col-sm-12">
+                            <p class="mb-0 m--font-bolder">PRINT #: </p>
+                        </div>
+                        <div class="col-7 col-md-7 col-lg-7 col-sm-12">
+                            <p class="mb-0 m--font-bolder"><span>{{ print_counter.count }}</span></p>
+                        </div>
+                    </div>
+                    <div class="row" v-if="print_counter.last_printed">
+                        <div class="col-5 col-md-5 col-lg-5 col-sm-12">
+                            <p class="mb-0 m--font-bolder">LAST PRINTED BY: </p>
+                        </div>
+                        <div class="col-7 col-md-7 col-lg-7 col-sm-12">
+                            <p class="mb-0 m--font-bolder"><span>{{ print_counter.last_printed }}</span></p>
+                        </div>
+                    </div>
+                    <div class="row" v-if="print_counter.last_printed_at">
+                        <div class="col-5 col-md-5 col-lg-5 col-sm-12">
+                            <p class="mb-0 m--font-bolder">LAST PRINTED AT: </p>
+                        </div>
+                        <div class="col-7 col-md-7 col-lg-7 col-sm-12">
+                            <p class="mb-0 m--font-bolder"><span>{{ print_counter.last_printed_at }}</span></p>
                         </div>
                     </div>
                 </div>

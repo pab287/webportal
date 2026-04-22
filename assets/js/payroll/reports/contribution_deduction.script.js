@@ -2,6 +2,8 @@ let globalPrintableSignatory = [];
 const psSignatoryModal = $("#modal-ps--signatory");
 const psResetSignatoryModal = $("#modal-ps--reset-signatory");
 const _tblPortletPS = $("#m_portlet_tools-contribution_deduction").mPortlet();
+let total_amount = 0;
+let _filter = [];
 
 let _tempIds = [];
 let _years = [];
@@ -299,7 +301,7 @@ var resetFilter = function (event) {
 
 var vmPrintArea = new Vue({
     el: "#printArea, #printArea_monthly",
-    data: { rows: {}, count: 0, filter: {}, signatures: {}, signature_count: 0, row_columns: [], column_count: 0, grand_total_footer: {}, grand_total: {} },
+    data: { rows: {}, count: 0, filter: {}, signatures: {}, signature_count: 0, row_columns: [], column_count: 0, grand_total_footer: {}, grand_total: {}, print_counter: { count: 0, last_printed: null, last_printed_at: null } },
     methods: {
         rowFormatNumber: function (number) {
             return numberFormat(number);
@@ -327,7 +329,7 @@ var vmPrintArea = new Vue({
 
 var vmPrintAreaMonthly = new Vue({
     el: "#printArea_monthly",
-    data: { count: 0, filter: {}, signatures: {}, signature_count: 0 },
+    data: { count: 0, filter: {}, signatures: {}, signature_count: 0, print_counter: { count: 0, last_printed: null, last_printed_at: null } },
     methods: {
         rowFormatNumber: function (number) {
             return numberFormat(number);
@@ -342,52 +344,179 @@ var vmPrintAreaMonthly = new Vue({
 });
 
 function printdiv(printdivname) {
-    var newstr = document.getElementById(printdivname).innerHTML;
-    var printWindow = window.open(siteUrl('payroll/reports/printable_form'), '_blank');
-    printWindow.focus();
-    printWindow.onload = function(){
-        setTimeout(function(){
-            const appendContainer = printWindow.document.getElementById('append_printable-container');
-            if (typeof appendContainer !== "undefined" && appendContainer !== null) {
-                appendContainer.innerHTML = newstr;
-                printWindow.document.getElementById('footer-signature').classList.remove('m--hide');
-                printWindow.document.getElementById('header--company_title--center').classList.remove('m--hide');
-                printWindow.document.getElementById('printAction').classList.add('m--hide');
-                setTimeout(function () {
-                    printWindow.print();
-                    printWindow.close();
-                }, 200);
+    const parseSerializedFilter = function (serialized) {
+        const parsed = {};
+        if (!serialized) { return parsed; }
+
+        $.each(serialized.split("&"), function (_i, pair) {
+            if (!pair) { return; }
+
+            const parts = pair.split("=");
+            const rawKey = decodeURIComponent((parts.shift() || "").replace(/\+/g, " "));
+            const rawValue = decodeURIComponent((parts.join("=") || "").replace(/\+/g, " "));
+            if (!rawKey) { return; }
+
+            if (rawKey.slice(-2) === "[]") {
+                const arrayKey = rawKey.slice(0, -2);
+                if (!Array.isArray(parsed[arrayKey])) { parsed[arrayKey] = []; }
+                parsed[arrayKey].push(rawValue);
             } else {
-                toastr.info("Print detail(s) is still in progress!", "Contribution / Deduction");
-                printWindow.close();
+                parsed[rawKey] = rawValue;
             }
-        }, 200);
-    }
+        });
+
+        return parsed;
+    };
+
+    const payload = parseSerializedFilter(_filter);
+    delete payload.csrf_token;
+
+    payload[_csrf_token] = _csrf_hash;
+    payload.amount = total_amount;
+    payload.module = "contribution_report";
+
+    $.ajax({
+        url: baseUrl('payroll/reports/count_print'),
+        data: payload,
+        dataType: "json",
+        type: 'post',
+        success: function (response) {
+            const data = response.data;
+            const isDisplayValue = function (value) {
+                if (value === null || typeof value === "undefined") { return false; }
+                const tempVal = String(value).trim();
+                if (!tempVal) { return false; }
+                if (tempVal.toLowerCase() === "null") { return false; }
+                if (tempVal.toLowerCase() === "no assigned name") { return false; }
+                return true;
+            };
+
+            vmPrintAreaMonthly.print_counter.count = (data && typeof data.count !== "undefined") ? data.count : 0;
+            vmPrintArea.print_counter.last_printed = (data && isDisplayValue(data.last_printed_by)) ? data.last_printed_by : null;
+            vmPrintArea.print_counter.last_printed_at = (data && isDisplayValue(data.last_printed_at)) ? moment(data.last_printed_at).format('lll').toUpperCase() : null;
+
+            Vue.nextTick(function () {
+                window.requestAnimationFrame(function () {
+                    window.requestAnimationFrame(function () {
+                        var newstr = document.getElementById(printdivname).innerHTML;
+                        var printWindow = window.open(siteUrl('payroll/reports/printable_form'), '_blank');
+                        printWindow.focus();
+                        printWindow.onload = function(){
+                            const appendContainer = printWindow.document.getElementById('append_printable-container');
+                            if (typeof appendContainer !== "undefined" && appendContainer !== null) {
+                                appendContainer.innerHTML = newstr;
+                                const footerSignature = printWindow.document.getElementById('footer-signature');
+                                const headerCompanyTitle = printWindow.document.getElementById('header--company_title--center');
+                                const printAction = printWindow.document.getElementById('printAction');
+            
+                                if (footerSignature) { footerSignature.classList.remove('m--hide'); }
+                                if (headerCompanyTitle) { headerCompanyTitle.classList.remove('m--hide'); }
+                                if (printAction) { printAction.classList.add('m--hide'); }
+                                setTimeout(function () {
+                                    printWindow.print();
+                                    printWindow.close();
+                                }, 200);
+                            } else {
+                                toastr.info("Print detail(s) is still in progress!", "Contribution / Deduction");
+                                printWindow.close();
+                            }
+                        }
+                    });
+                });
+            });
+        }
+    });
+
+    
     return false;
 }
 
 function printDivMonthly(printdivname) {
-    var newstr = document.getElementById(printdivname).innerHTML;
-    var printWindow = window.open(siteUrl('payroll/reports/printable_form'), '_blank');
-    printWindow.focus();
-    printWindow.onload = function(){
-        setTimeout(function(){
-            const appendContainer = printWindow.document.getElementById('append_printable-container');
-            if (typeof appendContainer !== "undefined" && appendContainer !== null) {
-                appendContainer.innerHTML = newstr;
-                printWindow.document.getElementById('footer-signature').classList.remove('m--hide');
-                printWindow.document.getElementById('header--company_title--center').classList.remove('m--hide');
-                printWindow.document.getElementById('printAction').classList.add('m--hide');
-                setTimeout(function () {
-                    printWindow.print();
-                    printWindow.close();
-                }, 200);
+    const parseSerializedFilter = function (serialized) {
+        const parsed = {};
+        if (!serialized) { return parsed; }
+
+        $.each(serialized.split("&"), function (_i, pair) {
+            if (!pair) { return; }
+
+            const parts = pair.split("=");
+            const rawKey = decodeURIComponent((parts.shift() || "").replace(/\+/g, " "));
+            const rawValue = decodeURIComponent((parts.join("=") || "").replace(/\+/g, " "));
+            if (!rawKey) { return; }
+
+            if (rawKey.slice(-2) === "[]") {
+                const arrayKey = rawKey.slice(0, -2);
+                if (!Array.isArray(parsed[arrayKey])) { parsed[arrayKey] = []; }
+                parsed[arrayKey].push(rawValue);
             } else {
-                toastr.info("Print detail(s) is still in progress!", "Contribution / Deduction");
-                printWindow.close();
+                parsed[rawKey] = rawValue;
             }
-        }, 200);
-    }
+        });
+
+        return parsed;
+    };
+
+    const payload = parseSerializedFilter(_filter);
+    delete payload.csrf_token;
+
+    payload[_csrf_token] = _csrf_hash;
+    payload.amount = total_amount;
+    payload.module = "contribution_report";
+
+    $.ajax({
+        url: baseUrl('payroll/reports/count_print'),
+        data: payload,
+        dataType: "json",
+        type: 'post',
+        success: function (response) {
+            const data = response.data;
+            const isDisplayValue = function (value) {
+                if (value === null || typeof value === "undefined") { return false; }
+                const tempVal = String(value).trim();
+                if (!tempVal) { return false; }
+                if (tempVal.toLowerCase() === "null") { return false; }
+                if (tempVal.toLowerCase() === "no assigned name") { return false; }
+                return true;
+            };
+
+            vmPrintAreaMonthly.print_counter.count = (data && typeof data.count !== "undefined") ? data.count : 0;
+            vmPrintAreaMonthly.print_counter.last_printed = (data && isDisplayValue(data.last_printed_by)) ? data.last_printed_by : null;
+            vmPrintAreaMonthly.print_counter.last_printed_at = (data && isDisplayValue(data.last_printed_at)) ? moment(data.last_printed_at).format('lll').toUpperCase() : null;
+
+            Vue.nextTick(function () {
+                window.requestAnimationFrame(function () {
+                    window.requestAnimationFrame(function () {
+                        var newstr = document.getElementById(printdivname).innerHTML;
+                        var printWindow = window.open(siteUrl('payroll/reports/printable_form'), '_blank');
+                        printWindow.focus();
+                        printWindow.onload = function(){
+                            setTimeout(function(){
+                                const appendContainer = printWindow.document.getElementById('append_printable-container');
+                                if (typeof appendContainer !== "undefined" && appendContainer !== null) {
+                                    appendContainer.innerHTML = newstr;
+                                    const footerSignature = printWindow.document.getElementById('footer-signature');
+                                    const headerCompanyTitle = printWindow.document.getElementById('header--company_title--center');
+                                    const printAction = printWindow.document.getElementById('printAction');
+
+                                    if (footerSignature) { footerSignature.classList.remove('m--hide'); }
+                                    if (headerCompanyTitle) { headerCompanyTitle.classList.remove('m--hide'); }
+                                    if (printAction) { printAction.classList.add('m--hide'); }
+                                    setTimeout(function () {
+                                        printWindow.print();
+                                        printWindow.close();
+                                    }, 200);
+                                } else {
+                                    toastr.info("Print detail(s) is still in progress!", "Contribution / Deduction");
+                                    printWindow.close();
+                                }
+                            }, 200);
+                        }
+                    });
+                });
+            });
+        }
+    });
+
     return false;
 }
 
@@ -624,6 +753,9 @@ $.validate({
         var formMethod = currentForm.method;
         var formUrl = currentForm.action;
         var formData = $(currentForm).serialize();
+
+        _filter = formData;
+
         var emptyEmployeeList = $(currentForm).find("#employees").serialize() ? true : false;
         if (emptyEmployeeList == false && $(currentForm).find("#employees").val().length > 0) {
             formData += '&serialized_employees=' + $(currentForm).find("#employees").val().toString();

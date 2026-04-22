@@ -153,9 +153,11 @@ class Reports extends MY_Controller {
         $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
         $tempData["company"] = $this->payroll->select2CompanyData();
 
+        $version = filemtime(FCPATH.'assets/js/payroll/reports/overtime.script.js');
+
         $this->core_layout->addJs("js/buttons.print.min.js", true);
         $this->core_layout->addJs("global/js/jquery.table2excel.min.js", true);
-        $this->core_layout->addJs("js/payroll/reports/overtime.script.js", true, $tempData);
+        $this->core_layout->addJs("js/payroll/reports/overtime.script.js", true, $tempData, "?v={$version}");
 
         $this->load->view("core/templates/header");
         $this->load->view("payroll/reports/overtime_summary");
@@ -1069,7 +1071,9 @@ class Reports extends MY_Controller {
         $this->core_layout->setPageTitle("Payroll - Night Differential Summary Report");
         $this->core_layout->setPrivilegeName("payroll_nightdiff_summary");
         $this->core_layout->addJs("js/buttons.print.min.js", true);
-        $this->core_layout->addJs("js/payroll/reports/nightdiff_summary.js", true, $tempData);
+
+        $version = filemtime(FCPATH.'assets/js/payroll/reports/nightdiff_summary.js');
+        $this->core_layout->addJs("js/payroll/reports/nightdiff_summary.js", true, $tempData, "?v={$version}");
 
         $this->load->view("core/templates/header");
         $this->load->view("payroll/reports/nightdiff_summary");
@@ -1107,5 +1111,12 @@ class Reports extends MY_Controller {
             $this->output
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
+    }
+
+    function count_print(){
+        $data = $this->reports->print_count();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
     }
 }

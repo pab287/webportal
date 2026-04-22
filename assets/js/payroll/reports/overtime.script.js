@@ -2,6 +2,8 @@ let globalPrintableSignatory = [];
 const psSignatoryModal = $("#modal-ps--signatory");
 const psResetSignatoryModal = $("#modal-ps--reset-signatory");
 const modalGenerateReport = $("#generate-report-modal");
+let total_amount = 0;
+let _filter = [];
 
 let _years = [];
 let _companies = [];
@@ -195,7 +197,7 @@ const vmGeneratejournal = new Vue({
 
 const vmReportHeaders = new Vue({
     el: "#report-header",
-    data: { show_header: false, filters: {} }
+    data: { show_header: false, filters: {}, print_counter: { count: 0, last_printed: null, last_printed_at: null } }
 });
 
 const vmActionSignatories = new Vue({
@@ -532,8 +534,6 @@ $(document).ready(function(){
             let nDiffTotalAmount = api.column(nDiffTotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
             let otAllowanceAmount = api.column(otAllowanceIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
             let totalAmount = api.column(grandTotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
-            
-            console.log(otAllowanceAmount);
 
             const grandTotalAmount = parseFloat(totalAmount) + parseFloat(totalAdjustmentAmount);
             const footerLabelTotal = $(api.column(5).footer());
@@ -547,6 +547,8 @@ $(document).ready(function(){
             $(api.column(otAllowanceIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(otAllowanceAmount) + "</span>");
             $(api.column(adjustmentIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAdjustmentAmount) + "</span>");
             $(api.column(grandTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(grandTotalAmount) + "</span>");
+
+            total_amount = grandTotalAmount;
         }
     });
 
@@ -626,6 +628,8 @@ $(document).ready(function(){
                         }
                     });
                 }
+
+                _filter = formData;
             }
         });
     }
@@ -835,4 +839,67 @@ const initSelect2Employee = function (tempModal, portlet) {
             });
         }
     }
+}
+
+function printSummary() {
+    const parseSerializedFilter = function (serialized) {
+        const parsed = {};
+        if (!serialized) { return parsed; }
+
+        $.each(serialized.split("&"), function (_i, pair) {
+            if (!pair) { return; }
+
+            const parts = pair.split("=");
+            const rawKey = decodeURIComponent((parts.shift() || "").replace(/\+/g, " "));
+            const rawValue = decodeURIComponent((parts.join("=") || "").replace(/\+/g, " "));
+            if (!rawKey) { return; }
+
+            if (rawKey.slice(-2) === "[]") {
+                const arrayKey = rawKey.slice(0, -2);
+                if (!Array.isArray(parsed[arrayKey])) { parsed[arrayKey] = []; }
+                parsed[arrayKey].push(rawValue);
+            } else {
+                parsed[rawKey] = rawValue;
+            }
+        });
+
+        return parsed;
+    };
+
+    const payload = parseSerializedFilter(_filter);
+    delete payload.csrf_token;
+
+    payload[_csrf_token] = _csrf_hash;
+    payload.amount = total_amount;
+    payload.module = "overtime_summary";
+
+    $.ajax({
+        url: baseUrl('payroll/reports/count_print'),
+        data: payload,
+        dataType: "json",
+        type: 'post',
+        success: function (response) {
+            const data = response.data;
+            const isDisplayValue = function (value) {
+                if (value === null || typeof value === "undefined") { return false; }
+                const tempVal = String(value).trim();
+                if (!tempVal) { return false; }
+                if (tempVal.toLowerCase() === "null") { return false; }
+                if (tempVal.toLowerCase() === "no assigned name") { return false; }
+                return true;
+            };
+
+            vmReportHeaders.print_counter.count = (data && typeof data.count !== "undefined") ? data.count : 0;
+            vmReportHeaders.print_counter.last_printed = (data && isDisplayValue(data.last_printed_by)) ? data.last_printed_by : null;
+            vmReportHeaders.print_counter.last_printed_at = (data && isDisplayValue(data.last_printed_at)) ? moment(data.last_printed_at).format('lll').toUpperCase() : null;
+
+            Vue.nextTick(function () {
+                window.requestAnimationFrame(function () {
+                    window.requestAnimationFrame(function () {
+                        window.print();
+                    });
+                });
+            });
+        }
+    });
 }
