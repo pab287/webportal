@@ -1009,125 +1009,181 @@
         }
 
         public function hireCandidate(){
-            $resultset = array();
             $post = $this->input->post();
-            $data = array(
-                'employee_status' => 'Active',
-                'add_date' => date('Y-m-d H:i:s'),
-                'add_by' => $this->user_data['emp_id'],
-                'is_incomplete' => 1,
-                'company_id' => $post['company_id'] ?? null,
-                'department_id' => $post['department_id'] ?? null,
-                'position' => $post['position_id'] ?? null,
-                'level' => $post['level'] ?? null,
-                'firstname' => $post['applicant_data']['firstname'] ?? '',
-                'middlename' => $post['applicant_data']['middlename'] ?? '',
-                'lastname' => $post['applicant_data']['lastname'] ?? '',
-                'suffix' => $post['applicant_data']['suffix'] ?? '',
-                'gender' => $post['applicant_data']['gender'] ?? '',
-                'civil_stat' => $post['applicant_data']['civil_status'] ?? '',
-                'religion' => $post['applicant_data']['religion'] ?? '',
-                'height' => $post['applicant_data']['height'] ?? '',
-                'weight' => $post['applicant_data']['weight'] ?? '',
-                'bday' => !empty($post['applicant_data']['birthdate'])
-                    ? date('Y-m-d', strtotime($post['applicant_data']['birthdate']))
-                    : null,
-                'citizenship' => $post['applicant_data']['citizenship'] ?? '',
-                'mobile_no' => $post['applicant_data']['contact_no'] ?? '',
-                'email' => $post['applicant_data']['email'] ?? '',
-                'tel_no' => $post['applicant_data']['tel_no'] ?? '',
-                'curr_addr' => $post['applicant_data']['address'] ?? '',
-                'prov_addr' => $post['applicant_data']['permanent_address'] ?? '',
-            );
-
-            $this->db->trans_begin();
-            $save = $this->db->insert('gccmaster.tblemployees', $data);
-            if ($save) {
-                $employee_id = $this->db->insert_id();
-                $references = $post['applicant_data']['references'] ?? array();
-                $work_experiences = $post['applicant_data']['workExperiences'] ?? array();
-                $educational_background = $post['applicant_data']['educInfo'] ?? array();
-                // $resume = $post['applicant_data']['uploadedFile'] ?? '';
-                if (!empty($references)) {
-                    $reference_data = array();
-                    foreach ($references as $ref) {
-                        $reference_data[] = array(
-                            'emp_id' => $employee_id,
-                            'ref_name' => $ref['ref_name'] ?? '',
-                            'ref_contact_no' => $ref['ref_contact_no'] ?? '',
-                            'ref_address' => $ref['ref_address'] ?? '',
-                            'ref_company' => $ref['ref_company'] ?? '',
-                            'ref_position' => $ref['ref_position'] ?? '',
-                            'ref_relationship' => $ref['ref_relationship'] ?? '',
-                            'add_date' => date('Y-m-d H:i:s'),
-                            'add_by' => $this->user_data['emp_id'],
-                        );
-                    }
-
-                    if (!empty($reference_data)) {
-                        $this->db->insert_batch('gcchris.tblreferences', $reference_data);
-                    }
-                }
-
-                if(!empty($work_experiences)) {
-                    $workExpData = array();
-                    foreach ($work_experiences as $work) {
-                        $workExpData[] = array(
-                            'emp_id' => $employee_id,
-                            'work_company' => $work['work_company'] ?? '',
-                            'work_position' => $work['work_position'] ?? '',
-                            'work_from' => $work['work_from'] ?? '',
-                            'work_to' => $work['work_to'] ?? '',
-                            'work_status' => $work['work_status'] ?? '',
-                            'work_reason' => $work['work_reason'] ?? '',
-                            'add_date' => date('Y-m-d H:i:s'),
-                            'add_by' => $this->user_data['emp_id'],
-                        );
-                    }
-                    if (!empty($workExpData)) {
-                        $this->db->insert_batch('gcchris.tblworkxps', $workExpData);
-                    }
-                }
-
-                if(!empty($educational_background)) {
-                    $educData = array();
-                    foreach ($educational_background as $educ) {
-                        $educData[] = array(
-                            'emp_id' => $employee_id,
-                            'educ_level_type' => $educ['educ_level_type'] ?? '',
-                            'educ_school' => $educ['educ_school'] ?? '',
-                            'educ_degree' => $educ['educ_degree'] ?? '',
-                            // 'educ_units' => $educ['educ_units'] ?? '',
-                            'educ_honors' => $educ['educ_honors'] ?? '',
-                            'educ_from' => $educ['educ_from'] ?? '',
-                            'educ_to' => $educ['educ_to'] ?? '',
-                            'add_date' => date('Y-m-d H:i:s'),
-                            'add_by' => $this->user_data['emp_id'],
-                        );
-                    }
-                    if (!empty($educData)) {
-                        $this->db->insert_batch('gcchris.tbleducations', $educData);
-                    }
-                }
-            }
-
-            if ($this->db->trans_status() === FALSE) {
-                $this->db->trans_rollback();
-                $resultset = array(
+            $applicant = $post['applicant_data'] ?? [];
+            $candidateId = $applicant['id'] ?? null;
+            if (empty($candidateId)) {
+                return [
                     'success' => false,
-                    'toastr_msg' => 'Failed to hire candidate. Transaction error.'
-                );
-            } else {
-                $this->db->trans_commit();
-                $resultset = array(
-                    'success' => true,
-                    'employee_id' => $employee_id,
-                    'toastr_msg' => 'Candidate hired successfully.'
-                );
+                    'toastr_msg' => 'Invalid candidate data.'
+                ];
             }
 
-            return $resultset;
+            $candidate = $this->db->where('id', $candidateId)->get($this->candidatesTable)->row_array();
+            if (!$candidate) {
+                return [
+                    'success' => false,
+                    'toastr_msg' => 'Candidate not found.'
+                ];
+            }
+
+            if (!empty($candidate['emp_id']) || ($candidate['status'] ?? '') === 'hired') {
+                return [
+                    'success' => false,
+                    'toastr_msg' => 'Candidate has already been hired.'
+                ];
+            }
+
+            $employeeData = [
+                'employee_status' => 'Active',
+                'add_date'        => date('Y-m-d H:i:s'),
+                'add_by'          => $this->user_data['emp_id'],
+                'is_incomplete'   => 1,
+                'company_id'      => $post['company_id'] ?? null,
+                'department_id'   => $post['department_id'] ?? null,
+                'position'        => $post['position_id'] ?? null,
+                'level'           => $post['level'] ?? null,
+                'firstname'       => trim($applicant['firstname'] ?? ''),
+                'middlename'      => trim($applicant['middlename'] ?? ''),
+                'lastname'        => trim($applicant['lastname'] ?? ''),
+                'suffix'          => trim($applicant['suffix'] ?? ''),
+                'gender'          => $applicant['gender'] ?? '',
+                'civil_stat'      => $applicant['civil_status'] ?? '',
+                'religion'        => $applicant['religion'] ?? '',
+                'height'          => $applicant['height'] ?? '',
+                'weight'          => $applicant['weight'] ?? '',
+                'bday'            => !empty($applicant['birthdate']) && strtotime($applicant['birthdate'])
+                    ? date('Y-m-d', strtotime($applicant['birthdate']))
+                    : null,
+                'citizenship'     => $applicant['citizenship'] ?? '',
+                'mobile_no'       => $applicant['contact_no'] ?? '',
+                'email'           => trim($applicant['email'] ?? ''),
+                'tel_no'          => $applicant['tel_no'] ?? '',
+                'curr_addr'       => $applicant['address'] ?? '',
+                'prov_addr'       => $applicant['permanent_address'] ?? '',
+            ];
+
+            $references = $applicant['references'] ?? [];
+            $workExperiences = $applicant['workExperiences'] ?? [];
+            $educationalBackground = $applicant['educInfo'] ?? [];
+            $employeeId = null;
+            $this->db->trans_begin();
+            try {
+                $saveEmployee = $this->db->insert('gccmaster.tblemployees', $employeeData);
+                if (!$saveEmployee) {
+                    throw new Exception('Failed to save employee record.');
+                }
+
+                $employeeId = $this->db->insert_id();
+                if (empty($employeeId)) {
+                    throw new Exception('Failed to retrieve employee ID.');
+                }
+
+                if (!empty($references) && is_array($references)) {
+                    $referenceData = [];
+
+                    foreach ($references as $ref) {
+                        $referenceData[] = [
+                            'emp_id'            => $employeeId,
+                            'ref_name'          => trim($ref['ref_name'] ?? ''),
+                            'ref_contact_no'    => trim($ref['ref_contact_no'] ?? ''),
+                            'ref_address'       => trim($ref['ref_address'] ?? ''),
+                            'ref_company'       => trim($ref['ref_company'] ?? ''),
+                            'ref_position'      => trim($ref['ref_position'] ?? ''),
+                            'ref_relationship'  => trim($ref['ref_relationship'] ?? ''),
+                            'add_date'          => date('Y-m-d H:i:s'),
+                            'add_by'            => $this->user_data['emp_id'],
+                        ];
+                    }
+
+                    if (!empty($referenceData)) {
+                        $savedReferences = $this->db->insert_batch('gcchris.tblreferences', $referenceData);
+                        if ($savedReferences === false) {
+                            throw new Exception('Failed to save references.');
+                        }
+                    }
+                }
+
+                if (!empty($workExperiences) && is_array($workExperiences)) {
+                    $workExpData = [];
+
+                    foreach ($workExperiences as $work) {
+                        $workExpData[] = [
+                            'emp_id'         => $employeeId,
+                            'work_company'   => trim($work['work_company'] ?? ''),
+                            'work_position'  => trim($work['work_position'] ?? ''),
+                            'work_from'      => $work['work_from'] ?? '',
+                            'work_to'        => $work['work_to'] ?? '',
+                            'work_status'    => $work['work_status'] ?? '',
+                            'work_reason'    => trim($work['work_reason'] ?? ''),
+                            'add_date'       => date('Y-m-d H:i:s'),
+                            'add_by'         => $this->user_data['emp_id'],
+                        ];
+                    }
+
+                    if (!empty($workExpData)) {
+                        $savedWorkExp = $this->db->insert_batch('gcchris.tblworkxps', $workExpData);
+                        if ($savedWorkExp === false) {
+                            throw new Exception('Failed to save work experiences.');
+                        }
+                    }
+                }
+
+                if (!empty($educationalBackground) && is_array($educationalBackground)) {
+                    $educData = [];
+
+                    foreach ($educationalBackground as $educ) {
+                        $educData[] = [
+                            'emp_id'           => $employeeId,
+                            'educ_level_type'  => $educ['educ_level_type'] ?? '',
+                            'educ_school'      => trim($educ['educ_school'] ?? ''),
+                            'educ_degree'      => trim($educ['educ_degree'] ?? ''),
+                            'educ_honors'      => trim($educ['educ_honors'] ?? ''),
+                            'educ_from'        => $educ['educ_from'] ?? '',
+                            'educ_to'          => $educ['educ_to'] ?? '',
+                            'add_date'         => date('Y-m-d H:i:s'),
+                            'add_by'           => $this->user_data['emp_id'],
+                        ];
+                    }
+
+                    if (!empty($educData)) {
+                        $savedEducation = $this->db->insert_batch('gcchris.tbleducations', $educData);
+                        if ($savedEducation === false) {
+                            throw new Exception('Failed to save educational background.');
+                        }
+                    }
+                }
+
+                $this->db->where('id', $candidateId);
+                $updatedCandidate = $this->db->update($this->candidatesTable, [
+                    'emp_id'    => $employeeId,
+                    'status'    => 'hired',
+                    'hired_dt'  => date('Y-m-d H:i:s'),
+                    'hired_by'  => $this->user_data['emp_id'],
+                ]);
+
+                if (!$updatedCandidate || $this->db->affected_rows() < 1) {
+                    throw new Exception('Failed to update candidate status.');
+                }
+
+                if ($this->db->trans_status() === false) {
+                    throw new Exception('Transaction failed.');
+                }
+
+                $this->db->trans_commit();
+
+                return [
+                    'success' => true,
+                    'employee_id' => $employeeId,
+                    'toastr_msg' => 'Candidate hired successfully.'
+                ];
+
+            } catch (Exception $e) {
+                $this->db->trans_rollback();
+                return [
+                    'success' => false,
+                    'toastr_msg' => $e->getMessage()
+                ];
+            }
         }
-
-
     }
