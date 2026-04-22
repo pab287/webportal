@@ -1051,6 +1051,9 @@
                             'ref_name'          => $ref['ref_name'] ?? '',
                             'ref_contact_no'    => $ref['ref_contact_no'] ?? '',
                             'ref_address'       => $ref['ref_address'] ?? '',
+                            'ref_company'       => $ref['ref_company'] ?? '',
+                            'ref_position'      => $ref['ref_position'] ?? '',
+                            'ref_relationship'  => $ref['ref_relationship'] ?? '',
                             'add_date'          => date('Y-m-d H:i:s'),
                             'add_by'            => $this->user_data['emp_id'],
                         );
