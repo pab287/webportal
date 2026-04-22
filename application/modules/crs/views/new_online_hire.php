@@ -25,7 +25,7 @@
                     <div class="m-portlet__head-tools">
                         <ul class="m-portlet__nav">
                             <li class="m-portlet__nav-item m-dropdown m-dropdown--inline m-dropdown--arrow m-dropdown--align-right m-dropdown--align-push">
-                                 <button class="nav-link btn btn-info btn-sm btnSave" href="javascript:void(0)" aria-expanded="true" @click="hireToHr()">Hire To HRIS</button>
+                                 <button class="nav-link btn btn-info btn-sm btnSave" href="javascript:void(0)" aria-expanded="true" @click="fillUpModal()">Hire To HRIS</button>
                             </li>
                         </ul>
                     </div>
@@ -582,37 +582,59 @@
             </div>
         </div>
     </div>
-</div>
 
-
-
-<div class="modal fade" id="manpowerRequestModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-xxl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Assign To Manpower Request</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-12">
-                        <table class="table table-striped table-bordered" width="100%" id="table-manpower_request">
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                    <th>Reference No</th>
-                                    <th>MRF INFO</th>
-                                    <th>ACtions</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
+    <div class="modal fade" id="other_info_modal" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">FILL UP REQUIRED INFORMATION</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
                 </div>
+                <form action="javascript:void(0);" id="other_info_form">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="company_id" class="form-control-label required">Company</label> 
+                                    <select id="company_id" name="company_id" autocomplete="off" data-validation="required" class="form-control m-input">
+                                        <option></option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="set_position_id" class="form-control-label required">Position</label> 
+                                    <select id="set_position_id" name="position_id" autocomplete="off" data-validation="required" class="form-control m-input">
+                                        <option></option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="department_id" class="form-control-label required">Department</label> 
+                                    <select id="department_id" name="department_id" autocomplete="off" data-validation="required" class="form-control m-input">
+                                        <option></option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="level_id" class="form-control-label required">Level / Ranking</label> 
+                                    <select id="level_id" name="level" autocomplete="off" data-validation="required" class="form-control m-input">
+                                        <option></option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary btnSave">SAVE</button>
+                        <button type="button" class="btn btn-danfer" data-dismiss="modal">CLOSE</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+
 </div>
+
+
+
+
 

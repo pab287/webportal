@@ -3204,13 +3204,30 @@ class Document_model extends CI_Model{
         return true;
     }
 
-        public function select2PositionData(){
+    public function select2PositionData(){
         $this->db->select('id, name as text');
         $this->db->from('gcchris.tblposition');
         $this->db->where('is_archived', 0);
         $this->db->where('name !=', '');
         $this->db->order_by('name', 'ASC');
         $results = $this->db->get()->result();
+        return $results;
+    }
+
+    public function select2DepartmentData(){
+        $this->db->select("departments.id, UPPER(CONCAT(departments.`code`,' | ', departments.`description`)) `text`, departments.*");
+		$this->db->where('departments.is_archived', 0);
+        $this->db->order_by("`code`", "ASC");
+        $results = $this->db->get("gcchris.tbldepartments departments")->result();
+        return $results;
+    }
+
+    function select2CompanyData(){
+        $this->db->select("companies.id, companies.`code` `text`, companies.*");
+        $this->db->where("is_archived", 0);
+        $this->db->where("exclude", 0);
+        $this->db->order_by("`code`", "ASC");
+        $results = $this->db->get("gcchris.tblcompanies companies")->result();
         return $results;
     }
     

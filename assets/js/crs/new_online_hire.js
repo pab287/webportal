@@ -1,10 +1,5 @@
-let position, schools, courses, candidate_information, employee;
-let manpower_request = null;
-let mrf_table = null;
-let archive = 0;
-let oldAssessment = null;
+let position, candidate_information, employee, department_data, company_data;
 let currentData = null;
-
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.position !== "undefined" && _tempContentData.position.length > 0){ 
         position = _tempContentData.position;
@@ -15,10 +10,24 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     if(typeof _tempContentData.employee !== "undefined" && _tempContentData.employee.length > 0){ 
         employee = _tempContentData.employee;
     }
+    if(typeof _tempContentData.department !== "undefined" && _tempContentData.department.length > 0){ 
+        department_data = _tempContentData.department;
+    }
+    if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){ 
+        company_data = _tempContentData.company;
+    }
 }
 
 let positions = candidate_information.candidate.positions;
 let candidate_id = candidate_information.candidate.id;
+
+const levels = [
+    {id: 'SKILLED RANK AND FILE', text: 'SKILLED RANK AND FILE'},
+    {id: 'RANK AND FILE', text: 'RANK AND FILE'},
+    {id: 'SUPERVISORY', text: 'SUPERVISORY'},
+    {id: 'MANAGERIAL', text: 'MANAGERIAL'},
+    {id: 'EXECUTIVE', text: 'EXECUTIVE'}
+];
 
 const mimeMap = {
     "application/pdf": "pdf",
@@ -192,11 +201,18 @@ let application_vue = new Vue({
         },
     },
     methods: {
-        hireToHr: function() {
+        fillUpModal(){
+            $('#other_info_modal').modal('show');
+        },
+        hireToHr: function(data) {
             const vm = this;
-
+            const formDataObject = data.reduce((acc, item) => {
+                acc[item.name] = item.value;
+                return acc;
+            }, {});
             const payload = {
                 csrf_token: _csrf_hash,
+                ...formDataObject,
                 applicant_data: {
                     ...this.selectedApplication,
                     references: this.references,
@@ -209,7 +225,7 @@ let application_vue = new Vue({
 
             Swal.fire({
                 title: 'HIRE CANDIDATE?',
-                text: 'This applicant will be added to HRIS.',
+                html: `This applicant <strong>${vm.fullName}</strong> will be added to HRIS. Do you want to proceed?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#28a745',
@@ -225,6 +241,10 @@ let application_vue = new Vue({
                         success: function(response) {
                             if (response.success) {
                                 toastr.success(response.toastr_msg, 'Success');
+                                $('#other_info_modal').modal('hide');
+                                setTimeout(function() {
+                                    window.location.href = baseUrl(`hris/masterfile/view_employee_masterfile/${response.employee_id}`);
+                                }, 1000);
                             } else {
                                 toastr.error(response.toastr_msg, 'Error');
                             }
@@ -837,3 +857,40 @@ function applyObjectUpdates(currentData, update) {
     });
     return currentData;
 }
+
+ $.validate({
+    form: '#other_info_form',
+    scrollToTopOnError: false,
+    onSuccess: function () {
+        const formData = $('#other_info_form').serializeArray();
+        application_vue.hireToHr(formData);
+    }
+ });
+
+ $('#set_position_id').select2({
+    placeholder: 'SELECT AN OPTION',
+    dropdownParent: $('#other_info_modal'),
+    width: '100%',
+    data: position,    
+}).val(null).trigger('change');
+
+$('#level_id').select2({
+    placeholder: 'SELECT AN OPTION',
+    dropdownParent: $('#other_info_modal'),
+    width: '100%',
+    data: levels,    
+}).val(null).trigger('change');
+
+$('#department_id').select2({
+    placeholder: 'SELECT AN OPTION',
+    dropdownParent: $('#other_info_modal'),
+    width: '100%',
+    data: department_data,    
+}).val(null).trigger('change');
+
+$('#company_id').select2({
+    placeholder: 'SELECT AN OPTION',
+    dropdownParent: $('#other_info_modal'),
+    width: '100%',
+    data: company_data,    
+}).val(null).trigger('change');

@@ -28,6 +28,8 @@
             $data = array();
             $data['candidate_information'] = $this->applicant->getCandidateInformation($id);
             $data['position'] = $this->document->select2PositionData();
+            $data['department'] = $this->document->select2DepartmentData();
+            $data['company'] = $this->document->select2CompanyData();
             $data['employee'] = $this->document->select2RefferalData();
             $this->core_layout->addCss("global/plugins/uploadui/css/blueimp/blueimp-gallery.min.css", true);
             $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload.css", true);

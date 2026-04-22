@@ -15,6 +15,7 @@
             $this->load->model("ams/Utilities_model", "utilities");
             $this->load->model("reports_model", "reports");
             $this->load->model("Registration_model", "registration");
+            $this->load->model("Applicant_model", "applicant");
             $this->user_data = $this->session->userdata("logged_in");
         }
 
