@@ -714,7 +714,7 @@ function late_absentee_column_report(type) {
             }
         },
         {
-            title: "Abs-w-loa",
+            title: "abs-w-loa",
             data: null,
             width: "8%",
             className: "text-right",

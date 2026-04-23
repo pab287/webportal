@@ -1678,7 +1678,14 @@ class Reports_model extends CI_Model{
             }
 
             if($startDate && $endDate && (is_array($employeeIds) && count($employeeIds) > 0)){
-                $tempMaxDate = $this->getTimesheetMaxDate();
+                $todayDate = Date("Y-m-d");
+                $reportMaxDate = Date("Y-m-d", strtotime($endDate));
+
+                // Never project absentee dates beyond the current runtime date.
+                if(strtotime($reportMaxDate) > strtotime($todayDate)){
+                    $reportMaxDate = $todayDate;
+                }
+
                 $this->db->reset_query();
 
                 $employeeShiftRecord = array();
@@ -1717,7 +1724,7 @@ class Reports_model extends CI_Model{
                 if(is_array($employeeShiftRecord) && !empty($employeeShiftRecord)){
                     $interval = DateInterval::createFromDateString('1 day');
                     $dateStart = new DateTime($startDate);
-                    $dateEnd = new DateTime($endDate);
+                    $dateEnd = new DateTime($reportMaxDate);
                     $dateEnd->modify("+1 day");
 
                     $period = new DatePeriod($dateStart, $interval, $dateEnd);
@@ -1767,7 +1774,7 @@ class Reports_model extends CI_Model{
                 
                 $updateEmployeeAbsences = array();
 
-                $overwrite_max_date = Date("Y-m-d", strtotime($endDate));
+                $absenceCutoffDate = $reportMaxDate;
 
                 if(is_array($employeeDates) && !empty($employeeDates)){
                     foreach ($employeeDates as $empId => $dates) {
@@ -1780,7 +1787,7 @@ class Reports_model extends CI_Model{
                         /*** $this->db->where("ts.verified", 1); ***/
                         $this->db->group_start();
                         $this->db->where("DATE(ts.date) >=", $startDate);
-                        $this->db->where("DATE(ts.date) <=", $endDate);
+                        $this->db->where("DATE(ts.date) <=", $reportMaxDate);
                         $this->db->group_end();
                         $this->db->where("ts.emp_id", $empId);
                         $this->db->order_by("ts.date", "ASC");
@@ -1788,8 +1795,8 @@ class Reports_model extends CI_Model{
                         
                         if($qdates->num_rows() > 0){
                             $qdates = $qdates->row();
-                            // $qMaxDate = $qdates->max_date;
-                            $qMaxDate = $overwrite_max_date;
+                            // Keep the absence projection to the selected range end.
+                            $qMaxDate = $absenceCutoffDate;
                             $qDateStart = $qdates->date_start;
 
                             $tsDates = $qdates->dates;
@@ -1895,7 +1902,7 @@ class Reports_model extends CI_Model{
                 /*** $this->db->where("ts.verified", 1); ***/
                 $this->db->group_start();
                 $this->db->where("DATE(ts.date) >=", $startDate);
-                $this->db->where("DATE(ts.date) <=", $endDate);
+                $this->db->where("DATE(ts.date) <=", $reportMaxDate);
                 $this->db->group_end();
                 $this->db->where_in("ts.emp_id", $employeeIds);
                 $this->db->order_by("emp.lastname", "ASC");
@@ -1906,8 +1913,7 @@ class Reports_model extends CI_Model{
                     $filter = "";
                 }
                 if($ctrCount > 0){
-                    // $maxDate = $qAttendance->row()->max_date;
-                    $maxDate = $overwrite_max_date;
+                    $maxDate = $reportMaxDate;
                     $qData = array();
                     $loaReference = array();
                     foreach($qAttendance->result() as $attx){
@@ -2008,7 +2014,7 @@ class Reports_model extends CI_Model{
                 }else{
                     $resultset["response"] = false;
                     $resultset["filters"] = $arrFilter;
-                    $resultset["toastr_msg"] = $tempMaxDate ? "<strong>No data available for the selected date range. Verified data is only up to `<strong>{$tempMaxDate}</strong>`  {$filter}." : "No absentee attendance record/s found!</strong>";
+                    $resultset["toastr_msg"] = $reportMaxDate ? "<strong>No data available for the selected date range. Verified data is only up to `<strong>{$reportMaxDate}</strong>`  {$filter}." : "No absentee attendance record/s found!</strong>";
                     $logMessage = $resultset["toastr_msg"];
                     $logState="success";
                     $userType="user";
