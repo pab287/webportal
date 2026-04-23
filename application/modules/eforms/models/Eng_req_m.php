@@ -800,8 +800,7 @@ class Eng_req_m extends CI_Model {
 
         
             foreach ($_FILES['files']['name'] as $i => $fileName) {
-                $currentFileName = strtolower(str_replace(' ', '', $fileName));
-
+                $currentFileName = strtolower(str_replace(['(', ')', ' '], '', $fileName));
                 if (!in_array(strtolower($currentFileName), $filesToAdd)) {
                     continue;
                 }
