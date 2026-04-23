@@ -1350,7 +1350,7 @@ class Portal_model extends CI_Model{
                 $tempResponse = (object) $this->getCurrentDateIsHoliday($rs->_date);
                 $allowPaidEmployee = $rs->payroll_type == "monthly" || $rs->payroll_type == "daily" || $rs->payroll_type == "project based";
                 $rs->allow_paid_holiday = false;
-                $rs->has_loa = $this->getLoa($start, $end, $rs->_emp_id);
+                $rs->has_loa = $this->getLoa($rs->_date, $end, $rs->_emp_id);
 
                 $propAttx = ["am_in", "am_out", "pm_in", "pm_out"];
                 $propSchedule = ["shift_am_start", "shift_am_end", "shift_pm_start", "shift_pm_end"];
@@ -1532,8 +1532,8 @@ class Portal_model extends CI_Model{
         $has_loa = false;
 
         $this->db->select('id');
-        $this->db->where('DATE(date_from) >=', $start);
-        $this->db->where('DATE(date_to) >=', $end);
+        $this->db->where('DATE(date_from) <=', $start);
+        $this->db->where('DATE(date_to) >=', $start);
         $this->db->where('employee', $id);
         $this->db->from('gcceforms.loa');
         $query = $this->db->get();
