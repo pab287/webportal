@@ -269,6 +269,7 @@ function archiveRecordShow() {
     is_archive = is_archive === 1 ? 0 : 1;
     $('#header').text(is_archive === 1 ? 'Request Forms Archive' : 'Request Form Masterfile');
     $('#archiveLabel').text(is_archive === 1 ? 'Back to Masterfile' : 'Archive');
+    $('#addNew').toggle(is_archive !== 1);
     rfiTable.ajax.reload();
 }
 

@@ -48,13 +48,12 @@
                         <div class="col-xl-8 order-2 order-xl-1">
                             <div class="form-group m-form__group row align-items-center">
                                 <div class="col-md-4">
-                                <a id="addNew" href="new_request"
-                                class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill btnNew">
-                                    <span>
-                                        <i class="la la-plus"></i>
-                                        <span>New</span>
-                                    </span>
-                                </a>
+                                    <a id="addNew" href="new_request" class="btn btn-accent m-btn m-btn--custom m-btn--icon m-btn--air m-btn--pill btnNew">
+                                        <span>
+                                            <i class="la la-plus"></i>
+                                            <span>New</span>
+                                        </span>
+                                    </a>
                                 </div>
                                 <!-- <div class="col-4">
                                     <div id="filter-by-date-range" class="form-group m-0">
