@@ -15,6 +15,7 @@
             $data = array();
             $data['employee'] = $this->eng_req->select2Employee();
             $data['projects'] = $this->eng_req->select2Projects();
+            $this->core_layout->setPrivilegeName("eng_req");
             $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
             $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
@@ -31,7 +32,7 @@
             $data['projects'] = $this->eng_req->select2Projects();
             $data['req_types'] = $this->eng_req->getReqTypes();
             $this->core_layout->setPageTitle("Request For Information");
-            // $this->core_layout->setPrivilegeName("eforms_new_rfi_request");
+            $this->core_layout->setPrivilegeName("eng_req");
             $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
             $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
             $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload.css", true);
@@ -44,6 +45,7 @@
         }
 
         public function req_types(){
+            $this->core_layout->setPrivilegeName("eng_req");
             $data = array();
             $data['employee'] = $this->eng_req->select2Employee();
             $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
@@ -80,6 +82,7 @@
         }
 
         public function projects(){
+            $this->core_layout->setPrivilegeName("eng_req");
             $data = array();
             $data['employee'] = $this->eng_req->select2Employee();
             // $data['supervisor'] = $this->eng_req->select2Supervisor();
