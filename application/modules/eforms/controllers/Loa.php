@@ -170,6 +170,10 @@
             $month = substr($date, 5, 2);
             $list = $this->loa->series($year, $month);
             $series = '';
+            $sms_sent = false;
+            $email_sent = false;
+            $email = null;
+            
             if (sizeof($list) > 0) {
                 foreach ($list as $arr) {
                     $x = $arr->ref_series;
