@@ -6,7 +6,7 @@
         {
             parent::__construct();
             $this->authenticate->setModuleAccess("eforms-engineering_request_forms");
-            $this->core_layout->setPrivilegeName("eforms");
+            $this->core_layout->setPrivilegeName("eng_req");
             $this->authenticate->doRedirect();
             $this->load->model("Eng_req_m","eng_req");
         }
