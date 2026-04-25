@@ -28,18 +28,20 @@
             $company = (isset($post['company']) && $post['company']) ? ucwords($post['company']) : null;
             $department = (isset($post['department']) && $post['department']) ? ucwords($post['department']) : null;
             $date_range = (isset($post['date']) && $post['date']) ? $post['date'] : null;
+            $is_advance_search = (isset($post['is_advance_search']) && $post['is_advance_search']) ? true : false;
 
             $view_own_request = (in_array("view_own_request", $this->current_action)) ? true : false;
             $view_own_dept = (in_array("view_by_dept", $this->current_action)) ? true : false;
             $view_by_company = (in_array("view_by_company", $this->current_action)) ? true : false;
+            $advance_search = (in_array('advance_search', $this->current_action)) ? true : false;
             $companyDescription = null;
 
             if ($view_by_company) {
                 $companyDescription = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $this->user_data['company']))->row()->description;
             }
             
-            $rowData = $this->get_all_items($view_own_request,  $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_own_dept, $view_by_company, $companyDescription, $company, $department,  $date_range );
-            $rowCount = $this->get_all_items_count($view_own_request,  $query_builder, $search, $status, $view_own_dept, $view_by_company, $companyDescription, $company, $department,  $date_range );
+            $rowData = $this->get_all_items($view_own_request,  $query_builder, $search, $limit, $offset, $sortBy, $sortOrder, $status, $view_own_dept, $view_by_company, $companyDescription, $company, $department, $date_range, $advance_search, $is_advance_search);
+            $rowCount = $this->get_all_items_count($view_own_request,  $query_builder, $search, $status, $view_own_dept, $view_by_company, $companyDescription, $company, $department,  $date_range, $advance_search, $is_advance_search);
             
             // if (!$search) {
             //     $rowData = $this->get_all_post($view_own_request,  $query_builder, $limit, $offset, $sortBy, $sortOrder, $status, $view_own_dept);
@@ -57,15 +59,17 @@
             $resultset["recordsTotal"] = $rowCount;
             $resultset["recordsFiltered"] = $rowCount;
             $resultset["data"] = $rowData;
-          // $resultset["action"] =  $this->core_layout->getCurrentActions();
-           
             
             return $resultset;
         }
 
-        function get_all_items($view, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $view_dept, $view_by_company = false, $companyDescription = null, $company, $department,  $date_range ) {
+        function get_all_items($view, $query_builder=null, $search = null, $limit = 10, $offset = 0, $sortBy, $sortOrder, $status = null, $view_dept, $view_by_company = false, $companyDescription = null, $company, $department, $date_range, $advance_search, $is_advance_search = false) {
             $data = array();
             $check = date("Y-m-d", strtotime("-1 year", time()));
+
+            if ($company && $advance_search) {
+                $_tempCompany = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $company))->row()->description;
+            }
 
             $filterFields = array("a.id", "a.status", "a.company", "a.department", "a.reference_no", "a.date_from", "a.date_to", "a.nature", "a.reason", "a.position", "b.firstname", "b.middlename", "b.lastname", "a.type");
 
@@ -79,9 +83,15 @@
 
             if ($view && ($this->user_data['emp_id'] != 1)) {
                 $this->db->where('a.employee', $this->user_data['emp_id']);
-            }else{
+            }
+            
+            if ($advance_search){
                 if($company){
                     $this->db->where('b.company_id', $company);
+                
+                    if ($_tempCompany) {
+                        $this->db->where('a.company', $_tempCompany);
+                    }
                 }
                 if($department){
                     $this->db->where('b.department_id', $department);
@@ -94,15 +104,17 @@
                 }
             }
 
-            if ($view_dept && ($this->user_data['emp_id']!=1)) {
-                $this->db->where('b.department_id', $this->user_data['department']);
-            }
-
-            if ($view_by_company) {
-                $this->db->where('b.company_id', (int)$this->user_data['company']);
-
-                if ($companyDescription) {
-                    $this->db->where('a.company', $companyDescription);
+            if (!$is_advance_search) {
+                if ($view_dept && ($this->user_data['emp_id']!=1)) {
+                    $this->db->where('b.department_id', $this->user_data['department']);
+                }
+    
+                if ($view_by_company) {
+                    $this->db->where('b.company_id', (int)$this->user_data['company']);
+    
+                    if ($companyDescription) {
+                        $this->db->where('a.company', $companyDescription);
+                    }
                 }
             }
 
@@ -159,10 +171,14 @@
             return $data;
         }
 
-        function get_all_items_count($view, $query_builder=null, $search = null, $status = null, $view_dept, $view_by_company = false, $companyDescription = null, $company, $department,  $date_range) {
+        function get_all_items_count($view, $query_builder=null, $search = null, $status = null, $view_dept, $view_by_company = false, $companyDescription = null, $company, $department,  $date_range, $advance_search, $is_advance_search = false) {
             $check = date("Y-m-d", strtotime("-1 year", time()));
             $filterFields = array("a.id", "a.status", "a.company", "a.department", "a.reference_no", "a.date_from", "a.date_to", "a.nature", "a.reason", "a.position", "b.firstname", "b.middlename", "b.lastname", "a.type");
             $sql = "a.id, a.status, a.company, a.department, b.firstname, b.middlename, b.lastname, b.suffix, a.position, a.nature, a.reason, a.date_from, a.date_to, a.reference_no, a.type";
+
+            if ($company && $advance_search) {
+                $_tempCompany = $this->db->select("description")->get_where('gcchris.tblcompanies', array('id' => $company))->row()->description;
+            }
 
             $this->db->select($sql);
             $this->db->join("gccmaster.tblemployees b", "a.employee = b.id", "LEFT");
@@ -172,9 +188,15 @@
 
             if ($view && ($this->user_data['emp_id'] != 1)) {
                 $this->db->where('a.employee', $this->user_data['emp_id']);
-            }else{
+            }
+
+            if ($advance_search) {
                 if($company){
                     $this->db->where('b.company_id', $company);
+
+                    if ($_tempCompany) {
+                        $this->db->where('a.company', $_tempCompany);
+                    }
                 }
                 if($department){
                     $this->db->where('b.department_id', $department);
@@ -187,15 +209,17 @@
                 }
             }
 
-            if ($view_dept && ($this->user_data['emp_id']!=1)) {
-                $this->db->where('b.department_id', $this->user_data['department']);
-            }
-
-            if ($view_by_company) {
-                $this->db->where('b.company_id', (int)$this->user_data['company']);
-
-                if ($companyDescription) {
-                    $this->db->where('a.company', $companyDescription);
+            if (!$is_advance_search) {
+                if ($view_dept && ($this->user_data['emp_id']!=1)) {
+                    $this->db->where('b.department_id', $this->user_data['department']);
+                }
+    
+                if ($view_by_company) {
+                    $this->db->where('b.company_id', (int)$this->user_data['company']);
+    
+                    if ($companyDescription) {
+                        $this->db->where('a.company', $companyDescription);
+                    }
                 }
             }
 
