@@ -31,6 +31,7 @@ class Portal extends MY_Controller {
 		$this->core_layout->setPrivilegeName("core_profile_employee_data");
 		$currentActions = $this->core_layout->getCurrentActions();
 		$data["showPayrollPayslip"] = is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_request", $currentActions);
+		$data['showAttendance'] = is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_attendance", $currentActions);
 
 		$data["portal_content"] = $portalContent;
 		$this->load->view('portal/index', $data);
@@ -113,11 +114,11 @@ class Portal extends MY_Controller {
 			->set_content_type('json')
 			->set_output(json_encode($data));
 	}
-  public function get_company_collection()
-  {
-      $data = $this->portal_model->getCompanyCollection();
-      echo json_encode($data);
-  }
+
+	public function get_company_collection()	{
+		$data = $this->portal_model->getCompanyCollection();
+		echo json_encode($data);
+	}
 
 	function get_borrowing(){
 		$data = $this->portal_model->getBorrowing();
@@ -152,6 +153,13 @@ class Portal extends MY_Controller {
 
 	public function get_payslip(){
 		$data = $this->portal_model->getPayslip();
+		$this->output
+			->set_content_type('json')
+			->set_output(json_encode($data));
+	}
+	
+	public function get_timesheet_attendance(){
+		$data = $this->portal_model->get_timesheet_attendance();
 		$this->output
 			->set_content_type('json')
 			->set_output(json_encode($data));
