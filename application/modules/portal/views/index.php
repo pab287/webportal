@@ -710,8 +710,13 @@
                             $hasAttendancePrivilege = (isset($showAttendance) && $showAttendance);
                             $hasPayslipPrivilege = (isset($showPayrollPayslip) && $showPayrollPayslip);
                             $hasBothTopCards = ($hasAttendancePrivilege && $hasPayslipPrivilege);
+                            $includePayslipInMasonry = ($hasPayslipPrivilege && !$hasAttendancePrivilege);
+                            $useMasonrySecondSection = $hasBothTopCards;
                         ?>
-                        <div class="row">
+                        <div class="row <?= $includePayslipInMasonry ? 'second-section' : '' ?>">
+                            <?php if ($includePayslipInMasonry): ?>
+                                <div class="grid-sizer"></div>
+                            <?php endif; ?>
                             <?php if ($hasPayslipPrivilege): ?>
                                 <div class="grid-item col-xs-12 col-sm-12 <?= $hasAttendancePrivilege ? 'col-lg-3' : 'col-lg-3' ?>">
                                     <div class="m-portlet m-portlet--head-sm ">
@@ -1096,7 +1101,7 @@
                                     </div>
                                 </div>
                             <?php endif; ?>
-                        <?php if ($hasBothTopCards): ?>
+                        <?php if ($useMasonrySecondSection): ?>
                         </div>
                         <div class="row second-section">
                             <div class="grid-sizer"></div>
