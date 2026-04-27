@@ -8878,12 +8878,15 @@ class Timesheet_model extends CI_Model{
         if($status){ $this->db->where("status", $status); }
 
         if($dtCfg){
-            $limit = isset($dtCfg->length) && intval($dtCfg->length) > 0 ? intval($dtCfg->length): 10;
+            $limit = isset($dtCfg->length) && intval($dtCfg->length) ? intval($dtCfg->length): 10;
             $start = isset($dtCfg->start) && intval($dtCfg->start) > 0 ? intval($dtCfg->start): 0;
             $orderBy = isset($dtCfg->order_direction) && $dtCfg->order_direction ? $dtCfg->order_direction: "asc";
             $orderColumn = isset($dtCfg->order_column) && $dtCfg->order_column ? $dtCfg->order_column: "id";
             $this->db->order_by($orderColumn, $orderBy);
-            $this->db->limit($limit, $start);
+
+            if($limit != -1){
+                $this->db->limit($limit, $start);
+            }
         }
 
         $qTemp = $this->db->get();
@@ -8932,6 +8935,7 @@ class Timesheet_model extends CI_Model{
                 $value->shift_pm_end = (isset($value->shift_pm_end) && $value->shift_pm_end)? date("H:i", strtotime($value->shift_pm_end)): "--:--";
                 $value->shift_id = $shifts;
                 $value->employee_id = $employees;
+                $value->employees = $this->get_custom_shift_employees($employees);
                 $value->employee_count = count((array)$employees);
             }
         }
@@ -10464,6 +10468,28 @@ class Timesheet_model extends CI_Model{
             END)) as employee_name");
         $qTemp = $this->db->get_where($this->tbl_employees, array('id' => $id));
         return $qTemp->num_rows() === 1 ? $qTemp->row()->employee_name : $id;
+    }
+
+    protected function get_custom_shift_employees($ids = array()) {
+        $result = array();
+
+        if ($ids && !empty($ids)) {
+            $this->db->select("CONCAT(lastname, CASE WHEN suffix != 'N/A' AND suffix !='NONE' AND suffix !='' AND suffix IS NOT NULL THEN CONCAT(' ', suffix) ELSE ''  END, ', ',
+            firstname, ' ', CASE WHEN middlename != 'N/A' AND middlename != 'NONE'
+            AND middlename !='' AND middlename IS NOT NULL THEN CONCAT(SUBSTR(middlename, 1, 1), '.') ELSE '' END) employee_name");
+            $this->db->where_in('id', $ids);
+            $this->db->from($this->tbl_employees);
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                $temp = $query->result();
+
+                $result = array_column($temp, 'employee_name');
+            }
+
+        }
+        
+        return $result;
     }
     
     public function get_ts_devices($emp_id, $date) {
