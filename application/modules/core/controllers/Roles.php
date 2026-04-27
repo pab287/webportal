@@ -96,10 +96,17 @@ class Roles extends MY_Controller {
         ->set_content_type('json')
         ->set_output(json_encode($data));
 	}
-
+	
 	function test_roles($id=null){
 		$data = $this->user_role->getAssignedUserRoleActionList($id);
 		echo "<pre>";
 		var_dump($data);
+	}
+
+	function clone_user_role(){
+		$data = $this->user_role->cloneUserRole();
+		$this->output
+		->set_content_type('json')
+		->set_output(json_encode($data));
 	}
 }

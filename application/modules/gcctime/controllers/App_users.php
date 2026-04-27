@@ -17,6 +17,16 @@ class App_users extends MY_Controller {
         $this->load->view('core/templates/footer');
     }
 
+    public function device_logs() {
+        $this->core_layout->setPrivilegeName("app_users-device_logs");
+        $this->core_layout->setPageTitle("Application Users - Device Logs");
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', true);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
+        $this->load->view('core/templates/header');
+        $this->load->view('gcctime/app_users/device_logs');
+        $this->load->view('core/templates/footer');
+    }
+
     public function getUsersLogin(){
         //$data = $this->app_user->all_users_login();
         $data = $this->app_user->getAppAttenanceUsersRequest();
@@ -35,6 +45,26 @@ class App_users extends MY_Controller {
 
     public function update_allow_user_access(){
         $data = $this->app_user->updateAllowUserAccess();
+        echo json_encode($data);
+    }
+
+    public function get_device_log_json(){
+        $data = $this->app_user->getDeviceLogJson();
+        echo json_encode($data);
+    }
+
+    public function get_active_app_users(){
+        $data = $this->app_user->getActiveAppUsers();
+        echo json_encode($data);
+    }
+
+    public function get_select2_app_users(){
+        $data = $this->app_user->getSelect2AppUsers();
+        echo json_encode($data);
+    }
+
+    public function get_device_log_files(){
+        $data = $this->app_user->getDeviceLogFiles();
         echo json_encode($data);
     }
 }

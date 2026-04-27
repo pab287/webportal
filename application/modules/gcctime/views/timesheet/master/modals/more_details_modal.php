@@ -372,6 +372,71 @@
                 </div>
             </div>
         </div>
+        
+        <!-- JP05 | Biometric Location Start -->
+        <style>
+            .site_punch_wrap {
+                gap: 20px;
+            }
+
+            .site_punch_wrap .site_item {
+                background: #f4f5f8;
+                border-radius: 5px;
+                border: 1px solid #dfe0e2;
+                padding: 10px;
+            }
+
+            .site_title {
+                font-size: 10px;
+                letter-spacing: 0.5px;
+            }
+
+            .punch_wrap span {
+                margin: 2px;
+            }
+
+            .site_item.col-12 { flex: 100% 0 0; max-width: max-content; }
+            .site_item.col-6 { flex: 50% 0 0; max-width: 48.5%;}
+            .site_item.col-4-3 {flex: 31.5% 0 0;}
+            .site_item.col-4 { flex: 23% 0 0; }
+        </style>
+
+        <?php if (!empty($devices)) : ?>
+            
+        <div class="attendance-location my-4">
+            <p class="m--regular-font-size-lg3 m--font-bolder">ATTENDANCE LOCATIONS</p>
+     
+            <div class="row mx-0 site_punch_wrap">
+                <?php 
+                    $count = count($devices);
+
+                    $class = 'col-4-3'; // default (4 items)
+
+                    if ($count === 1) {
+                        $class = 'col-12';
+                    } elseif ($count === 2) {
+                        $class = 'col-6';
+                    } elseif ($count === 3) {
+                        $class = 'col-4-3';
+                    }
+
+                    foreach ($devices as $site => $entry) : ?>
+                        <div class="site_item <?= $class; ?>">
+                            <h6 class="site_title"><?= $site; ?></h6>
+
+                            <div class="punch_wrap">
+                                <?php foreach ($entry as $log) : ?>
+                                    <span class="m-badge m-badge--success m-badge--wide text-white"><?= date("h:i A", strtotime($log['datetime'])); ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                <?php 
+                    endforeach;
+                ?>
+            </div>
+        </div>
+        <?php endif; ?>
+        <!-- JP05 | Biometric Location End -->
 
         <div class="mt-4">
             <p class="m--regular-font-size-lg3 m--font-bolder mt-3">SHIFT SCHEDULE</p>

@@ -3,6 +3,7 @@ let _departments = _tempContentData.departments;
 let company = null;
 let department = session.department;
 let dateRange = null;
+let is_advance_search = 0;
 load_telegram_config();
 var isExport = false;
 
@@ -55,7 +56,8 @@ var tblLoa = $("#table-loa").DataTable({
             d.status = param_status,
             d.company = company,
             d.department = department,    
-            d.date = dateRange
+            d.date = dateRange,
+            d.is_advance_search = is_advance_search;
         }
     },
     aaSorting: [],
@@ -393,6 +395,10 @@ $('#generalSearch').donetyping(function (callback) {
 
 //refresh datatable 
 $("#reload_dtTbl").on("click", function () {
+    company = null;
+    department = session.department;
+    dateRange = null;
+
     tblLoa.ajax.reload();
 });
 
@@ -772,14 +778,14 @@ $('#department').select2({
 }).val(session.department).trigger('change');
 
 $("#m_daterangepicker").daterangepicker({
-    startDate: moment("2016-01-01"),
+    startDate: moment().subtract(1, 'month'),
     endDate: moment(),
     buttonClasses: 'm-btn btn',
     applyClass: 'btn-primary',
     cancelClass: 'btn-secondary',
     locale: { format: 'MMM. DD, YYYY' },
     ranges: {
-        'All Time': [moment("2016-01-01"), moment()],
+        // 'All Time': [moment("2016-01-01"), moment()],
         'Today': [moment(), moment()],
         'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
         'Last 7 Days': [moment().subtract(6, 'days'), moment()],
@@ -792,7 +798,7 @@ $("#m_daterangepicker").daterangepicker({
 });
 
 dateRange = {
-    start: moment("2016-01-01").format('YYYY-MM-DD'),
+    start: moment().subtract(1, 'month').format('YYYY-MM-DD'),
     end: moment().format('YYYY-MM-DD')
 };
 
@@ -822,6 +828,7 @@ $.validate({
     onSuccess: function() {
         company = $("#company").val();
         department = $("#department").val();
+        is_advance_search = 1;
 
         tblLoa.ajax.reload();
         $("#modal-advance-search").modal("hide");
@@ -831,12 +838,13 @@ $.validate({
 
 $("#refresh").on("click", function () {
     company = null;
-    department = null;
+    department = session.department;
+    is_advance_search = 0;
 
     $("#company").val(null).trigger("change");
-    $("#department").val(null).trigger("change");
+    $("#department").val(department).trigger("change");
 
-    const start = moment("2016-01-01");
+    const start = moment().subtract(1, 'month');
     const end = moment();
 
     const picker = $("#m_daterangepicker").data("daterangepicker");
