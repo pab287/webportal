@@ -44,6 +44,7 @@ class Payroll_m extends CI_Model{
     protected $tbl_timesheet_monthly_employees = "gcctimeutility.timesheet_monthly_employees";
     protected $tbl_ps_employee_regular_ndiff = "payroll.employee_regular_ndiff";
     protected $tbl_payroll_group_transfer = "payroll.payroll_group_transfer";
+    protected $tblMode = "payroll.payment_mode";
 
     public function __construct(){
         parent::__construct();
@@ -9575,5 +9576,20 @@ class Payroll_m extends CI_Model{
         }
 
         return max(0, $totalMinutes);
+    }
+
+    public function getPaymentModeSelect2Data() {
+        $return = array();
+
+        $this->db->select("id, description as text");
+        $this->db->where("is_archived", 0);
+        $this->db->from($this->tblMode);
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $return = $query->result();
+        }
+
+        return $return;
     }
 }

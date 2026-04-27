@@ -14,6 +14,8 @@ let _forApproval = [];
 let _transferHistory = [];
 let _companies = [];
 let _globalLockedEmployees = { id: [], employees: {} };
+let _payoutSched = {};
+let _payment_mode = {};
 
 const notificationCounter = new Vue({
     el: "#notificationCounter",
@@ -30,6 +32,14 @@ const notificationCounter = new Vue({
 if(_tempContentData !== undefined && Object.keys(_tempContentData).length > 0){
     if(_tempContentData.company !== undefined && _tempContentData.company.length > 0){
         _companies = _tempContentData.company;
+    }
+
+    if (_tempContentData.payroll_sched !== undefined && Object.keys(_tempContentData.payroll_sched).length > 0) {
+        _payoutSched = _tempContentData.payroll_sched;
+    }
+
+    if (_tempContentData.payment_mode !== undefined && _tempContentData.payment_mode.length > 0) {
+        _payment_mode = _tempContentData.payment_mode;
     }
 }
 
@@ -347,6 +357,8 @@ btnNewEmployeeGroup.on("click", function () {
                 const companyAllFilter = documentModal.find("input#all_company_filter");
                 const allowView = documentModal.find("input#allow_view");
                 const assignSelect = documentModal.find('select#assign_employee_id');
+                const payoutSchedSelect = documentModal.find('select#payroll_sched');
+                const payoutMode = documentModal.find('select#payment_mode');
 
                 if (typeof companyAllFilter !== "undefined" && companyAllFilter.length == 1) {
                     companyAllFilter.on("change", function (e) {
@@ -379,6 +391,33 @@ btnNewEmployeeGroup.on("click", function () {
                     });
                 }
 
+                if (typeof payoutMode !== "undefined" && payoutMode.length == 1) {
+                    if (payoutMode.hasClass("select2-hidden-accessible")) {
+                        payoutMode.select2("destroy");
+                    }
+
+                    payoutMode.select2({
+                        width: "100%",
+                        placeholder: "select an option",
+                        dropdownParent: documentModal,
+                        data: _payment_mode
+                    })
+                }
+
+                if (typeof payoutSchedSelect !== "undefined" && payoutSchedSelect.length == 1) {
+                    if (payoutSchedSelect.hasClass("select2-hidden-accessible")) {
+                        payoutSchedSelect.select2("destroy");
+                    }
+
+                    payoutSchedSelect.select2({
+                        width: "100%",
+                        placeholder: "select an option",
+                        dropdownParent: documentModal,
+                        data: _payoutSched,
+                        allowClear: true
+                    })
+                }
+
                 if (typeof employeeSelect2 !== "undefined" && employeeSelect2.length == 1) {
                     employeeSelect2.select2({
                         width: "100%",
@@ -393,6 +432,7 @@ btnNewEmployeeGroup.on("click", function () {
                             data: function (params) {
                                 params.company_id = companySelect2.val();
                                 params.all_filter = propAllFilter;
+                                params.payout_sched = payoutSchedSelect.val();
                                 return params;
                             }
                         },
@@ -504,6 +544,8 @@ $(document).on("click", "button.btnEditGroup", function () {
                 const companyAllFilter = documentModal.find("input#all_company_filter");
                 const allowView = documentModal.find("input#allow_view");
                 const assignSelect = documentModal.find('select#assign_employee_id');
+                const payoutSchedSelect = documentModal.find('select#payroll_sched');
+                const payoutMode = documentModal.find('select#payment_mode');
 
                 if (companyAllFilter !== undefined && companyAllFilter.length == 1) {
                     companyAllFilter.on("change", function (e) {
@@ -534,6 +576,33 @@ $(document).on("click", "button.btnEditGroup", function () {
                     }).on("select2:unselect", function () {
                         employeeSelect2.val([]).trigger("change");
                     });
+                }
+
+                if (typeof payoutMode !== "undefined" && payoutMode.length == 1) {
+                    if (payoutMode.hasClass("select2-hidden-accessible")) {
+                        payoutMode.select2("destroy");
+                    }
+
+                    payoutMode.select2({
+                        width: "100%",
+                        placeholder: "select an option",
+                        dropdownParent: documentModal,
+                        data: _payment_mode
+                    }).val(tempRow.payout_mode).trigger("change");
+                }
+
+                if (typeof payoutSchedSelect !== "undefined" && payoutSchedSelect.length == 1) {
+                    if (payoutSchedSelect.hasClass("select2-hidden-accessible")) {
+                        payoutSchedSelect.select2("destroy");
+                    }
+
+                    payoutSchedSelect.select2({
+                        width: "100%",
+                        placeholder: "select an option",
+                        dropdownParent: documentModal,
+                        data: _payoutSched,
+                        allowClear: true
+                    }).val(tempRow.payout_sched).trigger("change");
                 }
 
                 if (employeeSelect2 !== undefined && employeeSelect2.length == 1) {

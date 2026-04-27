@@ -35,6 +35,22 @@
             </div>
         </div>
         <div class="form-group m-form__group">
+          <div class="row">
+            <div class="col-md-6">
+              <label for="">Payout Mode *</label>
+              <select id="payment_mode" name="payout_mode" class="form-control m-input">
+                <option value=""><option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="">Payout Schedule</label>
+              <select id="payroll_sched" name="payout_sched" class="form-control m-input">
+                <option value=""><option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="form-group m-form__group">
             <label for="employee_id">Employee(s) *</label>
             <select id="employee_id" class="form-control m-input" name="employee_id[]" multiple="multiple" data-validation="required">
                 <option value="">&nbsp;<option>
