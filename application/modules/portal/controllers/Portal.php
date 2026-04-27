@@ -31,6 +31,7 @@ class Portal extends MY_Controller {
 		$this->core_layout->setPrivilegeName("core_profile_employee_data");
 		$currentActions = $this->core_layout->getCurrentActions();
 		$data["showPayrollPayslip"] = is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_request", $currentActions);
+		$data['showAttendance'] = is_array($currentActions) && count($currentActions) > 0 && in_array("view_own_attendance", $currentActions);
 
 		$data["portal_content"] = $portalContent;
 		$this->load->view('portal/index', $data);

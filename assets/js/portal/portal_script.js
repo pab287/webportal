@@ -28,7 +28,12 @@ if(typeof getAcctgcount !== "undefined" && typeof getAcctgcount == "function"){
 
 if(window.location == siteUrl("portal/index")){
     document.addEventListener('DOMContentLoaded', function () {
-        msnry = new Masonry('.row.second-section', {
+        const masonryContainer = document.querySelector('.row.second-section');
+        if (!masonryContainer) {
+            return;
+        }
+
+        msnry = new Masonry(masonryContainer, {
             itemSelector: '.grid-item',
             columnWidth: '.grid-sizer',
             percentPosition: true,
@@ -307,10 +312,19 @@ if(window.location == siteUrl("portal/index")){
                 if(!amount) return "₱0.00";
                 return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
             }, updateMasonryLayout() {
+                if (!msnry) {
+                    return;
+                }
+
+                const masonryRow = document.querySelector('.row.second-section');
+                if (!masonryRow) {
+                    return;
+                }
+
                 new ResizeObserver(() => {
                     msnry.reloadItems();
                     msnry.layout();
-                }).observe(document.querySelector('.row'));
+                }).observe(masonryRow);
             }, isEmpty(arr) {
                 return jQuery.isEmptyObject(arr);
             }, formatTimesheetTime(time, has_shift = 1) {
