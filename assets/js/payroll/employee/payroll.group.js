@@ -493,7 +493,7 @@ $(document).on("click", "button.btnEditGroup", function () {
                 _globalLockedEmployees = { employees: {}, id: [] };
                 if(tempRow.allow_transfer !== undefined && Number.parseInt(tempRow.allow_transfer) === 0) {
                     _globalLockedEmployees.employees = { ..._employees };
-                    $.each(tempRow.employee_id, function(i, v){
+                    $.each(tempRow.employee_id, (i, v) => {
                         _globalLockedEmployees.id.push(v);
                     });
                 }
