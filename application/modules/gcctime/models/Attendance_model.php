@@ -1223,8 +1223,18 @@ class Attendance_model extends CI_Model {
             "device_state"=>"state",
             "date"=>"datetime");
 
-            $attendanceTable = $tempAttendance ? "zktime_logs.attendance_temp_receiver": "zktime_logs.attendance";
-            $added = $this->db->insert($attendanceTable, $post);
+            /*** $attendanceTable = $tempAttendance ? "zktime_logs.attendance_temp_receiver": "zktime_logs.attendance";
+            $added = $this->db->insert($attendanceTable, $post); ***/
+
+            $attendanceTable = $tempAttendance
+                ? "zktime_logs.attendance_temp_receiver"
+                : "zktime_logs.attendance";
+
+            // Insert raw log with IGNORE
+            $sql = $this->db->set($post)->get_compiled_insert($attendanceTable);
+            $sql = preg_replace('/^INSERT INTO/i', 'INSERT IGNORE INTO', $sql);
+            $this->db->query($sql);
+            $added = ($this->db->affected_rows() > 0);
             if($added){
                 if($tempAttendance == false){
                     $data = array();
@@ -1736,5 +1746,65 @@ class Attendance_model extends CI_Model {
             $resultset["data"] = array();
         }
         return $resultset;
+    }
+
+    public function appHookAttendanceData()
+    {
+        $emp_id  = $this->input->post('emp_id', true);
+        $dataStr = $this->input->post('data');
+
+        $uploadPath = FCPATH . "uploads/data/app";
+        if (!is_dir($uploadPath)) {
+            mkdir($uploadPath, 0755, true);
+        }
+
+        $result = [
+            "response" => false,
+            "message"  => "",
+        ];
+
+        if (!$emp_id) {
+            $result["message"] = "Missing emp_id";
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode($result));
+        }
+
+        if (!$dataStr) {
+            $result["message"] = "Missing data";
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode($result));
+        }
+
+        $newArr = json_decode($dataStr, true);
+        if (!is_array($newArr)) $newArr = [];
+
+        $timeStamp = date("mYd");
+        $fileUpload = $uploadPath . "/{$emp_id}-{$timeStamp}.json";
+
+        $oldArr = [];
+        if (file_exists($fileUpload)) {
+            $oldStr = file_get_contents($fileUpload);
+            $decoded = json_decode($oldStr, true);
+            if (is_array($decoded)) $oldArr = $decoded;
+        }
+
+        $merged = array_merge($oldArr, $newArr);
+        $writeOk = file_put_contents($fileUpload, json_encode($merged));
+
+        if ($writeOk === false) {
+            $result["message"] = "Failed to write file. Check folder permissions.";
+        } else {
+            $result["response"] = true;
+            $result["message"] = "Logs appended successfully.";
+            $result["count_added"] = count($newArr);
+            $result["count_total"] = count($merged);
+            $result["file"] = basename($fileUpload);
+        }
+
+        return $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode($result));
     }
 }

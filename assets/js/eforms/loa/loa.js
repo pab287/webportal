@@ -1,5 +1,10 @@
+let _companies = _tempContentData.companies;
+let _departments = _tempContentData.departments;
+let company = null;
+let department = session.department;
+let dateRange = null;
+let is_advance_search = 0;
 load_telegram_config();
-
 var isExport = false;
 
 $("#selectall").click(function () {
@@ -46,9 +51,13 @@ var tblLoa = $("#table-loa").DataTable({
         dataType: "json",
         data: function (d) {
             d.csrf_token = _csrf_hash,
-                d.search['value'] = search_val,
-                d.query_builder = query_builder,
-                d.status = param_status
+            d.search['value'] = search_val,
+            d.query_builder = query_builder,
+            d.status = param_status,
+            d.company = company,
+            d.department = department,    
+            d.date = dateRange,
+            d.is_advance_search = is_advance_search;
         }
     },
     aaSorting: [],
@@ -386,11 +395,15 @@ $('#generalSearch').donetyping(function (callback) {
 
 //refresh datatable 
 $("#reload_dtTbl").on("click", function () {
+    company = null;
+    department = session.department;
+    dateRange = null;
+
     tblLoa.ajax.reload();
 });
 
 $("#choice").select2({
-    width: '200px',
+    width: '250px',
     placeholder: 'Select an Option'
 }).on("select2:select", function (e) {
     var type = $("#choice option:selected").val();
@@ -733,5 +746,119 @@ function load_telegram_config(){
     })
 }
 
+$('#company').select2({
+    placeholder: 'Select an Option',
+    dropdownParent: $("#modal-advance-search"),
+    width: '100%',
+    data: _companies,
+    allowClear: true
+}).on('select2:select', function (e) {
+    const selectedData = e.params.data;
+    company = selectedData.id;
+}).on('select2:clear', function () {
+    console.log('company cleared');
+}).on('select2:unselect', function (e) {
+    const unselectedData = e.params.data;
+    company = null;
+});
 
+$('#department').select2({
+    placeholder: 'Select an Option',
+    dropdownParent: $("#modal-advance-search"),
+    width: '100%',
+    data: _departments,
+    allowClear: true
+}).on('select2:select', function (e) {
+    const selectedData = e.params.data;
+    department = selectedData.id;
+}).on('select2:clear', function () {
+    console.log('department cleared');
+}).on('select2:unselect', function (e) {
+    department = null;
+}).val(session.department).trigger('change');
 
+$("#m_daterangepicker").daterangepicker({
+    startDate: moment().subtract(1, 'month'),
+    endDate: moment(),
+    buttonClasses: 'm-btn btn',
+    applyClass: 'btn-primary',
+    cancelClass: 'btn-secondary',
+    locale: { format: 'MMM. DD, YYYY' },
+    ranges: {
+        // 'All Time': [moment("2016-01-01"), moment()],
+        'Today': [moment(), moment()],
+        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+        'Last 30 Days': [moment().subtract(29, 'days'), moment()]
+    }
+}, function(start, end) {
+    $("#m_daterangepicker").val(
+        start.format('MMM. DD, YYYY') + ' - ' + end.format('MMM. DD, YYYY')
+    );
+});
+
+dateRange = {
+    start: moment().subtract(1, 'month').format('YYYY-MM-DD'),
+    end: moment().format('YYYY-MM-DD')
+};
+
+$("#m_daterangepicker").on('apply.daterangepicker', function (ev, picker) {
+    $(this).val(
+        picker.startDate.format('MMM. DD, YYYY') + ' - ' + picker.endDate.format('MMM. DD, YYYY')
+    ).trigger('change');
+
+    dateRange = {
+        start: picker.startDate.format('YYYY-MM-DD'),
+        end: picker.endDate.format('YYYY-MM-DD')
+    };
+
+}).on('cancel.daterangepicker', function(ev, picker) {
+    $(this).val('').trigger('change');
+    dateRange = null;
+});
+
+if (_currentActions.includes('view_own_request')) {
+    $('#department').closest('.form-group').hide();
+    $('#company').closest('.form-group').hide();
+}
+
+$.validate({
+    lang: 'en',
+    form: '#frm-advance-search',
+    onSuccess: function() {
+        company = $("#company").val();
+        department = $("#department").val();
+        is_advance_search = 1;
+
+        tblLoa.ajax.reload();
+        $("#modal-advance-search").modal("hide");
+        return false;
+    }
+});
+
+$("#refresh").on("click", function () {
+    company = null;
+    department = session.department;
+    is_advance_search = 0;
+
+    $("#company").val(null).trigger("change");
+    $("#department").val(department).trigger("change");
+
+    const start = moment().subtract(1, 'month');
+    const end = moment();
+
+    const picker = $("#m_daterangepicker").data("daterangepicker");
+    picker.setStartDate(start);
+    picker.setEndDate(end);
+
+    $("#m_daterangepicker").val(
+        start.format("MMM. DD, YYYY") + " - " + end.format("MMM. DD, YYYY")
+    ).trigger("change");
+
+    dateRange = {
+        start: start.format("YYYY-MM-DD"),
+        end: end.format("YYYY-MM-DD")
+    };
+
+    tblLoa.ajax.reload();
+});

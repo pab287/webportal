@@ -823,4 +823,87 @@ class Cronjob_reports extends MY_Controller {
             }
         }
     }
+
+    public function generate_telegram_daily_notification($email = false) {
+        $currentDate = date("Y-m-d");
+        $data = $this->travel_order->generateDailyTravelOrderSummary($currentDate);
+
+        if ($data) {
+            $batchSize = 3;
+            $batchMessages = [];
+            $currentBatch = '';
+
+            foreach ($data as $i => $row) {
+                $vehicle_details = '';
+
+                if($row->is_service > 0){
+                    $vehicle_name = $this->travel_order->vehicle_details($row->vehicle_id);
+                    $veh_name = $vehicle_name->gen_code." | ".$vehicle_name->plateno." | ".$vehicle_name->name;
+                    $vehicle_details = '<b>VEHICLE</b>: '.strtoupper($veh_name).chr(10).'<b>DRIVER</b>: '.strtoupper($row->display_name).chr(10).chr(10);
+                }
+                if($row->is_hitch > 0){
+                    $vehicle_name = $this->travel_order->vehicle_details($row->vehicle_id);
+                    $veh_name = $vehicle_name->name." | ".$vehicle_name->plateno;
+                    $vehicle_details = '<b>Vehicle</b>: '.strtoupper($veh_name).chr(10).'<b>Driver</b>: '.strtoupper($row->display_name).chr(10).chr(10);
+                }
+                if($row->is_commute > 0){
+                    $vehicle_details = '<b>VEHICLE</b>: COMMUTE'.chr(10);
+                }
+                if($row->is_personal > 0){
+                    $vehicle_details = '<b>VEHICLE</b>: PERSONAL VEHICLE'.chr(10);
+                }
+                if($row->is_others > 0){
+                    if($row->others_remarks == ""){
+                        $vehicle_details = "".chr(10);
+                    }else{
+                        $vehicle_details = '<b>REMARKS</b>: '.strtoupper($row->others_remarks).chr(10).chr(10);
+                    }
+                }
+
+                $personnels = implode(", ", (array)$row->personnels);
+                $tempDestinations = array();
+
+                if ($row->destinations) {
+                    foreach ($row->destinations as $destination) {
+                        $tempDestinations[] = strtoupper($destination->destination);
+                    }
+                }
+
+                $destinations = implode(", ", $tempDestinations);
+                
+                $telegram_msg = "";
+
+                $tempEmergency = ($row->is_emergency && $row->is_emergency == 1) ? ' - [ EMERGENCY ]' : '';
+                $approved_remarks = isset($row->approved_remarks) && $row->approved_remarks ? $row->approved_remarks : 'NO REMARKS.';
+                $recommended_remarks = isset($row->approved_recommend_remarks) && $row->approved_recommend_remarks ? $row->approved_recommend_remarks : 'NO REMARKS';
+
+                $telegram_msg = "<b>".strtoupper($row->station).$tempEmergency."</b>".chr(10).chr(10);
+
+                $telegram_msg .= '<b>Status:</b> '.strtoupper($row->status).chr(10);
+                $telegram_msg .= '<b>TO #</b>: '.$row->reference_no.chr(10);
+                $telegram_msg .= '<b>PERSONNEL: </b>'.$personnels.chr(10);
+                $telegram_msg .= '<b>DESTINATION: </b>'.$destinations.chr(10);
+                $telegram_msg .= $vehicle_details;
+
+                $spacer = $i != 0 ? "\n--------------------\n".chr(10) : '';
+                $currentBatch .= $spacer.$telegram_msg;
+
+                if (($i + 1) % $batchSize == 0) {
+                    $batchMessages[] = $currentBatch;
+                    $currentBatch = '';
+                }
+            }
+
+            if (!empty($currentBatch)) {
+                $batchMessages[] = $currentBatch;
+            }
+
+            if($this->travel_order->telegram_config_if_exist("travel_order_topics", 'count') > 0){
+                foreach ($batchMessages as $msg) {
+                    $result = $this->travel_order->telegram($msg, 6);
+                    usleep(8000000);
+                }
+            }
+        }
+    }
 }

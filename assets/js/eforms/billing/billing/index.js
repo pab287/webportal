@@ -355,11 +355,10 @@ $('#table-billing').on("click","#viewBill",function() {
     var data_row = $("#table-billing").DataTable().rows($(this).parents('tr')).data();
 
     $.ajax({
-        url: baseUrl("eforms/billing/get_bill_data"),
+        url: baseUrl("eforms/billing/get_bill_data/" + selectedBill_id),
         type: 'post',
         data: { 
             csrf_token: _csrf_hash, 
-            id: selectedBill_id
         },
         success: function(response) {
             const payment_history = response.payment_history || [];

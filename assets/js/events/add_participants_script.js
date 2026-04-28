@@ -402,85 +402,63 @@ let eventVue = new Vue({
         },
         assignParticipant(schedule_id, participant_id) {
             self = this;
-            Swal.fire({
-                title: "Assign this trainee?",
-                text: "This will assign the trainee to the schedule.",
-                icon: "question",
-                showCancelButton: true,
-                confirmButtonText: "Yes, assign",
-                cancelButtonText: "Cancel"
-            }).then(result => {
-                if (result.isConfirmed) {
-                    self.$set(self.loadingAssign, schedule_id, true);
-                    $.ajax({
-                        url: baseUrl("events/assign_participant"),
-                        type: "POST",
-                        global: false,
-                        data: {
-                            csrf_token: _csrf_hash,
-                            schedule_id: schedule_id,
-                            participant_id: participant_id,
-                            event_id: eventsDetails.id
-                        },
-                        dataType: "JSON",
-                        success: function(res) {
-                            if (res.success) {
-                                const sched = self.participantSched.find(s => s.schedule_id == schedule_id);
-                                if (sched) sched.is_assigned = 1;
-                                toastr.success(res.toastr_msg, "Success", 5000);
-                            } else {
-                                toastr.error(res.toastr_msg, "Error", 5000);
-                            }
-                        },
-                        error: function() {
-                            toastr.error("Request failed. Please try again.", "Error", 5000);
-                        },
-                        complete: function() {
-                            self.$set(self.loadingAssign, schedule_id, false);
-                        }
-                    });
+            self.$set(self.loadingAssign, schedule_id, true);
+            $.ajax({
+                url: baseUrl("events/assign_participant"),
+                type: "POST",
+                global: false,
+                data: {
+                    csrf_token: _csrf_hash,
+                    schedule_id: schedule_id,
+                    participant_id: participant_id,
+                    event_id: eventsDetails.id
+                },
+                dataType: "JSON",
+                success: function(res) {
+                    if (res.success) {
+                        const sched = self.participantSched.find(s => s.schedule_id == schedule_id);
+                        if (sched) sched.is_assigned = 1;
+                        toastr.success(res.toastr_msg, "Success", 5000);
+                    } else {
+                        toastr.error(res.toastr_msg, "Error", 5000);
+                    }
+                },
+                error: function() {
+                    toastr.error("Request failed. Please try again.", "Error", 5000);
+                },
+                complete: function() {
+                    self.$set(self.loadingAssign, schedule_id, false);
                 }
             });
         },
         unassignParticipant(schedule_id, participant_id) {
             self = this;
-            Swal.fire({
-                title: "Unassign this trainee?",
-                text: "This will remove the trainee from the schedule.",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonText: "Yes, unassign",
-                cancelButtonText: "Cancel"
-            }).then(result => {
-                if (result.isConfirmed) {
-                    self.$set(self.loadingUnassign, schedule_id, true);
-                    $.ajax({
-                        url: baseUrl("events/unassign_participant"),
-                        type: "POST",
-                        global: false,
-                        data: {
-                            csrf_token: _csrf_hash,
-                            schedule_id: schedule_id,
-                            participant_id: participant_id,
-                            event_id: eventsDetails.id
-                        },
-                        dataType: "JSON",
-                        success: function(res) {
-                            if (res.success) {
-                                const sched = self.participantSched.find(s => s.schedule_id == schedule_id);
-                                if (sched) sched.is_assigned = 0;
-                                toastr.success(res.toastr_msg, "Success", 5000);
-                            } else {
-                                toastr.error(res.toastr_msg, "Error", 5000);
-                            }
-                        },
-                        error: function() {
-                            toastr.error("Request failed. Please try again.", "Error", 5000);
-                        },
-                        complete: function() {
-                            self.$set(self.loadingUnassign, schedule_id, false);
-                        }
-                    });
+            self.$set(self.loadingUnassign, schedule_id, true);
+            $.ajax({
+                url: baseUrl("events/unassign_participant"),
+                type: "POST",
+                global: false,
+                data: {
+                    csrf_token: _csrf_hash,
+                    schedule_id: schedule_id,
+                    participant_id: participant_id,
+                    event_id: eventsDetails.id
+                },
+                dataType: "JSON",
+                success: function(res) {
+                    if (res.success) {
+                        const sched = self.participantSched.find(s => s.schedule_id == schedule_id);
+                        if (sched) sched.is_assigned = 0;
+                        toastr.success(res.toastr_msg, "Success", 5000);
+                    } else {
+                        toastr.error(res.toastr_msg, "Error", 5000);
+                    }
+                },
+                error: function() {
+                    toastr.error("Request failed. Please try again.", "Error", 5000);
+                },
+                complete: function() {
+                    self.$set(self.loadingUnassign, schedule_id, false);
                 }
             });
         },

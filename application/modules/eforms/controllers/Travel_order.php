@@ -40,7 +40,9 @@ class Travel_order extends MY_Controller
         
         $this->core_layout->setPageTitle("Travel Order - Masterfile");
         $this->core_layout->setPrivilegeName("to_masterfile");
-        $this->core_layout->addJs("js/eforms/travel_order/employee_to.js", true);
+
+        $version = filemtime(FCPATH.'assets/js/eforms/travel_order/employee_to.js');
+        $this->core_layout->addJs("js/eforms/travel_order/employee_to.js", true, array(), "?v={$version}");
 
         $this->load->view('core/templates/header');
         $this->load->view('eforms/travel_order/index');
@@ -169,7 +171,7 @@ class Travel_order extends MY_Controller
         $this->core_layout->setPageTitle("Travel Order - New Travel Order");
         $this->core_layout->setPrivilegeName("to_masterfile");
 
-        $version = filemtime(FCPATH.'assets/js/eforms/travel_order/new_travel_order.js');$version = filemtime(FCPATH.'assets/js/eforms/travel_order/new_travel_order.js');
+        $version = filemtime(FCPATH.'assets/js/eforms/travel_order/new_travel_order.js');
         $this->core_layout->addJs("js/eforms/travel_order/new_travel_order.js", true, $tempData,"?v={$version}");
         // $this->core_layout->addJs("js/eforms/travel_order/travel_order_sites.js", true);
 
@@ -713,56 +715,11 @@ class Travel_order extends MY_Controller
                 $telegram_remarks = '<b>REMARKS: </b>'.strtoupper($arr2->remarks).chr(10);
             }
 
-
-            
             $travel_details[] .= '<b>DESTINATION: </b>'.strtoupper($arr2->travel_from).' - '.strtoupper($arr2->travel_to).chr(10).'<b>DATE: </b>'.$tg_date_from.' - '.$tg_date_to.chr(10).$telegram_remarks.'<b>REQ BY: </b>'.strtoupper($this->getDriver($arr2->requested_by)).chr(10).'<b>PURPOSE: </b>'.strtoupper($arr2->purpose).chr(10).chr(10)."=";
         }
     
         if($insert){
-            if($service == 1){
-                $vehicle_name = $this->travel_order->vehicle_details($vehicle);
-                $veh_name = $vehicle_name->name." | ".$vehicle_name->plateno;
-                $vehicle_details = '<b>VEHICLE</b>: '.strtoupper($veh_name).chr(10).'<b>DRIVER</b>: '.strtoupper($driver_name).chr(10).chr(10);
-            }
-            if($hitch == 1){
-                $vehicle_name = $this->travel_order->vehicle_details($vehicle);
-                $veh_name = $vehicle_name->name." | ".$vehicle_name->plateno;
-                $vehicle_details = '<b>Vehicle</b>: '.strtoupper($veh_name).chr(10).'<b>Driver</b>: '.strtoupper($driver_name).chr(10).chr(10);
-            }
-            if($commute == 1){
-                $vehicle_details = '<b>VEHICLE</b>: COMMUTE'.chr(10);
-            }
-            if($personal == 1){
-                $vehicle_details = '<b>VEHICLE</b>: PERSONAL VEHICLE'.chr(10);
-            }
-            if($other == 1){
-                if($remarks == ""){
-                    $vehicle_details = "".chr(10);
-                }else{
-                    $vehicle_details = '<b>REMARKS</b>: '.strtoupper($remarks).chr(10).chr(10);
-                }
-            }
-            
-            $td = implode("=",$travel_details);
-            $tp = implode(" ",$travel_personnel);
-            // $telegram_msg = '';
-            // $telegram_msg .= '<b>TO #</b>: '.'TO' . $year . '-' . $month . '-' . $series .chr(10);
-            // $telegram_msg .= '<b>FILE: </b>'.strtoupper($this->input->post('company_id')).chr(10);
-            // $telegram_msg .= '<b>ORIGIN</b>: '.strtoupper($this->input->post('origin')).chr(10);
-            // $telegram_msg .= '<b>PREP BY: </b>'.strtoupper($user_id).chr(10);
-            // $telegram_msg .= '<b>PERSONNEL: </b>'.$tp.chr(10);
-            // $telegram_msg .= $vehicle_details;
-            // $telegram_msg .= str_replace("=","",$td);
-            // if($this->travel_order->telegram_config_if_exist('travel_order', 'count') > 0){
-            //     $this->travel_order->telegram($telegram_msg);
-
-            //     foreach($list2 as $send_to_depthead){
-            //         $head_id = $this->travel_order->getTelegramId($send_to_depthead->employee_id);
-            //         if($head_id != 2){
-            //             $this->travel_order->telegram_dept_heads($telegram_msg,$head_id);
-            //         }
-            //     }
-            // }
+            $this->travel_order->sendTelegram($last_id, 2);
             $this->core_layout->setEventLog("Add travel order.","add", "success", "gcceforms", "user");
         }else{
             $this->core_layout->setEventLog("Failed adding travel order.","add", "error", "gcceforms", "system");
@@ -1069,6 +1026,15 @@ class Travel_order extends MY_Controller
             $type = "success";
             $action = "update";
             $table = "user";
+
+            $travel_order = $this->db->select('is_service, is_hitch')->get_where('gcceforms.travel_order', array('id' => $id))->row();
+            $destinationFrom = $this->db->select('date_from')->get_where('gcceforms.travel_destination', array('travel_order_id' => $id))->row('date_from');
+
+            if (date('Y-m-d', strtotime($date)) <= date('Y-m-d', strtotime($destinationFrom))) {
+                if ($travel_order->is_service == 1 || $travel_order->is_hitch == 1) {
+                    $this->travel_order->sendTelegram($id, 157);
+                }
+            }
         }else{
             $message = "View Travel Order - Failed disapprove travel order ".$this->getReferenceNo($id).".";
             $type = "error";
@@ -1234,6 +1200,15 @@ class Travel_order extends MY_Controller
             $type = "success";
             $action = "update";
             $table = "user";
+
+            $travel_order = $this->db->select('is_service, is_hitch')->get_where('gcceforms.travel_order', array('id' => $id))->row();
+            $destinationFrom = $this->db->select('date_from')->get_where('gcceforms.travel_destination', array('travel_order_id' => $id))->row('date_from');
+
+            if (date('Y-m-d', strtotime($date)) <= date('Y-m-d', strtotime($destinationFrom))) {
+                if ($travel_order->is_service == 1 || $travel_order->is_hitch == 1) {
+                    $this->travel_order->sendTelegram($id, 4);
+                }
+            }
         }else{
             $message = "View Travel Order - Failed cancel travel order ".$this->getReferenceNo($id).".";
             $type = "error";
@@ -1502,5 +1477,4 @@ class Travel_order extends MY_Controller
         $data = $this->travel_order->getApprovedChartData();
         $this->output->set_content_type('json')->set_output(json_encode($data));
     }
-
 }

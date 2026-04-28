@@ -43,10 +43,7 @@ class Verifylogin extends MY_Controller{
                 redirect('login/authentication');
             break;
             case 'FORCE_PASSWORD_CHANGE':
-                $this->session->set_userdata([
-                    'modal' => 'show',
-                    'post' => $_POST
-                ]);
+                $this->session->set_userdata($result['session']);
                 redirect('login/change_password');
             break;
             case 'SUSPENDED':

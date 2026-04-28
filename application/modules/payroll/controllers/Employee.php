@@ -360,7 +360,8 @@
             $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
             $this->core_layout->addJs('plugins/export_plugins/xlsx.full.min.js', true);
 
-            $this->core_layout->addJs("js/payroll/employee/payroll.group.js", true, $tempData);
+            $version = filemtime(FCPATH.'assets/js/payroll/employee/payroll.group.js');
+            $this->core_layout->addJs("js/payroll/employee/payroll.group.js", true, $tempData, "?v=$version");
 
             $this->load->view('core/templates/header');
             $this->load->view('payroll/payroll/employee_group');
@@ -602,6 +603,13 @@
 
         function restore_payroll_employee_group() {
             $data = $this->employee->restorePayrollEmployeeGroup();
+            $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+        }
+
+        public function set_as_paid_loan() {
+            $data = $this->employee->setAsPaidLoan();
             $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));

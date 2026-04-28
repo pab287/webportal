@@ -37,6 +37,8 @@ class Timesheet_model extends CI_Model{
     protected $tbl_ps_employee_regular_ndiff = "payroll.employee_regular_ndiff";
     protected $tbl_auto_overtime = 'payroll.employee_auto_overtime';
 
+    protected $tbl_devices = 'gcctimeutility.devices';
+
     private $db_debug;
     private $logged_in_user;
     private $today;
@@ -6766,6 +6768,7 @@ class Timesheet_model extends CI_Model{
         $this->db->where("ts.id", $timesheet_id);
         $timesheetRow = $this->db->get();
         $resultSet["timesheet"] = $timesheetRow->row();
+        $resultSet["devices"] = $this->get_ts_devices($employee_id, $date);
         $resultSet["employee"] = $this->db->select("CONCAT(emp.lastname,
             CASE WHEN emp.suffix != 'N/A' AND emp.suffix != 'NONE' AND emp.suffix != ''
             AND emp.suffix IS NOT NULL THEN CONCAT(' ', emp.suffix) ELSE '' END, ', ',
@@ -8875,12 +8878,15 @@ class Timesheet_model extends CI_Model{
         if($status){ $this->db->where("status", $status); }
 
         if($dtCfg){
-            $limit = isset($dtCfg->length) && intval($dtCfg->length) > 0 ? intval($dtCfg->length): 10;
+            $limit = isset($dtCfg->length) && intval($dtCfg->length) ? intval($dtCfg->length): 10;
             $start = isset($dtCfg->start) && intval($dtCfg->start) > 0 ? intval($dtCfg->start): 0;
             $orderBy = isset($dtCfg->order_direction) && $dtCfg->order_direction ? $dtCfg->order_direction: "asc";
             $orderColumn = isset($dtCfg->order_column) && $dtCfg->order_column ? $dtCfg->order_column: "id";
             $this->db->order_by($orderColumn, $orderBy);
-            $this->db->limit($limit, $start);
+
+            if($limit != -1){
+                $this->db->limit($limit, $start);
+            }
         }
 
         $qTemp = $this->db->get();
@@ -8929,6 +8935,7 @@ class Timesheet_model extends CI_Model{
                 $value->shift_pm_end = (isset($value->shift_pm_end) && $value->shift_pm_end)? date("H:i", strtotime($value->shift_pm_end)): "--:--";
                 $value->shift_id = $shifts;
                 $value->employee_id = $employees;
+                $value->employees = $this->get_custom_shift_employees($employees);
                 $value->employee_count = count((array)$employees);
             }
         }
@@ -10397,12 +10404,16 @@ class Timesheet_model extends CI_Model{
         $weekDay = date('l', strtotime($date));
         $empName = $this->getEmployeeNameById($id);
         $_date = date('F d, Y', strtotime($date));
+        $idx = 0;
 
         $result = array();
         if ($id) {
+            $patternCore = 'i:' . $idx . ';s:' . strlen($id) . ':"' . $id . '";';
+
             $this->db->select('id, employee_id, shift_id');
             $this->db->where('DATE(scheduled_date)', $date);
             $this->db->where('set_in', 'timesheet');
+            $this->db->LIKE('employee_id', $patternCore, 'both');
             $this->db->from($this->tbl_timesheet_customized_shift_schedule);
             $_query = $this->db->get();
 
@@ -10457,5 +10468,60 @@ class Timesheet_model extends CI_Model{
             END)) as employee_name");
         $qTemp = $this->db->get_where($this->tbl_employees, array('id' => $id));
         return $qTemp->num_rows() === 1 ? $qTemp->row()->employee_name : $id;
+    }
+
+    protected function get_custom_shift_employees($ids = array()) {
+        $result = array();
+
+        if ($ids && !empty($ids)) {
+            $this->db->select("CONCAT(lastname, CASE WHEN suffix != 'N/A' AND suffix !='NONE' AND suffix !='' AND suffix IS NOT NULL THEN CONCAT(' ', suffix) ELSE ''  END, ', ',
+            firstname, ' ', CASE WHEN middlename != 'N/A' AND middlename != 'NONE'
+            AND middlename !='' AND middlename IS NOT NULL THEN CONCAT(SUBSTR(middlename, 1, 1), '.') ELSE '' END) employee_name");
+            $this->db->where_in('id', $ids);
+            $this->db->from($this->tbl_employees);
+            $query = $this->db->get();
+
+            if ($query->num_rows() > 0) {
+                $temp = $query->result();
+
+                $result = array_column($temp, 'employee_name');
+            }
+
+        }
+        
+        return $result;
+    }
+    
+    public function get_ts_devices($emp_id, $date) {
+        $logs = $this->db->select('attend.device_id, dev.device_name, attend.datetime')
+            ->from($this->tbl_employees . ' emp')
+            ->join($this->tbl_attendance . ' attend', 'attend.biometric_id = emp.biometricno', 'left')
+            ->join($this->tbl_devices . ' dev', 'dev.id = attend.device_id', 'left')
+            ->where('emp.id', $emp_id)
+            ->where('DATE(attend.datetime)', $date)
+            ->order_by('attend.datetime', 'ASC')
+            ->get()
+            ->result();
+
+        // Group by device_name
+        $grouped = [];
+
+        foreach($logs as $type => $entry) {
+            if (!$entry) continue;
+
+            $deviceName = $entry->device_name;
+
+            if (!isset($grouped[$deviceName])) {
+                $grouped[$deviceName] = [];
+            }
+
+            $grouped[$deviceName][] = [
+                'device_id' => $entry->device_id,
+                'datetime' => $entry->datetime,
+                'type' => $type
+            ];
+        }
+
+        return $grouped;
     }
 }

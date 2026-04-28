@@ -1459,15 +1459,16 @@ class Reports_model extends CI_Model{
                 CASE WHEN UPPER(TRIM(emp.suffix)) != 'N/A' AND
                     UPPER(TRIM(emp.suffix !='NONE')) AND emp.suffix !='' AND
                     emp.suffix IS NOT NULL THEN CONCAT(' ', UPPER(TRIM(emp.suffix))) ELSE ''
-                END) as employee_name, emp.idno, IFNULL(UPPER(pos.name), 'NO ASSIGNED POSITION') as position,
+                END) as employee_name, emp.id as emp_id, emp.idno, IFNULL(UPPER(pos.name), 'NO ASSIGNED POSITION') as position,
                 COALESCE(SUM(IF(ts.date >= emp.date_start && ts.am_late > 0, 1, 0))) + COALESCE(SUM(IF(ts.date >= emp.date_start && ts.pm_late > 0, 1, 0))) as reports_total,
                 CONCAT(
                     GROUP_CONCAT(DISTINCT IF(ts.date >= emp.date_start && ts.am_late > 0, CONCAT(ts.date, ' ', ts.am_in), '')),
                     GROUP_CONCAT(DISTINCT IF(ts.date >= emp.date_start && ts.pm_late > 0, CONCAT(ts.date, ' ', ts.pm_in), ''))
-                ) as attendance_logs, MAX(ts.date) as max_date, emp.date_start");
+                ) as attendance_logs, MAX(ts.date) as max_date, emp.date_start, dept.description as department");
                 $this->db->from("gcctimeutility.timesheet as ts");
                 $this->db->join("gccmaster.tblemployees as emp", "emp.id = ts.emp_id", "INNER");
                 $this->db->join("gcchris.tblposition as pos", "pos.id = emp.position OR pos.name = emp.position", "LEFT");
+                $this->db->join("gcchris.tbldepartments as dept", "dept.id = emp.department_id", "LEFT");
                 $this->db->where("ts.has_shift", 1);
                 /*** $this->db->where("ts.verified", 1); ***/
                 $this->db->group_start();
@@ -1532,9 +1533,15 @@ class Reports_model extends CI_Model{
             $arrResponse = $this->generateLateReport($post);
             $arrResponse["filters"]["report_type"] = "Attendance Late Report";
         }
-        elseif ($reportType == "absentee"){
+
+        if ($reportType == "absentee"){
             $arrResponse = $this->generateAbsenteeReport($post);
             $arrResponse["filters"]["report_type"] = "Attendance Absentee Report";
+        }
+
+        if ($reportType == "late_absentee") {
+            $arrResponse = $this->generateLate_AbsenteeReport($post);
+            $arrResponse["filters"]["report_type"] = "Attendance Late & Absentee Report";
         }
 
         return $arrResponse;
@@ -1735,7 +1742,7 @@ class Reports_model extends CI_Model{
                                     foreach ($propShift as $prop) { $tempSchedule->{$prop} = $nSchedule->{$prop}; }
                                 }
 
-                                $isWholeDay = true;
+                                // $isWholeDay = true;
                                 $tempSchedule->am_start = $tempSchedule->am_start ? $tempSchedule->am_start : "00:00:00";
                                 $tempSchedule->am_end = $tempSchedule->am_end ? $tempSchedule->am_end : "00:00:00";
                                 $tempSchedule->pm_start = $tempSchedule->pm_start ? $tempSchedule->pm_start : "00:00:00";
@@ -1744,16 +1751,10 @@ class Reports_model extends CI_Model{
                                 $amDateTimeLog = $tempSchedule->am_start != "00:00:00" && $tempSchedule->am_end != "00:00:00" ? $date." ".$tempSchedule->am_start."~".$date." ".$tempSchedule->am_end : null;
                                 $pmDateTimeLog = $tempSchedule->pm_start != "00:00:00" && $tempSchedule->pm_end != "00:00:00" ? $date." ".$tempSchedule->pm_start."~".$date." ".$tempSchedule->pm_end : null;
 
-                                if (isset($tempSchedule->am_start) && isset($tempSchedule->am_end) && isset($tempSchedule->pm_start) && isset($tempSchedule->pm_end)){
-                                    if (($tempSchedule->am_start == null || $tempSchedule->am_start == "00:00:00")
-                                        && ($tempSchedule->am_end == null || $tempSchedule->am_end == "00:00:00")){
-                                        $isWholeDay = false;
-                                    }
-                                    if (($tempSchedule->pm_start == null || $tempSchedule->pm_start == "00:00:00")
-                                        && ($tempSchedule->pm_end == null || $tempSchedule->pm_end == "00:00:00")){
-                                        $isWholeDay = false;
-                                    }
-                                }
+                                $hasAM = $tempSchedule->am_start !== "00:00:00" && $tempSchedule->am_end !== "00:00:00";
+                                $hasPM = $tempSchedule->pm_start !== "00:00:00" && $tempSchedule->pm_end !== "00:00:00";
+                                $isWholeDay = $hasAM && $hasPM;
+
                                 if($amDateTimeLog){ $employeeLogDates[$key][$md5Date][] = $amDateTimeLog; }
                                 if($pmDateTimeLog){ $employeeLogDates[$key][$md5Date][] = $pmDateTimeLog; }
 
@@ -1765,6 +1766,8 @@ class Reports_model extends CI_Model{
                 }
                 
                 $updateEmployeeAbsences = array();
+
+                $overwrite_max_date = Date("Y-m-d", strtotime($endDate));
 
                 if(is_array($employeeDates) && !empty($employeeDates)){
                     foreach ($employeeDates as $empId => $dates) {
@@ -1782,11 +1785,11 @@ class Reports_model extends CI_Model{
                         $this->db->where("ts.emp_id", $empId);
                         $this->db->order_by("ts.date", "ASC");
                         $qdates = $this->db->get();
-
+                        
                         if($qdates->num_rows() > 0){
                             $qdates = $qdates->row();
-                            $qMaxDate = $qdates->max_date;
-                            
+                            // $qMaxDate = $qdates->max_date;
+                            $qMaxDate = $overwrite_max_date;
                             $qDateStart = $qdates->date_start;
 
                             $tsDates = $qdates->dates;
@@ -1794,15 +1797,35 @@ class Reports_model extends CI_Model{
                             $tsDates = array_map("trim", $tsDates);
                             $tsDates = array_filter($tsDates);
                             $tsDates = array_unique($tsDates);
-
+                            
                             $arrLogs = array();
                             $updateEmployeeAbsences[$empId]["attendance_logs"] = "";
                             $updateEmployeeAbsences[$empId]["absentee_dates"] = array();
                             foreach ($dates as $dt) {
                                 if(strtotime($dt) >= strtotime($qDateStart) && strtotime($dt) <= strtotime($qMaxDate) && !in_array($dt, $tsDates)){
                                     $md5Datex = md5($dt);
-                                    $updateEmployeeAbsences[$empId]["absentee_total"] = isset($updateEmployeeAbsences[$empId]["absentee_total"]) && $updateEmployeeAbsences[$empId]["absentee_total"] ? $updateEmployeeAbsences[$empId]["absentee_total"] : 0;
-                                    $updateEmployeeAbsences[$empId]["absentee_total"] += $newEmployeeRecord[$empId][$md5Datex];
+
+                                    $updateEmployeeAbsences[$empId]["absentee_total"] = isset($updateEmployeeAbsences[$empId]["absentee_total"]) ? $updateEmployeeAbsences[$empId]["absentee_total"] : 0;
+                                    
+                                    // --- NEW: derive credit from actual logs for this date ---
+                                    $dayCredit = 0;
+                                    if(isset($employeeLogDates[$empId][$md5Datex]) && is_array($employeeLogDates[$empId][$md5Datex])){
+                                        
+                                        foreach($employeeLogDates[$empId][$md5Datex] as $logSlot){
+                                            // Each slot = "YYYY-MM-DD HH:MM:SS~YYYY-MM-DD HH:MM:SS"
+                                            $slotParts = explode("~", $logSlot);
+                                            $slotHour  = (int) date("H", strtotime(trim($slotParts[0])));
+                                            $dayCredit += ($slotHour < 12) ? 0.5 : 0.5; // AM or PM = 0.5 each
+                                        }
+                                        // Cap at 1 (can't exceed whole day)
+                                        $dayCredit = min($dayCredit, 1);
+                                    } else {
+                                        // Fallback to shift-based value if no logs found
+                                        $dayCredit = $newEmployeeRecord[$empId][$md5Datex] ?? 1;
+                                    }
+                                    // --- END NEW ---
+
+                                    $updateEmployeeAbsences[$empId]["absentee_total"] += $dayCredit;
                                     
                                     if(is_array($employeeLogDates[$empId][$md5Datex]) && count($employeeLogDates[$empId][$md5Datex]) > 0){
                                         foreach ($employeeLogDates[$empId][$md5Datex] as $dtx) { $arrLogs[] = $dtx; }
@@ -1862,10 +1885,11 @@ class Reports_model extends CI_Model{
                             ts.date, ''))
                     )
                 ) as attendance_dates,
-                MAX(ts.date) as max_date, emp.date_start");
+                MAX(ts.date) as max_date, emp.date_start, dept.description as department");
                 $this->db->from("gcctimeutility.timesheet as ts");
                 $this->db->join("gccmaster.tblemployees as emp", "emp.id = ts.emp_id", "INNER");
                 $this->db->join("gcchris.tblposition as pos", "pos.id = emp.position OR pos.name = emp.position", "LEFT");
+                $this->db->join("gcchris.tbldepartments as dept", "dept.id = emp.department_id", "LEFT");
                 $this->db->where("ts.is_holiday", 0);
                 $this->db->where("ts.has_shift", 1);
                 /*** $this->db->where("ts.verified", 1); ***/
@@ -1882,7 +1906,8 @@ class Reports_model extends CI_Model{
                     $filter = "";
                 }
                 if($ctrCount > 0){
-                    $maxDate = $qAttendance->row()->max_date;
+                    // $maxDate = $qAttendance->row()->max_date;
+                    $maxDate = $overwrite_max_date;
                     $qData = array();
                     $loaReference = array();
                     foreach($qAttendance->result() as $attx){
@@ -3378,5 +3403,97 @@ class Reports_model extends CI_Model{
         }else{
             return false;
         }
+    }
+
+    public function generateLate_AbsenteeReport($post) {
+        $lateResult = $this->generateLateReport($post);
+        $absentResult = $this->generateAbsenteeReport($post);
+
+        $lateData = $lateResult["data"] ?? [];
+        $absentData = $absentResult["data"] ?? [];
+
+        $lateData   = json_decode(json_encode($lateData), true);
+        $absentData = json_decode(json_encode($absentData), true);
+
+        $merged = [];
+
+        // Index late records
+        foreach ($lateData as $row) {
+            $empId = $row["emp_id"];
+
+            $merged[$empId] = [
+                "emp_id"        => $row["emp_id"],
+                "employee_name" => $row["employee_name"],
+                "idno"          => $row["idno"],
+                "department"    => $row["department"],
+                "position"      => $row["position"],
+                "date_start"    => $row["date_start"],
+                "max_date"      => $row["max_date"],
+
+                "late" => [
+                    "total_late"  => (float) ($row["reports_total"] ?? 0),
+                    "late_dates"  => $row["attendance_logs"] ?? null
+                ],
+
+                "absent" => [
+                    "total_absent"      => 0,
+                    "absent_dates"      => null,
+                    "attendance_logs"   => null,
+                    "loa_reference"     => []
+                ]
+            ];
+        }
+
+        $loaMap = $absentResult["loa_reference"] ?? [];
+
+        // Merge absent records
+        foreach ($absentData as $row) {
+            $empId = $row["emp_id"];
+
+            $absentPayload = [
+                "total_absent"      => (float) ($row["reports_total"] ?? 0),
+                "absent_dates"      => $row["attendance_dates"] ?? null,
+                "attendance_logs"   => $row["attendance_logs"] ?? null,
+                "loa_reference"     => $loaMap[$empId] ?? null
+            ];
+
+            if (!isset($merged[$empId])) {
+                $merged[$empId] = [
+                    "emp_id"        => $row["emp_id"],
+                    "employee_name" => $row["employee_name"],
+                    "idno"          => $row["idno"],
+                    "position"      => $row["position"],
+                    "date_start"    => $row["date_start"],
+                    "max_date"      => $row["max_date"],
+
+                    "late" => [
+                        "total_late"    => 0,
+                        "late_dates"    => null
+                    ],
+
+                    "absent" => $absentPayload
+                ];
+            } else {
+                $merged[$empId]["absent"] = $absentPayload;
+            }
+        }
+
+        // Remove employees with no violations
+        foreach ($merged as $empId => $row) {
+            if ($row["late"]["total_late"] == 0 && $row["absent"]["total_absent"] == 0) {
+                unset($merged[$empId]);
+            }
+        }
+
+        // Re-index numerically for DataTables
+        $finalData = array_values($merged);
+        $count_emp = count($merged);
+
+        return [
+            "data"       => $finalData,
+            "response"   => true,
+            "filters"    => $lateResult["filters"], // reuse filters
+            "toastr_msg" => "Last verified attendance date on `{$lateResult["data"][0]["max_date"]}`, A total of ({$count_emp}) employee late & absentee attendance record/s found!"
+        ];
     }
 }

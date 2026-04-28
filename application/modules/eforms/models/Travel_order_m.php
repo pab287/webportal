@@ -3312,7 +3312,7 @@
 
         public function generateDailyTravelOrderSummary($date = null) {
             $currentDate = ($date) ? date("Y-m-d", strtotime($date)) : date("Y-m-d");
-            $sqlSelect = "a.id, a.reference_no, a.station, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks, a.vehicle_id, ";
+            $sqlSelect = "a.id, a.reference_no, a.station, a.is_service, a.is_hitch, a.is_commute, a.is_personal, a.is_others, a.others_remarks, a.vehicle_id, a.is_emergency, ";
             $sqlSelect .= "a.driver_id, a.status, a.created_by, a.approved_by, b.lastname, b.firstname, b.middlename, b.suffix, ";
             $sqlSelect .= "IFNULL(pos.name, IFNULL(b.position, '---')) as position, c.name as vehicle_name, c.plateno";
 
@@ -3588,7 +3588,7 @@
         }
 
         public function telegram_config_if_exist($module, $data){
-            $this->db->where("module","travel_order");
+            $this->db->where("module",$module);
             $this->db->order_by("created_at","DESC");
             $telegram_details = $this->db->get("gcceforms.telegram_config");
             $details = $telegram_details->row();
@@ -3600,12 +3600,19 @@
             }
         }
 
-        public function telegram($msg) {
+        public function telegram($msg, $channel = 0) {
             try {
-                $data = $this->telegram_config_if_exist('travel_order', 'data');
+                $module = $channel == 0 ? "travel_order" : "travel_order_topics";
+
+                $data = $this->telegram_config_if_exist($module, 'data');
                 $telegrambot=$data->telegram_bot_token;
                 $telegramchatid= $data->chat_id;
-                $url='https://api.telegram.org/bot'.$telegrambot.'/sendMessage';$data=array('chat_id'=>$telegramchatid,'text'=>$msg,'parse_mode'=>'html');
+                
+                $_data = $channel == 0 
+                    ? array('chat_id'=>$telegramchatid,'text'=>$msg,'parse_mode'=>'html') 
+                    : array('message_thread_id'=>$channel, 'chat_id'=>$telegramchatid,'text'=>$msg,'parse_mode'=>'html');
+
+                $url='https://api.telegram.org/bot'.$telegrambot.'/sendMessage';$data=$_data;
                 $options=array('http'=>array('method'=>'POST','header'=>"Content-Type:application/x-www-form-urlencoded\r\n",'content'=>http_build_query($data),'ignore_errors'=>true),);
                 $context=stream_context_create($options);
                 $result=file_get_contents($url,false,$context);
@@ -3748,6 +3755,7 @@
             return "{$code}{$year}-{$month}-{$series}";
         }
 
+        //here
         public function addTravelOrderV2(){
             date_default_timezone_set('Asia/Singapore');
             $resultarray = array();
@@ -3844,6 +3852,10 @@
                 }
                 $this->delete_temp_all_destination($this->user_data['id']);
 
+                if ($service == 1 || $hitch == 1) {
+                    $this->travel_order->sendTelegram($to_last_id, 2);
+                }
+
                 $resultarray['status'] = true;
                 $resultarray['msg'] = 'Travel order has been created successfully.';
                 $resultarray["redirect"] = site_url("eforms/travel_order/view_travel_order?id={$to_last_id}");
@@ -3885,6 +3897,19 @@
             $driver_name = isset($post['driver']) ? $this->getName($driver) : '';
             $is_emergency = isset($post['is_emergency']) && $post['is_emergency'] ? $post['is_emergency'] : 0;
 
+            if ($commute == 1 || $personal == 1 || $other == 1) {
+                $vehicle = 0;
+                $driver = 0;
+                $driver_name = '';
+            } else {
+                $commute = 0;
+                $personal = 0;
+                $other = 0;
+                $vehicle = isset($post['vehicle']) ? $post['vehicle'] : 0;
+                $driver = isset($post['driver']) ? $post['driver'] : 0;
+                $driver_name = isset($post['driver']) ? $this->getName($driver) : '';
+            }
+
             $data = array(
                 'company' => $post['company_id'],
                 'department' => $post['dep_id'],
@@ -3895,7 +3920,7 @@
                 'is_commute' => $commute,
                 'is_personal' => $personal,
                 'is_others' => $other,
-                'others_remarks' => $post['remark'],
+                'others_remarks' =>  $other == 1 ? $post['remark'] : "",
                 'last_edited_by' => $edited_by,
                 'last_edited_dt' => $current_date,
                 'last_edited_id' => $user_id,
@@ -3957,13 +3982,17 @@
             if($this->checkAssignTravelType($id)){
                 $post = $this->update_travel_order(array('id' => $id), $data);
                 if ($post) {
-
+                    $travel_order = $this->db->select('is_service, is_hitch')->get_where('gcceforms.travel_order', array('id' => $id))->row();
                     $destinationFrom = $this->db->select('date_from')->get_where('gcceforms.travel_destination', array('travel_order_id' => $id))->row('date_from');
                     // $createdTO = $this->db->select('created_dt')->get_where('gcceforms.travel_destination', array('travel_order_id' => $id))->row('created_dt');
 
                     // prevents sending notification when approving a backlogs
-                    if (date('Y-m-d', strtotime($date)) < date('Y-m-d', strtotime($destinationFrom))) {
+                    if (date('Y-m-d', strtotime($date)) <= date('Y-m-d', strtotime($destinationFrom))) {
                         $this->sendTelegram($id);
+                        
+                        if ($travel_order->is_service == 1 || $travel_order->is_hitch == 1) {
+                            $this->sendTelegram($id, 152);
+                        }
                     }
 
                     $message = "View Travel Order - Approve travel order ".$this->getReferenceNo($id).".";
@@ -4105,7 +4134,7 @@
             return $this->contacts->sendSMS($query->row('mobile_no'), $msg);
         }
 
-        function sendTelegram($id){
+        function sendTelegram($id, $channel = 0){
             $personnel = $this->getPersonnelById($id);
             $destination = $this->getDestinationById($id);
             $query = $this->db->get_where("gcceforms.travel_order", array("id"=>$id));
@@ -4114,9 +4143,11 @@
             if ($query->num_rows() > 0) {
                 $row = $query->row();
                 if($row->is_service > 0){
-                    $vehicle_name = $this->vehicle_details($row->vehicle_id);
-                    $veh_name = $vehicle_name->name." | ".$vehicle_name->plateno;
-                    $vehicle_details = '<b>VEHICLE</b>: '.strtoupper($veh_name).chr(10).'<b>DRIVER</b>: '.strtoupper($row->driver).chr(10).chr(10);
+                    if ($row->vehicle_id != 0) {
+                        $vehicle_name = $this->vehicle_details($row->vehicle_id);
+                        $veh_name = $vehicle_name->gen_code." | ".$vehicle_name->plateno." | ".$vehicle_name->name;
+                        $vehicle_details = '<b>VEHICLE</b>: '.strtoupper($veh_name).chr(10).'<b>DRIVER</b>: '.strtoupper($row->driver).chr(10).chr(10);
+                    }
                 }
                 if($row->is_hitch > 0){
                     $vehicle_name = $this->vehicle_details($row->vehicle_id);
@@ -4145,23 +4176,34 @@
                 $recomemnd_remarks = isset($row->approved_recommend_remarks) && $row->approved_recommend_remarks ? $row->approved_recommend_remarks : 'NO REMARKS';
 
                 $telegram_msg = "<b>".strtoupper($row->station).$tempEmergency."</b>".chr(10).chr(10);
+
+                if($channel != 0) {
+                    $telegram_msg .= '<b>Status:</b> '.strtoupper($row->status).chr(10);
+                }
                 
                 $telegram_msg .= '<b>TO #</b>: '.$row->reference_no.chr(10);
                 $telegram_msg .= '<b>FILE UNDER: </b>'.strtoupper($row->company).chr(10);
                 $telegram_msg .= '<b>PREP BY: </b>'.strtoupper($row->created_by).chr(10);
-                $telegram_msg .= '<b>RECOMMENDED BY: </b>'.strtoupper($row->approved_recommend_by).chr(10);
-                $telegram_msg .= '<b>RECOMMENDED REMARKS: </b>'.strtoupper($recomemnd_remarks).chr(10);
-                $telegram_msg .= '<b>RECOMMENDED DATE: </b>'.strtoupper($row->approved_recommend_date).chr(10);
-                $telegram_msg .= '<b>APPROVED BY: </b>'.strtoupper($row->approved_by).chr(10);
-                $telegram_msg .= '<b>APPROVED REMARKS: </b>'.strtoupper($approved_remarks).chr(10);
-                $telegram_msg .= '<b>APPROVED DATE: </b>'.date('F d, Y h:i A', strtotime($row->approved_dt)).chr(10);
+
+                if ($channel == 0) {
+                    $telegram_msg .= '<b>RECOMMENDED BY: </b>'.strtoupper($row->approved_recommend_by).chr(10);
+                    $telegram_msg .= '<b>RECOMMENDED REMARKS: </b>'.strtoupper($recomemnd_remarks).chr(10);
+                    $telegram_msg .= '<b>RECOMMENDED DATE: </b>'.strtoupper($row->approved_recommend_date).chr(10);
+                    $telegram_msg .= '<b>APPROVED BY: </b>'.strtoupper($row->approved_by).chr(10);
+                    $telegram_msg .= '<b>APPROVED REMARKS: </b>'.strtoupper($approved_remarks).chr(10);
+                    $telegram_msg .= '<b>APPROVED DATE: </b>'.date('F d, Y h:i A', strtotime($row->approved_dt)).chr(10);
+                }
+
                 $telegram_msg .= '<b>PERSONNEL: </b>'.$pers.chr(10);
                 $telegram_msg .= $vehicle_details;
                 $telegram_msg .= str_replace("=","",$dest);
-                if($this->telegram_config_if_exist('travel_order', 'count') > 0){
-                    $this->telegram($telegram_msg);
+                $module = $channel == 0 ? "travel_order" : "travel_order_topics";
+                if($this->telegram_config_if_exist($module, 'count') > 0){
+                    $this->telegram($telegram_msg, $channel);
     
-                    $this->sendTelegramToPersonnelHeads($id, $telegram_msg);
+                    if ($module == 0) {
+                        $this->sendTelegramToPersonnelHeads($id, $telegram_msg);
+                    }
                 }
             }
         }
@@ -5540,4 +5582,19 @@
             return $data;
         }
 
+        public function test_send_per_topic(){
+            $msg = 'test message';
+            try {
+                $data = $this->telegram_config_if_exist('travel_order', 'data');
+                $telegrambot=$data->telegram_bot_token;
+                $telegramchatid= -1003772834827;
+                $url='https://api.telegram.org/bot'.$telegrambot.'/sendMessage';$data=array('message_thread_id'=>2,'chat_id'=>$telegramchatid,'text'=>$msg,'parse_mode'=>'html');
+                $options=array('http'=>array('method'=>'POST','header'=>"Content-Type:application/x-www-form-urlencoded\r\n",'content'=>http_build_query($data),'ignore_errors'=>true),);
+                $context=stream_context_create($options);
+                $result=file_get_contents($url,false,$context);
+                return $result;
+            } catch (Exception $e) {
+                return false;
+            }
+        }
     }

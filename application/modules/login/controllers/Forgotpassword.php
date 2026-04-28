@@ -7,7 +7,7 @@ class Forgotpassword extends MY_Controller {
  	{
    		parent::__construct();
    		$this->load->helper('url');
-		$this->load->library('session');
+		//$this->load->library('session');
 		$this->load->model('Login_m');
 		$this->load->helper('string');
  	}

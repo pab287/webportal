@@ -447,8 +447,8 @@ class Billing extends MY_Controller {
         ->set_output(json_encode($data));
     }
 
-    function get_bill_data(){
-        $data = $this->billing->getBillData();
+    function get_bill_data($bill_id){
+        $data = $this->billing->getBillData($bill_id);
 		$this->output
         ->set_content_type('json')
         ->set_output(json_encode($data));

@@ -29,13 +29,18 @@
             $this->load->view('core/templates/footer');
         }
 
-        public function masterfile()
-        {
+        public function masterfile(){
+            $data['companies'] = $this->loa->getSelect2Company();
+            $data['departments'] = $this->loa->getSelect2Department();
+            $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
+            $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
             $this->core_layout->addCss('js/querybuilder/query-builder.default.min.css', TRUE);
             $this->core_layout->addJs('js/querybuilder/query-builder.standalone.min.js', TRUE);
             
+            $version = filemtime(FCPATH.'assets/js/eforms/loa/loa.js');
+
             $this->core_layout->setPageTitle("Leave of Absence - Masterfile");
-            $this->core_layout->addJs("js/eforms/loa/loa.js", true);
+            $this->core_layout->addJs("js/eforms/loa/loa.js", true,$data,"?v={$version}");
             $this->core_layout->setPrivilegeName("eforms_loa");
             $this->load->view('core/templates/header');
             $this->load->view('eforms/loa/index');
@@ -167,6 +172,10 @@
             $month = substr($date, 5, 2);
             $list = $this->loa->series($year, $month);
             $series = '';
+            $sms_sent = false;
+            $email_sent = false;
+            $email = null;
+            
             if (sizeof($list) > 0) {
                 foreach ($list as $arr) {
                     $x = $arr->ref_series;

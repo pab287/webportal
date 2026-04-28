@@ -65,7 +65,9 @@ class Timesheet extends MY_Controller {
     public function custom_shift_schedule() {
         $this->core_layout->setPrivilegeName("gcctime_timesheet_custom_shift_schedule");
         $this->core_layout->addCss("css/time/timesheet/timesheet.styles.css", TRUE);
-        $this->core_layout->addJs("js/time/timesheet/custom_shift_schedule.script.js", TRUE);
+
+        $version = filemtime(FCPATH.'assets/js/time/timesheet/custom_shift_schedule.script.js');
+        $this->core_layout->addJs("js/time/timesheet/custom_shift_schedule.script.js", TRUE, array(), "?version={$version}");
 
         $this->load->view('core/templates/header');
         $this->load->view('timesheet/custom_shift_schedule/index');

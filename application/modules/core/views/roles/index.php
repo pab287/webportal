@@ -137,6 +137,7 @@
 				</div>
 			</div>
 			<div class="modal-footer">
+				<button type="button" class="btn btn-warning btnUpdate clonableUserRole text-left m--font-bolder" data-raw="{}">Clone User Role</button>
 				<button class="btn btn-danger" data-dismiss="modal">Cancel</button>
 				<button type="submit" class="btn btn-primary btn-submit btnUpdate">Save</button>
 			</div>

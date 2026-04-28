@@ -6,6 +6,7 @@ var _modalUserModuleAssign = $("#modal-user_module-assign");
 var _modalUserRoleAssign = $("#modal-user_role-assign");
 var _modalUserRolePrivilege = $("#modal-user_role-privilege");
 var search_val = "";
+let globalRawValue = {};
 
 (function ($, undefined) {
   "use strict";
@@ -220,6 +221,7 @@ function roleActionUpdate() {
           data: { id: dataId, csrf_token: _csrf_hash },
           success: function (data) {
             if (data.response) {
+              const { value } = data;
               _modalUserRoleEdit.find("input.inptId").val(data.value["id"]);
               _modalUserRoleEdit.find("input.inptName").val(data.value["name"]);
               _modalUserRoleEdit
@@ -240,6 +242,8 @@ function roleActionUpdate() {
                   _checkedInactive.prop("checked", true);
                 }
               }
+              
+              globalRawValue = { ...value };
               $(_modalUserRoleEdit).modal("show");
             }
           }
@@ -650,4 +654,47 @@ jQuery(document).on(
 $('#generalSearch').donetyping(function (callback) {
   search_val = $(this).val();
   _dtUserRole.ajax.reload();
+});
+
+$(".clonableUserRole", _modalUserRoleEdit).on("click", function(){
+  const { id, name, description } = globalRawValue;  
+  Swal.fire({
+        title: 'Clone User Role?',
+        text: "Are you sure you want to clone this user role `"+ description.toUpperCase() +"`?",
+        icon: 'question',
+        input: "textarea",
+        inputLabel: "New User Role Description",
+        inputValidator: (result) => {
+            return !result && "Role description is required!";
+        },
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, Clone it!',
+        allowOutsideClick: false,
+        target: document.querySelector('.modal.show') || document.body,
+    }).then((result) => {
+        if (result.isConfirmed && typeof result.value !== "undefined" && result.value) {
+          $.ajax({
+            url: siteUrl("core/roles/clone_user_role"),
+            type: "POST",
+            data: {
+              csrf_token: _csrf_hash,
+              id: id,
+              name: name,
+              description: result.value, 
+            },
+            dataType: "json",
+            success: function(json){
+              if(json.response){
+                toastr.success(json.toastr_msg, "Clone User Role", 5000);
+                _dtUserRole.ajax.reload(null, false);
+                $(_modalUserRoleEdit).modal("hide");
+              }else{
+                toastr.error(json.toastr_msg, "Error - Clone User Role", 5000);
+              }
+            }
+          });
+        }
+    });
 });

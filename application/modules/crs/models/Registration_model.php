@@ -155,7 +155,6 @@ class Registration_model extends CI_Model{
             if ($insert) {
                 $insert_id = $this->db->insert_id();
                 $this->temp_files($insert_id);
-                
                 $filename = $_FILES['files']['name'];
                 $filepath = "uploads/files/hrd/resume_".$insert_id;
 
@@ -2322,4 +2321,235 @@ class Registration_model extends CI_Model{
             return true;
         }
     }
+
+    public function select2PositionData(){
+        $this->db->select('id, name as text');
+        $this->db->from('gcchris.tblposition');
+        $this->db->where('is_archived', 0);
+        $this->db->where('name !=', '');
+        $this->db->order_by('name', 'ASC');
+        $results = $this->db->get()->result();
+        return $results;
+    }
+
+    public function select2RefferalData(){
+        $query = $this->db->query("SELECT  c.id, CONCAT(c.firstname,' ',c.lastname) as emp_name FROM gccmaster.tblusers b, gccmaster.tblemployees c WHERE b.emp_id=c.id AND c.employee_status = 'Active' group by c.id ORDER BY c.firstname ASC ");
+        if ($query->num_rows() > 0) {
+            foreach ($query->result_array() as $_query) {
+                $data = array();
+                $data["id"] = $_query["id"];
+                $data["text"] = $_query["emp_name"];
+                $resultarray[] = $data;
+            }
+        }
+        return  $resultarray;
+    }
+
+    public function select2SchoolsData(){
+        $this->db->select('id, school as text');
+        $this->db->from('dbhrd.school');
+        $this->db->order_by('school', 'ASC');
+        $results = $this->db->get()->result();
+        return $results;
+    }
+
+    public function select2CoursesData(){
+        $this->db->select('id, course as text');
+        $this->db->from('dbhrd.course');
+        $this->db->order_by('course', 'ASC');
+        $results = $this->db->get()->result();
+        return $results;
+    }
+
+    public function submitAppilication(){
+        $result = array();
+        $post = $this->input->post('payload');
+        $post = json_decode($post, true);
+        $schools = isset($post['schools']) ? implode(',', $post['schools']): '';
+        $courses = isset($post['courses']) ? implode(',', $post['courses']): '';
+        $positions = isset($post['positions']) ? implode(',', $post['positions']): '';
+
+        $contactno = isset($post['contactFormData']['contact_no']) ? $post['contactFormData']['contact_no'] : '';
+        $address = isset($post['contactFormData']['address']) ? $post['contactFormData']['address'] : '';
+        $permanent_address = isset($post['contactFormData']['permanent_address']) ? $post['contactFormData']['permanent_address'] : '';
+        $tel_no = isset($post['contactFormData']['tel_no']) ? $post['contactFormData']['tel_no'] : '';
+        $email = isset($post['contactFormData']['email']) ? $post['contactFormData']['email'] : '';
+
+        $weight = isset($post['weight']) ? $post['weight'] : '';
+        $height = isset($post['height']) ? $post['height'] : '';
+
+        $personal_info = array(
+            "firstname"  => trim($post['firstname']),
+            "middlename" => trim($post['middlename']),
+            "lastname"   => trim($post['lastname']),
+            "suffix"     => trim($post['suffix']),
+            "weight"     => $weight,
+            "height"     => $height,
+            "contact_no"         => $contactno,
+            "status"             => "pooling",
+            "gender"             => $post['gender'],
+            "civil_status"       => $post['civil_status'],
+            "religion"           => $post['religion'],
+            "birthdate"          => date('Y-m-d', strtotime($post['birthdate'])),
+            "citizenship"        => $post['citizenship'],
+            // "schools"            => $schools,
+            // "courses"            => $courses,
+            "positions"          => $positions,
+            "recruitment"        => $post['recruitment'],
+            "applied_dt"         => date('Y-m-d', strtotime($post['applied_dt'])),
+            "created_by"         => 0,
+            "address"            => $address,
+            "permanent_address"  => $permanent_address,
+            "tel_no"             => $tel_no,
+            "email"              => $email,
+            "referral"           => $post['referral'],
+            "referral_relationship" => $post['referral-relationship'],
+            "is_online"          => 1,
+        );
+    
+        $this->db->trans_begin();
+    
+        $candidate = $this->db->insert("dbhrd.candidates", $personal_info);
+    
+        if (!$candidate) {
+            $this->db->trans_rollback();
+            $result['insert']  = false;
+            $result['success'] = false;
+            $result['message'] = 'Failed to insert applicant.';
+            return $result;
+        }
+    
+        $candidate_id    = $this->db->insert_id();
+        $result['id']    = $candidate_id;
+        $result['insert'] = true;
+    
+        if (!empty($_FILES['files']['name'])) {
+            $folder = "uploads/files/hrd/new_resume_{$candidate_id}/";
+            if (!is_dir($folder)) {
+                mkdir($folder, 0777, true);
+            }
+            $ext      = pathinfo($_FILES['files']['name'], PATHINFO_EXTENSION);
+            $filename = "new_resume_{$candidate_id}.{$ext}";
+            $config   = [
+                'upload_path'   => realpath($folder) . DIRECTORY_SEPARATOR,
+                'allowed_types' => 'pdf',
+                'file_name'     => $filename,
+                'overwrite'     => true,
+            ];
+            $this->load->library('upload');
+            $this->upload->initialize($config);
+    
+            if ($this->upload->do_upload('files')) {
+                $updated = $this->db->where('id', $candidate_id)
+                ->update('dbhrd.candidates', ['resume' => $filename]);
+                if (!$updated) {
+                    $this->db->trans_rollback();
+                    $result['upload']  = false;
+                    $result['success'] = false;
+                    $result['message'] = 'Failed to update resume filename.';
+                    return $result;
+                }
+                $result['upload'] = true;
+                $result['file']   = $filename;
+            } else {
+                $this->db->trans_rollback();
+                $result['upload']  = false;
+                $result['success'] = false;
+                $result['message'] = $this->upload->display_errors();
+                return $result;
+            }
+        }
+    
+        $references = array();
+        foreach ($post['references'] as $ref) {
+            $references[] = array(
+                "applicant_id"   => $candidate_id,
+                "ref_name"       => $ref['ref_name'],
+                "ref_contact_no" => $ref['ref_contact_no'],
+                "ref_address"    => $ref['ref_address'],
+                "ref_company"    => $ref['ref_company'],
+                "ref_position"   => $ref['ref_position'],
+                "ref_relationship"      => $ref['ref_relationship'],
+            );
+        }
+        $inserted_references = $this->db->insert_batch("dbhrd.candidate_references", $references);
+    
+        if (!$inserted_references) {
+            $this->db->trans_rollback();
+            $result['success'] = false;
+            $result['message'] = 'Failed to insert references.';
+            return $result;
+        }
+        $educ = array();
+        foreach ($post['educational_information_form'] as $edu) {
+            $educ[] = array(
+                "applicant_id"   => $candidate_id,
+                "educ_level_type" => $edu['level'],
+                "educ_school"    => $edu['school'],
+                "educ_degree"    => $edu['degree'],
+                "educ_honors"    => $edu['honor'],
+                "educ_from"      => $edu['from'],
+                "educ_to"        => $edu['to'],
+            );
+        }
+        $inserted_educ = $this->db->insert_batch("dbhrd.candidate_educations", $educ);
+        if (!$inserted_educ) {
+            $this->db->trans_rollback();
+            $result['success'] = false;
+            $result['message'] = 'Failed to insert education records.';
+            return $result;
+        }
+
+        if (!$post['is_fresh_graduate']) {
+            $workexp = array();
+
+            foreach ($post['experiences'] as $work) {
+                $workexp[] = array(
+                    "applicant_id"   => $candidate_id,
+                    "work_company"   => $work['company'],
+                    "work_position"  => $work['position'],
+                    "work_from"      => $work['from'],
+                    "work_to"        => $work['to'],
+                    "work_status"    => $work['status'],
+                    "work_reason"    => $work['reason'],
+                );
+            }
+            $inserted_workexp = $this->db->insert_batch("dbhrd.candidate_work_exp", $workexp);
+    
+            if (!$inserted_workexp) {
+                $this->db->trans_rollback();
+                $result['success'] = false;
+                $result['message'] = 'Failed to insert work experience records.';
+                return $result;
+            }
+        }
+
+    
+        $this->db->trans_commit();
+        $result['success'] = true;
+        $result['message'] = 'Applicant has been registered.';
+        return $result;
+    }
+
+    public function validateApplication(){
+        $post = $this->input->post();
+        $firstname  = strtolower(trim($post['firstname']  ?? ''));
+        $middlename = strtolower(trim($post['middlename'] ?? ''));
+        $lastname   = strtolower(trim($post['lastname']   ?? ''));
+        $suffix     = strtolower(trim($post['suffix']     ?? ''));
+        $birthdate = null;
+        if (!empty($post['birthdate'])) {
+            $date = DateTime::createFromFormat('m/d/Y', $post['birthdate']);
+            $birthdate = $date ? $date->format('Y-m-d') : null;
+        }
+        $this->db->from('dbhrd.candidates');
+        $this->db->where('is_archive', 0);
+        $this->db->where('LOWER(firstname)', $firstname);
+        $this->db->where('LOWER(middlename)', $middlename);
+        $this->db->where('LOWER(lastname)', $lastname);
+        $this->db->where('LOWER(suffix)', $suffix);
+        $this->db->where('birthdate', $birthdate);
+        return $this->db->count_all_results() > 0;
+    }
+
 }
