@@ -7522,7 +7522,7 @@ class Timesheet_model extends CI_Model{
                 $this->db->insert_batch($this->tbl_timesheet, $timesheet);
             }
 
-            $resultSet["success"] = true;
+            $state = true;
             $resultSet["message"] = "Timesheet was successfully imported.";
             $resultSet["title"] = "Import Successful.";
             $resultSet["invalid_records"] = $invalidRecords;
@@ -7533,7 +7533,6 @@ class Timesheet_model extends CI_Model{
             $this->db->trans_commit();
         } else {
             $this->db->trans_rollback();
-            $resultSet["success"] = false;
             $resultSet["message"] = $this->db->error()["message"];
             $resultSet["title"] = "An error occurred.";
         }
