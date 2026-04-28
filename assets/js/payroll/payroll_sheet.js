@@ -23,6 +23,10 @@ let _show_modal_once = false;
 let _show_modal_loans_once = false;
 let _md5_key_filter = null;
 
+let print_count = 0;
+let last_printed_by = null;
+let last_printed_at = null;
+
 const _tblPayrollSheet = $("#table-payroll-sheet");
 const _tblAbsenteeReport = $("#table-absentee_report");
 const _tblContributionReport = $("#table-contribution_report");
@@ -539,12 +543,39 @@ let dtPayrollSheet = _tblPayrollSheet
                     if (tempPayrollGroup) {
                         newPayrollGroup = `<div class="m--regular-font-size-sm1 mt-1">PAYROLL GROUP: <span style='font-weight: 600; text-transform: uppercase;'>${tempPayrollGroup}</span></div>`;
                     }
-                    return `<div class="text-center m--regular-font-size-lg2" style="text-transform: uppercase;">${selectedCompany.description}</div>
-                            <div class="text-center m--regular-font-size-sm1 text-muted" style="text-transform: uppercase;">${selectedCompany.company_address}</div>
-                            <div class="m--regular-font-size-lg1">PAYROLL SHEET</div>
-                            <div class="m--regular-font-size-sm1 mt-2">PAY DATE: ${tempPayDate}</div>
-                            <div class="m--regular-font-size-sm1 mt-1">PAY COVERAGE: ${coverage}</div>
-                            ${newPayrollGroup}`;
+
+                    let html = ``;
+
+                    html += `<div class="text-center m--regular-font-size-lg2" style="text-transform: uppercase;">${selectedCompany.description}</div>`;
+                    html += `<div class="text-center m--regular-font-size-sm1 text-muted" style="text-transform: uppercase;">${selectedCompany.company_address}</div>`;
+                    html += `<div style="display: flex; justify-content: space-between; flex-wrap: wrap;">`;
+                        html += `<div class="text-left" style="flex: 0 0 49%; max-width: 49%;">`;
+                            html += `<div class="m--regular-font-size-lg1 mt-2">PAYROLL SHEET</div>`;
+                            html += `<div class="m--regular-font-size-sm1 mt-2">PAY DATE: ${tempPayDate}</div>`;
+                            html += `<div class="m--regular-font-size-sm1 mt-1">PAY COVERAGE: ${coverage}</div>`;
+                        html += `</div>`;
+                        html += `<div class="ext-left" style="flex: 0 0 49%; max-width: 49%;">`;
+                            if (print_count > 0) {
+                                html += `<div class="m--regular-font-size-sm1 mt-2">Print #: ${print_count}</div>`;
+    
+                                if (last_printed_by && last_printed_at) {
+                                    html += `<div class="m--regular-font-size-sm1 mt-2">Last Printed By: ${last_printed_by}</div>`;
+                                    html += `<div class="m--regular-font-size-sm1 mt-1">Last Printed at: ${last_printed_at}</div>`;
+                                }
+                            }
+                        html += `</div>`;
+                    html += `</div>`;
+                    html += newPayrollGroup;
+
+                    return html;
+
+                    /** original source code */
+                    // return `<div class="text-center m--regular-font-size-lg2" style="text-transform: uppercase;">${selectedCompany.description}</div>
+                    //         <div class="text-center m--regular-font-size-sm1 text-muted" style="text-transform: uppercase;">${selectedCompany.company_address}</div>
+                    //         <div class="m--regular-font-size-lg1">PAYROLL SHEET</div>
+                    //         <div class="m--regular-font-size-sm1 mt-2">PAY DATE: ${tempPayDate}</div>
+                    //         <div class="m--regular-font-size-sm1 mt-1">PAY COVERAGE: ${coverage}</div>
+                    //         ${newPayrollGroup}`;
                 },
                 exportOptions: {
                     stripHtml: false,
@@ -3511,11 +3542,44 @@ function printPayrollSheet(el) {
     $("i", el).addClass("fa fa-spinner fa-spin");
     $("i", el).css({ right: 0, left: 0 });
 
-    setTimeout(() => {
-        dtPayrollSheet.button(".buttons-print").trigger();
-        $("i", el).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
-        $("i", el).css({ top: "50%", left: "50%" });
-    }, 150);
+    const date_range = $("input[name='date_range']", '#frm-filter').val();
+    const company = $("#company", '#frm-filter').val();
+    const payrollGroup = $("#payroll_group", "#frm-filter").val();
+
+    $.ajax({
+        url: baseUrl('payroll/reports/count_print'),
+        data: {
+            module: 'payroll_sheet',
+            csrf_token: _csrf_hash,
+            date_range: date_range,
+            company: company,
+            payroll_group: payrollGroup,
+            amount: 0
+        },
+        type: 'POST',
+        dataType: 'JSON',
+        success: function (response) {
+            const data = response.data;
+            const isDisplayValue = function (value) {
+                if (value === null || typeof value === "undefined") { return false; }
+                const tempVal = String(value).trim();
+                if (!tempVal) { return false; }
+                if (tempVal.toLowerCase() === "null") { return false; }
+                if (tempVal.toLowerCase() === "no assigned name") { return false; }
+                return true;
+            };
+
+            print_count = (data && typeof data.count !== "undefined") ? data.count : 0;
+            last_printed_by = (data && isDisplayValue(data.last_printed_by)) ? data.last_printed_by : null;
+            last_printed_at = (data && isDisplayValue(data.last_printed_at)) ? moment(data.last_printed_at).format('lll').toUpperCase() : null;
+
+            setTimeout(() => {
+                dtPayrollSheet.button(".buttons-print").trigger();
+                $("i", el).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
+                $("i", el).css({ top: "50%", left: "50%" });
+            }, 150);
+        }
+    });
 }
 
 function exportExcelPayrollSheet(el) {
