@@ -4057,6 +4057,10 @@ $.validate({
                             } else {
                                 const toast = response.success ? 'success' : 'error';
                                 toastr[toast](response.message, response.title, { timeOut: 10000 });
+
+                                btnSubmit.removeClass('m-btn--custom m-loader m-loader--light m-loader--left');
+                                $('#importing-alert-message').fadeOut();
+                                $(':input', form).prop('disabled', false);
                             }
                         } else {
                             if (parseInt(response.possible_duplicate.length) >= 1) {
@@ -4233,6 +4237,10 @@ $.validate({
                             } else {
                                 const toast = response.success ? 'success' : 'error';
                                 toastr[toast](response.message, response.title, { timeOut: 10000 });
+
+                                btnSubmit.removeClass('m-btn--custom m-loader m-loader--light m-loader--left');
+                                $('#importing-alert-message').fadeOut();
+                                $(':input', form).prop('disabled', false);
                             }
                         }
 
@@ -4258,6 +4266,10 @@ $.validate({
                     } else {
                         const toast = response.success ? 'success' : 'error';
                         toastr[toast](response.message, response.title, { timeOut: 10000 });
+
+                        btnSubmit.removeClass('m-btn--custom m-loader m-loader--light m-loader--left');
+                        $('#importing-alert-message').fadeOut();
+                        $(':input', form).prop('disabled', false);
                     }
                 }
 
