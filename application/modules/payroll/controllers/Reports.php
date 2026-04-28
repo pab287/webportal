@@ -1032,6 +1032,7 @@ class Reports extends MY_Controller {
         $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
         $tempData["company"] = $this->payroll->select2CompanyData();
         $tempData["payout_schedule"] = $this->payroll->select2PayoutScheduleData();
+        $tempData['payment_mode'] = $this->payroll->getPaymentModeSelect2Data();
         
         $this->core_layout->setPageTitle("Payroll - Custom Payroll sheet Report");
         $this->core_layout->setPrivilegeName("payroll_custom_report");

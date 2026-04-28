@@ -43,13 +43,13 @@
           <div class="row">
             <div class="col-md-6">
               <label for="">Payout Mode *</label>
-              <select id="payment_mode" name="payout_mode" class="form-control m-input">
+              <select id="payment_mode" name="payout_mode" class="form-control m-input" data-validation="required">
                 <option value=""><option>
               </select>
             </div>
             <div class="col-md-6">
-              <label for="">Payout Schedule</label>
-              <select id="payroll_sched" name="payout_sched" class="form-control m-input">
+              <label for="">Payout Schedule *</label>
+              <select id="payroll_sched" name="payout_sched" class="form-control m-input" data-validation="required">
                 <option value=""><option>
               </select>
             </div>

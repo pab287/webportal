@@ -39,6 +39,7 @@ class Reports_m extends CI_Model{
     protected $tbl_hris_allawances = "gcchris.allowances";
     protected $tbl_ps_allowances = "payroll.payroll_sheet_allowances";
     protected $tbl_default_station = "gcchris.default_station_location";
+    protected $tblMode = "payroll.payment_mode";
 
     function __construct(){
         parent::__construct();
@@ -5605,7 +5606,7 @@ class Reports_m extends CI_Model{
                 SUM(a.ot_amount) as ot_amount, SUM(a.total_ndiff_amount) as total_ndiff_amount, SUM(a.ot_ndiff_amount) as ot_ndiff_amount, SUM(a.total_holiday_amount) as total_holiday_amount,
                 SUM(a.total_allowances) as total_allowances, SUM(a.gross_pay) as gross_pay, SUM(a.net_pay) as net_pay, b.lastname, b.firstname, b.middlename, b.suffix,
                 UPPER(c.code) as company_description, UPPER(IF(d.name IS NULL, b.position, d.name)) as position, UPPER(b.work_status) as work_status, b.date_start,
-                UPPER(e.code) as department_description, IFNULL(f.rate, 0) as allowance_rate, g.station_description as station";
+                UPPER(e.code) as department_description, IFNULL(f.rate, 0) as allowance_rate, UPPER(g.station_description) as station";
 
                 $this->db->select($sqlSelect);
                 $this->db->from($this->tbl_payroll_sheet." a");
@@ -5654,12 +5655,17 @@ class Reports_m extends CI_Model{
                         $tempRs = (array) $value;
                         $tempDisplay = (object) $this->core_layout->getDisplayName($tempRs);
                         $tempName = (isset($tempDisplay->display_name_0) && $tempDisplay->display_name_0)? strtoupper($tempDisplay->display_name_0): strtoupper("no display name");
+
+                        $payroll_group = $this->get_payroll_group($value->emp_id);
+
                         $value->employee_name = $tempName;
                         $value->net_pay_decimal = number_format($value->net_pay, 2, ".", ",");
                         $arrData[$key] = $value;
                         $grossTotal+= floatval($value->gross_pay);
                         $grandTotal+= floatval($value->net_pay);
-                        $value->payroll_group = $this->get_payroll_group($value->emp_id);
+                        $value->payroll_group = (isset($payroll_group['payroll_group']) && $payroll_group['payroll_group']) ? $payroll_group['payroll_group'] : ' N/A ';
+                        $value->payout_mode = (isset($payroll_group['payout_mode']) && $payroll_group['payout_mode']) ? $payroll_group['payout_mode'] : ' N/A ';
+                        $value->payout_sched = (isset($payroll_group['payout_sched']) && $payroll_group['payout_sched']) ? $payroll_group['payout_sched'] : ' N/A ';
                     }
                 }
 
@@ -5686,10 +5692,11 @@ class Reports_m extends CI_Model{
         return $resultset;
     }
 
+    //here adding payout mode to the report
     function get_payroll_group($id) {
-        $result = ' --- ';
+        $result = array();
 
-        $this->db->select('GROUP_CONCAT(DISTINCT f.description SEPARATOR ", ") as payroll_group');
+        $this->db->select('GROUP_CONCAT(DISTINCT f.description SEPARATOR ", ") as payroll_group, GROUP_CONCAT(DISTINCT f.payout_mode SEPARATOR ",") as payout_mode, GROUP_CONCAT(DISTINCT f.payout_sched SEPARATOR ",") as payout_sched');
         $this->db->join($this->tbl_payroll_group.' f', 'f.employee_id LIKE CONCAT("%s:", LENGTH(b.id), ' . $this->db->escape(':"') . ', b.id, ' . $this->db->escape('";%') . ')', 'LEFT');
         $this->db->from($this->tbl_employees.' b');
         $this->db->where('b.id', $id);
@@ -5698,7 +5705,19 @@ class Reports_m extends CI_Model{
 
         if ($query->num_rows() > 0) {
             $row = $query->row();
-            $result = $row->payroll_group;
+            $payout_mode = $this->db->select('description')->get_where($this->tblMode, array('id' => $row->payout_mode))->row();
+
+            $payoutSchedules = array(
+                array("id" => 1, "text" => "Monthly Payroll"),
+                array("id" => 2, "text" => "Semi-Monthly Payroll"),
+                array("id" => 3, "text" => "Weekly Payroll")
+            );
+
+            $payoutScheduleText = array_column($payoutSchedules, "text", "id")[(int)$row->payout_sched] ?? "N/A";
+
+            $result['payroll_group'] = strtoupper($row->payroll_group);
+            $result['payout_mode'] = isset($payout_mode->description) ? strtoupper($payout_mode->description) : 'N/A';
+            $result['payout_sched'] = strtoupper($payoutScheduleText);
         }
 
         return $result;
