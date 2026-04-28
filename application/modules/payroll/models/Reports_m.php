@@ -5610,7 +5610,7 @@ class Reports_m extends CI_Model{
                 SUM(a.ot_amount) as ot_amount, SUM(a.total_ndiff_amount) as total_ndiff_amount, SUM(a.ot_ndiff_amount) as ot_ndiff_amount, SUM(a.total_holiday_amount) as total_holiday_amount,
                 SUM(a.total_allowances) as total_allowances, SUM(a.gross_pay) as gross_pay, SUM(a.net_pay) as net_pay, b.lastname, b.firstname, b.middlename, b.suffix,
                 UPPER(c.code) as company_description, UPPER(IF(d.name IS NULL, b.position, d.name)) as position, UPPER(b.work_status) as work_status, b.date_start,
-                UPPER(e.code) as department_description, IFNULL(f.rate, 0) as allowance_rate, UPPER(g.station_description) as station";
+                UPPER(e.code) as department_description, IFNULL(f.rate, 0) as allowance_rate, UPPER(g.station_description) as station, b.payout_sched";
 
                 $this->db->select($sqlSelect);
                 $this->db->from($this->tbl_payroll_sheet." a");
@@ -5664,6 +5664,14 @@ class Reports_m extends CI_Model{
                         $tempDisplay = (object) $this->core_layout->getDisplayName($tempRs);
                         $tempName = (isset($tempDisplay->display_name_0) && $tempDisplay->display_name_0)? strtoupper($tempDisplay->display_name_0): strtoupper("no display name");
 
+                        $payoutSchedules = array(
+                            array("id" => 1, "text" => "Monthly"),
+                            array("id" => 2, "text" => "Semi-Monthly"),
+                            array("id" => 3, "text" => "Weekly")
+                        );
+
+                        $payoutScheduleText = array_column($payoutSchedules, "text", "id")[(int)$value->payout_sched] ?? "N/A";
+
                         $payroll_group = $this->get_payroll_group($value->emp_id);
                         $mode = $this->get_payroll_group_payout_modes($value->emp_id);
 
@@ -5671,7 +5679,7 @@ class Reports_m extends CI_Model{
                         $value->net_pay_decimal = number_format($value->net_pay, 2, ".", ",");
                         $value->payroll_group = (isset($payroll_group['payroll_group']) && $payroll_group['payroll_group']) ? $payroll_group['payroll_group'] : ' N/A ';
                         $value->payout_mode = (isset($payroll_group['payout_mode']) && $payroll_group['payout_mode']) ? $payroll_group['payout_mode'] : ' N/A ';
-                        $value->payout_sched = (isset($payroll_group['payout_sched']) && $payroll_group['payout_sched']) ? $payroll_group['payout_sched'] : ' N/A ';
+                        $value->payout_sched = $payoutScheduleText;
 
                         if ($payout_mode != null) {
                             if ((int)$payout_mode == (int)$mode) {
