@@ -603,10 +603,10 @@ $.validate({
                 }else{
                     rebuildLateAbsenteeTable(vmLateAbsenteeReport.report_type, []);
                 }
-                const { report_type, company_code, filter_by } = json.filters;
+                const { report_type, company_code, filter_by, filter_date } = json.filters;
                 let tempHtml = `
                 <div class="row">
-                    <div class="col-sm-12 col-12 col-md-3 col-lg-3 col-xl-3">
+                    <div class="col-sm-12 col-12 col-md-3 col-lg-3 col-xl-4">
                         <div class="m-widget1 p-0">
                             <div class="m-widget1__item">
                                 <div class="row m-row--no-padding align-items-center">
@@ -618,12 +618,12 @@ $.validate({
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-12 col-12 col-md-2 col-lg-2 col-xl-2">
+                    <div class="col-sm-12 col-12 col-md-2 col-lg-2 col-xl-5">
                         <div class="m-widget1 p-0">
                             <div class="m-widget1__item">
                                 <div class="row m-row--no-padding align-items-center">
                                     <div class="col">
-                                        <h3 class="m-widget1__title">${filter_by}</h3>
+                                        <h3 class="m-widget1__title">${filter_date}</h3>
                                         <span class="m-widget1__desc">FILTER BY</span>
                                     </div>
                                 </div>
