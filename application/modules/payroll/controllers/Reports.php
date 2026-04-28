@@ -1109,4 +1109,11 @@ class Reports extends MY_Controller {
                 ->set_content_type('json')
                 ->set_output(json_encode($data));
     }
+
+    function select2_station() {
+        $data = $this->reports->select2_station();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 }

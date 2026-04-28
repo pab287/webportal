@@ -70,6 +70,12 @@
                                     <option></option>
                                 </select>
                             </div>
+                            <div class="form-group m-form-group col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                                <label for="project_num">PROJECT # <small class="m-form__help p-0">( Optional )</small></label>
+                                <select class="form-control" name="project" id="project_num">
+                                    <option></option>
+                                </select>
+                            </div>
                         </div>
 
                         <!-- added for payroll group -->
@@ -251,7 +257,7 @@
                                         <li class="dropdown-item pt-1 pb-1">
                                             <label class="m-checkbox mb-0" onclick="event.stopPropagation()">
                                                 <input type="checkbox" checked="checked" oninput="showOrHideColumn(9, this)">
-                                                STATION
+                                                PROJECT #
                                                 <span></span>
                                             </label>
                                         </li>
@@ -337,7 +343,7 @@
                                     <th scope="col">Payout Mode</th>
                                     <th scope="col">Payout Schedule</th>
                                     <th scope="col">Payroll Group</th>
-                                    <th scope="col">Station</th>
+                                    <th scope="col">Project #</th>
                                     <th scope="col">Rate</th>
                                     <th scope="col">Days</th>
                                     <th scope="col">Basic Pay</th>

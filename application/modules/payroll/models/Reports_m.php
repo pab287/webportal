@@ -40,6 +40,7 @@ class Reports_m extends CI_Model{
     protected $tbl_ps_allowances = "payroll.payroll_sheet_allowances";
     protected $tbl_default_station = "gcchris.default_station_location";
     protected $tblMode = "payroll.payment_mode";
+    protected $tblAppLocationSites = "gcctimeutility.app_location_sites";
 
     function __construct(){
         parent::__construct();
@@ -5559,12 +5560,15 @@ class Reports_m extends CI_Model{
         $resultset = array();
         $resultset["grand_total"] = 0;
 
+        session_write_close();
+
         $post = $this->input->post();
         if(isset($post) && $post){
             $tempFilter = array();
             $tempFilter["is_bonus"] = isset($post['is_bonus']) ? intval($post['is_bonus']) : 0;
             $tempRange = "";
             $option = isset($post['option']) && $post['option'] ? $post['option'] : 1; // 1 = all; 2 = earners; 3 = no earners
+            $payout_mode = isset($post['payout_mode']) && $post['payout_mode'] ? $post['payout_mode'] : null;
 
             if(isset($post["group"]) && intval($post["group"]) === 1){
                 $tempPayDate = date("Y-m-d", strtotime($post["pay_date"]));
@@ -5625,6 +5629,10 @@ class Reports_m extends CI_Model{
                     $this->db->where('a.gross_pay <=', 0);
                 }
 
+                if (isset($post['project']) && $post['project']) {
+                    $this->db->where('g.station_id', $post['project']);
+                }
+
                 $this->db->where("a.posted", 1);
                 foreach ($tempFilter as $key => $value) {
                     $this->db->where("a.{$key}", $value);
@@ -5657,16 +5665,30 @@ class Reports_m extends CI_Model{
                         $tempName = (isset($tempDisplay->display_name_0) && $tempDisplay->display_name_0)? strtoupper($tempDisplay->display_name_0): strtoupper("no display name");
 
                         $payroll_group = $this->get_payroll_group($value->emp_id);
+                        $mode = $this->get_payroll_group_payout_modes($value->emp_id);
 
                         $value->employee_name = $tempName;
                         $value->net_pay_decimal = number_format($value->net_pay, 2, ".", ",");
-                        $arrData[$key] = $value;
-                        $grossTotal+= floatval($value->gross_pay);
-                        $grandTotal+= floatval($value->net_pay);
                         $value->payroll_group = (isset($payroll_group['payroll_group']) && $payroll_group['payroll_group']) ? $payroll_group['payroll_group'] : ' N/A ';
                         $value->payout_mode = (isset($payroll_group['payout_mode']) && $payroll_group['payout_mode']) ? $payroll_group['payout_mode'] : ' N/A ';
                         $value->payout_sched = (isset($payroll_group['payout_sched']) && $payroll_group['payout_sched']) ? $payroll_group['payout_sched'] : ' N/A ';
+
+                        if ($payout_mode != null) {
+                            if ((int)$payout_mode == (int)$mode) {
+                                $arrData[$key] = $value;
+                            }
+                        } else {
+                            $arrData[$key] = $value;
+                        }
                     }
+                }
+
+                $temp = array();
+                foreach ($arrData as $k => $v) {
+                    $grossTotal+= floatval($v->gross_pay);
+                    $grandTotal+= floatval($v->net_pay);
+
+                    $temp[] = $v;
                 }
 
                 $payout_schedule = null;
@@ -5676,7 +5698,7 @@ class Reports_m extends CI_Model{
                 $tempFilter["group"] = $post["group"];
                 
                 if($filteredCompany){ $tempFilter["company_description"] = $filteredCompany; }
-                $resultset["data"] = $arrData;
+                $resultset["data"] = $temp;
                 $resultset["gross_total"] = $grossTotal;
                 $resultset["gross_total_decimal"] = number_format($grossTotal, 2, ".", ",");
                 $resultset["grand_total"] = $grandTotal;
@@ -5684,7 +5706,7 @@ class Reports_m extends CI_Model{
                 $resultset['payroll_option'] = $option == 2 ? 'earners' : ($option == 3 ? 'no earners' : 'all');
             }
             $resultset["filter"] = $tempFilter;
-            if(is_array($arrData) && !empty($arrData)){ $resultset["response"] = true;
+            if(is_array($temp) && !empty($temp)){ $resultset["response"] = true;
             }else{ $resultset["response"] = false; }
         }else{
             $resultset["response"] = false;
@@ -5718,6 +5740,24 @@ class Reports_m extends CI_Model{
             $result['payroll_group'] = strtoupper($row->payroll_group);
             $result['payout_mode'] = isset($payout_mode->description) ? strtoupper($payout_mode->description) : 'N/A';
             $result['payout_sched'] = strtoupper($payoutScheduleText);
+        }
+
+        return $result;
+    }
+
+    function get_payroll_group_payout_modes($id) {
+        $result = 0;
+
+        $this->db->select('GROUP_CONCAT(DISTINCT f.payout_mode SEPARATOR ",") as payout_mode');
+        $this->db->join($this->tbl_payroll_group.' f', 'f.employee_id LIKE CONCAT("%s:", LENGTH(b.id), ' . $this->db->escape(':"') . ', b.id, ' . $this->db->escape('";%') . ')', 'LEFT');
+        $this->db->from($this->tbl_employees.' b');
+        $this->db->where('b.id', $id);
+        $this->db->where('f.is_archived', 0);
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $row = $query->row();
+            $result = $row->payout_mode;
         }
 
         return $result;
@@ -7014,5 +7054,28 @@ class Reports_m extends CI_Model{
         });
 
         return $merged;
+    }
+
+    public function select2_station(){
+        $result = array();
+        $get = $this->input->get();
+        $this->db->select("id, site_name as text");
+        $this->db->from($this->tblAppLocationSites);
+
+        if (isset($get['q']) && $get['q']) {
+            $this->db->like("site_name", $get['q'], 'both');
+        }
+
+        if (!isset($get['q'])) {
+            $this->db->limit(10);
+        }
+
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $result = $query->result();
+        }
+
+        return array('results' => $result);
     }
 }

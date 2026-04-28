@@ -770,3 +770,18 @@ $("#payout_mode").select2({
     placeholder: 'Select an option',
     allowClear: true,
 });
+
+$("#project_num").select2({
+    width: '100%',
+    placeholder: 'Select an option',
+    allowClear: true,
+    ajax: {
+        url: baseUrl("payroll/reports/select2_station"),
+        dataType: "json",
+        delay: 500,
+        global: false,
+        processResults: function (data) {
+            return data;
+        }
+    }
+});
