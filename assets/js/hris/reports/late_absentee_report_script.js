@@ -591,10 +591,10 @@ $.validate({
             data: formData,
             success: function(json){
                 if(json.response){
-                    totalEntries = dtTableLateAbsenteeReport.rows().count();
                     filterOptionsLateAbsentee = { ...json.filters };
                     globalLoaReference ={ ...json.loa_reference };
                     rebuildLateAbsenteeTable(vmLateAbsenteeReport.report_type, json.data);
+                    totalEntries = dtTableLateAbsenteeReport.rows().count();
 
                     setTimeout(function () {
                         const rowCount = dtTableLateAbsenteeReport.rows().count();
