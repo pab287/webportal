@@ -3415,11 +3415,13 @@ class Reports_model extends CI_Model{
         $lateResult = $this->generateLateReport($post);
         $absentResult = $this->generateAbsenteeReport($post);
 
-        $lateData = $lateResult["data"] ?? [];
-        $absentData = $absentResult["data"] ?? [];
+        $lateData = (isset($lateResult["data"]) && is_array($lateResult["data"])) ? $lateResult["data"] : [];
+        $absentData = (isset($absentResult["data"]) && is_array($absentResult["data"])) ? $absentResult["data"] : [];
 
         $lateData   = json_decode(json_encode($lateData), true);
         $absentData = json_decode(json_encode($absentData), true);
+        $lateData = is_array($lateData) ? $lateData : [];
+        $absentData = is_array($absentData) ? $absentData : [];
 
         $merged = [];
 
@@ -3468,6 +3470,7 @@ class Reports_model extends CI_Model{
                     "emp_id"        => $row["emp_id"],
                     "employee_name" => $row["employee_name"],
                     "idno"          => $row["idno"],
+                    "department"    => $row["department"],
                     "position"      => $row["position"],
                     "date_start"    => $row["date_start"],
                     "max_date"      => $row["max_date"],
@@ -3494,12 +3497,27 @@ class Reports_model extends CI_Model{
         // Re-index numerically for DataTables
         $finalData = array_values($merged);
         $count_emp = count($merged);
+        $filters = $lateResult["filters"] ?? ($absentResult["filters"] ?? []);
+        $maxDate = null;
+
+        foreach (array_merge($lateData, $absentData) as $row) {
+            if (!empty($row["max_date"]) && (!$maxDate || strtotime($row["max_date"]) > strtotime($maxDate))) {
+                $maxDate = $row["max_date"];
+            }
+        }
+
+        if ($count_emp > 0) {
+            $maxDateMsg = $maxDate ? "Last verified attendance date on `{$maxDate}`, " : "";
+            $toastrMsg = "{$maxDateMsg}A total of ({$count_emp}) employee late & absentee attendance record/s found!";
+        } else {
+            $toastrMsg = $lateResult["toastr_msg"] ?? ($absentResult["toastr_msg"] ?? "No late & absentee attendance record/s found!");
+        }
 
         return [
             "data"       => $finalData,
-            "response"   => true,
-            "filters"    => $lateResult["filters"], // reuse filters
-            "toastr_msg" => "Last verified attendance date on `{$lateResult["data"][0]["max_date"]}`, A total of ({$count_emp}) employee late & absentee attendance record/s found!"
+            "response"   => $count_emp > 0,
+            "filters"    => $filters,
+            "toastr_msg" => $toastrMsg
         ];
     }
 }
