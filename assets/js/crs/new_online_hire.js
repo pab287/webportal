@@ -408,6 +408,7 @@ let application_vue = new Vue({
             else if(vm.selected_form === '#application_information_form'){
                 const selected_data = JSON.parse(JSON.stringify(vm.selectedApplication));
                 currentData = {
+                    ...vm.selectedApplication,
                     positions: selected_data.positions ? selected_data.positions : [],
                     recruitment: selected_data.recruitment,
                     referral: selected_data.referral,
