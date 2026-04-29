@@ -39,6 +39,25 @@
                 </div>
             </div>
         </div>
+
+        <div class="form-group m-form__group row">
+          <label class="col-3 col-form-label text-left" style="font-weight: 600;">
+            Active Employees<br>
+            <span class="m-form__help p-0" style="text-transform: none; font-weight: 600;">Filter Employee Status</span>
+          </label>
+          <div class="col-1">
+            <span class="m-switch m-switch--outline m-switch--sm m-switch--icon m-switch--success">
+              <label>
+                <input type="checkbox" value="1" id="active_employees" <?= intval($data->active_only) == "1" ? "checked": ""; ?> />
+                <span></span>
+              </label>
+            </span>
+          </div>
+          <div class="col-6">
+            <span class="m-form__help p-0" style="font-weight: 600;">Turning off this switch will include all employees on the search filter field.</span>
+          </div>
+        </div>
+
         <div class="form-group m-form__group">
             <label for="employee_id">Employee(s) *</label>
             <select id="employee_id" class="form-control m-input" name="employee_id[]" multiple="multiple" data-validation="required">

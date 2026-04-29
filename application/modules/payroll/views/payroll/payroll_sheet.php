@@ -217,7 +217,25 @@
                                 </div>
 
                                 <div class="row mt-3">
-                                    <div class="col-xl-11 col-lg-11 col-md-11 col-sm-11 mt-2">
+                                    <div class="col-xl-2 col-lg-2 col-md-2 col-sm-12 mt-2">
+                                        
+                                        <div class="m-form__group form-group row pt-0">
+                                            <label class="col-8 col-form-label text-left" style="font-weight: 600;">
+                                                Active Employees<br>
+                                                <span class="m-form__help p-0" style="text-transform: none; font-weight: 600;">Filter Employee Status</span>
+                                            </label>
+                                            <div class="col-3">
+                                                <span class="m-switch m-switch--outline m-switch--sm m-switch--icon m-switch--success">
+                                                    <label>
+                                                        <input type="checkbox" checked="checked" id="active_employees" />
+                                                        <span></span>
+                                                    </label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                    </div>
+                                    <div class="col-xl-9 col-lg-9 col-md-9 col-sm-12 mt-2">
                                         <div class="form-group m-form__group">
                                             <label for="payroll_group" class="mb-1" style="font-weight: 600;">
                                                 PAYROLL GROUP
@@ -226,7 +244,7 @@
                                             <select class="form-control" id="payroll_group" multiple="multiple"></select>
                                         </div>
                                     </div>
-                                    <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1 ">
+                                    <div class="col-xl-1 col-lg-1 col-md-1 col-sm-12">
                                         <button type="button" class="btn btn-warning btnReset btnAdvance_search pull-right m--margin-top-25 text-white" onclick="resetFilter(this)">
                                                 <span><i class="fa fa-refresh "></i>RESET</span>
                                         </button>

@@ -77,7 +77,15 @@ $("#reload_dtTbl").on("click", function () {
 if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){ _companies = _tempContentData.company; }
 if(typeof _tempContentData.payout_schedule !== "undefined" && _tempContentData.payout_schedule.length > 0){ _payoutSchedule = _tempContentData.payout_schedule; }
 if(typeof _tempContentData.incentive_type !== "undefined" && _tempContentData.incentive_type.length > 0){ _incentiveType = _tempContentData.incentive_type; }
-var select2Employees = function () {
+
+$(document).on("change", "#active_employees", function () {
+    setTimeout(() => {
+        $("#employees").prop("disabled", false);
+        $("#employees, #payroll_group").val([]).trigger("change");
+    }, 250);
+});
+
+const select2Employees = function () {
     $("#employees")
         .select2({
             placeholder: 'Select an option',
@@ -87,6 +95,10 @@ var select2Employees = function () {
                 dataType: "json",
                 delay: 250,
                 global: false,
+                data: function (params) {
+                    params.employee_status = $("form#frm-filter #active_employees").prop("checked") ? "1" : "0";
+                    return params;
+                },
                 processResults: function (data) {
                     return data;
                 }
@@ -113,8 +125,6 @@ var select2IncentiveType = function () {
             vmFormFilter.setIncentiveType();
         });
 }
-
-//select2Employees();
 
 var vmFormFilter = new Vue({
     el: "#temp-selector",
@@ -957,7 +967,7 @@ $.validate({
         const company = $("#company", form).val();
         const payout_schedule = $("#payout_schedule", form).val();
         const pay_date = $("input[name='pay_date']", form).val();
-
+        const employee_status = $("#active_employees", '#frm-filter').prop("checked") ? "active" : "inactive";
         $.ajax({
             url: baseUrl("payroll/generate_payroll_sheet_incentive"),
             type: "POST",
@@ -968,7 +978,8 @@ $.validate({
                 company,
                 payout_schedule,
                 pay_date,
-                bonus_code
+                bonus_code,
+                employee_status
             },
             dataType: "JSON",
             success: function (response) {
