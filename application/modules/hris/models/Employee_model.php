@@ -1301,7 +1301,7 @@ class Employee_model extends CI_Model {
     function getEmployeePersonalReference() {
         $post = $this->input->post();
         if ($post) {
-            $columns = array("ref_name", "ref_contact_no", "ref_address", "id", "emp_id");
+            $columns = array("ref_company", "ref_position", "ref_relationship", "ref_name", "ref_contact_no", "ref_address", "id", "emp_id");
             $dir = "DESC";
             $order = "id";
             if (isset($post["order"]) && $post["order"]) {
@@ -1339,6 +1339,9 @@ class Employee_model extends CI_Model {
                     $nestedData['ref_name'] = $pst->ref_name;
                     $nestedData['ref_contact_no'] = $pst->ref_contact_no;
                     $nestedData['ref_address'] = $pst->ref_address;
+                    $nestedData['ref_company'] = $pst->ref_company;
+                    $nestedData['ref_position'] = $pst->ref_position;
+                    $nestedData['ref_relationship'] = $pst->ref_relationship;
                     $data[] = $nestedData;
                 }
             }

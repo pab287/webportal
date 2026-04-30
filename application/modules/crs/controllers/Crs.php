@@ -15,6 +15,7 @@
             $this->load->model("ams/Utilities_model", "utilities");
             $this->load->model("reports_model", "reports");
             $this->load->model("Registration_model", "registration");
+            $this->load->model("Applicant_model", "applicant");
             $this->user_data = $this->session->userdata("logged_in");
         }
 
@@ -953,6 +954,21 @@
 
         public function restore_application(){
             $data = $this->document->restoreApplication();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function update_candidate_information(){
+            $data = $this->applicant->updateCandidateInformation();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function update_candidate_contact_information(){
+            $data = $this->applicant->updateCandidateContactInformation();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function update_candidate_attachment(){
+            $data = $this->applicant->updateCandidateAttachment();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 
