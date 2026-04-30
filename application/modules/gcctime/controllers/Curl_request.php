@@ -1873,4 +1873,22 @@ class Curl_request extends MY_Controller {
 		}
 	}
 
+	public function generate_timesheet_records(){
+		$this->load->model('timesheet_model', 'ts_model');
+
+		$resultset = array();
+		$date = date("Y-m-d");
+		$weekAgo = date("Y-m-d", strtotime("-3 days"));
+		$endDate = (new DateTime($date));
+		$period = new DatePeriod(new DateTime($weekAgo), new DateInterval('P1D'), $endDate);
+		$response = array();
+		foreach ($period as $date) {
+			$scDate = date("Y-m-d", strtotime($date->format("Y-m-d")));
+			$data = $this->ts_model->create($scDate, 0);
+			$response[md5($scDate)] = $data;
+		}
+
+		$resultset["data"] = $response;
+		echo json_encode($resultset);
+	}
 }
