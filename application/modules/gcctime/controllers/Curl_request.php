@@ -1650,7 +1650,8 @@ class Curl_request extends MY_Controller {
 		$timeParams = $weekly == 1 ? "-1 week" : "-2 day";
 		$date = date("Y-m-d");
 		$weekAgo = date("Y-m-d", strtotime($timeParams));
-		$period = new DatePeriod(new DateTime($weekAgo), new DateInterval('P1D'), new DateTime($date));
+		$endDate = (new DateTime($date))->modify('+1 day');
+		$period = new DatePeriod(new DateTime($weekAgo), new DateInterval('P1D'), $endDate);
 		$filepath = realpath("./uploads/data");
 		$files = $this->getScannedDirectoryFiles($filepath, $period);
 		if(is_array($files) && !empty($files)){

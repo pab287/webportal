@@ -64,7 +64,7 @@ class Timesheet_model extends CI_Model{
         $resultSet = array();
         $hasOT = 0;
         $updatedTimesheets = array();
-        $logged_in_user_emp_id = $this->logged_in_user["emp_id"];
+        $logged_in_user_emp_id = $this->logged_in_user["emp_id"] ?? 0;
         $attendance_params = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "TS_OT_PARAMS"))->row();
         $night_diff_cfg = $this->db->get_where($this->tbl_time_parameters, array("param_name" => "NIGHT_DIFF_PARAMS"))->row();
         $tempEmployeeIds = array();
@@ -98,27 +98,29 @@ class Timesheet_model extends CI_Model{
                 }
 
                 $updatedSchedule = $this->getCurrentShiftSchedule($date, $employee);
-                $schedule = $updatedSchedule->schedule;
+                $schedule = $updatedSchedule->schedule ?? null;
                 
                 /*** detect night shift ***/
                 $activeSchedule = [];
-                $schedule_props = array("am_start", "am_end", "pm_start", "pm_end");
-                foreach ($schedule_props as $nKey => $sProps) {
-                    if($schedule->{$sProps}){
-                        if($nKey > 0){
-                            $prevKey = $schedule_props[$nKey - 1];
-                            if($prevKey && $schedule->{$prevKey}){
-                                $prevTime = date("H:i:s", strtotime($schedule->{$prevKey}));
-                                $tempTime = date("H:i:s", strtotime($schedule->{$sProps}));
-                                if(strtotime($prevTime) > strtotime($tempTime)){
-                                    $nextDate = date("Y-m-d", strtotime("+1 day", strtotime($date)));
-                                    $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($nextDate ." ".$schedule->{$sProps}));
-                                }else{
-                                    $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($date ." ".$schedule->{$sProps}));
+                if($schedule){
+                    $schedule_props = array("am_start", "am_end", "pm_start", "pm_end");
+                    foreach ($schedule_props as $nKey => $sProps) {
+                        if(!empty($schedule->$sProps)){
+                            if($nKey > 0){
+                                $prevKey = $schedule_props[$nKey - 1];
+                                if($prevKey && !empty($schedule->$prevKey)){
+                                    $prevTime = date("H:i:s", strtotime($schedule->$prevKey));
+                                    $tempTime = date("H:i:s", strtotime($schedule->$sProps));
+                                    if(strtotime($prevTime) > strtotime($tempTime)){
+                                        $nextDate = date("Y-m-d", strtotime("+1 day", strtotime($date)));
+                                        $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($nextDate ." ".$schedule->$sProps));
+                                    }else{
+                                        $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($date ." ".$schedule->$sProps));
+                                    }
                                 }
+                            }else{
+                                $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($date ." ".$schedule->$sProps));
                             }
-                        }else{
-                            $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($date ." ".$schedule->{$sProps}));
                         }
                     }
                 }
@@ -1298,7 +1300,7 @@ class Timesheet_model extends CI_Model{
         $no_shift_schedule, $am_start, $am_end, $pm_start, $pm_end, $am_shift_only, $pm_shift_only, $props, $flexibleEmployee, $payrollType){
         $arrData = array();
         $flexibleEmployee = $flexibleEmployee ? true: false;
-        $logged_in_user_emp_id = $this->logged_in_user["emp_id"];
+        $logged_in_user_emp_id = $this->logged_in_user["emp_id"] ?? 0;
         $flexible = $employee_time_sheet->is_flexi;
         $flexibleEmployee = $flexibleEmployee && $flexible ? true: false;
 
@@ -11364,26 +11366,28 @@ class Timesheet_model extends CI_Model{
                 }
 
                 $updatedSchedule = $this->getCurrentShiftSchedule($date, $employee);
-                $schedule = $updatedSchedule->schedule;
+                $schedule = $updatedSchedule->schedule ?? null;
 
                 $activeSchedule = [];
-                $schedule_props = array("am_start", "am_end", "pm_start", "pm_end");
-                foreach ($schedule_props as $nKey => $sProps) {
-                    if(isset($schedule->{$sProps}) && $schedule->{$sProps}){
-                        if($nKey > 0){
-                            $prevKey = $schedule_props[$nKey - 1];
-                            if($prevKey && $schedule->{$prevKey}){
-                                $prevTime = date("H:i:s", strtotime($schedule->{$prevKey}));
-                                $tempTime = date("H:i:s", strtotime($schedule->{$sProps}));
-                                if(strtotime($prevTime) > strtotime($tempTime)){
-                                    $nextDate = date("Y-m-d", strtotime("+1 day", strtotime($date)));
-                                    $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($nextDate ." ".$schedule->{$sProps}));
-                                }else{
-                                    $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($date ." ".$schedule->{$sProps}));
+                if($schedule){
+                    $schedule_props = array("am_start", "am_end", "pm_start", "pm_end");
+                    foreach ($schedule_props as $nKey => $sProps) {
+                        if(!empty($schedule->$sProps) && isset($schedule->$sProps) && $schedule->$sProps){
+                            if($nKey > 0){
+                                $prevKey = $schedule_props[$nKey - 1];
+                                if($prevKey && !empty($schedule->$prevKey)){
+                                    $prevTime = date("H:i:s", strtotime($schedule->$prevKey));
+                                    $tempTime = date("H:i:s", strtotime($schedule->$sProps));
+                                    if(strtotime($prevTime) > strtotime($tempTime)){
+                                        $nextDate = date("Y-m-d", strtotime("+1 day", strtotime($date)));
+                                        $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($nextDate ." ".$schedule->$sProps));
+                                    }else{
+                                        $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($date ." ".$schedule->$sProps));
+                                    }
                                 }
+                            }else{
+                                $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($date ." ".$schedule->$sProps));
                             }
-                        }else{
-                            $activeSchedule[$sProps] = date("Y-m-d H:i", strtotime($date ." ".$schedule->{$sProps}));
                         }
                     }
                 }
