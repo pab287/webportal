@@ -6,7 +6,7 @@
         {
             parent::__construct();
             $this->authenticate->setModuleAccess("crs");
-            $this->authenticate->doRedirect();
+            // $this->authenticate->doRedirect();
             $this->load->model("Registration_model", "registration");
             $this->load->model("Applicant_model", "applicant");
             $this->load->model("document_model", "document");
@@ -25,6 +25,9 @@
 
         public function hire($id){
             $this->core_layout->setPrivilegeName("crs_resume");
+            $this->authenticate->setModuleAccess("crs");
+            $this->authenticate->doRedirect();
+
             $data = array();
             $data['candidate_information'] = $this->applicant->getCandidateInformation($id);
             $data['position'] = $this->document->select2PositionData();
@@ -49,6 +52,9 @@
 
         public function backup()
         {
+            $this->authenticate->setModuleAccess("crs");
+            $this->authenticate->doRedirect();
+            
             $this->load->view("core/templates/external/header");
             $this->load->view("crs/registration/index_backup");
             $this->load->view("core/templates/external/footer");
