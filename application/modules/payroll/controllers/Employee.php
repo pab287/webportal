@@ -350,6 +350,14 @@
             $this->load->model("payroll/payroll_m", "payroll");
             $tempData = array();
             $tempData["company"] = $this->payroll->select2CompanyData();
+            
+            $tempData["payroll_sched"] = array(
+                array("id" => 1, "text" => "Monthly"),
+                array("id" => 2, "text" => "Semi-Monthly"),
+                array("id" => 3, "text" => "Weekly")
+            );
+
+            $tempData['payment_mode'] = $this->payroll->getPaymentModeSelect2Data();
             $tempData["for_approval"] = $this->payroll->getTransferEmployeeGroupApproval();
             $tempData["transfer_history"] = $this->payroll->getTransferEmployeeGroupHistory();
             

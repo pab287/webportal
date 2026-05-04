@@ -33,10 +33,7 @@
     $billing_module = in_array("billing_masterfile", $privArr) ? true : false;
 ?>
 
-<html lang="en" class="wf-poppins-n3-active wf-poppins-n6-active 
-wf-poppins-n7-active wf-roboto-n3-active wf-poppins-n4-active 
-wf-poppins-n5-active wf-roboto-n4-active wf-roboto-n5-active 
-wf-roboto-n6-active wf-roboto-n7-active wf-active">
+<html lang="en" class="wf-poppins-n3-active wf-poppins-n6-active wf-poppins-n7-active wf-roboto-n3-active wf-poppins-n4-active wf-poppins-n5-active wf-roboto-n4-active wf-roboto-n5-active wf-roboto-n6-active wf-roboto-n7-active wf-active">
 
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -254,6 +251,216 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                     max-width: 49%;
                 }
             }
+
+            .absent td {
+                border-color: transparent;
+            }
+
+            .absent--contrast td {
+                color: #ffffff;
+            }
+
+            .absent {
+                background-color: #d32f2fde;
+            }
+
+            .lacking td {
+                border-color: transparent;
+            }
+
+            .lacking--contrast td {
+                color: #000000;
+            }
+
+            .lacking {
+                background-color: #f4433678;
+            }
+
+            .lacking td {
+                border-color: transparent;
+            }
+
+            .multiple {
+                background-color: #ffa7267d;
+            }
+
+            .multiple td {
+                border-color: transparent;
+            }
+
+            .multiple--contrast td {
+                color: #ffffff;
+            }
+
+            .no-shift {
+                background-color: #d8d8d8;
+            }
+
+            .no-shift td {
+                border-color: transparent;
+            }
+
+            .attendance-legend-dropdown .dropdown-item {
+                white-space: nowrap;
+            }
+
+            .attendance-mobile-card {
+                border: 1px solid #e6e6ec;
+                border-radius: 20px;
+                background: #f8f8fb;
+                padding: 14px 14px 12px;
+                margin: 10px 12px;
+            }
+
+            /* .attendance-mobile-card.is-late {
+                border-left: 3px solid #ffb822;
+            } */
+
+            .attendance-mobile-card.is-absent {
+                background: #ececf3;
+                border-left: 3px solid #d32f2fde;
+            }
+
+            .attendance-mobile-card.is-lacking {
+                background: #f7f8f6;
+                border-left: 3px solid #f4433678;
+            }
+
+            .attendance-mobile-card.is-multiple {
+                background: #f7f8f6;
+                border-left: 3px solid #ffa7267d;
+            }
+
+            .attendance-mobile-card.is-ontime {
+                background: #f7f8f6;
+            }
+
+            .attendance-mobile-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+
+            .attendance-mobile-title {
+                font-size: 16px;
+                font-weight: 700;
+                color: #30323a;
+                line-height: 1.2;
+            }
+
+            .attendance-mobile-meta {
+                font-size: 15px;
+                color: #6c757d;
+                line-height: 1.2;
+            }
+
+            .attendance-mobile-sub {
+                font-size: 14px;
+                color: #7a7d88;
+                line-height: 1.2;
+                margin-top: 3px;
+            }
+
+            .attendance-mobile-status {
+                border-radius: 999px;
+                padding: 4px 10px;
+                font-size: 12px;
+                font-weight: 700;
+                text-transform: uppercase;
+                white-space: nowrap;
+            }
+
+            .attendance-mobile-status.is-ontime {
+                color: #2e8c65;
+                background: #dff2e8;
+            }
+
+            .attendance-mobile-status.is-late {
+                color: #000000;
+                background: #ffb822;
+            }
+
+            .attendance-mobile-status.is-lacking {
+                color: #000000;
+                background: #f4433678;
+            }
+
+            .attendance-mobile-status.is-multiple {
+                color: #ffffff;
+                background: #ffa7267d;
+            }
+
+            .attendance-mobile-status.is-absent {
+                color: #FFFFFF;
+                background: #d32f2fde;
+            }
+
+            .attendance-mobile-status.is-restday {
+                color: #5f6675;
+                background: #e6e8ec;
+            }
+
+            .attendance-mobile-status.is-holiday {
+                color: #486b9c;
+                background: #dce8f8;
+            }
+
+            .attendance-mobile-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px 12px;
+                margin-top: 10px;
+            }
+
+            .attendance-mobile-label {
+                font-size: 12px;
+                font-weight: 700;
+                color: #9498a5;
+                letter-spacing: 0.2px;
+                text-transform: uppercase;
+                margin-bottom: 2px;
+            }
+
+            .attendance-mobile-time {
+                font-size: 16px;
+                line-height: 1.2;
+                color: #2e3139;
+                font-weight: 500;
+            }
+
+            .attendance-mobile-time.is-accent {
+                color: #4259d8;
+            }
+
+            .attendance-mobile-time.is-late {
+                color: #b54444;
+            }
+
+            .attendance-mobile-empty {
+                margin-top: 10px;
+                border-radius: 14px;
+                background: #e4e4ee;
+                text-align: center;
+                padding: 10px;
+                font-size: 13px;
+                font-weight: 700;
+                color: #616473;
+                text-transform: uppercase;
+            }
+
+            .attendance-mobile-scroll {
+                max-height: 420px;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #portal_notifications #attendance-legend-options.dropdown-menu {
+                left: -70px !important;
+            }
+
+            [v-cloak]{display:none;}
         </style>
     </head>
     <!-- end::Head -->
@@ -498,11 +705,20 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                             </div>
                         </div>
                     </div>
-                    <div class="m-content" id="portal_notifications">
-                        <div class="row">
-                            <div class="grid-sizer"></div>
-                            <?php if ((isset($showPayrollPayslip) && $showPayrollPayslip)): ?>
-                                <div class="grid-item col-xs-12 col-sm-12 col-lg-3">
+                    <div class="m-content" id="portal_notifications" v-cloak>
+                        <?php
+                            $hasAttendancePrivilege = (isset($showAttendance) && $showAttendance);
+                            $hasPayslipPrivilege = (isset($showPayrollPayslip) && $showPayrollPayslip);
+                            $hasBothTopCards = ($hasAttendancePrivilege && $hasPayslipPrivilege);
+                            $includePayslipInMasonry = ($hasPayslipPrivilege && !$hasAttendancePrivilege);
+                            $useMasonrySecondSection = $hasBothTopCards;
+                        ?>
+                        <div class="row <?= $includePayslipInMasonry ? 'second-section' : '' ?>">
+                            <?php if ($includePayslipInMasonry): ?>
+                                <div class="grid-sizer"></div>
+                            <?php endif; ?>
+                            <?php if ($hasPayslipPrivilege): ?>
+                                <div class="grid-item col-xs-12 col-sm-12 <?= $hasAttendancePrivilege ? 'col-lg-3' : 'col-lg-3' ?>">
                                     <div class="m-portlet m-portlet--head-sm ">
                                         <div class="m-portlet__head">
                                             <div class="m-portlet__head-caption">
@@ -734,6 +950,162 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
                                     </div>
                                 </div>
                             <?php endif; ?>
+
+                            <?php if ($hasAttendancePrivilege): ?>
+                                <div class="grid-item col-xs-12 col-sm-12 <?= $hasPayslipPrivilege ? 'col-lg-9' : 'col-lg-6' ?>">
+                                    <div class="m-portlet m-portlet--head-sm ">
+                                        <div class="m-portlet__head">
+                                            <div class="m-portlet__head-caption">
+                                                <div class="m-portlet__head-title">
+                                                    <span class="m-portlet__head-icon">
+                                                        <i class="fa fa-calendar"></i>
+                                                    </span>
+                                                    <h4 class="m-portlet__head-text">ATTENDANCE RECORD</h4>
+                                                </div>
+                                            </div>
+                                            <div class="m-portlet__head-tools">
+                                                <div class="btn-group" role="group" aria-label="Attendance legend">
+                                                    <div class="btn-group" role="group">
+                                                        <button type="button" id="attendanceLegendToggle" class="m-btn btn btn-success dropdown-toggle" aria-haspopup="true" aria-expanded="false" title="Attendance Legend">
+                                                            Legends
+                                                        </button>
+                                                        <ul class="dropdown-menu dropdown-menu-right attendance-legend-dropdown" id="attendance-legend-options">
+                                                            <li class="dropdown-item pt-1 pb-1">
+                                                                <span class="d-flex align-items-center">
+                                                                    <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#d32f2fde;margin-right:8px;"></span>
+                                                                    ABSENT
+                                                                </span>
+                                                            </li>
+                                                            <li class="dropdown-item pt-1 pb-1">
+                                                                <span class="d-flex align-items-center">
+                                                                    <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#f5b7b1;margin-right:8px;"></span>
+                                                                    LACKING ENTRIES
+                                                                </span>
+                                                            </li>
+                                                            <li class="dropdown-item pt-1 pb-1">
+                                                                <span class="d-flex align-items-center">
+                                                                    <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#ffa7267d;margin-right:8px;"></span>
+                                                                    MULTIPLE ENTRIES
+                                                                </span>
+                                                            </li>
+                                                            <li class="dropdown-item pt-1 pb-1">
+                                                                <span class="d-flex align-items-center">
+                                                                    <span style="display:inline-block;width:12px;height:12px;border-radius:2px;background:#d8d8d8;margin-right:8px;"></span>
+                                                                    NO SHIFT
+                                                                </span>
+                                                            </li>
+                                                            <li class="dropdown-item pt-1 pb-1">
+                                                                <span class="d-flex align-items-center">
+                                                                    <span style="display:inline-block;margin-right:8px;" class="fa fa-flag"></span>
+                                                                    Holiday
+                                                                </span>
+                                                            </li>
+                                                            <li class="dropdown-item pt-1 pb-1">
+                                                                <span class="d-flex align-items-center">
+                                                                    <span style="display:inline-block;margin-right:8px;" class="fa fa-flag text-success"></span>
+                                                                    Paid Holiday
+                                                                </span>
+                                                            </li>
+                                                            <li class="dropdown-item pt-1 pb-1">
+                                                                <span class="d-flex align-items-center">
+                                                                    <span style="display:inline-block;margin-right:8px;" class="flaticon-event-calendar-symbol"></span>
+                                                                    With LOA
+                                                                </span>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+    
+                                        <div class="m-widget1">
+                                            <template v-if="is_loading">
+                                                <div class="m-widget1__item">
+                                                    <div class="row m-row--no-padding align-items-center">
+                                                        <div class="col text-center">
+                                                            <h3 class="m-widget1__title p-0">LOADING CONTENT PLEASE WAIT...</h3>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <template v-else>
+                                                <div class="d-none d-md-block">
+                                                    <table id="timesheet-table" class="table table-bordered" width="100%">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>DATE</th>
+                                                                <th>DAY</th>
+                                                                <th>IN</th>
+                                                                <th>OUT</th>
+                                                                <th>IN</th>
+                                                                <th>OUT</th>
+                                                                <th>STATUS</th>
+                                                            </tr>
+                                                        </thead>
+                                                    </table>
+                                                </div>
+                                                <div class="d-block d-md-none attendance-mobile-scroll">
+                                                    <template v-if="attendance.length">
+                                                        <div class="attendance-mobile-card" :class="attendanceMobileCardClass(item)" v-for="(item, idx) in attendance" :key="'attendance-mobile-' + idx">
+                                                            <div class="attendance-mobile-header">
+                                                                <div>
+                                                                    <div class="attendance-mobile-title">
+                                                                        {{ attendanceMobileDate(item) }}
+    
+                                                                        <template v-if="item.is_holiday == 1">
+                                                                            <span class="fa fa-flag" :class="item.paid_holiday ? 'text-success' : ''"></span>
+                                                                        </template>
+    
+                                                                        <template v-if="item.has_loa == 1">
+                                                                            <span class="flaticon-event-calendar-symbol ml-1"></span>
+                                                                        </template>
+                                                                    </div>
+                                                                </div>
+                                                                <span class="attendance-mobile-status" :class="attendanceMobileStatusClass(item)">{{ attendanceMobileStatusText(item) }}</span>
+                                                            </div>
+                                                            <div v-if="attendanceMobileHasTime(item)" class="attendance-mobile-grid">
+                                                                <div>
+                                                                    <div class="attendance-mobile-label">AM IN</div>
+                                                                    <div class="attendance-mobile-time" :class="attendanceMobileTimeClass(item, 'am_in')">{{ formatTimesheetTime(item.am_in, item.has_shift) }}</div>
+                                                                </div>
+                                                                <div>
+                                                                    <div class="attendance-mobile-label">AM OUT</div>
+                                                                    <div class="attendance-mobile-time">{{ formatTimesheetTime(item.am_out, item.has_shift) }}</div>
+                                                                </div>
+                                                                <div>
+                                                                    <div class="attendance-mobile-label">PM IN</div>
+                                                                    <div class="attendance-mobile-time">{{ formatTimesheetTime(item.pm_in, item.has_shift) }}</div>
+                                                                </div>
+                                                                <div>
+                                                                    <div class="attendance-mobile-label">PM OUT</div>
+                                                                    <div class="attendance-mobile-time">{{ formatTimesheetTime(item.pm_out, item.has_shift) }}</div>
+                                                                </div>
+                                                            </div>
+                                                            <div v-else class="attendance-mobile-empty">
+                                                                NO TIME ENTRIES RECORDED
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                    <template v-else>
+                                                        <div class="m-widget1__item">
+                                                            <div class="row m-row--no-padding align-items-center">
+                                                                <div class="col text-center">
+                                                                    <h3 class="m-widget1__title p-0">NO ATTENDANCE AVAILABLE</h3>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        <?php if ($useMasonrySecondSection): ?>
+                        </div>
+                        <div class="row second-section">
+                            <div class="grid-sizer"></div>
+                        <?php endif; ?>
                             <?php if (isset($ca_module) && $ca_module): ?>
                                 <div class="grid-item col-xs-12 col-sm-12 col-lg-3">
                                     <div class="m-portlet m-portlet--head-sm">
@@ -1797,6 +2169,7 @@ wf-roboto-n6-active wf-roboto-n7-active wf-active">
         <?php $this->load->view("users/modal/password_reminder_dialog") ?>
         <?php $this->load->view("users/modal/force_change_pass") ?>
         <!-- end::Body -->
-        <script src="<?php echo base_url('assets/js/portal/portal_script.js'); ?>"></script>
+        <?php $version = filemtime(FCPATH.'assets/js/portal/portal_script.js'); ?>
+        <script src='<?php echo base_url("assets/js/portal/portal_script.js?v=$version"); ?>'></script>
     </body>
 </html>

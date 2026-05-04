@@ -2626,6 +2626,9 @@ if (typeof _tempContentData !== "undefined") {
                 { data: "ref_name", title: "Name" },
                 { data: "ref_contact_no", title: "Contact No" },
                 { data: "ref_address", title: "Address" },
+                { data: "ref_company", title: "Company" },
+                { data: "ref_position", title: "Position" },
+                { data: "ref_relationship", title: "Relationship" },
                 { data: null, title: "Action", width: "8%", className: "text-center" }
             ],
             columnDefs: [

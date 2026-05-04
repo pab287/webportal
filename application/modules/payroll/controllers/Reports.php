@@ -1034,6 +1034,7 @@ class Reports extends MY_Controller {
         $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
         $tempData["company"] = $this->payroll->select2CompanyData();
         $tempData["payout_schedule"] = $this->payroll->select2PayoutScheduleData();
+        $tempData['payment_mode'] = $this->payroll->getPaymentModeSelect2Data();
         
         $this->core_layout->setPageTitle("Payroll - Custom Payroll sheet Report");
         $this->core_layout->setPrivilegeName("payroll_custom_report");
@@ -1115,6 +1116,13 @@ class Reports extends MY_Controller {
 
     function count_print(){
         $data = $this->reports->print_count();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+    
+    function select2_station() {
+        $data = $this->reports->select2_station();
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));

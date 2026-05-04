@@ -7,6 +7,7 @@ let _tempIds = [];
 let _years = [];
 let _companies = [];
 let _payoutSchedule = [];
+let _payoutMode = [];
 let _globalNetPay = 0;
 let _globalGrossPay = 0;
 let filteredCompany = '';
@@ -38,6 +39,9 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     }
     if(typeof _tempContentData.payout_schedule !== "undefined" && _tempContentData.payout_schedule.length > 0){ 
         _payoutSchedule = _tempContentData.payout_schedule;
+    }
+    if(typeof _tempContentData.payment_mode !== "undefined" && _tempContentData.payment_mode.length > 0){ 
+        _payoutMode = _tempContentData.payment_mode;
     }
 }
 
@@ -477,6 +481,8 @@ const dtNetPayReport = tableNetpay.DataTable({
         { data: "department_description", width: "10%" },
         { data: "position", width: "10%" },
         { data: "work_status", visible: false },
+        { data: "payout_mode", width: "10%",},
+        { data: "payout_sched", width: "10%",},
         { data: "payroll_group", width: '14%',
             render: function (data) {
                 return data != null ? data : ' No group assigned ';
@@ -553,14 +559,14 @@ const dtNetPayReport = tableNetpay.DataTable({
         const intVal = function (i) { return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0; };
 
         const totalGrossPay = api
-            .column(17)
+            .column(19)
             .data()
             .reduce(function (a, b) {
                 return intVal(a) + intVal(b);
             }, 0);
 
         const totalNetPay = api
-            .column(18)
+            .column(20)
             .data()
             .reduce(function (a, b) {
                 return intVal(a) + intVal(b);
@@ -569,8 +575,8 @@ const dtNetPayReport = tableNetpay.DataTable({
 
         _globalNetPay = numberFormat(totalNetPay);
         _globalGrossPay = numberFormat(totalGrossPay);
-        $(api.column(17).footer()).html("<span class='m--font-boldest'>" + _globalGrossPay + "</span>");
-        $(api.column(18).footer()).html("<span class='m--font-boldest'>" + _globalNetPay + "</span>");
+        $(api.column(19).footer()).html("<span class='m--font-boldest'>" + _globalGrossPay + "</span>");
+        $(api.column(20).footer()).html("<span class='m--font-boldest'>" + _globalNetPay + "</span>");
     }
 });
 
@@ -757,3 +763,25 @@ function getMonthTextById(id) {
     const month = months.find(m => m.id === parseInt(id));
     return month ? month.text : "Invalid month";
 }
+
+$("#payout_mode").select2({
+    width: '100%',
+    data: _payoutMode,
+    placeholder: 'Select an option',
+    allowClear: true,
+});
+
+$("#project_num").select2({
+    width: '100%',
+    placeholder: 'Select an option',
+    allowClear: true,
+    ajax: {
+        url: baseUrl("payroll/reports/select2_station"),
+        dataType: "json",
+        delay: 500,
+        global: false,
+        processResults: function (data) {
+            return data;
+        }
+    }
+});

@@ -45,6 +45,8 @@ class Users extends MY_Controller{
 
     function roles()
     {
+        $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+        $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
         $this->core_layout->addJs("js/core/role_script.js", true);
         $arrData = array();
         $this->core_layout->setHeaderTitle("User - <small>Roles</small>");

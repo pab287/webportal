@@ -5,7 +5,11 @@
         public function __construct()
         {
             parent::__construct();
+            $this->authenticate->setModuleAccess("crs");
+            // $this->authenticate->doRedirect();
             $this->load->model("Registration_model", "registration");
+            $this->load->model("Applicant_model", "applicant");
+            $this->load->model("document_model", "document");
         }
 
         public function index()
@@ -18,8 +22,39 @@
             $this->load->view("crs/registration/index");
             $this->load->view("core/templates/external/footer",$tempData);
         }
+
+        public function hire($id){
+            $this->core_layout->setPrivilegeName("crs_resume");
+            $this->authenticate->setModuleAccess("crs");
+            $this->authenticate->doRedirect();
+
+            $data = array();
+            $data['candidate_information'] = $this->applicant->getCandidateInformation($id);
+            $data['position'] = $this->document->select2PositionData();
+            $data['department'] = $this->document->select2DepartmentData();
+            $data['company'] = $this->document->select2CompanyData();
+            $data['employee'] = $this->document->select2RefferalData();
+            $this->core_layout->addCss("global/plugins/uploadui/css/blueimp/blueimp-gallery.min.css", true);
+            $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload.css", true);
+            $this->core_layout->addCss("global/plugins/uploadui/css/jquery.fileupload-ui.css", true);
+            $this->core_layout->addJs("plugins/fileupload/js/vendor/jquery.ui.widget.js");
+            $this->core_layout->addJs("plugins/fileupload/js/jquery.iframe-transport.js");
+            $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
+            $this->core_layout->addCss('global/plugins/swal/sweetalert2.min.css', TRUE);
+            $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', TRUE);
+            $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js", true);
+            $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
+            $this->core_layout->addJs("js/crs/new_online_hire.js", true, $data);
+            $this->load->view('core/templates/header');
+            $this->load->view('crs/new_online_hire');
+            $this->load->view('core/templates/footer');
+        }
+
         public function backup()
         {
+            $this->authenticate->setModuleAccess("crs");
+            $this->authenticate->doRedirect();
+            
             $this->load->view("core/templates/external/header");
             $this->load->view("crs/registration/index_backup");
             $this->load->view("core/templates/external/footer");
@@ -434,6 +469,11 @@
 
         public function validate_application(){
             $data = $this->registration->validateApplication();
+            $this->output->set_content_type('json')->set_output(json_encode($data));
+        }
+
+        public function hire_candidate(){
+            $data = $this->applicant->hireCandidate();
             $this->output->set_content_type('json')->set_output(json_encode($data));
         }
 

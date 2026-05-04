@@ -4053,10 +4053,14 @@ $.validate({
                                 $('#biometric_no_array', noEmployeeBiometricModal).val(JSON.stringify(response.non_existing));
                                 $('#no_shifts_array', noEmployeeBiometricModal).val(JSON.stringify(response.no_shifts));
                                 $('#timesheet-imports-id', noEmployeeBiometricModal).val(response.timesheet_imports_id);
-                                noEmployeeBiometricModal.modal('show');
+                                noEmployeeBiometricModal.data('importPayload', response).modal('show');
                             } else {
                                 const toast = response.success ? 'success' : 'error';
                                 toastr[toast](response.message, response.title, { timeOut: 10000 });
+
+                                btnSubmit.removeClass('m-btn--custom m-loader m-loader--light m-loader--left');
+                                $('#importing-alert-message').fadeOut();
+                                $(':input', form).prop('disabled', false);
                             }
                         } else {
                             if (parseInt(response.possible_duplicate.length) >= 1) {
@@ -4229,16 +4233,22 @@ $.validate({
                                         }).draw();
                                     }
                                 });
-                                tsPossibleDuplicatesModal.modal("show");
+                                tsPossibleDuplicatesModal.data('importPayload', response).modal("show");
                             } else {
                                 const toast = response.success ? 'success' : 'error';
                                 toastr[toast](response.message, response.title, { timeOut: 10000 });
+
+                                btnSubmit.removeClass('m-btn--custom m-loader m-loader--light m-loader--left');
+                                $('#importing-alert-message').fadeOut();
+                                $(':input', form).prop('disabled', false);
                             }
                         }
 
                         vmInvalidImport.rows = response.invalid_records;
                         vmInvalidImport.count = response.invalid_count;
-                        if(response.invalid_count > 0){ importInvalidModal.modal('show'); }
+                        if(response.invalid_count > 0){ 
+                            importInvalidModal.data('importPayload', response).modal('show'); 
+                        }
 
                         btnSubmit.removeClass('m-btn--custom m-loader m-loader--light m-loader--left');
                         $(':input', form).prop('disabled', false);
@@ -4247,9 +4257,19 @@ $.validate({
                         $('#device-id', importModal).val(null);
                         $('.custom-file-control', importModal).html('CHOOSE FILE...');
                         $('#device-id', importModal).val(null).trigger('change');
+
+                        if (response.invalid_count == 0 && response.possible_duplicate == 0 && response.no_shifts == 0 && response.non_existing == 0) {
+                            if (response.emp_id_to_generate.length > 0) {
+                                generateImportTimesheet(response.emp_id_to_generate, response.start, response.end, response.timesheet_imports_id);
+                            }
+                        }
                     } else {
                         const toast = response.success ? 'success' : 'error';
                         toastr[toast](response.message, response.title, { timeOut: 10000 });
+
+                        btnSubmit.removeClass('m-btn--custom m-loader m-loader--light m-loader--left');
+                        $('#importing-alert-message').fadeOut();
+                        $(':input', form).prop('disabled', false);
                     }
                 }
 
@@ -5822,3 +5842,66 @@ const undoRestDay = function (e, date, has_shift, id, tsId, dtRowIndex) {
         }
     })
 }
+
+
+
+const generateImportTimesheet = function (arr = [], start, end, import_id){
+    Swal.fire({
+        icon: 'question',
+        title: 'Generate Timesheet',
+        html: 'Would you like to <b>Generate Timesheet</b> for the uploaded records?',
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        allowOutsideClick: false,
+        showLoaderOnConfirm: true,
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: baseUrl('gcctime/timesheet/generate_timesheet_imported_record'),
+                type: 'post',
+                data: {
+                    csrf_token: _csrf_hash,
+                    ids: arr,
+                    start,
+                    end,
+                    import_id: import_id
+                },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.state) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Generate Timesheet',
+                            text: 'Timesheets for the uploaded records were generated successfully.'
+                        })
+                    }
+
+                }
+            })
+        }
+    });
+}
+
+importInvalidModal.on('hidden.bs.modal', function () {
+    const payload = $(this).data('importPayload');
+    if(payload.emp_id_to_generate.length > 0) {
+        generateImportTimesheet(payload.emp_id_to_generate, payload.start, payload.end, payload.timesheet_imports_id);
+    }
+});
+
+noEmployeeBiometricModal.on('hidden.bs.modal', function() {
+    const payload = $(this).data('importPayload');
+    if(payload.emp_id_to_generate.length > 0) {
+        generateImportTimesheet(payload.emp_id_to_generate, payload.start, payload.end, payload.timesheet_imports_id);
+    }
+});
+
+tsPossibleDuplicatesModal.on('hidden.bs.modal', function() {
+    const payload = $(this).data('importPayload');
+    if(payload.emp_id_to_generate.length > 0) {
+        generateImportTimesheet(payload.emp_id_to_generate, payload.start, payload.end, payload.timesheet_imports_id);
+    }
+});

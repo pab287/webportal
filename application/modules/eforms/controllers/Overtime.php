@@ -141,7 +141,12 @@ class Overtime extends MY_Controller {
         $this->core_layout->addJs("plugins/fileupload/js/jquery.fileupload.js");
         $this->core_layout->addJs("plugins/lightbox/js/lightbox.js");
         $this->core_layout->addJs('global/plugins/swal/sweetalert2.all.min.js', true);
-        $this->core_layout->addJs("js/eforms/overtime/view_overtime.js", true);
+
+        $tempData = array();
+        $tempData['signatory'] = $this->overtime->get_all_signatory();
+
+        $version = filemtime(FCPATH.'assets/js/eforms/overtime/view_overtime.js');
+        $this->core_layout->addJs("js/eforms/overtime/view_overtime.js", true, $tempData, "?v={$version}");
 
         $this->load->view('core/templates/header');
         $this->load->view('eforms/overtime/view_overtime');
