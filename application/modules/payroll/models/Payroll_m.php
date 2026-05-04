@@ -4213,6 +4213,7 @@ class Payroll_m extends CI_Model{
         $this->db->where("a.emp_id", $emp_id);
         $this->db->where("a.paid", $status);
         $this->db->where("a.is_archived", 0);
+        $this->db->where('a.is_manually_tagged', 0);
         $this->db->order_by("pl.loan_type", "ASC");
         /*** $this->db->where("a.active", 1); ***/
         $loans = $this->db->get("gcchris.loans a")->result();
