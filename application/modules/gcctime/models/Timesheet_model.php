@@ -10950,8 +10950,119 @@ class Timesheet_model extends CI_Model{
 
         return $result;
     }
-    // here
+
     public function tag_date_restday() {
+        $result = array();
+        $post = $this->input->post();
+        $date = isset($post['date']) && $post['date'] ? date('Y-m-d', strtotime($post['date'])) : date('Y-m-d');
+        $id = isset($post['id']) && $post['id'] ? $post['id'] : 0;
+        $has_shift = isset($post['has_shift']) ? $post['has_shift'] : 0;
+        $reason = isset($post['reason']) && $post['reason'] ? trim($post['reason']) : null;
+        $timesheetId = isset($post['timesheetId']) && $post['timesheetId'] ? $post['timesheetId'] : 0;
+        $weekDay = date('l', strtotime($date));
+        $empName = $this->getEmployeeNameById($id);
+        $_date = date('F d, Y', strtotime($date));
+
+        if ($id) {
+            $shiftId = $this->get_shift_id($post['id']);
+
+            $data = array(
+                'shift_id' => serialize(array()),
+                'employee_id' => serialize(array($id)),
+                'scheduled_date' => $date,
+                'shift_am_start' => '',
+                'shift_am_end' => '',
+                'shift_pm_start' => '',
+                'shift_pm_end' => '',
+                'remarks' => $reason,
+                'has_shift' => 0,
+                'set_in' => 'timesheet',
+                'created_by' => $this->core_layout->getCurrentEmployeeId(),
+                'created_at' => date('Y-m-d')
+            );
+
+            $this->db->select('id, employee_id, shift_id');
+            $this->db->where('DATE(scheduled_date)', $date);
+            $this->db->from($this->tbl_timesheet_customized_shift_schedule);
+            $_query = $this->db->get();
+
+            $isExist = false;
+            $mergedToExisting = false;
+            if ($_query->num_rows() > 0) {
+                $row = $_query->row();
+                $shift = @unserialize($row->shift_id);
+                $meta = @unserialize($row->employee_id);
+                $meta = is_array($meta) ? $meta : array();
+
+                if (!empty($shift) && $shift) {
+                    if (in_array($shiftId, $shift)) {
+                        $isExist = true;
+                    } else {
+                        $isExist = in_array($id, $meta);
+                    }
+                } else {
+                    $isExist = in_array($id, $meta);
+                }
+
+                // Same date already exists: append employee id to that custom shift record.
+                if (!$isExist && intval($row->id) > 0) {
+                    $meta[] = intval($id);
+                    $meta = array_values(array_unique($meta));
+                    $mergedToExisting = $this->db->update(
+                        $this->tbl_timesheet_customized_shift_schedule,
+                        array('employee_id' => serialize($meta)),
+                        array('id' => $row->id)
+                    );
+                }
+            }
+
+            if ($mergedToExisting) {
+                if ($timesheetId && $timesheetId > 0) {
+                    $this->db->where('id', $timesheetId);
+                    $this->db->update($this->tbl_timesheet, array('has_shift' => 0));
+                }
+
+                $result['state'] = true;
+                $result['msg'] = 'Successfully added rest day.';
+
+                $logMessage = "User added tagged rest day for employee `<b>{$empName}</b>` on date <b>{$_date}</b>. Reason: {$reason}";
+                $this->core_layout->setEventLog($logMessage, "update", "success", "gcctimeutility", "user");
+            } elseif (!$isExist) {
+                $query = $this->db->insert($this->tbl_timesheet_customized_shift_schedule, $data);
+
+                if ($query) {
+                    if ($timesheetId && $timesheetId > 0) {
+                        $this->db->where('id', $timesheetId);
+                        $this->db->update($this->tbl_timesheet, array('has_shift' => 0));
+                    }
+
+                    $result['state'] = true;
+                    $result['msg'] = 'Successfully added rest day.';
+
+                    $logMessage = "User added tagged rest day for employee `<b>{$empName}</b>` on date <b>{$_date}</b>. Reason: {$reason}";
+                    $this->core_layout->setEventLog($logMessage, "create", "success", "gcctimeutility", "user");
+                } else {
+                    $result['state'] = false;
+                    $result['msg'] = 'Failed to add rest day.';
+
+                    $logMessage = "User failed to add tagged rest day for employee `<b>{$empName}</b>` on date <b>{$_date}</b>. Reason: {$reason}";
+                    $this->core_layout->setEventLog($logMessage, "create", "failed", "gcctimeutility", "system");
+                }
+            } else {
+                $result['state'] = false;
+                $result['msg'] = 'Employee already exists in custom shift schedule';
+            }
+
+        }
+
+        if ($timesheetId && $timesheetId > 0) {
+            $result["row"] = $this->getTimesheetRow($timesheetId, $id);
+        }
+
+        return $result;
+    }
+
+    public function tag_date_restdayv1() {
         $result = array();
         $post = $this->input->post();
         $date = isset($post['date']) && $post['date'] ? date('Y-m-d', strtotime($post['date'])) : date('Y-m-d');

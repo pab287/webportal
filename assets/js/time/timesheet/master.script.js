@@ -5857,7 +5857,6 @@ const undoRestDay = function (e, date, has_shift, id, tsId, dtRowIndex) {
 }
 
 
-
 const generateImportTimesheet = function (arr = [], start, end, import_id){
     Swal.fire({
         icon: 'question',
@@ -5918,3 +5917,7 @@ tsPossibleDuplicatesModal.on('hidden.bs.modal', function() {
         generateImportTimesheet(payload.emp_id_to_generate, payload.start, payload.end, payload.timesheet_imports_id);
     }
 });
+
+const confirmCustomShift = function(e, date, id, tsId, dtRowIndex) {
+    
+}
