@@ -132,36 +132,37 @@ if (typeof customShiftTable !== "undefined" && customShiftTable.length == 1) {
             },
             global: false
         },
+        order: [[0, 'desc']],
         columns: [
-            { data: 'scheduled_date', width: "8%" },
+            { data: 'scheduled_date', width: "6%" },
             {
                 data: 'scheduled_date', width: "8%", render: function (data) {
                     return moment(data).format('dddd');
                 }
             },
             {
-                data: 'shift_am_start', width: "8%", render: function (data) {
+                data: 'shift_am_start', width: "6%", orderable: false, render: function (data) {
                     var tempHtml = "--:--";
                     tempHtml = (data && data !== "--:--") ? moment(data, "HH:mm:ss").format("LT") : data;
                     return tempHtml;
                 }
             },
             {
-                data: 'shift_am_end', width: "8%", render: function (data) {
+                data: 'shift_am_end', width: "6%", orderable: false, render: function (data) {
                     var tempHtml = "--:--";
                     tempHtml = (data && data !== "--:--") ? moment(data, "HH:mm:ss").format("LT") : data;
                     return tempHtml;
                 }
             },
             {
-                data: 'shift_pm_start', width: "8%", render: function (data) {
+                data: 'shift_pm_start', width: "6%", orderable: false, render: function (data) {
                     var tempHtml = "--:--";
                     tempHtml = (data && data !== "--:--") ? moment(data, "HH:mm:ss").format("LT") : data;
                     return tempHtml;
                 }
             },
             {
-                data: 'shift_pm_end', width: "8%", render: function (data) {
+                data: 'shift_pm_end', width: "6%", orderable: false, render: function (data) {
                     var tempHtml = "--:--";
                     tempHtml = (data && data !== "--:--") ? moment(data, "HH:mm:ss").format("LT") : data;
                     return tempHtml;
@@ -175,7 +176,7 @@ if (typeof customShiftTable !== "undefined" && customShiftTable.length == 1) {
                     let tempResource = ``;
                     if (data.length > 0) {
                         $.each(data, function (index, value) {
-                            tempResource += `<span class="m-badge m-badge--metal m-badge--wide m-badge--rounded m--font-boldest">${value}</span> `;
+                            tempResource += `<span class="m-badge m-badge--metal m-badge--wide m-badge--rounded m--font-boldest mb-2">${value}</span> `;
                         });
                     } else {
                         tempResource += `<span class="m-badge m-badge--warning m-badge--wide m-badge--rounded m--font-boldest">No Assigned Shift</span> `;
@@ -191,6 +192,25 @@ if (typeof customShiftTable !== "undefined" && customShiftTable.length == 1) {
                 render: function (data) {
                     let tempResource = `<span class="m-badge m-badge--brand">${data}</span>`;
                     return tempResource;
+                }
+            },
+            {
+                data: "employees",
+                width: "14%",
+                orderable: false,
+                className: "text-center",
+                render: function (data) {
+                    let html = '';
+
+                    if (data.length > 0) {
+                        $.each(data, function(index, value){
+                            html += `<span class="m-badge m-badge--metal m-badge--wide m-badge--rounded m--font-boldest mb-2" style="font-size: 10px">${value}</span> `;
+                        });
+                    } else {
+                        html += '---';
+                    }
+
+                    return html;
                 }
             },
             {

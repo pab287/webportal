@@ -164,7 +164,23 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-sm-12 col-xl-6 col-lg-6 col-md-6 text-right">
+                                    <div class="col-xl-2 col-lg-2 col-md-2 col-sm-12 mt-2">
+                                        <div class="m-form__group form-group row pt-0 pl-3">
+                                            <label class="col-8 col-form-label text-left" style="font-weight: 600;">
+                                                Active Employees<br>
+                                                <span class="m-form__help p-0" style="text-transform: none; font-weight: 600;">Filter Employee Status</span>
+                                            </label>
+                                            <div class="col-3">
+                                                <span class="m-switch m-switch--outline m-switch--sm m-switch--icon m-switch--success">
+                                                    <label>
+                                                        <input type="checkbox" checked="checked" id="active_employees" />
+                                                        <span></span>
+                                                    </label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-12 col-xl-4 col-lg-4 col-md-4 text-right">
                                         <button type="submit"
                                             class="btn btn-info m-btn m-btn--icon btnAdvance_search m--margin-top-25">
                                             <span><i class="fa fa-search"></i><span>GENERATE</span></span>

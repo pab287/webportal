@@ -456,7 +456,7 @@
                 -webkit-overflow-scrolling: touch;
             }
 
-            .dropdown-menu {
+            #portal_notifications #attendance-legend-options.dropdown-menu {
                 left: -70px !important;
             }
 

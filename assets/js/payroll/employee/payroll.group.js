@@ -359,6 +359,7 @@ btnNewEmployeeGroup.on("click", function () {
                 const assignSelect = documentModal.find('select#assign_employee_id');
                 const payoutSchedSelect = documentModal.find('select#payroll_sched');
                 const payoutMode = documentModal.find('select#payment_mode');
+                const activeEmployeeFilter = documentModal.find("input#active_employees");
 
                 if (typeof companyAllFilter !== "undefined" && companyAllFilter.length == 1) {
                     companyAllFilter.on("change", function (e) {
@@ -433,6 +434,7 @@ btnNewEmployeeGroup.on("click", function () {
                                 params.company_id = companySelect2.val();
                                 params.all_filter = propAllFilter;
                                 params.payout_sched = payoutSchedSelect.val();
+                                params.employee_status = activeEmployeeFilter.is(":checked") ? 1 : 0;
                                 return params;
                             }
                         },
@@ -476,6 +478,12 @@ btnNewEmployeeGroup.on("click", function () {
                     });
                 }
 
+                if(typeof activeEmployeeFilter !== "undefined" && activeEmployeeFilter.length == 1){
+                    activeEmployeeFilter.on("change", function () {
+                        employeeSelect2.val([]).trigger("change");
+                    });
+                }
+
                 $.validate({
                     form: documentModal.find("form"),
                     lang: "en",
@@ -483,6 +491,9 @@ btnNewEmployeeGroup.on("click", function () {
                         var currentForm = form[0];
                         var formUrl = currentForm.action;
                         var formData = $(currentForm).serialize();
+                        const isActiveFilter = activeEmployeeFilter.is(":checked") ? 1 : 0;
+                        formData += "&active_only="+isActiveFilter;
+
                         $.ajax({
                             url: formUrl,
                             type: "POST",
@@ -533,7 +544,7 @@ $(document).on("click", "button.btnEditGroup", function () {
                 _globalLockedEmployees = { employees: {}, id: [] };
                 if(tempRow.allow_transfer !== undefined && Number.parseInt(tempRow.allow_transfer) === 0) {
                     _globalLockedEmployees.employees = { ..._employees };
-                    $.each(tempRow.employee_id, function(i, v){
+                    $.each(tempRow.employee_id, (i, v) => {
                         _globalLockedEmployees.id.push(v);
                     });
                 }
@@ -546,6 +557,8 @@ $(document).on("click", "button.btnEditGroup", function () {
                 const assignSelect = documentModal.find('select#assign_employee_id');
                 const payoutSchedSelect = documentModal.find('select#payroll_sched');
                 const payoutMode = documentModal.find('select#payment_mode');
+                const activeEmployeeFilter = documentModal.find("input#active_employees");
+                let idsToEnable = tempRow.employee_id ?? [];
 
                 if (companyAllFilter !== undefined && companyAllFilter.length == 1) {
                     companyAllFilter.on("change", function (e) {
@@ -619,17 +632,27 @@ $(document).on("click", "button.btnEditGroup", function () {
                             data: function (params) {
                                 params.company_id = companySelect2.val();
                                 params.all_filter = propAllFilter;
+                                params.employee_status = activeEmployeeFilter.is(":checked") ? 1 : 0;
                                 return params;
+                            }, processResults: function (data) {
+                                const { results } = data;
+                                results.forEach(item => {
+                                    if (idsToEnable.includes(String(item.id))) {
+                                        item.disabled = false;
+                                    }
+                                });
+                                return { results: results };
                             }
                         },
                         escapeMarkup: function (markup) {
                             return markup;
+
                         },
                         templateResult: function (data) {
-                            return data.html;
+                            return data.html || data.text;
                         },
                         templateSelection: function (data) {
-                            return data.text;
+                            return data.text || data.id;
                         }
                     });
 
@@ -680,6 +703,36 @@ $(document).on("click", "button.btnEditGroup", function () {
                             assignSelect.append(tempOption);
                         });
                     }
+                }
+                
+                if (typeof activeEmployeeFilter !== "undefined" && activeEmployeeFilter.length === 1) {
+                    activeEmployeeFilter.on("change", function (e) {
+                        const current = $(this);
+                        const oldChecked = current.prop("checked");
+                        
+                        const hasValue = employeeSelect2.val() && employeeSelect2.val().length > 0;
+                        if (!hasValue) { return; }
+                        e.preventDefault();
+
+                        Swal.fire({
+                            title: "Active/All Filter Search",
+                            text: "This will clear the current employee(s) on the payroll group employees. Would you like to proceed?",
+                            icon: "question",
+                            showCancelButton: true,
+                            confirmButtonColor: "#3085d6",
+                            cancelButtonColor: "#d33",
+                            confirmButtonText: "Yes, Proceed",
+                            cancelButtonText: "No",
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                employeeSelect2.val([]).trigger("change");
+                            }else{
+                                current.prop("checked", !oldChecked);
+                            }
+                        });
+                    });
                 }
                 
                 $.validate({
@@ -778,6 +831,9 @@ const postPayrollGroup = function (form, data) {
             formData+="&employees[]="+encodeURIComponent(value);
         });
     }
+
+    const isActiveFilter = $(currentForm).find("input#active_employees").is(":checked") ? 1 : 0;
+    formData += "&active_only="+isActiveFilter;
 
     $.ajax({
         url: formUrl,

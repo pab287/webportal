@@ -277,7 +277,7 @@
                                         <div class="row mt-2">
                                             <div class="col">
                                                 <div class="m-portlet__head-title">
-                                                    <h5 class="m-portlet__head-text">REFERENCES </h5>
+                                                    <h5 class="m-portlet__head-text">CHARACTER REFERENCES </h5>
                                                 </div>
                                             </div>
                                         </div>

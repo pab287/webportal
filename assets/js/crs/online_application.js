@@ -166,22 +166,57 @@ let tblCandidates = $("#candidates_table").DataTable({
         {
             data: "applied_dt",
             render: function (data, type, row) {
-                let content = `
-                    Applied on: ${moment(data).format('MMM D, YYYY')}<br>
-                    Recruitment: ${application_vue.renderRecruitment(row.recruitment)}`;
-        
-                if (row.recruitment === 'REFERRAL' && row.referral_name) {
-                    content += `<br>Referral by: ${row.referral_name}`;
+                const appliedDate = data ? moment(data).format("MMM D, YYYY") : "N/A";
+                const hiredDate = row.hired_dt ? moment(row.hired_dt).format("MMM D, YYYY hh:mm A") : "N/A";
+                const recruitment = application_vue.renderRecruitment(row.recruitment || "N/A");
+
+                let badges = "";
+
+                if (row.status === "pooling") {
+                    badges += `<span class="badge badge-warning text-uppercase mr-1">Pooling</span>`;
+                } else if (row.status === "hired") {
+                    badges += `<span class="badge badge-success text-uppercase mr-1">Hired</span>`;
+                } else {
+                    badges += `<span class="badge badge-secondary text-uppercase mr-1">${row.status || "N/A"}</span>`;
                 }
-        
-                content += `<br>
-                    <span class="badge badge-warning text-uppercase">${row.status || 'N/A'}</span>`;
-        
-                if (row.is_online == 1) {
-                    content += ` <span class="badge badge-info text-uppercase">Applied Online</span>`;
+
+                if (parseInt(row.is_online) === 1) {
+                    badges += `<span class="badge badge-info text-uppercase">Applied Online</span>`;
                 }
-        
-                return content;
+
+                let extraInfo = "";
+                if (row.recruitment === "REFERRAL" && row.referral_name) {
+                    extraInfo = `
+                        <div class="small text-muted mt-1">
+                            Referral by: <span class="font-weight-semibold text-dark">${row.referral_name}</span>
+                        </div>
+                    `;
+                }
+
+                let hiredInfo = "";
+                if (row.status === "hired") {
+                    hiredInfo = `
+                        <div class="small text-muted mt-1">
+                            Hired on: ${hiredDate}
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="applied-cell">
+                        <div class="font-weight-bold text-dark">
+                            Applied on: ${appliedDate}
+                        </div>
+                        <div class="small text-muted">
+                            Recruitment: ${recruitment}
+                        </div>
+                        ${extraInfo}
+                        <div class="mt-2">
+                            ${badges}
+                        </div>
+                        ${hiredInfo}
+                    </div>
+                `;
             }
         },
         {
@@ -275,35 +310,63 @@ let tblCandidates = $("#candidates_table").DataTable({
 
 function itemDatatableActions(id, status) {
     let _actionButton = "<span class='action-buttons'>";
+
     if (!archive) {
         _actionButton += `
-                   <a style="text-decoration: none;" 
-                        class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnView" 
-                        onclick="onViewApplication(${id})" 
-                        data-toggle="m-tooltip" data-placement="bottom" 
-                        data-skin="dark" 
-                        title="View Application">
-                        <i class="la la-eye"></i>
-                    </a>
-                    <button 
-                        type="button" 
-                        class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
-                        onclick="deleteApplication(${id})" 
-                        data-toggle="m-tooltip" data-placement="bottom" title="Archive Application" 
-                        data-skin="dark">
-                        <i class="la la-file-archive-o"></i>
-                    </button>`
+            <a style="text-decoration: none;" 
+                class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnView" 
+                onclick="onViewApplication(${id})" 
+                data-toggle="m-tooltip" 
+                data-placement="bottom" 
+                data-skin="dark" 
+                title="View Application">
+                <i class="la la-eye"></i>
+            </a>
+        `;
+
+        if (status !== 'hired') {
+            _actionButton += `
+                <button 
+                    type="button" 
+                    class="btn btn-default m-btn m-btn--hover-success m-btn--icon m-btn--icon-only m-btn--pill btnHire" 
+                    onclick="hireApplication(${id})" 
+                    data-toggle="m-tooltip" 
+                    data-placement="bottom" 
+                    title="Hire Applicant" 
+                    data-skin="dark">
+                    <i class="la la-user-plus"></i>
+                </button>
+            `;
+        }
+
+        _actionButton += `
+            <button 
+                type="button" 
+                class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnArchive" 
+                onclick="deleteApplication(${id})" 
+                data-toggle="m-tooltip" 
+                data-placement="bottom" 
+                title="Archive Application" 
+                data-skin="dark">
+                <i class="la la-file-archive-o"></i>
+            </button>
+        `;
     } else {
-         _actionButton += `                  
-                    <button 
-                        type="button" 
-                        class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnRestore" 
-                        onclick="restoreApplication(${id})" 
-                        data-toggle="m-tooltip" data-placement="bottom" title="Restore Application" 
-                        data-skin="dark">
-                        <i class="la la-undo"></i>
-                    </button>`;
+        _actionButton += `
+            <button 
+                type="button" 
+                class="btn btn-default m-btn m-btn--hover-accent m-btn--icon m-btn--icon-only m-btn--pill btnRestore" 
+                onclick="restoreApplication(${id})" 
+                data-toggle="m-tooltip" 
+                data-placement="bottom" 
+                title="Restore Application" 
+                data-skin="dark">
+                <i class="la la-undo"></i>
+            </button>
+        `;
     }
+
+    _actionButton += "</span>";
     return _actionButton;
 }
 
@@ -432,4 +495,31 @@ function openArchive(){
         $('#newOption').show();
     }
     tblCandidates.ajax.reload();
+}
+
+function hireApplication(id) {
+    Swal.fire({
+        title: 'HIRE APPLICANT?',
+        text: 'Are you sure you want to hire this applicant? You will be redirected to the applicant hire page.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        cancelButtonText: 'CANCEL',
+        confirmButtonText: 'YES, HIRE APPLICANT'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'Redirecting...',
+                text: 'You will now be redirected to applicant hire page.',
+                icon: 'info',
+                timer: 2000,
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false
+            }).then(() => {
+                window.location.href = baseUrl("crs/online_registration/hire/" + id);
+            });
+        }
+    });
 }
