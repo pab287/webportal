@@ -7064,6 +7064,106 @@ class Reports_m extends CI_Model{
         return $merged;
     }
 
+    public function print_count() {
+        $post = $this->input->post();
+
+        $count = 1;
+        $last_printed = null;
+        $last_printed_at = null;
+        $last_amount = 0;
+
+        $group = (isset($post["group"]) && $post["group"])? intval($post["group"]): 1;
+        $payrollGroup = isset($post["payroll_group"]) && $post["payroll_group"] ? $post["payroll_group"]: array();
+
+        $isDateRange = isset($post["date_range"]) && $post["date_range"];
+        $isFilterMonth = isset($post["filter_month"]) && $post["filter_month"];
+
+        if(isset($post["date_range"]) && $post["date_range"]){
+            $dates = explode("-", $post["date_range"]);
+            if(is_array($dates) && count($dates) == 2){
+                foreach ($dates as $key => $date) {
+                    $tempDate = date("Y-m-d", strtotime(trim($date)));
+                    $dates[$key] = $tempDate;
+                }
+                $tempStartDate = $dates[0];
+                $tempEndDate = $dates[1];
+            }
+        }
+
+        if ($isFilterMonth) {
+            if(isset($post["filter_month"], $post["filter_year"]) && ($post["filter_month"] && $post["filter_year"])){
+                $tempStartDate = date("Y-m-d", strtotime("{$post["filter_year"]}-{$post["filter_month"]}-01"));
+                $date = new DateTime($tempStartDate);
+                $date->modify('last day of this month');
+                $tempEndDate = $date->format('Y-m-d');
+            }elseif (isset($post["filter_year"]) && $post["filter_year"]){
+                $tempStartDate = date("Y-01-01", strtotime("{$post["filter_year"]}-01-01"));
+                $tempEndDate = date("Y-12-31", strtotime("{$post["filter_year"]}-12-31"));
+            }
+        }
+
+        if ($isDateRange) {
+            if(isset($post["pay_date"]) && $post["pay_date"]){
+                $tempStartDate = date("Y-m-d", strtotime($post["pay_date"]));
+                $tempEndDate = date("Y-m-d", strtotime($post["pay_date"]));
+            }
+        }
+
+        $company_id = $post['company'];
+        $module = $post['module'];
+        $payroll_group = isset($post['payroll_group']) && $post['payroll_group'] ? serialize($post['payroll_group']) : serialize(array());
+        $amount = $post['amount'];
+
+        $this->db->where('module', $module);
+        $this->db->where('DATE(date_from)', $tempStartDate);
+        $this->db->where('DATE(date_to)', $tempEndDate);
+        $this->db->where('company_id', $company_id);
+        $this->db->where('payroll_group', $payroll_group);
+        $this->db->order_by('id', 'desc');
+        $this->db->limit(1);
+        $query = $this->db->get('payroll.print_report_counter');
+        $row = $query->row();
+
+        if ($row) {
+            $count = ((int) $row->counter) + 1;
+            $last_amount = isset($row->printed_amount) ? $row->printed_amount : 0;
+
+            if (!empty($row->printed_by)) {
+                $tempRecord = (object) $this->core_layout->getEmployeeData($row->printed_by);
+                if (isset($tempRecord->display_name_0) && $tempRecord->display_name_0) {
+                    $last_printed = $tempRecord->display_name_0;
+                }
+            }
+
+            if (!empty($row->printed_at)) {
+                $last_printed_at = date('Y-m-d H:i:s', strtotime($row->printed_at));
+            }
+        }
+
+        $data = array(
+            'module' => $module,
+            'date_from' => $tempStartDate,
+            'date_to' => $tempEndDate,
+            'company_id' => $company_id,
+            'payroll_group' => $payroll_group,
+            'counter' => $count,
+            'printed_amount' => $amount,
+            'printed_by' => $this->user_data['emp_id'],
+            'printed_at' => date('Y-m-d H:i:s')
+        );
+
+        $this->db->insert('payroll.print_report_counter', $data);
+
+        return array(
+            'data' => array(
+                'count' => $count,
+                'last_printed_by' => $last_printed,
+                'last_printed_at' => $last_printed_at,
+                'amount' => $last_amount
+            )
+        );
+    }
+
     public function select2_station(){
         $result = array();
         $get = $this->input->get();

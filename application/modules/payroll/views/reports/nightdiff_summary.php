@@ -16,10 +16,18 @@
     table.dataTable tfoot tr:first-child th{ border-bottom: 4px double #000000; }
     #portlet--signatories { page-break-inside: inherit; }
     #filter-table { display: none !important }
+
+    #print-counter {
+        display: block !important;
+    }
 }
 
 .unpaid-ndiff td {
     background-color: #EBEDF2;
+}
+
+#print-counter {
+    display: none;
 }
 </style>
 <div class="m-content">
@@ -35,7 +43,7 @@
             <div class="m-portlet__head-tools">
                 <ul class="m-portlet__nav">
                     <li id="table-actions" class="m-portlet__nav-item text-right m-animate-fade-in m--hide">
-                        <button class='btn btn-brand m-btn' onclick='window.print()'>
+                        <button class='btn btn-brand m-btn' onclick="printSummary()">
                             <span><i class="fa fa-print pr-1"></i> Print</span>
                         </button>
                         <button class='btn btn-warning m-btn text-white' onclick='exportExcel()'>
@@ -116,10 +124,25 @@
                                         <p v-if="filters.company_address">{{ filters.company_address }}</p>
                                     </div>
                                 </div>
-                                <div class="printable-top--filter">
+                                <!-- <div class="printable-top--filter">
                                     <div class="col-md-12">FILTERED BY: {{ filters.filter_by ? filters.filter_by: '---' }}</div>
                                     <div class="col-md-12">COVERAGE DATE: {{ filters.coverage_date ? filters.coverage_date: '---' }}</div>
                                     <div class="col-md-12">PAYROLL GROUP: {{ filters.payroll_group ? filters.payroll_group: '---' }}</div>
+                                </div> -->
+
+                                <div class="col-md-12">
+                                    <div class="row justify-content-between align-items-start">
+                                        <div class="col-md-8 printable-top--filter">
+                                            <div>FILTERED BY: {{ filters.filter_by ? filters.filter_by: '---' }}</div>
+                                            <div>COVERAGE DATE: {{ filters.coverage_date ? filters.coverage_date: '---' }}</div>
+                                            <div>PAYROLL GROUP: {{ filters.payroll_group ? filters.payroll_group: '---' }}</div>
+                                        </div>
+                                        <div id="print-counter" class="col-md-3">
+                                            <div>PRINT #: <b>{{ print_counter.count }}</b></div>
+                                            <div v-if="print_counter.last_printed">LAST PRINTED BY: <b>{{ print_counter.last_printed }}</b></div>
+                                            <div v-if="print_counter.last_printed_at">LAST PRINTED AT: <b>{{ print_counter.last_printed_at }}</b></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </template>
