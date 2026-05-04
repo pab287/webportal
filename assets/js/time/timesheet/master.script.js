@@ -1001,6 +1001,7 @@ $(document)
                                 regenerateRecord = ``,
                                 timeAdjustmentDetails = ``;
                                 restDay = ``;
+                                customShift = ``;
 
                             let isHolidayAction = ``;
                             /*** if (allowPaidHoliday && hasOvertime == false) { ***/
@@ -1096,6 +1097,17 @@ $(document)
                                             <span class="m-nav__link-text">REST DAY</span>
                                         </a>
                                     </li>`;
+
+                                    //here not done
+                                    customShift = `
+                                    <li class="m-nav__item customShift-button">
+                                        <a href="javascript:void(0)" class="m-nav__link"
+                                        data-id="${row.id}"
+                                        onclick="confirmCustomShift(this, '${row._date}', ${row.has_shift }, ${row._emp_id}, ${row.tsID}, ${meta.row})">
+                                            <i class="m-nav__link-icon fa fa-calendar"></i>
+                                            <span class="m-nav__link-text">CUSTOM SHIFT SCHEDULE</span>
+                                        </a>
+                                    </li>`;
                                 }
 
                                 if (hasShift == 0 && (row.custom_shift_id == 0 || row.custom_shift_id > 0 || row.custom_shift_id == null) && (row.verified == 0 || row.verified == null) && row.altered_shift && row.altered_shift.has_shift == 0 && row.altered_shift.tag == 'timesheet'){
@@ -1138,6 +1150,7 @@ $(document)
                                                             </li>
                                                             ${undoVerification}
                                                             ${restDay}
+                                                            ${customShift}
                                                             ${regenerateRecord}
                                                             ${timeAdjustmentDetails}
                                                         </ul>
