@@ -20,6 +20,7 @@
         protected $tbl_hris_loans = "gcchris.loans";
         protected $tbl_payroll_loans = "payroll.loans";
         protected $tbl_hris_loans_tagged = "gcchris.loans_tagged_paid";
+        protected $tblMode = "payroll.payment_mode";
 
         private $user_data;
         private $db_debug;
@@ -1086,7 +1087,6 @@
                     $vv->assigned_employees = $allowed;
                     // get assigned employees when have a privilege of view by company
 
-
                     $vv->edit_url = site_url("payroll/employee/get_employee_group_data/edit/{$vv->id}");
                     $vv->archive_url = site_url("payroll/employee/get_employee_group_data/archive/{$vv->id}");
                     unset($vv->employee_id, $vv->assigned_employee_id, $vv->is_allow_view);
@@ -1234,6 +1234,7 @@
             $tempIds = array();
             $allFilter = isset($get["all_filter"]) && $get["all_filter"] == "true" ? true: false;
             $hasCompanySearch = isset($get["company_id"]) && $get["company_id"] ? true: false;
+            $payout_sched = isset($get["payout_sched"]) && $get["payout_sched"] ? $get["payout_sched"]: null;
             $activeEmployeeFilter = isset($get["employee_status"]) && intval($get["employee_status"]) == 1 ? "Active": "All";
 
             $idx = array();
@@ -1302,6 +1303,11 @@
                 $this->db->or_like("CONCAT(a.firstname, ' ', a.lastname, ' ', a.suffix)", $get["term"], "both");
                 $this->db->group_end();
             }
+
+            if ($payout_sched) {
+                $this->db->where("a.payout_sched", $payout_sched);
+            }
+
             $this->db->limit(10);
             $this->db->order_by("a.firstname", "ASC");
             $qTemp = $this->db->get();
@@ -1351,6 +1357,11 @@
                     $this->db->or_like("CONCAT(a.firstname, ' ', a.lastname, ' ', a.suffix)", $get["term"], "both");
                     $this->db->group_end();
                 }
+
+                if ($payout_sched) {
+                    $this->db->where("a.payout_sched", $payout_sched);
+                }
+
                 $this->db->limit(10);
                 $this->db->order_by("a.firstname", "ASC");
                 $_qTemp = $this->db->get();
@@ -1398,10 +1409,22 @@
             $post = $this->input->post();
             $logInfo = null;
             if($post){
+                $getPayoutMode = $this->db->get_where($this->tblMode, array('id' => $post['payout_mode']))->row();
+                $payout_mode = isset($getPayoutMode->description) && $getPayoutMode->description ? strtoupper($getPayoutMode->description) : "";
+
+                $payoutSchedules = array(
+                    array("id" => 1, "text" => "Monthly Payroll"),
+                    array("id" => 2, "text" => "Semi-Monthly Payroll"),
+                    array("id" => 3, "text" => "Weekly Payroll")
+                );
+
+                $payoutScheduleText = array_column($payoutSchedules, "text", "id")[(int)$post['payout_sched']] ?? "";
+
                 $post["employee_id"] = serialize($post["employee_id"]);
                 $post["created_by"] = $this->core_layout->getCurrentEmployeeId();
                 $post["created_at"] = date("Y-m-d H:i:s");
                 $post['is_allow_view'] = isset($post['is_allow_view']) && $post['is_allow_view'] ? 1: 0;
+                $post['description'] = isset($post['description']) && $post['description'] ? strtoupper(trim($post['description'])) . ($payoutSchedules ? ' - '.$payoutScheduleText : '') . ' - '. $payout_mode: null;
                 $post['assigned_employee_id'] = isset($post['is_allow_view']) && $post['is_allow_view'] == 1 ? serialize($post['assigned_employee_id']) : serialize(array());
                 $post["active_only"] = isset($post["active_only"]) && $post["active_only"] == "1" ? 1: 0;
 
@@ -1451,6 +1474,22 @@
                 $post["updated_at"] = date("Y-m-d H:i:s");
                 $post['is_allow_view'] = isset($post['is_allow_view']) && $post['is_allow_view'] ? 1: 0;
                 $post['assigned_employee_id'] = isset($post['is_allow_view']) && $post['is_allow_view'] == 1 ? serialize($post['assigned_employee_id']) : serialize(array());
+
+                // Keep base description, and append/replace " - <PAYOUT SCHEDULE> - <PAYOUT MODE>" suffix.
+                if (isset($post['description']) && $post['description']) {
+                    $getPayoutMode = $this->db->get_where($this->tblMode, array('id' => $post['payout_mode']))->row();
+                    $payout_mode = isset($getPayoutMode->description) && $getPayoutMode->description ? strtoupper($getPayoutMode->description) : "";
+
+                    $payoutSchedules = array(
+                        array("id" => 1, "text" => "Monthly Payroll"),
+                        array("id" => 2, "text" => "Semi-Monthly Payroll"),
+                        array("id" => 3, "text" => "Weekly Payroll")
+                    );
+
+                    $payoutScheduleText = array_column($payoutSchedules, "text", "id")[(int)$post['payout_sched']] ?? "";
+                    $post['description'] = $this->formatPayrollGroupDescription($post['description'], $payoutScheduleText, $payout_mode);
+                    $logDescription = strtoupper($post['description']);
+                }
                 
                 $updated = $this->db->update($this->payrollGroupTable, $post, $tempWhere);
                 if($updated && $this->db->affected_rows() > 0){
@@ -3545,5 +3584,29 @@ public function getEmployeeNightDiffList(){
             "response" => $status,
             "toastr_msg" => $message
         ];
+    }
+
+    /**
+     * Build payroll group description with schedule/mode suffix.
+     * If an existing "BASE - SCHEDULE - MODE" format is detected, replace only the suffix.
+     * Otherwise, append the suffix to the current description.
+     */
+    private function formatPayrollGroupDescription($description, $payoutScheduleText, $payoutMode){
+        $baseDescription = isset($description) && $description ? strtoupper(trim($description)) : null;
+        if (!$baseDescription) {
+            return null;
+        }
+
+        $suffix = ($payoutScheduleText ? " - {$payoutScheduleText}" : "") . " - {$payoutMode}";
+        $chunks = explode(" - ", $baseDescription);
+
+        // Existing format detected: BASE - <SCHEDULE> - <MODE>; replace trailing schedule/mode only.
+        if (count($chunks) >= 3) {
+            $baseOnly = trim(implode(" - ", array_slice($chunks, 0, -2)));
+            return ($baseOnly ? $baseOnly : $baseDescription) . $suffix;
+        }
+
+        // No format detected yet; append schedule/mode to the current description.
+        return $baseDescription . $suffix;
     }
 }

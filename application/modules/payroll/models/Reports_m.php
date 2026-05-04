@@ -39,6 +39,8 @@ class Reports_m extends CI_Model{
     protected $tbl_hris_allawances = "gcchris.allowances";
     protected $tbl_ps_allowances = "payroll.payroll_sheet_allowances";
     protected $tbl_default_station = "gcchris.default_station_location";
+    protected $tblMode = "payroll.payment_mode";
+    protected $tblAppLocationSites = "gcctimeutility.app_location_sites";
 
     function __construct(){
         parent::__construct();
@@ -5558,12 +5560,15 @@ class Reports_m extends CI_Model{
         $resultset = array();
         $resultset["grand_total"] = 0;
 
+        session_write_close();
+
         $post = $this->input->post();
         if(isset($post) && $post){
             $tempFilter = array();
             $tempFilter["is_bonus"] = isset($post['is_bonus']) ? intval($post['is_bonus']) : 0;
             $tempRange = "";
             $option = isset($post['option']) && $post['option'] ? $post['option'] : 1; // 1 = all; 2 = earners; 3 = no earners
+            $payout_mode = isset($post['payout_mode']) && $post['payout_mode'] ? $post['payout_mode'] : null;
 
             if(isset($post["group"]) && intval($post["group"]) === 1){
                 $tempPayDate = date("Y-m-d", strtotime($post["pay_date"]));
@@ -5605,7 +5610,7 @@ class Reports_m extends CI_Model{
                 SUM(a.ot_amount) as ot_amount, SUM(a.total_ndiff_amount) as total_ndiff_amount, SUM(a.ot_ndiff_amount) as ot_ndiff_amount, SUM(a.total_holiday_amount) as total_holiday_amount,
                 SUM(a.total_allowances) as total_allowances, SUM(a.gross_pay) as gross_pay, SUM(a.net_pay) as net_pay, b.lastname, b.firstname, b.middlename, b.suffix,
                 UPPER(c.code) as company_description, UPPER(IF(d.name IS NULL, b.position, d.name)) as position, UPPER(b.work_status) as work_status, b.date_start,
-                UPPER(e.code) as department_description, IFNULL(f.rate, 0) as allowance_rate, g.station_description as station";
+                UPPER(e.code) as department_description, IFNULL(f.rate, 0) as allowance_rate, UPPER(g.station_description) as station, b.payout_sched";
 
                 $this->db->select($sqlSelect);
                 $this->db->from($this->tbl_payroll_sheet." a");
@@ -5622,6 +5627,10 @@ class Reports_m extends CI_Model{
 
                 if ($option == 3) {
                     $this->db->where('a.gross_pay <=', 0);
+                }
+
+                if (isset($post['project']) && $post['project']) {
+                    $this->db->where('g.station_id', $post['project']);
                 }
 
                 $this->db->where("a.posted", 1);
@@ -5654,13 +5663,40 @@ class Reports_m extends CI_Model{
                         $tempRs = (array) $value;
                         $tempDisplay = (object) $this->core_layout->getDisplayName($tempRs);
                         $tempName = (isset($tempDisplay->display_name_0) && $tempDisplay->display_name_0)? strtoupper($tempDisplay->display_name_0): strtoupper("no display name");
+
+                        $payoutSchedules = array(
+                            array("id" => 1, "text" => "Monthly"),
+                            array("id" => 2, "text" => "Semi-Monthly"),
+                            array("id" => 3, "text" => "Weekly")
+                        );
+
+                        $payoutScheduleText = array_column($payoutSchedules, "text", "id")[(int)$value->payout_sched] ?? "N/A";
+
+                        $payroll_group = $this->get_payroll_group($value->emp_id);
+                        $mode = $this->get_payroll_group_payout_modes($value->emp_id);
+
                         $value->employee_name = $tempName;
                         $value->net_pay_decimal = number_format($value->net_pay, 2, ".", ",");
-                        $arrData[$key] = $value;
-                        $grossTotal+= floatval($value->gross_pay);
-                        $grandTotal+= floatval($value->net_pay);
-                        $value->payroll_group = $this->get_payroll_group($value->emp_id);
+                        $value->payroll_group = (isset($payroll_group['payroll_group']) && $payroll_group['payroll_group']) ? $payroll_group['payroll_group'] : ' N/A ';
+                        $value->payout_mode = (isset($payroll_group['payout_mode']) && $payroll_group['payout_mode']) ? $payroll_group['payout_mode'] : ' N/A ';
+                        $value->payout_sched = $payoutScheduleText;
+
+                        if ($payout_mode != null) {
+                            if ((int)$payout_mode == (int)$mode) {
+                                $arrData[$key] = $value;
+                            }
+                        } else {
+                            $arrData[$key] = $value;
+                        }
                     }
+                }
+
+                $temp = array();
+                foreach ($arrData as $k => $v) {
+                    $grossTotal+= floatval($v->gross_pay);
+                    $grandTotal+= floatval($v->net_pay);
+
+                    $temp[] = $v;
                 }
 
                 $payout_schedule = null;
@@ -5670,7 +5706,7 @@ class Reports_m extends CI_Model{
                 $tempFilter["group"] = $post["group"];
                 
                 if($filteredCompany){ $tempFilter["company_description"] = $filteredCompany; }
-                $resultset["data"] = $arrData;
+                $resultset["data"] = $temp;
                 $resultset["gross_total"] = $grossTotal;
                 $resultset["gross_total_decimal"] = number_format($grossTotal, 2, ".", ",");
                 $resultset["grand_total"] = $grandTotal;
@@ -5678,7 +5714,7 @@ class Reports_m extends CI_Model{
                 $resultset['payroll_option'] = $option == 2 ? 'earners' : ($option == 3 ? 'no earners' : 'all');
             }
             $resultset["filter"] = $tempFilter;
-            if(is_array($arrData) && !empty($arrData)){ $resultset["response"] = true;
+            if(is_array($temp) && !empty($temp)){ $resultset["response"] = true;
             }else{ $resultset["response"] = false; }
         }else{
             $resultset["response"] = false;
@@ -5686,10 +5722,11 @@ class Reports_m extends CI_Model{
         return $resultset;
     }
 
+    //here adding payout mode to the report
     function get_payroll_group($id) {
-        $result = ' --- ';
+        $result = array();
 
-        $this->db->select('GROUP_CONCAT(DISTINCT f.description SEPARATOR ", ") as payroll_group');
+        $this->db->select('GROUP_CONCAT(DISTINCT f.description SEPARATOR ", ") as payroll_group, GROUP_CONCAT(DISTINCT f.payout_mode SEPARATOR ",") as payout_mode, GROUP_CONCAT(DISTINCT f.payout_sched SEPARATOR ",") as payout_sched');
         $this->db->join($this->tbl_payroll_group.' f', 'f.employee_id LIKE CONCAT("%s:", LENGTH(b.id), ' . $this->db->escape(':"') . ', b.id, ' . $this->db->escape('";%') . ')', 'LEFT');
         $this->db->from($this->tbl_employees.' b');
         $this->db->where('b.id', $id);
@@ -5698,7 +5735,37 @@ class Reports_m extends CI_Model{
 
         if ($query->num_rows() > 0) {
             $row = $query->row();
-            $result = $row->payroll_group;
+            $payout_mode = $this->db->select('description')->get_where($this->tblMode, array('id' => $row->payout_mode))->row();
+
+            $payoutSchedules = array(
+                array("id" => 1, "text" => "Monthly Payroll"),
+                array("id" => 2, "text" => "Semi-Monthly Payroll"),
+                array("id" => 3, "text" => "Weekly Payroll")
+            );
+
+            $payoutScheduleText = array_column($payoutSchedules, "text", "id")[(int)$row->payout_sched] ?? "N/A";
+
+            $result['payroll_group'] = strtoupper($row->payroll_group);
+            $result['payout_mode'] = isset($payout_mode->description) ? strtoupper($payout_mode->description) : 'N/A';
+            $result['payout_sched'] = strtoupper($payoutScheduleText);
+        }
+
+        return $result;
+    }
+
+    function get_payroll_group_payout_modes($id) {
+        $result = 0;
+
+        $this->db->select('GROUP_CONCAT(DISTINCT f.payout_mode SEPARATOR ",") as payout_mode');
+        $this->db->join($this->tbl_payroll_group.' f', 'f.employee_id LIKE CONCAT("%s:", LENGTH(b.id), ' . $this->db->escape(':"') . ', b.id, ' . $this->db->escape('";%') . ')', 'LEFT');
+        $this->db->from($this->tbl_employees.' b');
+        $this->db->where('b.id', $id);
+        $this->db->where('f.is_archived', 0);
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $row = $query->row();
+            $result = $row->payout_mode;
         }
 
         return $result;
@@ -6995,5 +7062,28 @@ class Reports_m extends CI_Model{
         });
 
         return $merged;
+    }
+
+    public function select2_station(){
+        $result = array();
+        $get = $this->input->get();
+        $this->db->select("id, site_name as text");
+        $this->db->from($this->tblAppLocationSites);
+
+        if (isset($get['q']) && $get['q']) {
+            $this->db->like("site_name", $get['q'], 'both');
+        }
+
+        if (!isset($get['q'])) {
+            $this->db->limit(10);
+        }
+
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $result = $query->result();
+        }
+
+        return array('results' => $result);
     }
 }

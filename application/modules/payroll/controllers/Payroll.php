@@ -10,6 +10,7 @@ class Payroll extends MY_Controller {
 
         $this->load->model("ams/Utilities_model", "utilities");
         $this->load->model("Payroll_m", "payroll");
+        $this->load->model("Payment_mode_m", "mode");
         $this->load->model("Dashboard_m", "dashboard");
         $this->core_layout->addJs("plugins/daterange_picker/daterangepicker.min.js");
         $this->core_layout->addCss("plugins/daterange_picker/daterangepicker.css");
@@ -852,6 +853,53 @@ class Payroll extends MY_Controller {
     public function update_weekly_count($year = null, $weekday = null, $monthIndex = null, $toYear = null, $toMonthIndex = null) {
         $weekIndex = $this->payroll->normalizeWeekday($weekday);
         $data = $this->payroll->generatePayrollMonthlyWeekCountUpdated($year, $weekIndex, $monthIndex, $toYear, $toMonthIndex);
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function payment_mode() {
+        $this->core_layout->setPageTitle("Payroll - Payment Mode");
+        $this->core_layout->setPrivilegeName("payment_mode");
+        
+        $version = filemtime(FCPATH.'assets/js/payroll/payment_mode.js');
+        $this->core_layout->addJs("js/payroll/payment_mode.js", true, array(), "?version={$version}");
+
+        $this->load->view('core/templates/header');
+        $this->load->view('payroll/payroll/payment_mode');
+        $this->load->view('core/templates/footer');
+    }
+
+    public function get_payment_mode_datatable() {
+        $data = $this->mode->get_payment_mode_datatable();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+    
+    public function save_payment_mode() {
+        $data = $this->mode->save_payment_mode();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+    
+    public function get_mode_data($id = 0) {
+        $data = $this->mode->get_mode_data($id);
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+
+    public function updated_payment_mode($id = 0) {
+        $data = $this->mode->updated_payment_mode($id);
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
+    
+    public function delete_payment_mode($id = 0) {
+        $data = $this->mode->delete_payment_mode($id);
         $this->output
             ->set_content_type('json')
             ->set_output(json_encode($data));
