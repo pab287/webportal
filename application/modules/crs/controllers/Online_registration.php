@@ -6,7 +6,7 @@
         {
             parent::__construct();
             $this->authenticate->setModuleAccess("crs");
-            $this->authenticate->doRedirect();
+            // $this->authenticate->doRedirect();
             $this->load->model("Registration_model", "registration");
             $this->load->model("Applicant_model", "applicant");
             $this->load->model("document_model", "document");
