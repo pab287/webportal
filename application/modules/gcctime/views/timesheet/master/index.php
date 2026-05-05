@@ -449,4 +449,5 @@
     $this->load->view('../modals/confirmation_modal');
     $this->load->view('../modals/alert_modal');
     $this->load->view('modals/overtime_nobreak_modal');
+    $this->load->view('modals/custom_shift_modal');
 ?>
