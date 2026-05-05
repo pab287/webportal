@@ -900,9 +900,9 @@ function rebuildLateAbsenteeTable(type, data = []) {
 
 function getExportColumnIndexes(type){
     const map = {
-        late_absentee: [0,1,2,3,4,5],
+        late_absentee: [0, 1, 2, 3, 4, 5, 6, 7],
         late: [0, 1, 2, 3, 4],
-        absentee: [0, 1, 2, 3, 4, 5 ,6]
+        absentee: [0, 1, 2, 3, 4, 5, 6]
     };
     return map[type] ?? [];
 }
