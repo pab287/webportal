@@ -591,11 +591,10 @@ $.validate({
             data: formData,
             success: function(json){
                 if(json.response){
-                    rebuildLateAbsenteeTable(vmLateAbsenteeReport.report_type, json.data);
-
-                    totalEntries = dtTableLateAbsenteeReport.rows().count();
                     filterOptionsLateAbsentee = { ...json.filters };
                     globalLoaReference ={ ...json.loa_reference };
+                    rebuildLateAbsenteeTable(vmLateAbsenteeReport.report_type, json.data);
+                    totalEntries = dtTableLateAbsenteeReport.rows().count();
 
                     setTimeout(function () {
                         const rowCount = dtTableLateAbsenteeReport.rows().count();
@@ -604,10 +603,10 @@ $.validate({
                 }else{
                     rebuildLateAbsenteeTable(vmLateAbsenteeReport.report_type, []);
                 }
-                const { report_type, company_code, filter_by } = json.filters;
+                const { report_type, company_code, filter_by, filter_date } = json.filters;
                 let tempHtml = `
                 <div class="row">
-                    <div class="col-sm-12 col-12 col-md-3 col-lg-3 col-xl-3">
+                    <div class="col-sm-12 col-12 col-md-3 col-lg-3 col-xl-4">
                         <div class="m-widget1 p-0">
                             <div class="m-widget1__item">
                                 <div class="row m-row--no-padding align-items-center">
@@ -619,12 +618,12 @@ $.validate({
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-12 col-12 col-md-2 col-lg-2 col-xl-2">
+                    <div class="col-sm-12 col-12 col-md-2 col-lg-2 col-xl-5">
                         <div class="m-widget1 p-0">
                             <div class="m-widget1__item">
                                 <div class="row m-row--no-padding align-items-center">
                                     <div class="col">
-                                        <h3 class="m-widget1__title">${filter_by}</h3>
+                                        <h3 class="m-widget1__title">${filter_date}</h3>
                                         <span class="m-widget1__desc">FILTER BY</span>
                                     </div>
                                 </div>
@@ -658,7 +657,7 @@ $.validate({
 function late_absentee_column_report(type) {
     const cols = [
         { title: "ID Number", data: "idno", width: "8%" },
-        { title: "Employee Name", data: "employee_name", width: "30%" },
+        { title: "Employee Name", data: "employee_name", width: "20%" },
         { title: "Department", data: "department", width: "*" },
         { title: "Position", data: "position", width: "*" },
     ];
@@ -674,6 +673,29 @@ function late_absentee_column_report(type) {
 
     if (type === "absentee") {
         cols.push({
+            title: "W-LOA",
+            data: null,
+            width: "8%",
+            className: "text-right",
+            render: function (data, type, row) {
+                const emp_id = row.emp_id;
+                const total_absent_w_loa = Object.keys(globalLoaReference[emp_id] ?? {}).length;
+                return total_absent_w_loa ? total_absent_w_loa : 0;
+            }
+        },
+        {
+            title: "WO-LOA",
+            data: null,
+            width: "8%",
+            className: "text-right",
+            render: function (data, type, row) {
+                const emp_id = row.emp_id;
+                const total_absent_w_loa = Object.keys(globalLoaReference[emp_id] ?? {}).length;
+                const total_absent = row.reports_total || 0;
+                return total_absent - total_absent_w_loa || 0;
+            }
+        },
+        {
             title: "Total Absent",
             data: "reports_total",
             width: "8%",
@@ -682,26 +704,45 @@ function late_absentee_column_report(type) {
     }
 
     if (type === "late_absentee") {
-        cols.push(
-            {
-                title: "Late",
-                data: null,
-                width: "8%",
-                className: "text-right",
-                render: function (data, type, row) {
-                    return row.late.total_late ? row.late.total_late : 0;
-                }
-            },
-            {
-                title: "Absent",
-                data: null,
-                width: "8%",
-                className: "text-right",
-                render: function (data, type, row) {
-                    return row.absent.total_absent ? row.absent.total_absent : 0;
-                }
-            },
-        );
+        cols.push({
+            title: "Late",
+            data: null,
+            width: "8%",
+            className: "text-right",
+            render: function (data, type, row) {
+                return row.late.total_late ? row.late.total_late : 0;
+            }
+        },
+        {
+            title: "abs-w-loa",
+            data: null,
+            width: "8%",
+            className: "text-right",
+            render: function (data, type, row) {
+                const total_absent_w_loa = row.absent.loa_reference ? Object.keys(row.absent.loa_reference).length : 0;
+                return total_absent_w_loa ? total_absent_w_loa : 0;
+            }
+        },
+        {
+            title: "abs-wo-loa",
+            data: null,
+            width: "8%",
+            className: "text-right",
+            render: function (data, type, row) {
+                const total_absent_w_loa = row.absent.loa_reference ? Object.keys(row.absent.loa_reference).length : 0;
+                const total_absent = row.absent.total_absent || 0;
+                return total_absent - total_absent_w_loa || 0;
+            }
+        },
+        {
+            title: "Total Absent",
+            data: null,
+            width: "8%",
+            className: "text-right",
+            render: function (data, type, row) {
+                return row.absent.total_absent ? row.absent.total_absent : 0;
+            }
+        });
     }
 
     cols.push({
@@ -859,9 +900,9 @@ function rebuildLateAbsenteeTable(type, data = []) {
 
 function getExportColumnIndexes(type){
     const map = {
-        late_absentee: [0,1,2,3,4,5],
+        late_absentee: [0, 1, 2, 3, 4, 5, 6, 7],
         late: [0, 1, 2, 3, 4],
-        absentee: [0, 1, 2, 3, 4]
+        absentee: [0, 1, 2, 3, 4, 5, 6]
     };
     return map[type] ?? [];
 }
