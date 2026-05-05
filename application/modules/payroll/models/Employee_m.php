@@ -3525,6 +3525,7 @@ public function getEmployeeNightDiffList(){
 
     private function markLoanAsPaid($id, $post){
         $post['paid'] = 1;
+        $post['is_manually_tagged'] = 1;
         $this->db->where("id", $id);
         return $this->db->update($this->tbl_hris_loans, $post);
     }
