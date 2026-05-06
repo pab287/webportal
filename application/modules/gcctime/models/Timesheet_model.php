@@ -4238,6 +4238,7 @@ class Timesheet_model extends CI_Model{
                     $this->db->where("to.driver_id", $employee->id);
                     $this->db->or_where("tp.employee_id", $employee->id);
                     $this->db->group_end();
+                    $this->db->where('to.status', 'Approved');
                     $timesheet->has_TO = $this->db->count_all_results($this->tbl_TO." to");
 					
                     $this->db->select("*, `travel_destination`.`date_from` AS `F_TO`");
@@ -4253,6 +4254,7 @@ class Timesheet_model extends CI_Model{
                     $this->db->where("to.driver_id", $employee->id);
                     $this->db->or_where("tp.employee_id", $employee->id);
                     $this->db->group_end();
+                    $this->db->where('to.status', 'Approved');
                     $TO_sql = $this->db->get();
                     if($TO_sql->result()){
                         $row = $TO_sql->row();
