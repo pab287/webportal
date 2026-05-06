@@ -211,4 +211,27 @@ class Payment_mode_m extends CI_Model {
 
         return $result;
     }
+
+    public function select_payout_mode() {
+        $result = array();
+        $get = $this->input->get();
+
+        $this->db->select('id, description as text');
+        $this->db->where('is_archived', 0);
+
+        if (isset($get['q']) && $get['q']) {
+            $this->db->like('description', $get['q'], 'both');
+        }
+
+        if (!isset($get['q'])) { $this->db->limit(10); }
+
+        $this->db->from($this->tblMode);
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $result = $query->result();
+        }
+
+        return array('results' => $result);
+    }
 }
