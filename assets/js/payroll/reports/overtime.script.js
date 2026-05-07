@@ -8,6 +8,7 @@ let _filter = [];
 let _years = [];
 let _companies = [];
 let psEmployeeGroup = [];
+let _payout_mode = [];
 
 let _tempIds = [];
 const months = [
@@ -31,7 +32,7 @@ let _globalFooterHtml = null;
 let _totalTaxable = 0;
 let _tempData = {
     show_by_date: true, show_picker: false,
-    year_picker: false, month_picker: false, company_ids: 0,
+    year_picker: false, month_picker: false, company_ids: 0, payout_mode: 0
 };
 let dtOTSummary = null;
 
@@ -41,6 +42,9 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     }
     if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){
         _companies = _tempContentData.company;
+    }
+    if(typeof _tempContentData.payout_mode !== "undefined" && _tempContentData.payout_mode.length > 0){
+        _payout_mode = _tempContentData.payout_mode;
     }
 }
 
@@ -133,6 +137,7 @@ const vmGeneratejournal = new Vue({
                             data: function (params) {
                                 /*** params.company_ids = _this.company_ids; ***/
                                 params.q = params.term;
+                                params.payout_mode = $("form#frm-journal-report select#payout_mode").val();
                                 return params;
                             },
                             processResults: function (data) {
@@ -160,6 +165,31 @@ const vmGeneratejournal = new Vue({
                         const _thisSelect2 = this;
                         const selectedValues = $(_thisSelect2).select2("val");
                         _this.company_ids = selectedValues;
+                        $(currentElement)
+                            .find("select#employee")
+                            .val([])
+                            .trigger("change");
+                    });
+                
+                $(currentElement).find("select#payout_mode")
+                    .select2({
+                        allowClear: true,
+                        width: '100%',
+                        data: _payout_mode,
+                        placeholder: "SELECT AN OPTION",
+                        dropdownParent: tempModal,
+                    }).on("select2:select", function (e) {
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
+                        _this.payout_mode = selectedValues;
+                        $(currentElement)
+                            .find("select#employee")
+                            .val([])
+                            .trigger("change");
+                    }).on("select2:unselect", function (e) {
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
+                        _this.payout_mode = selectedValues;
                         $(currentElement)
                             .find("select#employee")
                             .val([])
@@ -223,6 +253,7 @@ $("#payroll_group").select2({
         global: false,
         data: function (params) {
             params.company_id = $("form#frm-journal-report select#company").val();
+            params.payout_mode = $("form#frm-journal-report select#payout_mode").val();
             return params;
         },
         processResults: function (data) {
@@ -450,7 +481,9 @@ $(document).ready(function(){
             }
         ], rowGroup: {
             startRender: function ( _rows, group ) {
-                return $('<tr><td colspan="13" class="bg-secondary"><span class="m--font-boldest">' + group + '</span></td></tr>');
+                const firstRow = _rows.data()[0] || {};
+                const station = firstRow.station || 'No assigned Project';
+                return $('<tr><td colspan="13" class="bg-secondary"><span class="m--font-boldest">' + group + '</span> <span>(' + station + ')</span></td></tr>');
             },
             endRender: function ( rows, _group ) {
                 let OTadj = rows

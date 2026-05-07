@@ -259,16 +259,25 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row mt-3">
-                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                    <div class="row">
+                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
                             <div class="form-group">
                                 <label for="company" class="m--font-bolder">Company *</label>
                                 <select id="company" class="form-control" name="company" data-validation="required"><option></option></select>
                             </div>
                         </div>
+                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                            <div class="form-group">
+                                <label for="company" class="m--font-bolder">
+                                    Payout Mode
+                                    <small class="m-form__help p-0">( Optional )</small>
+                                </label>
+                                <select id="payout_mode" class="form-control" name="payout_mode"><option></option></select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="row mt-3">
-                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mt-2">
+                    <div class="row">
+                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                             <div class="form-group m-form__group">
                                 <label for="payroll_group" class="mb-1 m--font-bolder">
                                     PAYROLL GROUP

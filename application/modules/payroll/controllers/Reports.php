@@ -152,6 +152,7 @@ class Reports extends MY_Controller {
         $tempData = array();
         $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
         $tempData["company"] = $this->payroll->select2CompanyData();
+        $tempData['payout_mode'] = $this->payroll->getPaymentModeSelect2Data();
 
         $version = filemtime(FCPATH.'assets/js/payroll/reports/overtime.script.js');
 

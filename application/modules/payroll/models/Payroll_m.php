@@ -160,6 +160,7 @@ class Payroll_m extends CI_Model{
         $resultarray = array();
         $employeeStatus = isset($get["employee_status"]) && $get["employee_status"] == "0" ? "Inactive": "Active";
         $companyIds = (isset($get["company_ids"]) && $get["company_ids"])? $get["company_ids"]: array();
+        $payout_mode = (isset($get['payout_mode'])) && $get['payout_mode'] ? $get['payout_mode'] : 0;
         //$this->db->select("a.id, trim(a.firstname) as firstname, a.lastname, a.middlename, a.suffix");
 
         $this->db->select("a.id, UPPER(TRIM(CONCAT(a.firstname, ' ',
@@ -173,11 +174,16 @@ class Payroll_m extends CI_Model{
                 END))) as text");
         $this->db->from("gccmaster.tblemployees a");
         $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id", "LEFT");
+        $this->db->join($this->tbl_payroll_group.' c', 'c.employee_id LIKE CONCAT("%s:", LENGTH(a.id), ' . $this->db->escape(':"') . ', a.id, ' . $this->db->escape('";%') . ')', 'LEFT');
         
         if($type !== 'all' && $type === null){
             $this->db->where("a.employee_status", $employeeStatus);
         } elseif ($type !== 'all' && $type !== null) {
             $this->db->where("a.employee_status", $type);
+        }
+
+        if ($payout_mode && $payout_mode > 0) {
+            $this->db->where('c.payout_mode', $payout_mode);
         }
 
         if(is_array($companyIds) && count($companyIds) > 0){ $this->db->where_in("b.id", $companyIds); }
@@ -6763,12 +6769,18 @@ class Payroll_m extends CI_Model{
         $arrData = array();
         $resultset = array();
         $companyId = (isset($get["company_id"]) && $get["company_id"])? $get["company_id"]: 0;
+        $payout_mode = (isset($get["payout_mode"]) && $get["payout_mode"])? $get["payout_mode"]: 0;
         if($companyId || $companyId == 0){
             $this->db->select("id, description as text, employee_id");
             $this->db->from($this->tbl_payroll_group);
             $this->db->where("company_id", $companyId);
             $this->db->where("status", 1);
             $this->db->where("is_archived", 0);
+
+            if ($payout_mode > 0) {
+                $this->db->where('payout_mode', $payout_mode);
+            }
+
             if (isset($get['term']) && $get['term']) {
                 $this->db->like("description", $get['term'], "both");
             }

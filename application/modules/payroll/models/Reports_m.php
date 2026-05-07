@@ -4091,6 +4091,7 @@ class Reports_m extends CI_Model{
             $arrGroup = array(1=>"PAY DATE", 2=>"MONTH", 3=>"YEAR");
             $group = (isset($post["group"]) && $post["group"])? intval($post["group"]): 1;
             $payrollGroup = isset($post["payroll_group"]) && $post["payroll_group"] ? $post["payroll_group"]: array();
+            $payout_mode = isset($post["payout_mode"]) && $post["payout_mode"] ? $post["payout_mode"]: 0;
 
             $arrCompany = array();
             $employeeIds = array();
@@ -4188,6 +4189,7 @@ class Reports_m extends CI_Model{
                 $this->db->select("ts.id");
                 $this->db->from("gcctimeutility.timesheet ts");
                 $this->db->join("gccmaster.tblemployees emp", "emp.id=ts.emp_id", "LEFT");
+                $this->db->join($this->tbl_payroll_group.' p_group', 'p_group.employee_id LIKE CONCAT("%s:", LENGTH(emp.id), ' . $this->db->escape(':"') . ', emp.id, ' . $this->db->escape('";%') . ')', 'LEFT');
                 $this->db->join("gcchris.tblcompanies comp", "comp.id=emp.company_id", "LEFT");
                 $this->db->where("ts.has_overtime", 1);
                 $this->db->group_start();
@@ -4201,6 +4203,11 @@ class Reports_m extends CI_Model{
                 if(isset($post["company"]) && $post["company"]){
                     $this->db->where_in("comp.id", $post["company"]);
                 }
+
+                if ($payout_mode && $payout_mode > 0) {
+                    $this->db->where('p_group.payout_mode', $payout_mode);
+                }
+
                 $this->db->order_by("DATE(ts.overtime_in)");
                 $query = $this->db->get();
                 $resultset["sql"] = $this->db->last_query();
@@ -4219,6 +4226,7 @@ class Reports_m extends CI_Model{
                     $tempArrFilter["company_address"] = isset($tempCompRow['company_address']) && $tempCompRow['company_address']  ? strtoupper(trim($tempCompRow['company_address'])): "";
                     $tempArrFilter["has_comp_desc"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? true: false;
                     $tempArrFilter["payroll_group"] = $filterPayrollGroup;
+                    $tempArrFilter['payout_mode'] = $payout_mode;
 
                     if(is_array($ids) && $tempCount > 0){
                         $ids = array_map("intval", $ids);
@@ -4255,9 +4263,10 @@ class Reports_m extends CI_Model{
         $filteredIds = $post['ids'] ?? [];
         $clearTable = $post['clear_table'] === 'true';
         $coverageDate = $post['filters']['coverage_date'] ?? false;
+        $payout_mode = $post['payout_mode'] ?? 0;
 
-        $results = $this->overtimeSummaryList($filteredIds, $search, $limit, $offset, $sortBy, $sortOrder, $coverageDate);
-        $rowCount = $this->overtimeSummaryListCount($filteredIds, $search);
+        $results = $this->overtimeSummaryList($filteredIds, $search, $limit, $offset, $sortBy, $sortOrder, $coverageDate, $payout_mode);
+        $rowCount = $this->overtimeSummaryListCount($filteredIds, $search, $payout_mode);
 
         if ($clearTable) { $rowCount = 0; $results = []; }
 
@@ -4271,7 +4280,7 @@ class Reports_m extends CI_Model{
     // end function
 
     // Function to display data for datatable of payroll journal request
-    protected function overtimeSummaryList($filteredIds, $search, $limit, $offset, $sortBy, $sortOrder, $coverageDate){
+    protected function overtimeSummaryList($filteredIds, $search, $limit, $offset, $sortBy, $sortOrder, $coverageDate, $payout_mode = 0){
         if (is_array($filteredIds) && count($filteredIds) > 0) {
             $select = "a.id, a.emp_id, b.firstname, b.lastname, b.middlename, b.suffix, b.company_id, b.idno,
             a.total_accredited_ot_hrs as ot_hrs, a.total_accredited_ndiff_ot_hrs as ot_ndiff_hrs,
@@ -4281,19 +4290,26 @@ class Reports_m extends CI_Model{
             ROUND(IF(LOWER(allw.frequency) = 'month', ROUND( IFNULL(allw.rate, 0), 2) * 12 / ROUND( IFNULL(comp.work_days_in_year, 314), 2),
             IFNULL(allw.rate, 0)), 2) as allowance_rate,
             a.has_overtime, a.has_shift, IF((a.shift_am_start && a.shift_am_end) || (a.shift_pm_start && a.shift_pm_end), '1', '0') as ampm_shift,
-            IF(a.is_holiday = 1 && a.paid_holiday = 1, '1', '0') as is_paid_holiday, a.payrate_id, DATE(a.date) as tsDate";
+            IF(a.is_holiday = 1 && a.paid_holiday = 1, '1', '0') as is_paid_holiday, a.payrate_id, DATE(a.date) as tsDate, UPPER(g.station_description) as station";
 
             $this->db->select($select);
             $this->db->from('gcctimeutility.timesheet a');
             $this->db->join('gccmaster.tblemployees b', 'a.emp_id = b.id');
             $this->db->join('gcchris.tblcompanies comp', 'comp.id = b.company_id', 'LEFT');
             $this->db->join($this->tbl_hris_allawances." allw", "allw.emp_id = b.id AND allw.is_active = 1 AND allw.is_archived = 0", "LEFT");
+            $this->db->join($this->tbl_payroll_group.' p_group', 'p_group.employee_id LIKE CONCAT("%s:", LENGTH(b.id), ' . $this->db->escape(':"') . ', b.id, ' . $this->db->escape('";%') . ')', 'LEFT');
+            $this->db->join($this->tbl_default_station.' g', 'g.employee_id = b.id', 'LEFT');
             $this->db->where_in('a.id', $filteredIds);
             $this->db->where('a.has_overtime', 1);
             $this->db->group_start();
             $this->db->where('a.total_accredited_ot_hrs >', 0);
             $this->db->or_where('a.total_accredited_ndiff_ot_hrs >', 0);
             $this->db->group_end();
+
+            if ($payout_mode && $payout_mode > 0) {
+                $this->db->where('p_group.payout_mode', $payout_mode);
+            }
+            
             if ($limit != -1) {
                 $this->db->limit($limit, $offset);
             }
@@ -4423,7 +4439,7 @@ class Reports_m extends CI_Model{
     }
     //
     // function to display number of entries of requested data of payroll journal
-    protected function overtimeSummaryListCount($filteredId, $search){
+    protected function overtimeSummaryListCount($filteredId, $search, $payout_mode = 0){
         $count = 0;
         if(is_array($filteredId) && count($filteredId) > 0){
             $sqlSelect = "a.id, a.emp_id, b.firstname, b.lastname, b.middlename, b.suffix, b.company_id, b.idno,
@@ -4433,8 +4449,14 @@ class Reports_m extends CI_Model{
             $this->db->from('gcctimeutility.timesheet a');
             $this->db->join('gccmaster.tblemployees b', 'a.emp_id = b.id');
             $this->db->join('gcchris.tblcompanies comp', 'comp.id = b.company_id', "LEFT");
+            $this->db->join($this->tbl_payroll_group.' p_group', 'p_group.employee_id LIKE CONCAT("%s:", LENGTH(b.id), ' . $this->db->escape(':"') . ', b.id, ' . $this->db->escape('";%') . ')', 'LEFT');
             $this->db->where_in("a.id", $filteredId);
             $this->db->where("a.has_overtime", 1);
+
+            if ($payout_mode && $payout_mode > 0) {
+                $this->db->where('p_group.payout_mode', $payout_mode);
+            }
+
             $this->db->order_by("b.lastname, b.firstname, a.overtime_in","asc");
             $query = $this->db->get();
             $count = $query->num_rows();
