@@ -341,5 +341,17 @@ class Timesheet extends MY_Controller {
     public function generate_timesheet_imported_record(){
         echo json_encode($this->ts_model->generate_timesheet_imported_record());
     }
+
+    public function get_shift_schedules_list_select2($date = null) {
+        echo json_encode($this->ts_model->getShiftSchedulesListSelect2($date));
+    }
+    
+    public function set_timesheet_custom_shift_schedule() {
+        echo json_encode($this->ts_model->setTimesheetCustomShiftSchedule());
+    }
+    
+    public function undo_custom_shift() {
+        echo json_encode($this->ts_model->undoCustomShift());
+    }
 }
 /* End of file Timesheet.php */

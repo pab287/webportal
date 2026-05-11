@@ -1001,6 +1001,7 @@ $(document)
                                 regenerateRecord = ``,
                                 timeAdjustmentDetails = ``;
                                 restDay = ``;
+                                customShift = ``;
 
                             let isHolidayAction = ``;
                             /*** if (allowPaidHoliday && hasOvertime == false) { ***/
@@ -1086,12 +1087,12 @@ $(document)
                                     </li>`;
                                 }
 
-                                if (hasShift && (row.custom_shift_id == 0 || row.custom_shift_id == 1 || row.custom_shift_id == null) && (row.verified == 0 || row.verified == null)) {
+                                if (hasShift && (row.custom_shift_id == 0 || row.custom_shift_id == 1 || row.custom_shift_id == null) && (row.verified == 0 || row.verified == null) && (typeof row.generate_row == 'undefined' && !row.generate_row) && row.altered_shift.length == 0) {
                                     restDay = `
                                     <li class="m-nav__item restday-button">
                                         <a href="javascript:void(0)" class="m-nav__link"
                                         data-id="${row.id}"
-                                        onclick="confirmRestDay(this, '${row._date}', ${row.has_shift }, ${row._emp_id}, ${row.tsID}, ${meta.row})">
+                                        onclick="confirmRestDay(this, '${row._date}', ${row.has_shift}, ${row._emp_id}, ${row.id}, ${meta.row})">
                                             <i class="m-nav__link-icon fa fa-clock-o"></i>
                                             <span class="m-nav__link-text">REST DAY</span>
                                         </a>
@@ -1103,9 +1104,33 @@ $(document)
                                     <li class="m-nav__item restday-button">
                                         <a href="javascript:void(0)" class="m-nav__link"
                                         data-id="${row.id}"
-                                        onclick="undoRestDay(this, '${row._date}', ${row.has_shift }, ${row._emp_id}, ${row.tsID}, ${meta.row})">
+                                        onclick="undoRestDay(this, '${row._date}', ${row.has_shift }, ${row._emp_id}, ${row.id}, ${meta.row})">
                                             <i class="m-nav__link-icon fa fa-undo"></i>
                                             <span class="m-nav__link-text">UNDO REST DAY</span>
+                                        </a>
+                                    </li>`;
+                                }
+
+                                if (hasShift && (row.custom_shift_id == 0 || row.custom_shift_id == 1 || row.custom_shift_id == null) && (row.verified == 0 || row.verified == null) && row.altered_shift.length == 0) {
+                                    customShift = `
+                                        <li class="m-nav__item customShift-button">
+                                            <a href="javascript:void(0)" class="m-nav__link"
+                                            data-id="${row.id}"
+                                            onclick="confirmCustomShift(this, '${row._date}', ${row.has_shift}, ${row._emp_id}, ${row.id}, ${meta.row})">
+                                                <i class="m-nav__link-icon fa fa-calendar"></i>
+                                                <span class="m-nav__link-text">SHIFT SCHEDULE</span>
+                                            </a>
+                                        </li>`;
+                                }
+
+                                if (hasShift == 1 && (row.custom_shift_id == 0 || row.custom_shift_id > 0 || row.custom_shift_id == null) && (row.verified == 0 || row.verified == null) && row.altered_shift && row.altered_shift.has_shift == 1 && row.altered_shift.tag == 'timesheet'){
+                                    customShift = `
+                                    <li class="m-nav__item customShift-button">
+                                        <a href="javascript:void(0)" class="m-nav__link"
+                                        data-id="${row.id}"
+                                        onclick="undoCustomShift(this, '${row._date}', ${row.has_shift }, ${row._emp_id}, ${row.id}, ${meta.row})">
+                                            <i class="m-nav__link-icon fa fa-calendar"></i>
+                                            <span class="m-nav__link-text">UNDO SHIFT SCHEDULE</span>
                                         </a>
                                     </li>`;
                                 }
@@ -1138,6 +1163,7 @@ $(document)
                                                             </li>
                                                             ${undoVerification}
                                                             ${restDay}
+                                                            ${customShift}
                                                             ${regenerateRecord}
                                                             ${timeAdjustmentDetails}
                                                         </ul>
@@ -5844,7 +5870,6 @@ const undoRestDay = function (e, date, has_shift, id, tsId, dtRowIndex) {
 }
 
 
-
 const generateImportTimesheet = function (arr = [], start, end, import_id){
     Swal.fire({
         icon: 'question',
@@ -5905,3 +5930,283 @@ tsPossibleDuplicatesModal.on('hidden.bs.modal', function() {
         generateImportTimesheet(payload.emp_id_to_generate, payload.start, payload.end, payload.timesheet_imports_id);
     }
 });
+
+const confirmCustomShift = function(e, date, has_shift, id, tsId, dtRowIndex) {
+    customShiftModal.modal('show');
+    const customShiftForm = $("#frmAddCustomShift");
+    const shiftTimeFields = $("#_am-start, #_am-end, #_pm-start, #_pm-end", customShiftForm);
+
+    shiftScheduleListSelect2('#shift-schedule-list', true, date);
+
+    shiftTimeFields.timepicker({
+        defaultTime: null,
+        minuteStep: 1,
+        showSeconds: false,
+        showMeridian: true,
+        snapToStep: true,
+    });
+
+    $.formUtils.addValidator({
+        name: 'atleast_one',
+        validatorFunction: function (value, $el, config, language, $form) {
+            const form = ($form && $form.length) ? $form : customShiftForm;
+            const fields = form.find("#_am-start, #_am-end, #_pm-start, #_pm-end");
+            let hasValue = false;
+
+            fields.each(function () {
+                const tempVal = $.trim($(this).val() || "");
+                if (tempVal.length > 0) {
+                    hasValue = true;
+                    return false;
+                }
+            });
+
+            return hasValue;
+        },
+        errorMessage: 'You have to fill up atleast 1 shift schedule time IN or OUT!',
+        errorMessageKey: 'badTimeCount'
+    });
+
+    $.validate({
+        form: '#frmAddCustomShift',
+        lang: "en",
+        validateHiddenInputs: true,
+        scrollToTopOnError: false,
+        onSuccess: function (form) {
+            const url = $(form).attr("action");
+            const submit = $('button[type="submit"]', $(form));
+            const formData = new FormData($(form)[0]);
+            formData.append("csrf_token", _csrf_hash);
+            formData.append("date", date);
+            formData.append("id", id);
+            formData.append("timesheetId", tsId);
+
+            $.ajax({
+                url,
+                data: formData,
+                type: "POST",
+                dataType: "JSON",
+                processData: false,
+                contentType: false,
+                beforeSend: function () {
+                    submit.addClass(`m-btn--custom m-loader m-loader--light m-loader--left`);
+                },
+                success: function (response) {
+                    submit.removeClass(`m-btn--custom m-loader m-loader--light m-loader--left`);
+                    if (response.state) {
+                        const rowData = response.row;
+                        if (typeof tsId != "undefined" && tsId) {
+                            const scrub_status = parseInt(rowData.scrub_status);
+                            const verified = parseInt(rowData.verified);
+                            const hasTO = parseInt(rowData.has_TO);
+                            const hasLOA = parseInt(rowData.has_LOA);
+                            const hasWholeDayLoa = parseInt(rowData.has_whole_day_LOA);
+        
+                            dtTimesheet.row(dtRowIndex).data(rowData).draw();
+                            const rowEl = dtTimesheet.row(dtRowIndex).node();
+                            let oddEvenClass = $(rowEl).hasClass("odd") ? "odd" : "even";
+                            $(rowEl)
+                                .removeClass()
+                                .addClass(oddEvenClass);
+        
+                            let currentRowClass = null;
+        
+                            if (scrub_status === 1 && verified === 0) {
+                                currentRowClass = "lacking lacking--contrast";
+                            } else if (scrub_status === 2 && verified === 0) {
+                                currentRowClass = "multiple";
+                            } else {
+                                $(rowEl).hasClass("lacking lacking--contrast") && $(rowEl).removeClass("lacking lacking--contrast");
+                                $(rowEl).hasClass("multiple") && $(rowEl).removeClass("multiple");
+                            }
+        
+                            if ((parseInt(rowData.has_shift) === 0 && (verified === 0 || !verified))) {
+                                currentRowClass = "no-shift";
+                            } else {
+                                $(rowEl).hasClass("no-shift") && $(rowEl).removeClass("no-shift");
+                            }
+        
+                            if (!rowData.id && parseInt(rowData.has_shift) === 1) {
+                                if ((hasLOA >= 1 && hasWholeDayLoa === 1)) { currentRowClass = "absent absent--contrast"; }
+                                else if (hasLOA >= 1 && hasWholeDayLoa <= 0) { currentRowClass = "lacking lacking--contrast"; }
+                                else { currentRowClass = "absent absent--contrast"; }
+        
+                                if (hasTO >= 1) { currentRowClass = "lacking lacking--contrast"; }
+                            }
+        
+                            if (currentRowClass) { $(rowEl).addClass(currentRowClass); }
+                        } else {
+                            dtTimesheet.ajax.reload(null, false);
+                        }
+
+                        customShiftModal.modal('hide');
+                    }
+                }
+            });
+
+            return false;
+        }
+    })
+}
+
+customShiftModal.on('hidden.bs.modal', function () {
+    $("#shift-schedule-list", customShiftModal).val("").trigger("change");
+    // $("#_am-start", customShiftModal).val("");
+    // $("#_am-end", customShiftModal).val("");
+    // $("#_pm-start", customShiftModal).val("");
+    // $("#_pm-end", customShiftModal).val("");
+    // $("#remark", customShiftModal).val("");
+    $("#frmAddCustomShift", customShiftModal).trigger("reset");
+});
+
+const shiftScheduleListSelect2 = function (element, destroy = false, date = null) {
+    const shiftScheduleList = customShiftModal.find(element);
+    const formatShiftTime = function (value) {
+        if (!value) return "";
+        if (value === "00:00" || value === "00:00:00") return "";
+        const parsed = moment(value, ["HH:mm:ss", "HH:mm", "YYYY-MM-DD HH:mm:ss", moment.ISO_8601], true);
+        return parsed.isValid() ? parsed.format("h:mm A") : value;
+    };
+
+    if (!shiftScheduleList.length) {
+        console.warn("Missing #shift-schedule-list inside custom shift modal.");
+        return;
+    }
+
+    shiftScheduleList.off("change");
+
+    if (destroy) {
+        if (shiftScheduleList.data("select2")) {
+            shiftScheduleList.select2("destroy");
+        }
+    }
+
+    const setTimeToField = function (selector, value) {
+        const field = $(selector, customShiftModal);
+        const formatted = formatShiftTime(value);
+        if (!field.length) return;
+
+        if (field.data("timepicker")) {
+            field.timepicker("setTime", formatted || null);
+        } else {
+            field.val(formatted);
+        }
+    };
+
+    shiftScheduleList.select2({
+        width: '100%',
+        dropdownParent: customShiftModal,
+        placeholder: "Select Shift Schedule",
+        ajax: {
+            url: baseUrl(`gcctime/timesheet/get_shift_schedules_list_select2/${date}`),
+            global: false,
+            dataType: 'JSON',
+            type: 'GET',
+            delay: 1000,
+        },
+    }).on("select2:select", function (e) {
+        const data = e.params.data;
+
+        setTimeToField("#_am-start", data.am_start);
+        setTimeToField("#_am-end", data.am_end);
+        setTimeToField("#_pm-start", data.pm_start);
+        setTimeToField("#_pm-end", data.pm_end);
+    });
+}
+
+const undoCustomShift = function (e, date, has_shift, id, tsId, dtRowIndex) {
+    Swal.fire({
+        icon : 'question',
+        title : 'Undo Shift Schedule',
+        html: 'Are you sure you want to `<b>UNDO</b>` shift schedule for this date?',
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        allowOutsideClick: false,
+        input: "textarea",
+        inputLabel: "Reason for undo shift schedule.",
+        inputValidator: (result) => {
+            return !result && "Reason is required!";
+        },
+        showLoaderOnConfirm: true,
+    }).then((result) => {
+        if (result.isConfirmed && typeof result.value != undefined && result.value) {
+            $.ajax({
+                url: baseUrl('gcctime/timesheet/undo_custom_shift'),
+                type: 'post',
+                data: {
+                    csrf_token: _csrf_hash,
+                    date,
+                    has_shift,
+                    id,
+                    timesheetId: tsId,
+                    reason: result.value
+                },
+                dataType: 'json',
+                success: function(response) {
+                    const rowData = response.row;
+
+                    if (typeof tsId != "undefined" && tsId) {
+                        const scrub_status = parseInt(rowData.scrub_status);
+                        const verified = parseInt(rowData.verified);
+                        const hasTO = parseInt(rowData.has_TO);
+                        const hasLOA = parseInt(rowData.has_LOA);
+                        const hasWholeDayLoa = parseInt(rowData.has_whole_day_LOA);
+    
+                        dtTimesheet.row(dtRowIndex).data(rowData).draw();
+                        const rowEl = dtTimesheet.row(dtRowIndex).node();
+                        let oddEvenClass = $(rowEl).hasClass("odd") ? "odd" : "even";
+                        $(rowEl)
+                            .removeClass()
+                            .addClass(oddEvenClass);
+    
+                        let currentRowClass = null;
+    
+                        if (scrub_status === 1 && verified === 0) {
+                            currentRowClass = "lacking lacking--contrast";
+                        } else if (scrub_status === 2 && verified === 0) {
+                            currentRowClass = "multiple";
+                        } else {
+                            $(rowEl).hasClass("lacking lacking--contrast") && $(rowEl).removeClass("lacking lacking--contrast");
+                            $(rowEl).hasClass("multiple") && $(rowEl).removeClass("multiple");
+                        }
+    
+                        if ((parseInt(rowData.has_shift) === 0 && (verified === 0 || !verified))) {
+                            currentRowClass = "no-shift";
+                        } else {
+                            $(rowEl).hasClass("no-shift") && $(rowEl).removeClass("no-shift");
+                        }
+    
+                        if (!rowData.id && parseInt(rowData.has_shift) === 1) {
+                            if ((hasLOA >= 1 && hasWholeDayLoa === 1)) { currentRowClass = "absent absent--contrast"; }
+                            else if (hasLOA >= 1 && hasWholeDayLoa <= 0) { currentRowClass = "lacking lacking--contrast"; }
+                            else { currentRowClass = "absent absent--contrast"; }
+    
+                            if (hasTO >= 1) { currentRowClass = "lacking lacking--contrast"; }
+                        }
+    
+                        if (currentRowClass) { $(rowEl).addClass(currentRowClass); }
+                    } else {
+                        dtTimesheet.ajax.reload(null, false);
+                    }
+
+                    if (response.state) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Undo Custom Shift',
+                            html: 'Successfully `<b>UNDO</b>` customized shift for this date!'
+                        })
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Undo Custom Shift',
+                            html: 'Failed to `<b>UNDO</b>` customized shift for this date!'
+                        })
+                    }
+                }
+            })
+        }
+    })
+}
