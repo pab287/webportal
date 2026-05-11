@@ -2063,6 +2063,9 @@ class Reports_m extends CI_Model{
             $tempGroup = "PAY DATE";
             $arrGroup = array(1=>"PAY DATE", 2=>"MONTH", 3=>"YEAR");
             $group = (isset($post["group"]) && $post["group"])? intval($post["group"]): 1;
+            $payout_mode = isset($post['payout_mode']) && $post['payout_mode'] ? $post['payout_mode'] : 0;
+            $station = isset($post['station']) && $post['station'] ? $post['station'] : 0;
+            $payout_sched = isset($post['payroll_sched']) && $post['payroll_sched'] ? $post['payroll_sched'] : 0;
 
             $employeeIds = array();
             $tempStartDate = null;
@@ -2104,6 +2107,8 @@ class Reports_m extends CI_Model{
             $this->db->join("gcchris.tblcompanies b", "b.id = ps.company_id", "LEFT");
             /*** $this->db->join("gcchris.tblcompanies b", "b.id = a.company_id OR b.description = a.company_id OR b.code = a.company_id", "LEFT"); ***/
             $this->db->join("payroll.payout_schedule c", "c.id = a.payout_sched", "INNER");
+            $this->db->join($this->tbl_payroll_group.' p_group', 'p_group.employee_id LIKE CONCAT("%s:", LENGTH(a.id), ' . $this->db->escape(':"') . ', a.id, ' . $this->db->escape('";%') . ')', 'LEFT');
+            $this->db->join($this->tbl_default_station.' site', 'site.employee_id = a.id', 'left');
             $this->db->where("b.id", $post["company"]);
             if(isset($post["employees"]) && $post["employees"]){
                 $this->db->where_in("a.id", $post["employees"]);
@@ -2111,6 +2116,18 @@ class Reports_m extends CI_Model{
                 if(isset($post["serialized_employees"]) && $post["serialized_employees"]){
                     $this->db->where_in("a.id", explode(",",$post["serialized_employees"]));
                 }
+            }
+
+            if ($payout_mode && $payout_mode > 0) {
+                $this->db->where('p_group.payout_mode', $payout_mode);
+            }
+
+            if ($station && $station > 0) {
+                $this->db->where('site.station_id', $station);
+            }
+
+            if ($payout_sched && $payout_sched > 0) {
+                $this->db->where('a.payout_sched', $payout_sched);
             }
 
             $this->db->group_by("a.id");
@@ -2226,41 +2243,56 @@ class Reports_m extends CI_Model{
                             $_tempPayDateEnd = Date("Y-m-d", strtotime("+1 year", strtotime($_tempPayDateEnd)));
                         }
 
-                        $this->db->select("id");
-                        $this->db->from("payroll.payroll_sheet");
-                        $this->db->where("posted", 1);
-                        $this->db->where("is_bonus", 0);
+                        $this->db->select("a.id");
+                        $this->db->from("payroll.payroll_sheet as a");
+                        $this->db->join($this->tbl_payroll_group.' p_group', 'p_group.employee_id LIKE CONCAT("%s:", LENGTH(a.emp_id), ' . $this->db->escape(':"') . ', a.emp_id, ' . $this->db->escape('";%') . ')', 'LEFT');
+                        $this->db->join($this->tbl_default_station.' site', 'site.employee_id = a.emp_id', 'left');
+                        $this->db->where("a.posted", 1);
+                        $this->db->where("a.is_bonus", 0);
                         if($isMonthlyFilter === true){
                             $_monthStartDate = date("Y-m-d", strtotime("first day of this month", strtotime($tempStartDate)));
                             $_monthEndDate = date("Y-m-d", strtotime("last day of this month", strtotime($_monthStartDate)));
                             $this->db->group_start();
 
                                 $this->db->group_start();
-                                    $this->db->where("DATE(date_start) >=", $_tempStartDate);
-                                    $this->db->where("DATE(date_end) <=", $_tempEndDate);
+                                    $this->db->where("DATE(a.date_start) >=", $_tempStartDate);
+                                    $this->db->where("DATE(a.date_end) <=", $_tempEndDate);
                                 $this->db->group_end();
                                 $this->db->or_group_start();
-                                    $this->db->where("DATE(date_start) >=", $_monthStartDate);
-                                    $this->db->where("DATE(date_end) <=", $_monthEndDate);
+                                    $this->db->where("DATE(a.date_start) >=", $_monthStartDate);
+                                    $this->db->where("DATE(a.date_end) <=", $_monthEndDate);
                                 $this->db->group_end();
                             $this->db->group_end(); 
                         }else{
                             $this->db->group_start();
-                            $this->db->where("DATE(date_start) >=", $_tempStartDate);
-                            $this->db->where("DATE(date_end) <=", $_tempEndDate);
+                            $this->db->where("DATE(a.date_start) >=", $_tempStartDate);
+                            $this->db->where("DATE(a.date_end) <=", $_tempEndDate);
                             $this->db->group_end();
                         }
                         if($isPaydate){
                             $this->db->group_start();
-                            $this->db->or_where("DATE(pay_date) >=", $_tempPayDateStart);
-                            $this->db->where("DATE(pay_date) <=", $_tempPayDateEnd);
+                            $this->db->or_where("DATE(a.pay_date) >=", $_tempPayDateStart);
+                            $this->db->where("DATE(a.pay_date) <=", $_tempPayDateEnd);
                             $this->db->group_end();
                         }
                         if(isset($post["company"]) && $post["company"]){
-                            $this->db->where("company_id", $post["company"]);
+                            $this->db->where("a.company_id", $post["company"]);
                         }
-                        $this->db->where_in("emp_id", $isWeeklyEmployees);
-                        $this->db->order_by("emp_id", "ASC");
+
+                        if ($payout_mode && $payout_mode > 0) {
+                            $this->db->where('p_group.payout_mode', $payout_mode);
+                        }
+
+                        if ($payout_sched && $payout_sched > 0) {
+                            $this->db->where('a.payroll_sched', $payout_sched);
+                        }
+
+                        if ($station && $station > 0) {
+                            $this->db->where('site.station_id', $station);
+                        }
+                        
+                        $this->db->where_in("a.emp_id", $isWeeklyEmployees);
+                        $this->db->order_by("a.emp_id", "ASC");
 
                         $queryWeekly = $this->db->get();
                         if($queryWeekly->num_rows() > 0){
@@ -2274,21 +2306,36 @@ class Reports_m extends CI_Model{
                 }
 
                 if(is_array($employeeIds) && count($employeeIds) > 0){
-                    $this->db->select("id");
-                    $this->db->from("payroll.payroll_sheet");
-                    $this->db->where("posted", 1);
-                    $this->db->where("is_bonus", 0);
+                    $this->db->select("a.id");
+                    $this->db->from("payroll.payroll_sheet as a");
+                    $this->db->join($this->tbl_payroll_group.' p_group', 'p_group.employee_id LIKE CONCAT("%s:", LENGTH(a.emp_id), ' . $this->db->escape(':"') . ', a.emp_id, ' . $this->db->escape('";%') . ')', 'LEFT');
+                    $this->db->join($this->tbl_default_station.' site', 'site.employee_id = a.emp_id', 'left');
+                    $this->db->where("a.posted", 1);
+                    $this->db->where("a.is_bonus", 0);
                     $this->db->group_start();
-                    $this->db->where("DATE(date_start) >=", $tempStartDate);
-                    $this->db->where("DATE(date_end) <=", $tempEndDate);
-                    $this->db->or_where("DATE(pay_date) >=", $tempStartDate);
-                    $this->db->where("DATE(pay_date) <=", $tempEndDate);
+                    $this->db->where("DATE(a.date_start) >=", $tempStartDate);
+                    $this->db->where("DATE(a.date_end) <=", $tempEndDate);
+                    $this->db->or_where("DATE(a.pay_date) >=", $tempStartDate);
+                    $this->db->where("DATE(a.pay_date) <=", $tempEndDate);
                     $this->db->group_end();
-                    $this->db->where_in("emp_id", $employeeIds);
+                    $this->db->where_in("a.emp_id", $employeeIds);
                     if(isset($post["company"]) && $post["company"]){
-                        $this->db->where("company_id", $post["company"]);
+                        $this->db->where("a.company_id", $post["company"]);
                     }
-                    $this->db->order_by("emp_id", "ASC");
+
+                    if ($payout_mode && $payout_mode > 0) {
+                        $this->db->where('p_group.payout_mode', $payout_mode);
+                    }
+
+                    if ($station && $station > 0) {
+                        $this->db->where('site.station_id', $station);
+                    }
+
+                    if ($payout_sched && $payout_sched > 0) {
+                        $this->db->where('a.payroll_sched', $payout_sched);
+                    }
+                    
+                    $this->db->order_by("a.emp_id", "ASC");
                     $query = $this->db->get();
                     $tempSql = $this->db->last_query();
                     if($query->num_rows() > 0){
@@ -2305,7 +2352,8 @@ class Reports_m extends CI_Model{
                 $tempArrFilter["company_description"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? strtoupper(trim($tempCompRow['description'])): "";
                 $tempArrFilter["company_address"] = isset($tempCompRow['company_address']) && $tempCompRow['company_address']  ? strtoupper(trim($tempCompRow['company_address'])): "";
                 $tempArrFilter["has_comp_desc"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? true: false;
-
+                $tempArrFilter['payout_mode'] = $payout_mode;
+                $tempArrFilter['station'] = $station;
                 if((is_array($employeePsIds) && count($employeePsIds) > 0) || (is_array($weeklyPsIds) && count($weeklyPsIds) > 0)){
                     $employeePsIds = array_unique(array_merge($employeePsIds, $weeklyPsIds));
                     if(is_array($employeePsIds) && count($employeePsIds) > 0){
@@ -2350,6 +2398,9 @@ class Reports_m extends CI_Model{
             $includedBonus = isset($post["13th_month"]) && intval($post["13th_month"]) === 1 ? true: false;
             $payDate = date("Y-m-d", strtotime($post["pay_date"]));
             $dates = explode("-", $post["date_range"]);
+            $payout_mode = isset($post['payout_mode']) && $post['payout_mode'] ? $post['payout_mode'] : 0;
+            $station = isset($post['station']) && $post['station'] ? $post['station'] : 0;
+            $payout_sched = isset($post['payroll_sched']) && $post['payroll_sched'] ? $post['payroll_sched'] : 0;
 
             if(isset($post["date_range"]) && $post["date_range"]){
                 $tempStartDate = date("Y-m-d", strtotime($dates[0]));
@@ -2369,11 +2420,25 @@ class Reports_m extends CI_Model{
             $this->db->join("payroll.payroll_sheet ps", "ps.emp_id = a.id", "INNER");
             $this->db->join("gcchris.tblcompanies b", "b.id = ps.company_id", "LEFT");
             $this->db->join("payroll.payout_schedule c", "c.id = a.payout_sched", "INNER");
+            $this->db->join($this->tbl_payroll_group.' p_group', 'p_group.employee_id LIKE CONCAT("%s:", LENGTH(a.id), ' . $this->db->escape(':"') . ', a.id, ' . $this->db->escape('";%') . ')', 'LEFT');
+                $this->db->join($this->tbl_default_station.' site', 'site.employee_id = a.id', 'left');
             $this->db->where("b.id", $post["company"]);
             if (isset($post["employees"]) && $post["employees"]){
                 $this->db->where_in("a.id", $post["employees"]);
             } elseif (isset($post["serialized_employees"]) && $post["serialized_employees"]){
                 $this->db->where_in("a.id", explode(",",$post["serialized_employees"]));
+            }
+
+            if ($payout_mode && $payout_mode > 0) {
+                $this->db->where('p_group.payout_mode', $payout_mode);
+            }
+
+            if ($station && $station > 0) {
+                $this->db->where('site.station_id', $station);
+            }
+            
+            if ($payout_sched && $payout_sched > 0) {
+                $this->db->where('a.payout_sched', $payout_sched);
             }
 
             $this->db->group_by("a.id");
@@ -2409,19 +2474,34 @@ class Reports_m extends CI_Model{
                         $_tempEndDate = Date("Y-m-d", strtotime("+1 year", strtotime($_tempEndDate)));
                     }
 
-                    $this->db->select("id");
-                    $this->db->from("payroll.payroll_sheet");
-                    $this->db->where("posted", 1);
-                    if($includedBonus === false){ $this->db->where("is_bonus", 0); }
+                    $this->db->select("a.id");
+                    $this->db->from("payroll.payroll_sheet as a");
+                    $this->db->join($this->tbl_payroll_group.' p_group', 'p_group.employee_id LIKE CONCAT("%s:", LENGTH(a.emp_id), ' . $this->db->escape(':"') . ', a.emp_id, ' . $this->db->escape('";%') . ')', 'LEFT');
+                    $this->db->join($this->tbl_default_station.' site', 'site.employee_id = a.emp_id', 'left');
+                    $this->db->where("a.posted", 1);
+                    if($includedBonus === false){ $this->db->where("a.is_bonus", 0); }
                     $this->db->group_start();
-                    $this->db->where("DATE(date_start) >=", $_tempStartDate);
-                    $this->db->where("DATE(date_end) <=", $_tempEndDate);
+                    $this->db->where("DATE(a.date_start) >=", $_tempStartDate);
+                    $this->db->where("DATE(a.date_end) <=", $_tempEndDate);
                     $this->db->group_end();
-                    $this->db->where_in("emp_id", $isWeeklyEmployees);
+                    $this->db->where_in("a.emp_id", $isWeeklyEmployees);
                     if(isset($post["company"]) && $post["company"]){
-                        $this->db->where("company_id", $post["company"]);
+                        $this->db->where("a.company_id", $post["company"]);
                     }
-                    $this->db->order_by("emp_id", "ASC");
+
+                    if ($payout_mode && $payout_mode > 0) {
+                        $this->db->where('p_group.payout_mode', $payout_mode);
+                    }
+
+                    if ($station && $station > 0) {
+                        $this->db->where('site.station_id', $station);
+                    }
+
+                    if ($payout_sched && $payout_sched > 0) {
+                        $this->db->where('a.payroll_sched', $payout_sched);
+                    }
+
+                    $this->db->order_by("a.emp_id", "ASC");
                     $queryWeekly = $this->db->get();
                     if($queryWeekly->num_rows() > 0){
                         foreach ($queryWeekly->result() as $value) {
@@ -2433,18 +2513,32 @@ class Reports_m extends CI_Model{
                 }
 
                 if(is_array($employeeIds) && !empty($employeeIds)){
-                    $this->db->select("id");
-                    $this->db->from("payroll.payroll_sheet");
-                    $this->db->where("posted", 1);
-                    if($includedBonus === false){ $this->db->where("is_bonus", 0); }
+                    $this->db->select("a.id");
+                    $this->db->from("payroll.payroll_sheet as a");
+                    $this->db->join($this->tbl_payroll_group.' p_group', 'p_group.employee_id LIKE CONCAT("%s:", LENGTH(a.emp_id), ' . $this->db->escape(':"') . ', a.emp_id, ' . $this->db->escape('";%') . ')', 'LEFT');
+                    $this->db->join($this->tbl_default_station.' site', 'site.employee_id = a.emp_id', 'left');
+                    $this->db->where("a.posted", 1);
+                    if($includedBonus === false){ $this->db->where("a.is_bonus", 0); }
                     $this->db->group_start();
-                    $this->db->where("DATE(date_start) >=", $tempStartDate);
-                    $this->db->where("DATE(date_end) <=", $tempEndDate);
-                    $this->db->where("DATE(pay_date)", $payDate);
+                    $this->db->where("DATE(a.date_start) >=", $tempStartDate);
+                    $this->db->where("DATE(a.date_end) <=", $tempEndDate);
+                    $this->db->where("DATE(a.pay_date)", $payDate);
                     $this->db->group_end();
-                    $this->db->where_in("emp_id", $employeeIds);
+                    $this->db->where_in("a.emp_id", $employeeIds);
                     if(isset($post["company"]) && $post["company"]){
-                        $this->db->where("company_id", $post["company"]);
+                        $this->db->where("a.company_id", $post["company"]);
+                    }
+
+                    if ($payout_mode && $payout_mode > 0) {
+                        $this->db->where('p_group.payout_mode', $payout_mode);
+                    }
+
+                    if ($station && $station > 0) {
+                        $this->db->where('site.station_id', $station);
+                    }
+
+                    if ($payout_sched && $payout_sched > 0) {
+                        $this->db->where('a.payroll_sched', $payout_sched);
                     }
     
                     $query = $this->db->get();
@@ -2505,7 +2599,7 @@ class Reports_m extends CI_Model{
             $arrPsData = array();
             $arrKxy = array();
             $arrMaxCount = array();
-            $defaultFields = array("id", "emp_id", "idno", "gross_pay", "sss", "sss_prov", "ph", "hdmf", "tax", "net_pay");
+            $defaultFields = array("id", "emp_id", "idno", "gross_pay", "sss", "sss_prov", "ph", "hdmf", "tax", "net_pay", "station");
 
             if(is_array($psIds) && count($psIds) > 0){
                 $this->db->select("UPPER(GROUP_CONCAT(TRIM(ps_loans.code) ORDER BY ps_loans.code ASC)) as loan_code");
@@ -2596,7 +2690,7 @@ class Reports_m extends CI_Model{
                 $sqlSelect = "ps.id, ps.emp_id, emp.idno, ps.basic_rate, ps.total_allowances, ps.ot_amount, ps.ot_ndiff_amount, ps.total_ndiff_amount, ps.total_holiday_amount, ps.ot_allowance_amount, ps.gross_pay, ps.net_pay, ps.sss, ps.sss_prov, ps.ph, ps.hdmf, ps.tax,
                 GROUP_CONCAT(DISTINCT(CONCAT(ps_custom_adj.particulars,'||',ps_custom_adj.amount, '||', ps_custom_adj.cadj_type))) custom_adjustments,
                 GROUP_CONCAT(DISTINCT(CONCAT(ps_created_adj.particulars,'||', ps_created_adj.amount, '||', ps_created_adj.adj_type, '||', ps_created_adj.description))) created_adjustments,
-                GROUP_CONCAT(DISTINCT(CONCAT(ps_loans.code,'||',ps_loan_payment.amount_due, '||', ps_loans.loan_class,'||',ps_loan_payment.id))) sss_hdmf_loan_deduction";
+                GROUP_CONCAT(DISTINCT(CONCAT(ps_loans.code,'||',ps_loan_payment.amount_due, '||', ps_loans.loan_class,'||',ps_loan_payment.id))) sss_hdmf_loan_deduction, site.station_description";
                 $this->db->select($sqlSelect);
                 $this->db->from($this->tbl_payroll_sheet." ps");
                 $this->db->join($this->tbl_employees." emp", "emp.id = ps.emp_id", "inner");
@@ -2605,6 +2699,7 @@ class Reports_m extends CI_Model{
                 $this->db->join($this->tbl_ps_loans." ps_loans", "ps_loans.id = loans.loan_id", "left");
                 $this->db->join($this->tbl_ps_custom_adjustments." ps_custom_adj", "ps_custom_adj.payroll_sheet_id = ps.id", "left");
                 $this->db->join($this->tbl_ps_created_adjustments." ps_created_adj", "ps_created_adj.payroll_sheet_id = ps.id AND ps_created_adj.status = 1", "left");
+                $this->db->join($this->tbl_default_station.' site', 'site.employee_id = emp.id', 'left');
                 $this->db->where_in("ps.id", $psIds);
                 $this->db->order_by("emp.lastname", "ASC");
                 $this->db->group_by("ps.id");
@@ -2617,6 +2712,7 @@ class Reports_m extends CI_Model{
                         $tempRow["gross_pay"] = $value->gross_pay;
                         $tempRow["net_pay"] = $value->net_pay;
                         $tempRow["emp_id"] = $value->emp_id;
+                        $tempRow['station'] = $value->station_description;
                         $employee = $this->core_layout->getEmployeeData($value->emp_id);
                         $employee = (object) $employee;
                         $tempName = isset($employee->display_name_1) && $employee->display_name_1 ? strtoupper($employee->display_name_0): strtoupper("No Assigned Name");
@@ -2761,7 +2857,7 @@ class Reports_m extends CI_Model{
             $grandTotalFooter = array();
             $tempArrData = array();
             if(is_array($arrPsData) && !empty($arrPsData)){
-                foreach ($arrPsData as $key => $value) {;
+                foreach ($arrPsData as $key => $value) {
                     $tempKeys = array_keys($value);
                     $employee = (object) $this->core_layout->getEmployeeData($value["emp_id"]);
                     $tempName = isset($employee->display_name_1) && $employee->display_name_1 ? strtoupper($employee->display_name_0): strtoupper("No Assigned Name");
@@ -3183,10 +3279,11 @@ class Reports_m extends CI_Model{
                         }
                     }
 
-                    $sqlSelect = "ps.id, ps.emp_id, emp.idno, emp.biometricno, ps.payroll_type, ps.basic_rate, ps.rate";
+                    $sqlSelect = "ps.id, ps.emp_id, emp.idno, emp.biometricno, ps.payroll_type, ps.basic_rate, ps.rate, site.station_description";
                     $this->db->select($sqlSelect);
                     $this->db->from($this->tbl_payroll_sheet." ps");
                     $this->db->join($this->tbl_employees." emp", "emp.id = ps.emp_id");
+                    $this->db->join($this->tbl_default_station.' site', 'site.employee_id = emp.id', 'left');
                     $this->db->where_in("ps.id", $tempIds);
                     $this->db->order_by("emp.lastname", "ASC");
                     $this->db->group_by("ps.emp_id");
@@ -3195,7 +3292,7 @@ class Reports_m extends CI_Model{
                         foreach ($qData->result() as $key => $value) { $arrResultData[$value->emp_id] = $value; }
                     }
                 }
-                
+
                 foreach ($arrKxy as $key => $value) {
                     $tempKey = strtolower($key);
                     $arrMaxCount[$tempKey] = max($value);
@@ -3209,6 +3306,7 @@ class Reports_m extends CI_Model{
                         $tempRow["idno"] = $value->idno;
                         $tempRow["biometricno"] = $value->biometricno;
                         $tempRow["emp_id"] = $value->emp_id;
+                        $tempRow['station'] = $value->station_description;
                         if($value->payroll_type !== "monthly"){ $tempRow["regular_pay"] = $value->basic_rate; }
                         $employee = $this->core_layout->getEmployeeData($value->emp_id);
                         $employee = (object) $employee;
@@ -4092,6 +4190,8 @@ class Reports_m extends CI_Model{
             $group = (isset($post["group"]) && $post["group"])? intval($post["group"]): 1;
             $payrollGroup = isset($post["payroll_group"]) && $post["payroll_group"] ? $post["payroll_group"]: array();
             $payout_mode = isset($post["payout_mode"]) && $post["payout_mode"] ? $post["payout_mode"]: 0;
+            $station = isset($post["station"]) && $post["station"] ? $post["station"]: 0;
+            $payout_sched = isset($post["payout_sched"]) && $post["payout_sched"] ? $post["payout_sched"]: 0;
 
             $arrCompany = array();
             $employeeIds = array();
@@ -4190,6 +4290,7 @@ class Reports_m extends CI_Model{
                 $this->db->from("gcctimeutility.timesheet ts");
                 $this->db->join("gccmaster.tblemployees emp", "emp.id=ts.emp_id", "LEFT");
                 $this->db->join($this->tbl_payroll_group.' p_group', 'p_group.employee_id LIKE CONCAT("%s:", LENGTH(emp.id), ' . $this->db->escape(':"') . ', emp.id, ' . $this->db->escape('";%') . ')', 'LEFT');
+                $this->db->join($this->tbl_default_station.' site', 'site.employee_id = emp.id', 'left');
                 $this->db->join("gcchris.tblcompanies comp", "comp.id=emp.company_id", "LEFT");
                 $this->db->where("ts.has_overtime", 1);
                 $this->db->group_start();
@@ -4206,6 +4307,14 @@ class Reports_m extends CI_Model{
 
                 if ($payout_mode && $payout_mode > 0) {
                     $this->db->where('p_group.payout_mode', $payout_mode);
+                }
+
+                if ($station && $station > 0) {
+                    $this->db->where('site.station_id', $station);
+                }
+
+                if ($payout_sched && $payout_sched > 0) {
+                    $this->db->where('emp.payout_sched', $payout_sched);
                 }
 
                 $this->db->order_by("DATE(ts.overtime_in)");
@@ -4227,12 +4336,15 @@ class Reports_m extends CI_Model{
                     $tempArrFilter["has_comp_desc"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? true: false;
                     $tempArrFilter["payroll_group"] = $filterPayrollGroup;
                     $tempArrFilter['payout_mode'] = $payout_mode;
+                    $tempArrFilter['station'] = $station;
+                    $tempArrFilter['payout_sched'] = $payout_sched;
 
                     if(is_array($ids) && $tempCount > 0){
                         $ids = array_map("intval", $ids);
                         $resultset["response"] = true;
                         $resultset["data"] = $ids;
                         $resultset["filters"] = $tempArrFilter;
+                        $resultset['summary'] = $this->station_summary($ids, $payout_mode, $station, $payout_sched);
                         $resultset["toastr_msg"] = "Posted payroll entries found.";
                     }else{
                         $resultset["response"] = false;
@@ -4264,9 +4376,11 @@ class Reports_m extends CI_Model{
         $clearTable = $post['clear_table'] === 'true';
         $coverageDate = $post['filters']['coverage_date'] ?? false;
         $payout_mode = $post['payout_mode'] ?? 0;
+        $station = $post['station'] ?? 0;
+        $payout_sched = $post['payout_sched'] ?? 0;
 
-        $results = $this->overtimeSummaryList($filteredIds, $search, $limit, $offset, $sortBy, $sortOrder, $coverageDate, $payout_mode);
-        $rowCount = $this->overtimeSummaryListCount($filteredIds, $search, $payout_mode);
+        $results = $this->overtimeSummaryList($filteredIds, $search, $limit, $offset, $sortBy, $sortOrder, $coverageDate, $payout_mode, $station, $payout_sched);
+        $rowCount = $this->overtimeSummaryListCount($filteredIds, $search, $payout_mode, $station, $payout_sched);
 
         if ($clearTable) { $rowCount = 0; $results = []; }
 
@@ -4280,7 +4394,7 @@ class Reports_m extends CI_Model{
     // end function
 
     // Function to display data for datatable of payroll journal request
-    protected function overtimeSummaryList($filteredIds, $search, $limit, $offset, $sortBy, $sortOrder, $coverageDate, $payout_mode = 0){
+    protected function overtimeSummaryList($filteredIds, $search, $limit, $offset, $sortBy, $sortOrder, $coverageDate, $payout_mode = 0, $station = 0, $payout_sched = 0){
         if (is_array($filteredIds) && count($filteredIds) > 0) {
             $select = "a.id, a.emp_id, b.firstname, b.lastname, b.middlename, b.suffix, b.company_id, b.idno,
             a.total_accredited_ot_hrs as ot_hrs, a.total_accredited_ndiff_ot_hrs as ot_ndiff_hrs,
@@ -4308,6 +4422,14 @@ class Reports_m extends CI_Model{
 
             if ($payout_mode && $payout_mode > 0) {
                 $this->db->where('p_group.payout_mode', $payout_mode);
+            }
+
+            if ($station && $station > 0) {
+                $this->db->where('g.station_id', $station);
+            }
+
+            if ($payout_sched && $payout_sched > 0) {
+                $this->db->where('b.payout_sched', $payout_sched);
             }
             
             if ($limit != -1) {
@@ -4439,7 +4561,7 @@ class Reports_m extends CI_Model{
     }
     //
     // function to display number of entries of requested data of payroll journal
-    protected function overtimeSummaryListCount($filteredId, $search, $payout_mode = 0){
+    protected function overtimeSummaryListCount($filteredId, $search, $payout_mode = 0, $station = 0, $payout_sched = 0){
         $count = 0;
         if(is_array($filteredId) && count($filteredId) > 0){
             $sqlSelect = "a.id, a.emp_id, b.firstname, b.lastname, b.middlename, b.suffix, b.company_id, b.idno,
@@ -4450,11 +4572,20 @@ class Reports_m extends CI_Model{
             $this->db->join('gccmaster.tblemployees b', 'a.emp_id = b.id');
             $this->db->join('gcchris.tblcompanies comp', 'comp.id = b.company_id', "LEFT");
             $this->db->join($this->tbl_payroll_group.' p_group', 'p_group.employee_id LIKE CONCAT("%s:", LENGTH(b.id), ' . $this->db->escape(':"') . ', b.id, ' . $this->db->escape('";%') . ')', 'LEFT');
+            $this->db->join($this->tbl_default_station.' g', 'g.employee_id = b.id', 'LEFT');
             $this->db->where_in("a.id", $filteredId);
             $this->db->where("a.has_overtime", 1);
 
             if ($payout_mode && $payout_mode > 0) {
                 $this->db->where('p_group.payout_mode', $payout_mode);
+            }
+
+            if ($station && $station > 0) {
+                $this->db->where('g.station_id', $station);
+            }
+
+            if ($payout_sched && $payout_sched > 0) {
+                $this->db->where('b.payout_sched', $payout_sched);
             }
 
             $this->db->order_by("b.lastname, b.firstname, a.overtime_in","asc");
@@ -5465,6 +5596,7 @@ class Reports_m extends CI_Model{
         
         return $data;
     }
+
     public function setGeneratedHdmfRemittances($psIds=array()){
         $data = array();
         if(is_array($psIds) && count($psIds) > 0){
@@ -5823,7 +5955,7 @@ class Reports_m extends CI_Model{
     }
 
     private function getCAReportData($search, $limit, $offset, $sortBy, $sortOrder, $filterFields, $date_range) {
-    $innerSql = $this->db->select("psloanpayments.*,ps.date_start,ps.date_end,ps.pay_date,ps.posted_by,ps.posted_at,d.firstname,d.middlename,d.lastname,
+        $innerSql = $this->db->select("psloanpayments.*,ps.date_start,ps.date_end,ps.pay_date,ps.posted_by,ps.posted_at,d.firstname,d.middlename,d.lastname,
             CONCAT(TRIM(d.firstname),' ',TRIM(d.middlename),' ',TRIM(d.lastname)) AS fullname,
             c.reference, c.remarks, 
             c.amount AS loan_amount,
@@ -5878,7 +6010,6 @@ class Reports_m extends CI_Model{
         return $this->db->get()->result_array();
     }
     
-
     private function getCAReportDataCount($search,$filterFields,$date_range){
         $innerSql = $this->db->select("psloanpayments.*,ps.date_start,ps.date_end,ps.pay_date,ps.posted_by,ps.posted_at,d.firstname,d.middlename,d.lastname,
         CONCAT(TRIM(d.firstname),' ',TRIM(d.middlename),' ',TRIM(d.lastname)) AS fullname,
@@ -7207,5 +7338,52 @@ class Reports_m extends CI_Model{
         }
 
         return array('results' => $result);
+    }
+
+    public function station_summary($ids, $payout_mode = 0, $station = 0, $payout_sched = 0) {
+        $result = array();
+        if (!is_array($ids) || count($ids) === 0) {
+            return $result;
+        }
+
+        // Reuse overtimeSummaryList so station totals follow the same amount computation as the report rows.
+        $rows = $this->overtimeSummaryList($ids, false, -1, 0, array(), null, false, $payout_mode, $station, $payout_sched);
+        if (!isset($rows['data']) || !is_array($rows['data']) || count($rows['data']) === 0) {
+            return $result;
+        }
+
+        $aggregated = array();
+        foreach ($rows['data'] as $item) {
+            $station = isset($item->station) && trim((string) $item->station) !== '' ? trim((string) $item->station) : 'NO ASSIGNED PROJECT';
+            if (!isset($aggregated[$station])) {
+                $aggregated[$station] = array(
+                    'station' => $station,
+                    'employee_count' => 0,
+                    'ot_adj' => 0,
+                    'total_amount' => 0,
+                    '_employees' => array()
+                );
+            }
+
+            $empId = intval($item->emp_id);
+            if ($empId > 0 && !isset($aggregated[$station]['_employees'][$empId])) {
+                $aggregated[$station]['_employees'][$empId] = true;
+                $aggregated[$station]['employee_count']++;
+            }
+
+            $otAdj = floatval($item->ot_adj);
+            $aggregated[$station]['ot_adj'] += $otAdj;
+            $aggregated[$station]['total_amount'] += floatval($item->amount) + $otAdj;
+        }
+
+        ksort($aggregated);
+        foreach ($aggregated as $stationRow) {
+            unset($stationRow['_employees']);
+            $total = $stationRow['ot_adj'] + $stationRow['total_amount'];
+            $stationRow['total_amount'] = round($total, 2);
+            $result[] = $stationRow;
+        }
+
+        return $result;
     }
 }

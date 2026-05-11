@@ -94,6 +94,37 @@
                                     </select>
                                 </div>
                             </div>
+                            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                                <div class="form-group">
+                                    <label class="m--font-bolder">
+                                        PAYOUT CLASSIFICATION
+                                        <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">(Optional)</span>
+                                    </label>
+                                    <select name="payroll_sched" id="payout_schedule" class="form-control">
+                                        <option></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                                <div class="form-group">
+                                    <label class="m--font-bolder">
+                                        PAYOUT MODE
+                                        <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">(Optional)</span>
+                                    </label>
+                                    <select name="payout_mode" id="payout_mode" class="form-control">
+                                        <option></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                                <div class="form-group">
+                                    <label for="station" class="m--font-bolder">
+                                        Project #
+                                        <small class="m-form__help p-0">( Optional )</small>
+                                    </label>
+                                    <select id="station" class="form-control" name="station"><option></option></select>
+                                </div>
+                            </div>
                             <div class="form-group col-xl-12 col-lg-12 col-md-12 col-sm-12">
                                 <label class="m--font-bolder" for="payroll_group">PAYROLL GROUP <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">(Optional)</span>
                                 </label>

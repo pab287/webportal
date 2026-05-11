@@ -3,6 +3,10 @@
         #print-counter {
             display: block !important;
         }
+        .print-page-break {
+            page-break-before: always;
+            break-before: page;
+        }
     }
     #print-counter {
         display: none;
@@ -117,20 +121,40 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-if="count > 0" v-for="(item, index) in rows">
-                                    <td class="text-center">{{ctrCount(index)}}</td>
-                                    <td>{{item.employee_name}}</td>
-                                    <td class="text-right">{{item.sss}}</td>
-                                    <td class="text-right">{{item.sss_prov}}</td>
-                                    <td class="text-right">{{item.ph}}</td>
-                                    <td class="text-right">{{rowFormatNumber(item.hdmf)}}</td>
-                                    <td class="text-right">{{rowFormatNumber(item.tax)}}</td>
-                                    <td class="text-right" 
-                                        v-if="item.column_count > 0" 
-                                        v-for="(cols, ii) in item.row_columns">
-                                        {{rowFormatNumber(cols)}}
-                                    </td>
-                                </tr>
+                                <template v-if="count > 0" v-for="(group, gIndex) in getStationGroups()">
+                                    <tr>
+                                        <td colspan="7" class="m--font-boldest">PROJECT #: {{group.station}}</td>
+                                        <td v-if="column_count > 0" v-for="header in row_columns"></td>
+                                    </tr>
+                                    <tr v-for="(item, index) in group.rows">
+                                        <td class="text-center">{{ctrCount(index)}}</td>
+                                        <td>{{item.employee_name}}</td>
+                                        <td class="text-right">{{rowFormatNumber(item.sss)}}</td>
+                                        <td class="text-right">{{rowFormatNumber(item.sss_prov)}}</td>
+                                        <td class="text-right">{{rowFormatNumber(item.ph)}}</td>
+                                        <td class="text-right">{{rowFormatNumber(item.hdmf)}}</td>
+                                        <td class="text-right">{{rowFormatNumber(item.tax)}}</td>
+                                        <td class="text-right"
+                                            v-if="column_count > 0"
+                                            v-for="header in row_columns">
+                                            {{rowFormatNumber(getDynamicColumnValue(item, header))}}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td class="text-right m--font-boldest">SUB TOTAL - {{group.station}}</td>
+                                        <td class="text-right m--font-boldest">{{rowFormatNumber(getStationSubtotal(group.rows, 'sss'))}}</td>
+                                        <td class="text-right m--font-boldest">{{rowFormatNumber(getStationSubtotal(group.rows, 'sss_prov'))}}</td>
+                                        <td class="text-right m--font-boldest">{{rowFormatNumber(getStationSubtotal(group.rows, 'ph'))}}</td>
+                                        <td class="text-right m--font-boldest">{{rowFormatNumber(getStationSubtotal(group.rows, 'hdmf'))}}</td>
+                                        <td class="text-right m--font-boldest">{{rowFormatNumber(getStationSubtotal(group.rows, 'tax'))}}</td>
+                                        <td class="text-right m--font-boldest"
+                                            v-if="column_count > 0"
+                                            v-for="header in row_columns">
+                                            {{rowFormatNumber(getStationSubtotal(group.rows, header))}}
+                                        </td>
+                                    </tr>
+                                </template>
                             </tbody>
                             <tfoot>
                                 <tr>
@@ -142,7 +166,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row mt-3">
+            <div class="row mt-3" v-if="count > 0">
                 <div class="col-12">
                     <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll" id="append--table_content-payroll_sheet_grand_total">
                         <table border='1' cellpadding='5' cellspacing='0' style='font-family: roboto; font-size: 10px; width: 100% !important;'>
@@ -191,6 +215,45 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+
+            <div class="row mt-5 print-page-break" v-if="count > 0">
+                <div class="col-12">
+                    <h5 class="mb-3">STATION SUMMARY</h5>
+                    <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
+                        <table border='1' cellpadding='5' cellspacing='0' style='font-family: roboto; font-size: 10px; width: 100% !important;'>
+                            <thead>
+                                <tr>
+                                    <th>PROJECT #</th>
+                                    <th class="text-center"># OF EMPLOYEE(S)</th>
+                                    <th class="text-center">MPL</th>
+                                    <th class="text-center">SAL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="summary in getStationSummary()">
+                                    <td>{{summary.station}}</td>
+                                    <td class="text-center">{{summary.employee_count}}</td>
+                                    <td class="text-right">{{rowFormatNumber(summary.mpl_total)}}</td>
+                                    <td class="text-right">{{rowFormatNumber(summary.sal_total)}}</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th class="text-right" colspan="2">GRAND TOTAL</th>
+                                    <th class="text-right">{{rowFormatNumber(getStationSummaryGrandTotal().mpl_total)}}</th>
+                                    <th class="text-right">{{rowFormatNumber(getStationSummaryGrandTotal().sal_total)}}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-3" v-if="count == 0">
+                <div class="col-md-12">
+                    <h6 class='text-center mt-3 m--font-danger text-uppercase'>No Loan(s) Contribution/Deduction found!</h6>
                 </div>
             </div>
 
