@@ -795,7 +795,7 @@ class Reports extends MY_Controller {
                     $tempHtml .= "<div class='mt-5'>";
                         $tempHtml .= "<div class='row mt-5'>";
                             $tempHtml .= "<div class='col-md-12'>";
-                                $tempHtml .= "<h5>STATION SUMMARY</h5>";
+                                $tempHtml .= "<h5>PROJECT # SUMMARY</h5>";
                             $tempHtml .= "</div>";
                         $tempHtml .= "</div>";
                         $tempHtml .= "<table border='1' cellpadding='5' cellspacing='0' style='font-family: roboto; font-size: 10px; width: 100% !important;'>";

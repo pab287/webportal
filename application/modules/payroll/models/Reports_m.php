@@ -2360,7 +2360,7 @@ class Reports_m extends CI_Model{
                 $tempArrFilter["company_description"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? strtoupper(trim($tempCompRow['description'])): "";
                 $tempArrFilter["company_address"] = isset($tempCompRow['company_address']) && $tempCompRow['company_address']  ? strtoupper(trim($tempCompRow['company_address'])): "";
                 $tempArrFilter["has_comp_desc"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? true: false;
-                $tempArrFilter['payout_sched'] = $payoutScheduleText;
+                $tempArrFilter['payout_sched'] = strtoupper($payoutScheduleText);
                 $tempArrFilter['payout_mode'] = $payout_mode && $payout_mode > 0 ? $this->getPayoutMode($payout_mode) : null;
                 $tempArrFilter['station'] = $station && $station > 0 ? $this->getStationName($station) : null;
                 if((is_array($employeePsIds) && count($employeePsIds) > 0) || (is_array($weeklyPsIds) && count($weeklyPsIds) > 0)){
@@ -2580,7 +2580,7 @@ class Reports_m extends CI_Model{
                                 array("id" => 3, "text" => "Weekly")
                             );
 
-                            $payoutScheduleText = array_column($payoutSchedules, "text", "id")[(int)$payout_sched] ?? null;
+                            $payoutScheduleText = strtoupper(array_column($payoutSchedules, "text", "id")[(int)$payout_sched]) ?? null;
 
                             $resultset["filter"] = array(
                                 "pay_date"=>"{$filterPayDate}",
@@ -4366,7 +4366,7 @@ class Reports_m extends CI_Model{
                     $tempArrFilter["payroll_group"] = $filterPayrollGroup;
                     $tempArrFilter['payout_mode'] = $payout_mode && $payout_mode > 0 ? $this->getPayoutMode($payout_mode) : null;
                     $tempArrFilter['station'] = $station && $station > 0 ? $this->getStationName($station) : null;
-                    $tempArrFilter['payout_sched'] = $payoutScheduleText;
+                    $tempArrFilter['payout_sched'] = strtoupper($payoutScheduleText);
 
                     if(is_array($ids) && $tempCount > 0){
                         $ids = array_map("intval", $ids);
@@ -5862,7 +5862,7 @@ class Reports_m extends CI_Model{
                         $value->net_pay_decimal = number_format($value->net_pay, 2, ".", ",");
                         $value->payroll_group = (isset($payroll_group['payroll_group']) && $payroll_group['payroll_group']) ? $payroll_group['payroll_group'] : ' N/A ';
                         $value->payout_mode = (isset($payroll_group['payout_mode']) && $payroll_group['payout_mode']) ? $payroll_group['payout_mode'] : ' N/A ';
-                        $value->payout_sched = $payoutScheduleText;
+                        $value->payout_sched = strtoupper($payoutScheduleText);
 
                         if ($payout_mode != null) {
                             if ((int)$payout_mode == (int)$mode) {

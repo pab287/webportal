@@ -80,7 +80,7 @@
                     </div>
                     <div class="row" v-if="filter.station">
                         <div class="col-3 col-md-3 col-lg-3 col-sm-12 printable-width-2">
-                            <p class="mb-0 m--font-bolder">STATION:</p>
+                            <p class="mb-0 m--font-bolder">PROJECT #:</p>
                         </div>
                         <div class="col-8 col-md-8 col-lg-8 col-sm-12 printable-width-10">
                             <p class="mb-0 m--font-bolder"><span>{{filter.station}}</span></p>
@@ -244,30 +244,39 @@
 
             <div class="row mt-5 print-page-break" v-if="count > 0">
                 <div class="col-12">
-                    <h5 class="mb-3">STATION SUMMARY</h5>
+                    <h5 class="mb-3">PROJECT # SUMMARY</h5>
                     <div class="m_datatable m-datatable m-datatable--default m-datatable--loaded m-datatable--scroll">
                         <table border='1' cellpadding='5' cellspacing='0' style='font-family: roboto; font-size: 10px; width: 100% !important;'>
                             <thead>
                                 <tr>
                                     <th>PROJECT #</th>
                                     <th width="10%" class="text-center"># OF EMPLOYEE(S)</th>
-                                    <th class="text-center">MPL</th>
-                                    <th class="text-center">SAL</th>
+                                    <th class="text-center" v-for="key in getStationSummaryColumns()">
+                                        <template v-if="key == 'sss'">SSS</template>
+                                        <template v-else-if="key == 'sss_prov'">SSS PROV</template>
+                                        <template v-else-if="key == 'ph'">PHIC</template>
+                                        <template v-else-if="key == 'hdmf'">HDMF</template>
+                                        <template v-else-if="key == 'tax'">TAX</template>
+                                        <template v-else>{{renderColumnLabel(key)}}</template>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="summary in getStationSummary()">
                                     <td>{{summary.station}}</td>
                                     <td class="text-center">{{summary.employee_count}}</td>
-                                    <td class="text-right">{{rowFormatNumber(summary.mpl_total)}}</td>
-                                    <td class="text-right">{{rowFormatNumber(summary.sal_total)}}</td>
+                                    <td class="text-right" v-for="key in getStationSummaryColumns()">
+                                        {{rowFormatNumber(summary.totals[key])}}
+                                    </td>
                                 </tr>
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <th class="text-right" colspan="2">GRAND TOTAL</th>
-                                    <th class="text-right">{{rowFormatNumber(getStationSummaryGrandTotal().mpl_total)}}</th>
-                                    <th class="text-right">{{rowFormatNumber(getStationSummaryGrandTotal().sal_total)}}</th>
+                                    <th class="text-right">GRAND TOTAL</th>
+                                    <th class="text-center">{{getStationSummaryGrandTotal().employee_count}}</th>
+                                    <th class="text-right" v-for="key in getStationSummaryColumns()">
+                                        {{rowFormatNumber(getStationSummaryGrandTotal().totals[key])}}
+                                    </th>
                                 </tr>
                             </tfoot>
                         </table>

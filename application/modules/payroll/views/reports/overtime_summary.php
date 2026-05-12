@@ -98,9 +98,9 @@
                                             <div v-if="filters.payroll_group">PAYROLL GROUP: {{ filters.payroll_group ? filters.payroll_group: '---' }}</div>
                                             <div v-if="filters.payout_sched">PAYOUT SCHED: {{ filters.payout_sched ? filters.payout_sched: '---' }}</div>
                                             <div v-if="filters.payout_mode">PAYOUT MODE: {{ filters.payout_mode ? filters.payout_mode: '---' }}</div>
-                                            <div v-if="filters.station">STATION: {{ filters.station ? filters.station: '---' }}</div>
+                                            <div v-if="filters.station">PROJECT #: {{ filters.station ? filters.station: '---' }}</div>
                                         </div>
-                                        <div id="print-counter" class="col-md-3">
+                                        <div id="print-counter" class="col-md-4">
                                             <div>PRINT #: <b>{{ print_counter.count }}</b></div>
                                             <div v-if="print_counter.last_printed">LAST PRINTED BY: <b>{{ print_counter.last_printed }}</b></div>
                                             <div v-if="print_counter.last_printed_at">LAST PRINTED AT: <b>{{ print_counter.last_printed_at }}</b></div>
@@ -152,7 +152,7 @@
                     <div v-show="count > 0">
                         <div class="row mt-5">
                             <div class="col-md-12">
-                                <h5>STATION SUMMARY</h5>
+                                <h5>PROJECT # SUMMARY</h5>
                             </div>
                         </div>
                         <table class="table table-bordered" style="font-family: roboto; width: 100%;" id="tbl-summary">

@@ -51,26 +51,26 @@
                     </div>
                 </div>
                 <div class="row" v-if="filter.payout_sched">
-                    <div class="col-4 col-md-4 col-lg-4 col-sm-12 printable-width-2">
+                    <div class="col-4 col-md-4 col-lg-4 col-sm-12">
                         <p class="mb-0 m--font-bolder">PAYOUT SCHED:</p>
                     </div>
-                    <div class="col-8 col-md-8 col-lg-8 col-sm-12 printable-width-10">
+                    <div class="col-8 col-md-8 col-lg-8 col-sm-12">
                         <p class="mb-0 m--font-bolder"><span>{{filter.payout_sched}}</span></p>
                     </div>
                 </div>
                 <div class="row" v-if="filter.payout_mode">
-                    <div class="col-4 col-md-4 col-lg-4 col-sm-12 printable-width-2">
+                    <div class="col-4 col-md-4 col-lg-4 col-sm-12">
                         <p class="mb-0 m--font-bolder">PAYOUT MODE:</p>
                     </div>
-                    <div class="col-8 col-md-8 col-lg-8 col-sm-12 printable-width-10">
+                    <div class="col-8 col-md-8 col-lg-8 col-sm-12">
                         <p class="mb-0 m--font-bolder"><span>{{filter.payout_mode}}</span></p>
                     </div>
                 </div>
                 <div class="row" v-if="filter.station">
-                    <div class="col-4 col-md-4 col-lg-4 col-sm-12 printable-width-2">
-                        <p class="mb-0 m--font-bolder">STATION:</p>
+                    <div class="col-4 col-md-4 col-lg-4 col-sm-12">
+                        <p class="mb-0 m--font-bolder">PROJECT #:</p>
                     </div>
-                    <div class="col-8 col-md-8 col-lg-8 col-sm-12 printable-width-10">
+                    <div class="col-8 col-md-8 col-lg-8 col-sm-12">
                         <p class="mb-0 m--font-bolder"><span>{{filter.station}}</span></p>
                     </div>
                 </div>

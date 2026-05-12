@@ -376,33 +376,48 @@ var vmPrintArea = new Vue({
                 }
                 return acc + _this.getDynamicColumnValue(row, key);
             }, 0);
+        }, getStationSummaryColumns: function () {
+            const dynamicCols = Array.isArray(this.row_columns) ? this.row_columns.map(function (col) {
+                return String(col || '').toLowerCase();
+            }) : [];
+            return ['sss', 'sss_prov', 'ph', 'hdmf', 'tax'].concat(dynamicCols);
         }, getStationSummary: function () {
+            const _this = this;
+            const columns = _this.getStationSummaryColumns();
             const groups = this.getStationGroups();
             return groups.map(function (group) {
                 const uniq = {};
-                let mplTotal = 0;
-                let salTotal = 0;
+                const totals = {};
+                columns.forEach(function (col) { totals[col] = 0; });
                 (group.rows || []).forEach(function (row) {
                     const empId = row && row.emp_id ? parseInt(row.emp_id, 10) : 0;
                     if (empId > 0) { uniq[empId] = true; }
-                    mplTotal += row && row.mpl ? parseFloat(row.mpl) : 0;
-                    salTotal += row && row.sal ? parseFloat(row.sal) : 0;
                 });
+
+                columns.forEach(function (col) {
+                    totals[col] = _this.getStationSubtotal(group.rows, col);
+                });
+
                 return {
                     station: group.station,
                     employee_count: Object.keys(uniq).length,
-                    mpl_total: mplTotal,
-                    sal_total: salTotal
+                    totals: totals
                 };
             });
         }, getStationSummaryGrandTotal: function () {
+            const columns = this.getStationSummaryColumns();
             const summaries = this.getStationSummary();
             return summaries.reduce(function (acc, row) {
                 acc.employee_count += row.employee_count || 0;
-                acc.mpl_total += row.mpl_total || 0;
-                acc.sal_total += row.sal_total || 0;
+                columns.forEach(function (col) {
+                    acc.totals[col] += row.totals && row.totals[col] ? row.totals[col] : 0;
+                });
                 return acc;
-            }, { employee_count: 0, mpl_total: 0, sal_total: 0 });
+            }, (function () {
+                const initTotals = {};
+                columns.forEach(function (col) { initTotals[col] = 0; });
+                return { employee_count: 0, totals: initTotals };
+            })());
         }
     }
 });
