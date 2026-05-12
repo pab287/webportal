@@ -171,6 +171,32 @@
                     </div>
                 </div>
 
+                <div id="portlet--summary">
+                    <div v-show="count > 0">
+                        <div class="row mt-5">
+                            <div class="col-md-12">
+                                <h5>PROJECT # SUMMARY</h5>
+                            </div>
+                        </div>
+                        <table class="table table-bordered mt-3" style="font-family: roboto; width: 100%;" id="tbl-summary">
+                            <thead>
+                                <tr>
+                                    <th>Project #</th>
+                                    <th># of Employee(s)</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot>
+                                <tr>
+                                    <th class="text-right" colspan="2"></th>
+                                    <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
                 <div id="portlet--signatories">
                 <template v-if="count > 0">
                 <table style='margin-top: 60px; width: 100%;'>
@@ -287,14 +313,43 @@
                         </div>
                     </div>
                     <div class="row mt-3">
-                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                        <div class="col-xl-7 col-lg-7 col-md-7 col-sm-12">
                             <div class="form-group">
                                 <label for="company" class="m--font-bolder required">Company</label>
                                 <select id="company" class="form-control" name="company" data-validation="required"><option></option></select>
                             </div>
                         </div>
+                        <div class="col-xl-5 col-lg-5 col-md-5 col-sm-12">
+                            <div class="form-group">
+                                <label for="payout_sched" class="m--font-bolder">
+                                    Payout Classification
+                                    <small class="m-form__help p-0">( Optional )</small>
+                                </label>
+                                <select id="payout_sched" class="form-control" name="payout_sched"><option></option></select>
+                            </div>
+                        </div>
                     </div>
-                    <div class="row mt-3">
+                    <div class="row">
+                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                            <div class="form-group">
+                                <label for="payout_mode" class="m--font-bolder">
+                                    Payout Mode
+                                    <small class="m-form__help p-0">( Optional )</small>
+                                </label>
+                                <select id="payout_mode" class="form-control" name="payout_mode"><option></option></select>
+                            </div>
+                        </div>
+                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                            <div class="form-group">
+                                <label for="station" class="m--font-bolder">
+                                    Project #
+                                    <small class="m-form__help p-0">( Optional )</small>
+                                </label>
+                                <select id="station" class="form-control" name="station"><option></option></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
                         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mt-2">
                             <div class="form-group m-form__group">
                                 <label for="payroll_group" class="mb-1 m--font-bolder">

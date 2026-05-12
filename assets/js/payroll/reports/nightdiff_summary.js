@@ -8,6 +8,8 @@ let _filter = [];
 let _years = [];
 let _companies = [];
 let psEmployeeGroup = [];
+let _payout_mode = [];
+let _payoutSchedule = [];
 
 let _tempIds = [];
 const months = [
@@ -34,6 +36,7 @@ let _tempData = {
     year_picker: false, month_picker: false, company_ids: 0,
 };
 let dtNighDiffTable = null;
+let dtSummary = null;
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.years !== "undefined" && _tempContentData.years.length > 0){
@@ -41,6 +44,12 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     }
     if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){
         _companies = _tempContentData.company;
+    }
+    if(typeof _tempContentData.payout_mode !== "undefined" && _tempContentData.payout_mode.length > 0){
+        _payout_mode = _tempContentData.payout_mode;
+    }
+    if(typeof _tempContentData.payout_schedule !== "undefined" && _tempContentData.payout_schedule.length > 0){
+        _payoutSchedule = _tempContentData.payout_schedule;
     }
 }
 
@@ -177,6 +186,67 @@ const vmGeneratejournal = new Vue({
                             .val([])
                             .trigger("change");
                     });
+                
+                $(currentElement).find("select#payout_mode")
+                    .select2({
+                        allowClear: true,
+                        width: '100%',
+                        data: _payout_mode,
+                        placeholder: "SELECT AN OPTION",
+                        dropdownParent: tempModal,
+                    }).on("select2:select", function (e) {
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
+                        _this.payout_mode = selectedValues;
+                        $(currentElement)
+                            .find("select#employee")
+                            .val([])
+                            .trigger("change");
+                    }).on("select2:unselect", function (e) {
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
+                        _this.payout_mode = selectedValues;
+                        $(currentElement)
+                            .find("select#employee")
+                            .val([])
+                            .trigger("change");
+                    });
+
+                $(currentElement).find("select#station")
+                    .select2({
+                        allowClear: true,
+                        width: '100%',
+                        ajax: {
+                            url: baseUrl('payroll/reports/select2_station'),
+                            dataType: 'json',
+                            global: false,
+                            delay: 250,
+                            data: function (params) {
+                                params.q = params.term;
+                                return params;
+                            },
+                            processResults: function (data) {
+                                return data;
+                            }
+                        }, language: { errorLoading: function () { return "Searching..." } },
+                        placeholder: "SELECT AN OPTION",
+                        dropdownParent: tempModal,
+                    }).on("select2:select", function (e) {
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
+                        _this.station = selectedValues;
+                    }).on("select2:unselect", function (e) {
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
+                        _this.station = selectedValues;
+                    });
+
+                $(currentElement).find("select#payout_sched").select2({
+                    width: "100%",
+                    data: _payoutSchedule,
+                    placeholder: "SELECT AN OPTION",
+                    allowClear: true,
+                });
             }, 200);
         }, resetFields: function () {
             const _this = this;
@@ -223,6 +293,48 @@ const vmActionSignatories = new Vue({
         }
     }
 });
+
+const vmPortletSummary = new Vue({
+    el: "#portlet--summary",
+    data: { count: 0 }
+});
+
+const buildProjectSummaryRows = function (rows) {
+    const list = Array.isArray(rows) ? rows : [];
+    const grouped = {};
+    list.forEach(function (item) {
+        const station = (item && item.station && String(item.station).trim()) ? String(item.station).trim() : 'No assigned Project';
+        if (!grouped[station]) {
+            grouped[station] = { station: station, employees: {}, amount: 0, otAdjByEmp: {} };
+        }
+
+        const empId = item && item.emp_id ? parseInt(item.emp_id, 10) : 0;
+        if (empId > 0) { grouped[station].employees[empId] = true; }
+
+        const amount = item && item.amount ? parseFloat(item.amount) : 0;
+        grouped[station].amount += Number.isNaN(amount) ? 0 : amount;
+
+        if (empId > 0 && item && item.ot_adj) {
+            const adj = parseFloat(item.ot_adj);
+            if (!Number.isNaN(adj) && !grouped[station].otAdjByEmp[empId]) {
+                grouped[station].otAdjByEmp[empId] = adj;
+            }
+        }
+    });
+
+    return Object.keys(grouped).sort().map(function (key) {
+        const row = grouped[key];
+        let stationAdj = 0;
+        Object.keys(row.otAdjByEmp).forEach(function (empId) {
+            stationAdj += parseFloat(row.otAdjByEmp[empId]) || 0;
+        });
+        return {
+            station: row.station,
+            employee_count: Object.keys(row.employees).length,
+            total_amount: row.amount + stationAdj
+        };
+    });
+};
 
 $("#payroll_group").select2({
     placeholder: 'Select an option',
@@ -402,10 +514,23 @@ $(document).ready(function(){
                 }
             }
         ], rowGroup: {
-            startRender: function ( _rows, group ) {
+            startRender: function ( _rows, group, level ) {
+                if (level === 0) {
+                    const station = group || 'No assigned Project';
+                    return $('<tr class="text-center"><td colspan="6" class="bg-secondary"><span class="m--font-boldest">Project #: ' + station + '</span></td></tr>');
+                }
+
+                if (!group || String(group).toUpperCase() === 'NO GROUP') {
+                    return null;
+                }
+
                 return $('<tr><td colspan="6" class="bg-secondary"><span class="m--font-boldest">' + group + '</span></td></tr>');
             },
-            endRender: function ( rows, _group ) {
+            endRender: function ( rows, _group, level ) {
+                if (level !== 0 && level !== 1) {
+                    return null;
+                }
+
                 let OTadj = rows
                     .data()
                     .pluck('ot_adj')
@@ -424,14 +549,16 @@ $(document).ready(function(){
                 let total = parseFloat(totalAmount) + parseFloat(OTadj);
                 const uiTotal = `<strong>₱ ${numberFormat(total)}</strong>`;
 
-                const tempContainer = `<tr class="bg-secondary">
+                const rowClass = level === 0 ? 'bg-secondary' : '';
+                const tempContainer = `<tr class="${rowClass}">
                     <td colspan="5" class="text-right">&nbsp;</td>
                     <td class="text-right pr-3">${uiTotal}</td>
                     </tr>`;
 
                 return $(tempContainer);
             },
-            dataSrc: [ 'employee_name' ],
+            dataSrc: [ 'station', 'employee_name' ],
+            emptyDataGroup: '',
             
         }, drawCallback: function () {
             const api = this.api();
@@ -554,13 +681,35 @@ $(document).ready(function(){
                     vmReportHeaders.filters = { ...json.filters };
                     toastr.success('Regular Night Differential entries found!', "Filtered Night Differential Summary Report");
 
-                    dtNighDiffTable.clear().rows.add(json.data).draw();
+                    const sortedRows = json.data.sort(function (a, b) {
+                        const stationA = (a && a.station) ? String(a.station).toLowerCase() : '';
+                        const stationB = (b && b.station) ? String(b.station).toLowerCase() : '';
+                        if (stationA !== stationB) { return stationA.localeCompare(stationB); }
+
+                        const employeeA = (a && a.employee_name) ? String(a.employee_name).toLowerCase() : '';
+                        const employeeB = (b && b.employee_name) ? String(b.employee_name).toLowerCase() : '';
+                        if (employeeA !== employeeB) { return employeeA.localeCompare(employeeB); }
+
+                        const dateA = (a && a.date) ? String(a.date) : '';
+                        const dateB = (b && b.date) ? String(b.date) : '';
+                        return dateA.localeCompare(dateB);
+                    });
+
+                    dtNighDiffTable.clear().rows.add(sortedRows).draw();
+                    const summaryRows = buildProjectSummaryRows(sortedRows);
+                    vmPortletSummary.count = summaryRows.length;
+                    Vue.nextTick(function () {
+                        dtSummary.clear().rows.add(summaryRows).draw();
+                        dtSummary.columns.adjust().draw(false);
+                    });
 
                     setTimeout( function () { 
                         modalGenerateReport.modal("hide"); 
                     }, 750);
                 } else {
                     toastr.error('No regular night differential entries available!', "Filtered Night Differential Summary Report");
+                    vmPortletSummary.count = 0;
+                    dtSummary.clear().draw();
                 }
     
                 const currentSelectCompanyId = $(currentForm).find("#company").val();
@@ -592,6 +741,65 @@ $(document).ready(function(){
 
     $('input[name="filter"]').on('change', function () {
         dtNighDiffTable.draw();
+    });
+
+    dtSummary = $("#tbl-summary").DataTable({
+        dom: "rt",
+        serverSide: false,
+        processing: false,
+        destroy: true,
+        paging: false,
+        searching: false,
+        ordering: false,
+        footer: true,
+        autoWidth: false,
+        columns: [
+            {
+                data: "station",
+                width: "60%",
+                render: function (data) {
+                    const val = (data === null || typeof data === "undefined" || String(data).trim() === "") ? "No assigned Project" : String(data);
+                    return val.toUpperCase();
+                }
+            },
+            {
+                data: "employee_count",
+                width: "15%",
+                className: "text-center",
+                render: function (data) {
+                    const count = parseInt(data, 10);
+                    return Number.isNaN(count) ? 0 : count;
+                }
+            },
+            {
+                data: "total_amount",
+                width: "25%",
+                className: "text-right pr-3",
+                render: function (data) {
+                    const amount = parseFloat(data);
+                    return '₱ ' + numberFormat(Number.isNaN(amount) ? 0 : amount);
+                }
+            }
+        ],
+        footerCallback: function () {
+            const api = this.api();
+            const intVal = function (i) {
+                if (typeof i === 'string') {
+                    return parseFloat(i.replace(/[^0-9.-]/g, '').trim()) || 0;
+                }
+                return typeof i === 'number' ? i : 0;
+            };
+
+            const grandTotalIndex = 2;
+            const totalAmount = api.column(grandTotalIndex).data().reduce(function (a, b) {
+                return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2));
+            }, 0);
+
+            const footerLabelTotal = $(api.column(1).footer());
+            footerLabelTotal.removeClass("text-center");
+            footerLabelTotal.html(`<span class="m--font-boldest mr-3">GRAND TOTAL</span>`);
+            $(api.column(grandTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAmount) + "</span>");
+        }
     });
 });
 

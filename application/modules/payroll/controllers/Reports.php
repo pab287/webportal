@@ -1268,6 +1268,8 @@ class Reports extends MY_Controller {
         $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
         $tempData["company"] = $this->payroll->select2CompanyData();
         $tempData["payout_schedule"] = $this->payroll->select2PayoutScheduleData();
+        $tempData['payout_mode'] = $this->payroll->getPaymentModeSelect2Data();
+        $tempData["payout_schedule"] = $this->payroll->select2PayoutScheduleData();
         
         $this->core_layout->setPageTitle("Payroll - Night Differential Summary Report");
         $this->core_layout->setPrivilegeName("payroll_nightdiff_summary");
