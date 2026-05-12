@@ -15,6 +15,96 @@ let filteredGroup = '';
 let payroll_option = "";
 let filtered = [];
 
+const renderSecondarySummaryTables = function (rows) {
+    const tableStation = $("#tbl-summary-station");
+    const tablePayout = $("#tbl-summary-payout-mode");
+    const stationWrapper = $("#summary-station-wrapper");
+    const payoutWrapper = $("#summary-payout-wrapper");
+    if (!tableStation.length || !tablePayout.length) { return; }
+
+    const list = Array.isArray(rows) ? rows : [];
+    if (!list.length) {
+        stationWrapper.addClass("m--hide");
+        payoutWrapper.addClass("m--hide");
+        tableStation.find("tbody").empty();
+        tablePayout.find("tbody").empty();
+        return;
+    }
+
+    stationWrapper.removeClass("m--hide");
+    payoutWrapper.removeClass("m--hide");
+
+    const toNumber = function (value) {
+        if (typeof value === 'string') {
+            return parseFloat(value.replace(/[^0-9.-]/g, '').trim()) || 0;
+        }
+        return typeof value === 'number' ? value : 0;
+    };
+
+    const summarizeBy = function (keyName, fallbackLabel) {
+        const grouped = {};
+        list.forEach(function (row) {
+            const key = row && row[keyName] ? String(row[keyName]).trim() : fallbackLabel;
+            if (!grouped[key]) {
+                grouped[key] = {
+                    key: key,
+                    employees: {},
+                    gross_total: 0,
+                    net_total: 0
+                };
+            }
+
+            const empId = row && row.emp_id ? parseInt(row.emp_id, 10) : 0;
+            if (empId > 0) { grouped[key].employees[empId] = true; }
+            grouped[key].gross_total += toNumber(row ? row.gross_pay : 0);
+            grouped[key].net_total += toNumber(row ? row.net_pay : 0);
+        });
+
+        return Object.keys(grouped).sort().map(function (groupKey) {
+            return {
+                key: groupKey,
+                employee_count: Object.keys(grouped[groupKey].employees).length,
+                gross_total: grouped[groupKey].gross_total,
+                net_total: grouped[groupKey].net_total
+            };
+        });
+    };
+
+    const stationRows = summarizeBy("station", "No assigned Station");
+    const payoutRows = summarizeBy("payout_mode", "No payout mode");
+
+    const renderTable = function (tableRef, rowsData) {
+        const tbody = tableRef.find("tbody");
+        const tfootCells = tableRef.find("tfoot th");
+        tbody.empty();
+
+        let grandEmployees = 0;
+        let grandGross = 0;
+        let grandNet = 0;
+
+        rowsData.forEach(function (row) {
+            grandEmployees += row.employee_count;
+            grandGross += row.gross_total;
+            grandNet += row.net_total;
+            tbody.append(
+                `<tr>
+                    <td>${row.key}</td>
+                    <td class="text-center">${row.employee_count}</td>
+                    <td class="text-right">${numberFormat(row.gross_total)}</td>
+                    <td class="text-right">${numberFormat(row.net_total)}</td>
+                </tr>`
+            );
+        });
+
+        $(tfootCells[1]).text(grandEmployees);
+        $(tfootCells[2]).text(numberFormat(grandGross));
+        $(tfootCells[3]).text(numberFormat(grandNet));
+    };
+
+    renderTable(tableStation, stationRows);
+    renderTable(tablePayout, payoutRows);
+};
+
 const months = [
     { id: 1, text: "January" },
     { id: 2, text: "February" },
@@ -203,9 +293,20 @@ $.validate({
                 vmNavigation.printable_content = null;
             },
             success: function (json) {
+                const sortedRows = Array.isArray(json.data) ? json.data.sort(function (a, b) {
+                    const stationA = (a && a.station) ? String(a.station).toLowerCase() : '';
+                    const stationB = (b && b.station) ? String(b.station).toLowerCase() : '';
+                    if (stationA !== stationB) { return stationA.localeCompare(stationB); }
+
+                    const employeeA = (a && a.employee_name) ? String(a.employee_name).toLowerCase() : '';
+                    const employeeB = (b && b.employee_name) ? String(b.employee_name).toLowerCase() : '';
+                    return employeeA.localeCompare(employeeB);
+                }) : [];
+
                 dtNetPayReport.clear();
-                dtNetPayReport.rows.add(json.data);
+                dtNetPayReport.rows.add(sortedRows);
                 dtNetPayReport.draw();
+                renderSecondarySummaryTables(sortedRows);
 
                 const filteredBy = $("input[name=group]:checked").val();
                 const filteredDate = filteredBy == 1 ? 'DATE RANGE ' + $("#date-range").val() : getMonthTextById($("#filter_month").val()).toUpperCase() + ' - ' + $("#filter_year").val();
@@ -247,7 +348,7 @@ const dtNetPayReport = tableNetpay.DataTable({
         },
         exportOptions: { stripHtml: false, columns: ':visible:not(:eq(0)):not(.actions)' },
         customize: function (win) {
-            const css = `@page { size: portrait; margin: 0.5cm; } 
+            const css = `@page { size: landscape; margin: 0.5cm; } 
                 .print-size-25{ width: 25% }
                 .dt-print-view table { font-size: 12px; } 
                 .dt-print-view table.dataTable tfoot tr:first-child th{ border-top: 1px solid #000000; }
@@ -273,6 +374,91 @@ const dtNetPayReport = tableNetpay.DataTable({
             const tempTable = win.document.getElementsByClassName('dataTable')[0];
             $(tempTable).removeClass("table-bordered");
 
+            // Rebuild print table body with station group headers + subtotals.
+            const exportIndexes = dtNetPayReport.columns(':visible').indexes().toArray().filter(function (idx) { return idx !== 0; });
+            const stationPos = exportIndexes.indexOf(9);
+            const grossPos = exportIndexes.indexOf(19);
+            const netPos = exportIndexes.indexOf(20);
+            const totalCols = exportIndexes.length;
+
+            if (stationPos >= 0 && tempTable) {
+                const tbody = tempTable.getElementsByTagName('tbody')[0];
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                rows.sort(function (a, b) {
+                    const aCells = a.querySelectorAll('td');
+                    const bCells = b.querySelectorAll('td');
+                    const stationA = aCells[stationPos] ? aCells[stationPos].textContent.trim().toLowerCase() : '';
+                    const stationB = bCells[stationPos] ? bCells[stationPos].textContent.trim().toLowerCase() : '';
+                    if (stationA !== stationB) { return stationA.localeCompare(stationB); }
+
+                    const empA = aCells[0] ? aCells[0].textContent.trim().toLowerCase() : '';
+                    const empB = bCells[0] ? bCells[0].textContent.trim().toLowerCase() : '';
+                    return empA.localeCompare(empB);
+                });
+                let currentStation = null;
+                let stationGross = 0;
+                let stationNet = 0;
+
+                const toNumber = function (value) {
+                    return parseFloat(String(value || '0').replace(/[^0-9.-]/g, '')) || 0;
+                };
+
+                const appendSubtotalRow = function (stationName) {
+                    if (stationName === null) { return; }
+                    const subtotalTr = win.document.createElement('tr');
+                    const labelColspan = Math.max(totalCols - ((grossPos >= 0 ? 1 : 0) + (netPos >= 0 ? 1 : 0)), 1);
+
+                    const labelTd = win.document.createElement('td');
+                    labelTd.setAttribute('colspan', labelColspan);
+                    labelTd.style.textAlign = 'right';
+                    labelTd.style.fontWeight = 'bold';
+                    labelTd.textContent = 'SUB TOTAL - ' + stationName;
+                    subtotalTr.appendChild(labelTd);
+
+                    if (grossPos >= 0) {
+                        const grossTd = win.document.createElement('td');
+                        grossTd.style.textAlign = 'right';
+                        grossTd.style.fontWeight = 'bold';
+                        grossTd.textContent = numberFormat(stationGross);
+                        subtotalTr.appendChild(grossTd);
+                    }
+                    if (netPos >= 0) {
+                        const netTd = win.document.createElement('td');
+                        netTd.style.textAlign = 'right';
+                        netTd.style.fontWeight = 'bold';
+                        netTd.textContent = numberFormat(stationNet);
+                        subtotalTr.appendChild(netTd);
+                    }
+                    tbody.appendChild(subtotalTr);
+                };
+
+                rows.forEach(function (tr) {
+                    const cells = tr.querySelectorAll('td');
+                    const stationValue = cells[stationPos] ? cells[stationPos].textContent.trim() : 'No assigned Station';
+
+                    if (currentStation !== stationValue) {
+                        appendSubtotalRow(currentStation);
+                        currentStation = stationValue;
+                        stationGross = 0;
+                        stationNet = 0;
+
+                        const headerTr = win.document.createElement('tr');
+                        const headerTd = win.document.createElement('td');
+                        headerTd.setAttribute('colspan', totalCols);
+                        headerTd.style.fontWeight = 'bold';
+                        headerTd.textContent = 'PROJECT #: ' + currentStation;
+                        headerTr.appendChild(headerTd);
+                        tbody.appendChild(headerTr);
+                    }
+
+                    if (grossPos >= 0 && cells[grossPos]) { stationGross += toNumber(cells[grossPos].textContent); }
+                    if (netPos >= 0 && cells[netPos]) { stationNet += toNumber(cells[netPos].textContent); }
+                    tbody.appendChild(tr);
+                });
+
+                appendSubtotalRow(currentStation);
+            }
+
             tempDiv2.innerHTML = `<div class="row mt-5 printable-row_content">
                 <div class="col-md-9 col-lg-9 col-sm-12">&nbsp;</div>
                 <div class="col-md-3 col-lg-3 col-sm-12 text-right">
@@ -281,6 +467,22 @@ const dtNetPayReport = tableNetpay.DataTable({
                 </div>
             </div>`;
             body.appendChild(tempDiv2);
+
+            const stationSummary = document.getElementById('summary-station-wrapper');
+            const payoutSummary = document.getElementById('summary-payout-wrapper');
+            const printSummaryContainer = win.document.createElement('div');
+            printSummaryContainer.className = 'mt-5';
+
+            if (stationSummary && !stationSummary.classList.contains('m--hide')) {
+                printSummaryContainer.innerHTML += stationSummary.innerHTML;
+            }
+            if (payoutSummary && !payoutSummary.classList.contains('m--hide')) {
+                printSummaryContainer.innerHTML += payoutSummary.innerHTML;
+            }
+
+            if (printSummaryContainer.innerHTML.trim() !== '') {
+                body.appendChild(printSummaryContainer);
+            }
         }
     },{
         extend: 'excelHtml5',
@@ -552,6 +754,52 @@ const dtNetPayReport = tableNetpay.DataTable({
         },
         
     ],
+    rowGroup: {
+        dataSrc: function (row) {
+            return row.station ? row.station : 'No assigned Station';
+        },
+        startRender: function (rows, group) {
+            const visibleColumnCount = dtNetPayReport.columns(':visible').count();
+            return $('<tr><td colspan="' + visibleColumnCount + '" class="m--font-boldest">PROJECT #: ' + group + '</td></tr>');
+        },
+        endRender: function (rows, group) {
+            const toNumber = function (value) {
+                if (typeof value === 'string') {
+                    return parseFloat(value.replace(/[^0-9.-]/g, '').trim()) || 0;
+                }
+                return typeof value === 'number' ? value : 0;
+            };
+
+            const stationGrossPay = rows
+                .data()
+                .pluck('gross_pay')
+                .reduce(function (a, b) { return toNumber(a) + toNumber(b); }, 0);
+
+            const stationNetPay = rows
+                .data()
+                .pluck('net_pay')
+                .reduce(function (a, b) { return toNumber(a) + toNumber(b); }, 0);
+
+            const visibleColumnCount = dtNetPayReport.columns(':visible').count();
+            const isGrossVisible = dtNetPayReport.column(19).visible();
+            const isNetVisible = dtNetPayReport.column(20).visible();
+            const totalColumnsToShow = (isGrossVisible ? 1 : 0) + (isNetVisible ? 1 : 0);
+            const labelColspan = Math.max(visibleColumnCount - totalColumnsToShow, 1);
+
+            let tempContainer = `<tr class="bg-secondary">
+                <td colspan="${labelColspan}" class="text-right m--font-boldest">SUB TOTAL - ${group}</td>`;
+
+            if (isGrossVisible) {
+                tempContainer += `<td class="text-right m--font-boldest">${numberFormat(stationGrossPay)}</td>`;
+            }
+            if (isNetVisible) {
+                tempContainer += `<td class="text-right m--font-boldest">${numberFormat(stationNetPay)}</td>`;
+            }
+            tempContainer += `</tr>`;
+
+            return $(tempContainer);
+        }
+    },
     footerCallback: function (row, data, start, end, display) {
         _globalNetPay = 0;
         _globalGrossPay = 0;
@@ -582,7 +830,8 @@ const dtNetPayReport = tableNetpay.DataTable({
 
 function showOrHideColumn(index, el) {
     const column = dtNetPayReport.column(index);
-    column.visible($(el)[0].checked);
+    column.visible($(el)[0].checked, false);
+    dtNetPayReport.columns.adjust().draw(false);
 }
 
 const vmNavigation = new Vue({
