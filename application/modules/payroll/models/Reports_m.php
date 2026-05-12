@@ -2347,13 +2347,22 @@ class Reports_m extends CI_Model{
                     }
                 }
 
+                $payoutSchedules = array(
+                    array("id" => 1, "text" => "Monthly"),
+                    array("id" => 2, "text" => "Semi-Monthly"),
+                    array("id" => 3, "text" => "Weekly")
+                );
+
+                $payoutScheduleText = array_column($payoutSchedules, "text", "id")[(int)$payout_sched] ?? null;
+
                 $tempArrFilter["coverage_date"] = strtoupper("{$xDateFrom} - {$xDateTo}");
                 $tempArrFilter["month"] = strtoupper(date("Y F", strtotime("{$post["filter_year"]}-{$post["filter_month"]}")));
                 $tempArrFilter["company_description"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? strtoupper(trim($tempCompRow['description'])): "";
                 $tempArrFilter["company_address"] = isset($tempCompRow['company_address']) && $tempCompRow['company_address']  ? strtoupper(trim($tempCompRow['company_address'])): "";
                 $tempArrFilter["has_comp_desc"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? true: false;
-                $tempArrFilter['payout_mode'] = $payout_mode;
-                $tempArrFilter['station'] = $station;
+                $tempArrFilter['payout_sched'] = $payoutScheduleText;
+                $tempArrFilter['payout_mode'] = $payout_mode && $payout_mode > 0 ? $this->getPayoutMode($payout_mode) : null;
+                $tempArrFilter['station'] = $station && $station > 0 ? $this->getStationName($station) : null;
                 if((is_array($employeePsIds) && count($employeePsIds) > 0) || (is_array($weeklyPsIds) && count($weeklyPsIds) > 0)){
                     $employeePsIds = array_unique(array_merge($employeePsIds, $weeklyPsIds));
                     if(is_array($employeePsIds) && count($employeePsIds) > 0){
@@ -2565,6 +2574,14 @@ class Reports_m extends CI_Model{
                             $filterDatex = date("Y-m / ", strtotime($payDate));
                             $resultset["response"] = true;
 
+                            $payoutSchedules = array(
+                                array("id" => 1, "text" => "Monthly"),
+                                array("id" => 2, "text" => "Semi-Monthly"),
+                                array("id" => 3, "text" => "Weekly")
+                            );
+
+                            $payoutScheduleText = array_column($payoutSchedules, "text", "id")[(int)$payout_sched] ?? null;
+
                             $resultset["filter"] = array(
                                 "pay_date"=>"{$filterPayDate}",
                                 "pay_coverage"=>"{$filterStartDate} - {$filterEndDate}",
@@ -2572,7 +2589,10 @@ class Reports_m extends CI_Model{
                                 "company_description"=> $tempCompRow['description'] ? strtoupper($tempCompRow['description'] ): "GC&C, INC",
                                 "company_address"=> $tempCompRow['company_address']  ? strtoupper($tempCompRow['company_address'] ): "",
                                 "has_comp_desc"=>$tempCompRow['description'] ? true: false,
-                                "payroll_group"=>$payrollGroup
+                                "payroll_group"=>$payrollGroup,
+                                "payout_sched" => $payoutScheduleText,
+                                "payout_mode" => $payout_mode && $payout_mode > 0 ? $this->getPayoutMode($payout_mode) : null,
+                                "station" => $station && $station > 0 ? $this->getStationName($station) : null
                             );
                                 
                             $resultset["data"] = $tempData["data"];
@@ -4333,11 +4353,20 @@ class Reports_m extends CI_Model{
                     if($isDateRange === false && $isFilterMonth){ $tempArrFilter["month"] = strtoupper(date("Y F", strtotime("{$post["filter_year"]}-{$post["filter_month"]}"))); }
                     $tempArrFilter["company_description"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? strtoupper(trim($tempCompRow['description'])): "";
                     $tempArrFilter["company_address"] = isset($tempCompRow['company_address']) && $tempCompRow['company_address']  ? strtoupper(trim($tempCompRow['company_address'])): "";
+
+                    $payoutSchedules = array(
+                                array("id" => 1, "text" => "Monthly"),
+                                array("id" => 2, "text" => "Semi-Monthly"),
+                                array("id" => 3, "text" => "Weekly")
+                            );
+
+                    $payoutScheduleText = array_column($payoutSchedules, "text", "id")[(int)$payout_sched] ?? null;
+
                     $tempArrFilter["has_comp_desc"] = isset($tempCompRow['description']) && $tempCompRow['description'] ? true: false;
                     $tempArrFilter["payroll_group"] = $filterPayrollGroup;
-                    $tempArrFilter['payout_mode'] = $payout_mode;
-                    $tempArrFilter['station'] = $station;
-                    $tempArrFilter['payout_sched'] = $payout_sched;
+                    $tempArrFilter['payout_mode'] = $payout_mode && $payout_mode > 0 ? $this->getPayoutMode($payout_mode) : null;
+                    $tempArrFilter['station'] = $station && $station > 0 ? $this->getStationName($station) : null;
+                    $tempArrFilter['payout_sched'] = $payoutScheduleText;
 
                     if(is_array($ids) && $tempCount > 0){
                         $ids = array_map("intval", $ids);
@@ -7266,12 +7295,18 @@ class Reports_m extends CI_Model{
         $module = $post['module'];
         $payroll_group = isset($post['payroll_group']) && $post['payroll_group'] ? serialize($post['payroll_group']) : serialize(array());
         $amount = $post['amount'];
+        $payout_sched = isset($post['payout_sched']) && $post['payout_sched'] ? $post['payout_sched'] : 0;
+        $payout_mode = isset($post['payout_mode']) && $post['payout_mode'] ? $post['payout_mode'] : 0;
+        $station = isset($post['station']) && $post['station'] ? $post['station'] : 0;
 
         $this->db->where('module', $module);
         $this->db->where('DATE(date_from)', $tempStartDate);
         $this->db->where('DATE(date_to)', $tempEndDate);
         $this->db->where('company_id', $company_id);
         $this->db->where('payroll_group', $payroll_group);
+        $this->db->where('payout_sched', $payout_sched);
+        $this->db->where('payout_mode', $payout_mode);
+        $this->db->where('station', $station);
         $this->db->order_by('id', 'desc');
         $this->db->limit(1);
         $query = $this->db->get('payroll.print_report_counter');
@@ -7299,6 +7334,9 @@ class Reports_m extends CI_Model{
             'date_to' => $tempEndDate,
             'company_id' => $company_id,
             'payroll_group' => $payroll_group,
+            'payout_mode' => $payout_mode,
+            'payout_sched' => $payout_sched,
+            'station' => $station,
             'counter' => $count,
             'printed_amount' => $amount,
             'printed_by' => $this->user_data['emp_id'],
@@ -7385,5 +7423,35 @@ class Reports_m extends CI_Model{
         }
 
         return $result;
+    }
+
+    public function getPayoutMode($id) {
+        $desc = null;
+        $this->db->select("description");
+        $this->db->where('id', $id);
+        $this->db->from($this->tblMode);
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $row = $query->row();
+            $desc = $row->description;
+        }
+
+        return strtoupper($desc);
+    }
+
+    public function getStationName($id) {
+        $site = null;
+        $this->db->select("site_name");
+        $this->db->where('id', $id);
+        $this->db->from($this->tblAppLocationSites);
+        $query = $this->db->get();
+
+        if ($query->num_rows() > 0) {
+            $row = $query->row();
+            $site = $row->site_name;
+        }
+
+        return strtoupper($site);
     }
 }

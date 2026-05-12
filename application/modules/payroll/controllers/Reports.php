@@ -802,7 +802,7 @@ class Reports extends MY_Controller {
                             $tempHtml .= "<thead>";
                                 $tempHtml .= "<tr>";
                                     $tempHtml .= "<th>PROJECT #</th>";
-                                    $tempHtml .= "<th class='text-center'># OF EMPLOYEE(S)</th>";
+                                    $tempHtml .= "<th width='10%' class='text-center'># OF EMPLOYEE(S)</th>";
                                     $tempHtml .= "<th class='text-center'>MPL</th>";
                                     $tempHtml .= "<th class='text-center'>SAL</th>";
                                 $tempHtml .= "</tr>";

@@ -471,7 +471,7 @@ function printdiv(printdivname) {
                 return true;
             };
 
-            vmPrintAreaMonthly.print_counter.count = (data && typeof data.count !== "undefined") ? data.count : 0;
+            vmPrintArea.print_counter.count = (data && typeof data.count !== "undefined") ? data.count : 0;
             vmPrintArea.print_counter.last_printed = (data && isDisplayValue(data.last_printed_by)) ? data.last_printed_by : null;
             vmPrintArea.print_counter.last_printed_at = (data && isDisplayValue(data.last_printed_at)) ? moment(data.last_printed_at).format('lll').toUpperCase() : null;
 

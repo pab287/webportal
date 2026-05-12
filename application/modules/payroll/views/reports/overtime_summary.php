@@ -95,7 +95,10 @@
                                         <div class="col-md-8 printable-top--filter">
                                             <div>FILTERED BY: {{ filters.filter_by ? filters.filter_by: '---' }}</div>
                                             <div>COVERAGE DATE: {{ filters.coverage_date ? filters.coverage_date: '---' }}</div>
-                                            <div>PAYROLL GROUP: {{ filters.payroll_group ? filters.payroll_group: '---' }}</div>
+                                            <div v-if="filters.payroll_group">PAYROLL GROUP: {{ filters.payroll_group ? filters.payroll_group: '---' }}</div>
+                                            <div v-if="filters.payout_sched">PAYOUT SCHED: {{ filters.payout_sched ? filters.payout_sched: '---' }}</div>
+                                            <div v-if="filters.payout_mode">PAYOUT MODE: {{ filters.payout_mode ? filters.payout_mode: '---' }}</div>
+                                            <div v-if="filters.station">STATION: {{ filters.station ? filters.station: '---' }}</div>
                                         </div>
                                         <div id="print-counter" class="col-md-3">
                                             <div>PRINT #: <b>{{ print_counter.count }}</b></div>

@@ -50,8 +50,32 @@
                         <p class="mb-0 m--font-bolder"><span>{{filter.coverage_date}}</span></p>
                     </div>
                 </div>
+                <div class="row" v-if="filter.payout_sched">
+                    <div class="col-4 col-md-4 col-lg-4 col-sm-12 printable-width-2">
+                        <p class="mb-0 m--font-bolder">PAYOUT SCHED:</p>
+                    </div>
+                    <div class="col-8 col-md-8 col-lg-8 col-sm-12 printable-width-10">
+                        <p class="mb-0 m--font-bolder"><span>{{filter.payout_sched}}</span></p>
+                    </div>
+                </div>
+                <div class="row" v-if="filter.payout_mode">
+                    <div class="col-4 col-md-4 col-lg-4 col-sm-12 printable-width-2">
+                        <p class="mb-0 m--font-bolder">PAYOUT MODE:</p>
+                    </div>
+                    <div class="col-8 col-md-8 col-lg-8 col-sm-12 printable-width-10">
+                        <p class="mb-0 m--font-bolder"><span>{{filter.payout_mode}}</span></p>
+                    </div>
+                </div>
+                <div class="row" v-if="filter.station">
+                    <div class="col-4 col-md-4 col-lg-4 col-sm-12 printable-width-2">
+                        <p class="mb-0 m--font-bolder">STATION:</p>
+                    </div>
+                    <div class="col-8 col-md-8 col-lg-8 col-sm-12 printable-width-10">
+                        <p class="mb-0 m--font-bolder"><span>{{filter.station}}</span></p>
+                    </div>
+                </div>
             </div>
-            <div id="print-counter" class="col-12 col-md-5 col-sm-5 printable-width-5">
+            <div id="print-counter" v-if="print_counter.count > 0" class="col-12 col-md-5 col-sm-5 printable-width-5">
                 <div class="row">
                     <div class="col-5 col-md-5 col-lg-5 col-sm-12">
                         <p class="mb-0 m--font-bolder">PRINT #: </p>
