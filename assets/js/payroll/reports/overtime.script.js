@@ -8,6 +8,8 @@ let _filter = [];
 let _years = [];
 let _companies = [];
 let psEmployeeGroup = [];
+let _payout_mode = [];
+let _payoutSchedule = [];
 
 let _tempIds = [];
 const months = [
@@ -31,9 +33,10 @@ let _globalFooterHtml = null;
 let _totalTaxable = 0;
 let _tempData = {
     show_by_date: true, show_picker: false,
-    year_picker: false, month_picker: false, company_ids: 0,
+    year_picker: false, month_picker: false, company_ids: 0, payout_mode: 0, station: 0, payout_sched: 0
 };
 let dtOTSummary = null;
+let dtSummary = null;
 
 if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).length > 0){
     if(typeof _tempContentData.years !== "undefined" && _tempContentData.years.length > 0){
@@ -41,6 +44,12 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     }
     if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){
         _companies = _tempContentData.company;
+    }
+    if(typeof _tempContentData.payout_mode !== "undefined" && _tempContentData.payout_mode.length > 0){
+        _payout_mode = _tempContentData.payout_mode;
+    }
+    if(typeof _tempContentData.payout_schedule !== "undefined" && _tempContentData.payout_schedule.length > 0){
+        _payoutSchedule = _tempContentData.payout_schedule;
     }
 }
 
@@ -133,6 +142,7 @@ const vmGeneratejournal = new Vue({
                             data: function (params) {
                                 /*** params.company_ids = _this.company_ids; ***/
                                 params.q = params.term;
+                                params.payout_mode = $("form#frm-journal-report select#payout_mode").val();
                                 return params;
                             },
                             processResults: function (data) {
@@ -165,6 +175,67 @@ const vmGeneratejournal = new Vue({
                             .val([])
                             .trigger("change");
                     });
+                
+                $(currentElement).find("select#payout_mode")
+                    .select2({
+                        allowClear: true,
+                        width: '100%',
+                        data: _payout_mode,
+                        placeholder: "SELECT AN OPTION",
+                        dropdownParent: tempModal,
+                    }).on("select2:select", function (e) {
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
+                        _this.payout_mode = selectedValues;
+                        $(currentElement)
+                            .find("select#employee")
+                            .val([])
+                            .trigger("change");
+                    }).on("select2:unselect", function (e) {
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
+                        _this.payout_mode = selectedValues;
+                        $(currentElement)
+                            .find("select#employee")
+                            .val([])
+                            .trigger("change");
+                    });
+
+                $(currentElement).find("select#station")
+                    .select2({
+                        allowClear: true,
+                        width: '100%',
+                        ajax: {
+                            url: baseUrl('payroll/reports/select2_station'),
+                            dataType: 'json',
+                            global: false,
+                            delay: 250,
+                            data: function (params) {
+                                params.q = params.term;
+                                return params;
+                            },
+                            processResults: function (data) {
+                                return data;
+                            }
+                        }, language: { errorLoading: function () { return "Searching..." } },
+                        placeholder: "SELECT AN OPTION",
+                        dropdownParent: tempModal,
+                    }).on("select2:select", function (e) {
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
+                        _this.station = selectedValues;
+                    }).on("select2:unselect", function (e) {
+                        const _thisSelect2 = this;
+                        const selectedValues = $(_thisSelect2).select2("val");
+                        _this.station = selectedValues;
+                    });
+
+                $(currentElement).find("select#payout_sched").select2({
+                    width: "100%",
+                    data: _payoutSchedule,
+                    placeholder: "SELECT AN OPTION",
+                    allowClear: true,
+                });
             }, 200);
         }, resetFields: function () {
             const _this = this;
@@ -223,6 +294,7 @@ $("#payroll_group").select2({
         global: false,
         data: function (params) {
             params.company_id = $("form#frm-journal-report select#company").val();
+            params.payout_mode = $("form#frm-journal-report select#payout_mode").val();
             return params;
         },
         processResults: function (data) {
@@ -332,6 +404,7 @@ $(document).ready(function(){
         searching: false,
         ordering: false,
         footer: true,
+        autoWidth: false,
         ajax: {
             url: baseUrl('payroll/reports/get_overtime_summary'),
             type: 'POST',
@@ -341,7 +414,24 @@ $(document).ready(function(){
                 d.ids = _tempIds;
                 d.clear_table = _clearTable;
                 d.filters = _tempFilter;
-            }, 
+            },
+            dataSrc: function (json) {
+                const rows = Array.isArray(json.data) ? json.data : [];
+                rows.sort(function (a, b) {
+                    const stationA = String(a.station || '').toLowerCase();
+                    const stationB = String(b.station || '').toLowerCase();
+                    if (stationA !== stationB) { return stationA.localeCompare(stationB); }
+
+                    const employeeA = String(a.employee_name || '').toLowerCase();
+                    const employeeB = String(b.employee_name || '').toLowerCase();
+                    if (employeeA !== employeeB) { return employeeA.localeCompare(employeeB); }
+
+                    const dateA = String(a.overtime_in || '');
+                    const dateB = String(b.overtime_in || '');
+                    return dateA.localeCompare(dateB);
+                });
+                return rows;
+            },
         }, buttons: [{
             extend: 'excel',
             footer: true,
@@ -370,6 +460,7 @@ $(document).ready(function(){
             }
         }], columns: [
             { visible: false, data: 'employee_name' },
+            { visible: false, data: 'station' },
             { data: 'overtime_in', width: '10%' },
             { data: 'day', width: '8%', className: "text-center" },
             { data: 'daily_rate', width: '6%', className: "text-right",
@@ -383,11 +474,11 @@ $(document).ready(function(){
                         return '₱ '+ allw.toFixed(2);
                     } else { return '-'; }
                 }
-            }, { data: 'ot_hrs', width: '5%', className: "text-right",
+            }, { data: 'ot_hrs', width: '5%', className: "text-center",
                 render: function (data, type, row) {
                     if (data && parseFloat(data) > 0) {
                         const ot_hrs = parseFloat(data);
-                        return ot_hrs.toFixed(2);
+                        return Number.isInteger(ot_hrs) ? String(ot_hrs) : ot_hrs.toFixed(2);
                     }
                     return data;
                 }
@@ -449,10 +540,23 @@ $(document).ready(function(){
                 }
             }
         ], rowGroup: {
-            startRender: function ( _rows, group ) {
+            startRender: function ( _rows, group, level ) {
+                if (level === 0) {
+                    const station = group || 'No assigned Project';
+                    return $('<tr class="text-center"><td colspan="13" class="bg-secondary"><span class="m--font-boldest">Project #: ' + station + '</span></td></tr>');
+                }
+
+                if (!group || String(group).toUpperCase() === 'NO GROUP') {
+                    return null;
+                }
                 return $('<tr><td colspan="13" class="bg-secondary"><span class="m--font-boldest">' + group + '</span></td></tr>');
             },
-            endRender: function ( rows, _group ) {
+            endRender: function ( rows, _group, level ) {
+                // Render subtotals for both station (level 0) and employee (level 1).
+                if (level !== 0 && level !== 1) {
+                    return null;
+                }
+
                 let OTadj = rows
                     .data()
                     .pluck('ot_adj')
@@ -472,7 +576,8 @@ $(document).ready(function(){
                 const uiAdjustmentAmount = parseFloat(OTadj) > 0 ? `<span class="m--font-boldest">₱ ${numberFormat(OTadj)}</span>`: `-`;
                 const uiTotal = `<strong>₱ ${numberFormat(total)}</strong>`;
 
-                const tempContainer = `<tr class="bg-secondary">
+                const rowClass = level === 0 ? 'bg-secondary' : '';
+                const tempContainer = `<tr class="${rowClass}">
                     <td colspan="11" class="text-right">&nbsp;</td>
                     <td class="text-right">${uiAdjustmentAmount}</td>
                     <td class="text-right pr-3">${uiTotal}</td>
@@ -480,7 +585,8 @@ $(document).ready(function(){
 
                 return $(tempContainer);
             },
-            dataSrc: [ 'employee_name' ],
+            dataSrc: [ 'station', 'employee_name' ],
+            emptyDataGroup: '',
             
         }, drawCallback: function () {
             const api = this.api();
@@ -520,13 +626,13 @@ $(document).ready(function(){
                 return typeof i === 'number' ? i : 0;
             };
 
-            const otPayTotalIndex = 6;
-            const otPay20TotalIndex = 7;
-            const otPay30TotalIndex = 8;
-            const nDiffTotalIndex = 10;
-            const otAllowanceIndex = 11;
-            const adjustmentIndex = 12;
-            const grandTotalIndex = 13;
+            const otPayTotalIndex = 7;
+            const otPay20TotalIndex = 8;
+            const otPay30TotalIndex = 9;
+            const nDiffTotalIndex = 11;
+            const otAllowanceIndex = 12;
+            const adjustmentIndex = 13;
+            const grandTotalIndex = 14;
 
             let otPayTotalAmount = api.column(otPayTotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
             let otPay20TotalAmount = api.column(otPay20TotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
@@ -536,7 +642,7 @@ $(document).ready(function(){
             let totalAmount = api.column(grandTotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
 
             const grandTotalAmount = parseFloat(totalAmount) + parseFloat(totalAdjustmentAmount);
-            const footerLabelTotal = $(api.column(5).footer());
+            const footerLabelTotal = $(api.column(6).footer());
             footerLabelTotal.removeClass("text-center");
             footerLabelTotal.html(`<span class="m--font-boldest mr-3">GRAND TOTAL</span>`);
 
@@ -600,10 +706,32 @@ $(document).ready(function(){
                     vmActionSignatories.show_signatories = true;
                     toastr.success(json.toastr_msg, "Filtered Overtime Summary Report");
 
+                    const rawSummary = Array.isArray(json.summary)
+                        ? json.summary
+                        : (json.summary && typeof json.summary === "object" ? Object.values(json.summary) : []);
+                    const summaryRows = rawSummary.map(function (row) {
+                        return {
+                            station: row && row.station ? row.station : 'NO ASSIGNED PROJECT',
+                            employee_count: row && row.employee_count ? parseInt(row.employee_count) : 0,
+                            total_amount: row && row.total_amount ? parseFloat(row.total_amount) : 0
+                        };
+                    });
+
+                    vmPortletSummary.count = summaryRows.length;
+                    Vue.nextTick(function () {
+                        dtSummary.clear().rows.add(summaryRows).draw();
+                        dtSummary.columns.adjust().draw(false);
+                    });
+
                     setTimeout( function () { modalGenerateReport.modal("hide"); }, 750);
                 } else {
                     _clearTable = true;
                     toastr.error(json.toastr_msg, "Filtered Overtime Summary Report");
+
+                    Vue.nextTick(function () {
+                        dtSummary.clear().draw();
+                        dtSummary.columns.adjust().draw(false);
+                    });
                 }
     
                 dtOTSummary.ajax.reload();
@@ -633,6 +761,66 @@ $(document).ready(function(){
             }
         });
     }
+
+    dtSummary = $("#tbl-summary").DataTable({
+        dom: "rt",
+        serverSide: false,
+        processing: false,
+        destroy: true,
+        paging: false,
+        searching: false,
+        ordering: false,
+        footer: true,
+        data: [],
+        columns: [
+            {
+                data: 'station',
+                width: '*',
+                defaultContent: 'NO ASSIGNED PROJECT',
+                render: function (data) {
+                    const val = (data === null || typeof data === "undefined" || String(data).trim() === "") ? "NO ASSIGNED PROJECT" : String(data);
+                    return val.toUpperCase();
+                }
+            },
+            {
+                data: 'employee_count',
+                className: "text-center",
+                defaultContent: 0,
+                width: '10%',
+                render: function (data) {
+                    const count = parseInt(data, 10);
+                    return Number.isNaN(count) ? 0 : count;
+                }
+            },
+            {
+                data: 'total_amount',
+                className: "text-right pr-3",
+                defaultContent: 0,
+                width: '15%',
+                render: function (data) {
+                    const amount = parseFloat(data);
+                    const safeAmount = Number.isNaN(amount) ? 0 : amount;
+                    return '₱ ' + numberFormat(safeAmount);
+                }
+            },
+        ], footerCallback: function() {
+            const api = this.api();
+            const intVal = function (i) {
+                if (typeof i === 'string') {
+                    return parseFloat(i.replace(/[^0-9.-]/g, '').trim()) || 0;
+                }
+                return typeof i === 'number' ? i : 0;
+            };
+
+            const grandTotalIndex = 2;
+            let totalAmount = api.column(grandTotalIndex).data().reduce(function (a, b) { return parseFloat(intVal(a).toFixed(2)) + parseFloat(intVal(b).toFixed(2)); }, 0);
+
+            const footerLabelTotal = $(api.column(1).footer());
+            footerLabelTotal.removeClass("text-center");
+            footerLabelTotal.html(`<span class="m--font-boldest mr-3">GRAND TOTAL</span>`);
+            $(api.column(grandTotalIndex).footer()).html("<span class='m--font-boldest'>" + '₱ '+numberFormat(totalAmount) + "</span>");
+        }
+    })
 });
 
 const exportExcel = function(){
@@ -814,7 +1002,7 @@ const vmResetSignatories = new Vue({
 const initSelect2Employee = function (tempModal, portlet) {
     if (typeof tempModal !== "undefined" && tempModal.length == 1) {
         let tempSelector = tempModal.find("select.select2--value");
-        if (typeof portlet !== "undefined") { tempSelector = portlet.find("select.select2--value"); }
+        if (typeof portlet !== "undefined") { tempSelector = portlet.find("select.select2 --value"); }
         if (typeof tempSelector !== "undefined") {
             tempSelector.select2({
                 tags: true,
@@ -903,3 +1091,8 @@ function printSummary() {
         }
     });
 }
+
+const vmPortletSummary = new Vue({
+    el: "#portlet--summary",
+    data: { row: {}, count: 0 }
+})

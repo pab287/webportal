@@ -95,9 +95,12 @@
                                         <div class="col-md-8 printable-top--filter">
                                             <div>FILTERED BY: {{ filters.filter_by ? filters.filter_by: '---' }}</div>
                                             <div>COVERAGE DATE: {{ filters.coverage_date ? filters.coverage_date: '---' }}</div>
-                                            <div>PAYROLL GROUP: {{ filters.payroll_group ? filters.payroll_group: '---' }}</div>
+                                            <div v-if="filters.payroll_group">PAYROLL GROUP: {{ filters.payroll_group ? filters.payroll_group: '---' }}</div>
+                                            <div v-if="filters.payout_sched">PAYOUT SCHED: {{ filters.payout_sched ? filters.payout_sched: '---' }}</div>
+                                            <div v-if="filters.payout_mode">PAYOUT MODE: {{ filters.payout_mode ? filters.payout_mode: '---' }}</div>
+                                            <div v-if="filters.station">PROJECT #: {{ filters.station ? filters.station: '---' }}</div>
                                         </div>
-                                        <div id="print-counter" class="col-md-3">
+                                        <div id="print-counter" class="col-md-4">
                                             <div>PRINT #: <b>{{ print_counter.count }}</b></div>
                                             <div v-if="print_counter.last_printed">LAST PRINTED BY: <b>{{ print_counter.last_printed }}</b></div>
                                             <div v-if="print_counter.last_printed_at">LAST PRINTED AT: <b>{{ print_counter.last_printed_at }}</b></div>
@@ -113,6 +116,7 @@
                             <thead>
                                 <tr>
                                     <th class="m--hide">EMPLOYEE NAME</th>
+                                    <th class="m--hide">STATION</th>
                                     <th>DATE</th>
                                     <th>SPECIFIED DAY</th>
                                     <th>DAILY RATE</th>
@@ -130,7 +134,7 @@
                             </thead>
                             <tbody></tbody>
                             <tfoot>
-                                <th class="text-right" colspan="6">&nbsp;</th>
+                                <th class="text-right" colspan="7">&nbsp;</th>
                                 <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>
                                 <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>
                                 <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>
@@ -138,6 +142,30 @@
                                 <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>
                                 <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>
                                 <th class="text-right"><span class='m--font-boldest'>-</span></th>
+                                <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="portlet--summary">
+                    <div v-show="count > 0">
+                        <div class="row mt-5">
+                            <div class="col-md-12">
+                                <h5>PROJECT # SUMMARY</h5>
+                            </div>
+                        </div>
+                        <table class="table table-bordered" style="font-family: roboto; width: 100%;" id="tbl-summary">
+                            <thead>
+                                <tr>
+                                    <th>Project #</th>
+                                    <th># of Employee(s)</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot>
+                                <th class="text-right" colspan="2"></th>
                                 <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>
                             </tfoot>
                         </table>
@@ -259,16 +287,47 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row mt-3">
-                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
+                    <div class="row">
+                        <div class="col-xl-7 col-lg-7 col-md-7 col-sm-12">
                             <div class="form-group">
                                 <label for="company" class="m--font-bolder">Company *</label>
-                                <select id="company" class="form-control" name="company" data-validation="required"><option></option></select>
+                                <select id="company" class="form-control" name="company" data-validation="required">
+                                    <option></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-xl-5 col-lg-5 col-md-5 col-sm-12">
+                            <div class="form-group">
+                                <label for="payout_sched" class="m--font-bolder">
+                                    Payout Classification
+                                    <small class="m-form__help p-0">( Optional )</small>
+                                </label>
+                                <select id="payout_sched" class="form-control" name="payout_sched"><option></option></select>
                             </div>
                         </div>
                     </div>
-                    <div class="row mt-3">
-                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mt-2">
+                    <div class="row">
+                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                            <div class="form-group">
+                                <label for="payout_mode" class="m--font-bolder">
+                                    Payout Mode
+                                    <small class="m-form__help p-0">( Optional )</small>
+                                </label>
+                                <select id="payout_mode" class="form-control" name="payout_mode"><option></option></select>
+                            </div>
+                        </div>
+                        <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                            <div class="form-group">
+                                <label for="station" class="m--font-bolder">
+                                    Project #
+                                    <small class="m-form__help p-0">( Optional )</small>
+                                </label>
+                                <select id="station" class="form-control" name="station"><option></option></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12">
                             <div class="form-group m-form__group">
                                 <label for="payroll_group" class="mb-1 m--font-bolder">
                                     PAYROLL GROUP

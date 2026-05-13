@@ -8,6 +8,9 @@ let _filter = [];
 let _tempIds = [];
 let _years = [];
 let _companies = [];
+let _payout_mode = [];
+let _payoutSchedule = [];
+let _station = 0;
 let isCollapsedPortlet = true;
 
 const months = [
@@ -32,6 +35,14 @@ if(typeof _tempContentData !== "undefined" && Object.keys(_tempContentData).leng
     if(typeof _tempContentData.company !== "undefined" && _tempContentData.company.length > 0){
         _companies = _tempContentData.company;
     }
+    
+    if(typeof _tempContentData.payout_mode !== "undefined" && _tempContentData.payout_mode.length > 0){
+        _payout_mode = _tempContentData.payout_mode;
+    }
+
+    if(typeof _tempContentData.payout_schedule !== "undefined" && _tempContentData.payout_schedule.length > 0){ 
+        _payoutSchedule = _tempContentData.payout_schedule;
+    }
 }
 
 _tblPortletPS.on('afterExpand', function (portlet) {
@@ -54,12 +65,18 @@ $(document).ready(function () {
             $("#filter-by-month-year").addClass('m--hide');
             $("#company").val('').trigger('change');
             $("#payroll_group").empty();
+            $("#payout_mode").val('').trigger('change');
+            $("#station").val('').trigger('change');
+            $("#payout_schedule").val('').trigger('change');
             $("#employees").empty().prop("disabled", false);
         } else {
             $("#filter-by-month-year").removeClass('m--hide');
             $("#paydate-filter").addClass('m--hide');
             $("#company").val('').trigger('change');
             $("#payroll_group").empty();
+            $("#payout_mode").val('').trigger('change');
+            $("#station").val('').trigger('change');
+            $("#payout_schedule").val('').trigger('change');
             $("#employees").empty().prop("disabled", false);
         }
     });
@@ -89,6 +106,11 @@ $("#employees").select2({
         dataType: "json",
         delay: 250,
         global: false,
+        data: function (params) {
+            params.q = params.term;
+            params.payout_mode = $("form#frm-filter-payroll-contribution select#payout_mode").val();
+            return params;
+        },
         processResults: function (data) {
             return data;
         }
@@ -106,6 +128,7 @@ $("#payroll_group").select2({
         global: false,
         data: function (params) {
             params.company_id = $("form#frm-filter-payroll-contribution select#company").val();
+            params.payout_mode = $("form#frm-filter-payroll-contribution select#payout_mode").val();
             return params;
         },
         processResults: function (data) {
@@ -323,6 +346,78 @@ var vmPrintArea = new Vue({
                 default: tempLabel = label.toUpperCase(); break;
             }
             return tempLabel;
+        }, getStationGroups: function () {
+            const rawRows = Array.isArray(this.rows) ? this.rows : Object.values(this.rows || {});
+            const grouped = {};
+            rawRows.forEach(function (item) {
+                const station = (item && item.station && String(item.station).trim()) ? String(item.station).trim().toUpperCase() : 'NO ASSIGNED PROJECT';
+                if (!grouped[station]) { grouped[station] = []; }
+                grouped[station].push(item);
+            });
+
+            return Object.keys(grouped)
+                .sort()
+                .map(function (station) {
+                    return { station: station, rows: grouped[station] };
+                });
+        }, getDynamicColumnValue: function (item, header) {
+            if (!item) { return 0; }
+            const key = String(header || '').toLowerCase();
+            const value = item[key];
+            return value ? parseFloat(value) : 0;
+        }, getStationSubtotal: function (rows, key) {
+            const _this = this;
+            const tempRows = Array.isArray(rows) ? rows : [];
+            return tempRows.reduce(function (acc, row) {
+                if (!row) { return acc; }
+                if (['sss', 'sss_prov', 'ph', 'hdmf', 'tax'].indexOf(key) >= 0) {
+                    const val = row[key] ? parseFloat(row[key]) : 0;
+                    return acc + (Number.isNaN(val) ? 0 : val);
+                }
+                return acc + _this.getDynamicColumnValue(row, key);
+            }, 0);
+        }, getStationSummaryColumns: function () {
+            const dynamicCols = Array.isArray(this.row_columns) ? this.row_columns.map(function (col) {
+                return String(col || '').toLowerCase();
+            }) : [];
+            return ['sss', 'sss_prov', 'ph', 'hdmf', 'tax'].concat(dynamicCols);
+        }, getStationSummary: function () {
+            const _this = this;
+            const columns = _this.getStationSummaryColumns();
+            const groups = this.getStationGroups();
+            return groups.map(function (group) {
+                const uniq = {};
+                const totals = {};
+                columns.forEach(function (col) { totals[col] = 0; });
+                (group.rows || []).forEach(function (row) {
+                    const empId = row && row.emp_id ? parseInt(row.emp_id, 10) : 0;
+                    if (empId > 0) { uniq[empId] = true; }
+                });
+
+                columns.forEach(function (col) {
+                    totals[col] = _this.getStationSubtotal(group.rows, col);
+                });
+
+                return {
+                    station: group.station,
+                    employee_count: Object.keys(uniq).length,
+                    totals: totals
+                };
+            });
+        }, getStationSummaryGrandTotal: function () {
+            const columns = this.getStationSummaryColumns();
+            const summaries = this.getStationSummary();
+            return summaries.reduce(function (acc, row) {
+                acc.employee_count += row.employee_count || 0;
+                columns.forEach(function (col) {
+                    acc.totals[col] += row.totals && row.totals[col] ? row.totals[col] : 0;
+                });
+                return acc;
+            }, (function () {
+                const initTotals = {};
+                columns.forEach(function (col) { initTotals[col] = 0; });
+                return { employee_count: 0, totals: initTotals };
+            })());
         }
     }
 });
@@ -391,7 +486,7 @@ function printdiv(printdivname) {
                 return true;
             };
 
-            vmPrintAreaMonthly.print_counter.count = (data && typeof data.count !== "undefined") ? data.count : 0;
+            vmPrintArea.print_counter.count = (data && typeof data.count !== "undefined") ? data.count : 0;
             vmPrintArea.print_counter.last_printed = (data && isDisplayValue(data.last_printed_by)) ? data.last_printed_by : null;
             vmPrintArea.print_counter.last_printed_at = (data && isDisplayValue(data.last_printed_at)) ? moment(data.last_printed_at).format('lll').toUpperCase() : null;
 
@@ -899,6 +994,7 @@ var getScriptRendering = function (formUrl, formData, currentForm) {
             } else {
                 _clearTable = true;
                 toastr.error(response.toastr_msg, "Filtered Taxable Income");
+                $("#append--table_content").empty().html("<h6 class='text-center mt-3 m--font-danger text-uppercase'>No Loan(s) Contribution/Deduction found!</h6>");
             }
 
             $(currentForm)
@@ -914,7 +1010,35 @@ var getScriptRendering = function (formUrl, formData, currentForm) {
     });
 }
 
+$("#payout_mode").select2({
+    allowClear: true,
+    width: '100%',
+    data: _payout_mode,
+    placeholder: "SELECT AN OPTION",
+});
 
+$("#station").select2({
+    allowClear: true,
+    width: '100%',
+    ajax: {
+        url: baseUrl('payroll/reports/select2_station'),
+        dataType: 'json',
+        global: false,
+        delay: 250,
+        data: function (params) {
+            params.q = params.term;
+            return params;
+        },
+        processResults: function (data) {
+            return data;
+        }
+    }, language: { errorLoading: function () { return "Searching..." } },
+    placeholder: "SELECT AN OPTION",
+});
 
-
-
+$("#payout_schedule").select2({
+    width: "100%",
+    data: _payoutSchedule,
+    placeholder: "SELECT AN OPTION",
+    allowClear: true,
+});

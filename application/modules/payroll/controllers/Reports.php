@@ -74,11 +74,15 @@ class Reports extends MY_Controller {
         $tempData = array(); 
         $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
         $tempData["company"] = $this->payroll->select2CompanyData();
+        $tempData['payout_mode'] = $this->payroll->getPaymentModeSelect2Data();
+        $tempData["payout_schedule"] = $this->payroll->select2PayoutScheduleData();
+
+        $version = filemtime(FCPATH.'assets/js/payroll/reports/contribution_deduction.script.js');
 
         $this->core_layout->setPageTitle("Payroll - Reports");
         $this->core_layout->setPrivilegeName("payroll_contribution_deduction");
         $this->core_layout->addJs("js/buttons.print.min.js", true);
-        $this->core_layout->addJs("js/payroll/reports/contribution_deduction.script.js", true, $tempData);
+        $this->core_layout->addJs("js/payroll/reports/contribution_deduction.script.js", true, $tempData, "?v={$version}");
 
         $this->load->view("core/templates/header");
         $this->load->view("payroll/reports/contribution_deduction");
@@ -152,6 +156,8 @@ class Reports extends MY_Controller {
         $tempData = array();
         $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
         $tempData["company"] = $this->payroll->select2CompanyData();
+        $tempData['payout_mode'] = $this->payroll->getPaymentModeSelect2Data();
+        $tempData["payout_schedule"] = $this->payroll->select2PayoutScheduleData();
 
         $version = filemtime(FCPATH.'assets/js/payroll/reports/overtime.script.js');
 
@@ -691,6 +697,200 @@ class Reports extends MY_Controller {
                     }
 
                     $arrNoGrandTotal = array("biometricno", "company", "tax_status", "tin_no", "phealth_no", "pagibig_no", "sss_no", "employee_status");
+                    $renderColumns = array();
+                    foreach ($tempColumns as $value) {
+                        $tempKey = strtolower($value);
+                        if(!in_array($tempKey, $arrNoGrandTotal) && in_array($tempKey, $tempCodes)){
+                            $renderColumns[] = $tempKey;
+                        }
+                    }
+
+                    $groupedByStation = array();
+                    foreach ($data as $value) {
+                        $row = (object) $value;
+                        $station = isset($row->station) && trim($row->station) ? strtoupper(trim($row->station)) : "NO ASSIGNED PROJECT";
+                        if(!isset($groupedByStation[$station])){ $groupedByStation[$station] = array(); }
+                        $groupedByStation[$station][] = $row;
+                    }
+                    ksort($groupedByStation);
+
+                    $arrGrandTotal = array();
+                    $tempHtml = "<table border='1' cellpadding='5' cellspacing='0' style='font-family: roboto; font-size: 10px; width: 100% !important;' id='monthly_contrib_deduct'>";
+                    if($data){
+                        $tempHtml .="<thead>";
+                        $tempHtml .= "<tr>";
+                        $tempHtml .= "<th>EMPLOYEE #</th>";
+                        $tempHtml .= "<th>EMPLOYEE NAME</th>";
+
+                        foreach ($renderColumns as $tempKey) {
+                            $_tempHeader = strtoupper($tempKey);
+                            if (strtolower($tempKey) === 'cal.'){ $_tempHeader = 'SSS CAL'; }
+                            elseif (strtolower($tempKey) == 'cal'){ $_tempHeader = 'HDMF CAL'; }
+                            $tempHtml .= "<th class='text-center'>{$_tempHeader}</th>";
+                        }
+
+                        $tempHtml .= "</tr>";
+                        $tempHtml .="<thead>";
+                        $tempHtml .="<tbody>";
+
+                        $maxColumnCount = 2 + count($renderColumns);
+                        foreach ($groupedByStation as $station => $rows) {
+                            $tempHtml .= "<tr>";
+                            $tempHtml .= "<td class='m--font-boldest'>PROJECT #: {$station}</td>";
+                            for ($cx = 1; $cx < $maxColumnCount; $cx++) {
+                                $tempHtml .= "<td></td>";
+                            }
+                            $tempHtml .= "</tr>";
+                            $arrStationTotal = array();
+
+                            foreach ($rows as $tempValuex) {
+                                $tempHtml .= "<tr>";
+                                $tempHtml .= "<td>{$tempValuex->idno}</td>";
+                                $tempHtml .= "<td>{$tempValuex->employee_name}</td>";
+
+                                foreach ($renderColumns as $tempKey) {
+                                    $tempValue = isset($tempValuex->$tempKey) && $tempValuex->$tempKey ? $tempValuex->$tempKey: 0;
+                                    $decimalTempValue = $tempValue;
+                                    $tempHtml .= "<td align='right'>{$decimalTempValue}</td>";
+
+                                    if(isset($arrStationTotal[$tempKey]) && $arrStationTotal[$tempKey]){ $arrStationTotal[$tempKey] += $tempValue; }
+                                    else{ $arrStationTotal[$tempKey] = $tempValue; }
+
+                                    if(isset($arrGrandTotal[$tempKey]) && $arrGrandTotal[$tempKey]){ $arrGrandTotal[$tempKey] += $tempValue; }
+                                    else{ $arrGrandTotal[$tempKey] = $tempValue; }
+                                }
+                                $tempHtml .= "</tr>";
+                            }
+
+                            $tempHtml .= "<tr>";
+                            $tempHtml .= "<td></td>";
+                            $tempHtml .= "<td class='text-right m--font-boldest'>SUB TOTAL - {$station}</td>";
+                            foreach ($renderColumns as $tempKey) {
+                                $_stationTotal = isset($arrStationTotal[$tempKey]) ? number_format($arrStationTotal[$tempKey], 2, ".", ",") : "0.00";
+                                $tempHtml .= "<td class='text-right m--font-boldest'>{$_stationTotal}</td>";
+                            }
+                            $tempHtml .= "</tr>";
+                        }
+                        $tempHtml .="</tbody>";
+                    }
+
+                    if($arrGrandTotal){
+                        $arrGrandTotal = (object) $arrGrandTotal;
+                        $tempHtml .="<tfoot><tr><td colspan='2' class='text-right m--font-boldest'>GRAND TOTAL</td>";
+                        foreach ($renderColumns as $tempKey) {
+                            $_decimalValue = (isset($arrGrandTotal->$tempKey) && $arrGrandTotal->$tempKey)? number_format($arrGrandTotal->$tempKey, 2, ".", ","): 0;
+                            $tempHtml .= "<td class='text-right m--font-boldest'>{$_decimalValue}</td>";
+                        }
+                        $tempHtml .="</tr></tfoot>";
+                    }
+
+                    $tempHtml .= "</table>";
+
+                    $summaryMplKey = in_array('mpl', $renderColumns) ? 'mpl' : null;
+                    $summarySalKey = in_array('sal', $renderColumns) ? 'sal' : null;
+                    $summaryGrandEmployee = 0;
+                    $summaryGrandMpl = 0;
+                    $summaryGrandSal = 0;
+
+                    $tempHtml .= "<div class='mt-5'>";
+                        $tempHtml .= "<div class='row mt-5'>";
+                            $tempHtml .= "<div class='col-md-12'>";
+                                $tempHtml .= "<h5>PROJECT # SUMMARY</h5>";
+                            $tempHtml .= "</div>";
+                        $tempHtml .= "</div>";
+                        $tempHtml .= "<table border='1' cellpadding='5' cellspacing='0' style='font-family: roboto; font-size: 10px; width: 100% !important;'>";
+                            $tempHtml .= "<thead>";
+                                $tempHtml .= "<tr>";
+                                    $tempHtml .= "<th>PROJECT #</th>";
+                                    $tempHtml .= "<th width='10%' class='text-center'># OF EMPLOYEE(S)</th>";
+                                    $tempHtml .= "<th class='text-center'>MPL</th>";
+                                    $tempHtml .= "<th class='text-center'>SAL</th>";
+                                $tempHtml .= "</tr>";
+                            $tempHtml .= "</thead>";
+                        $tempHtml .= "<tbody>";
+
+                        foreach ($groupedByStation as $station => $rows) {
+                            $employeeCounter = array();
+                            $stationMpl = 0;
+                            $stationSal = 0;
+                            foreach ($rows as $row) {
+                                $empId = isset($row->emp_id) ? intval($row->emp_id) : 0;
+                                if ($empId > 0) { $employeeCounter[$empId] = true; }
+
+                                if ($summaryMplKey) {
+                                    $stationMpl += isset($row->$summaryMplKey) ? floatval($row->$summaryMplKey) : 0;
+                                }
+                                if ($summarySalKey) {
+                                    $stationSal += isset($row->$summarySalKey) ? floatval($row->$summarySalKey) : 0;
+                                }
+                            }
+
+                            $stationEmployeeCount = count($employeeCounter);
+                            $summaryGrandEmployee += $stationEmployeeCount;
+                            $summaryGrandMpl += $stationMpl;
+                            $summaryGrandSal += $stationSal;
+
+                            $tempHtml .= "<tr>";
+                                $tempHtml .= "<td>{$station}</td>";
+                                $tempHtml .= "<td class='text-center'>{$stationEmployeeCount}</td>";
+                                $tempHtml .= "<td class='text-right'>".number_format($stationMpl, 2, ".", ",")."</td>";
+                                $tempHtml .= "<td class='text-right'>".number_format($stationSal, 2, ".", ",")."</td>";
+                            $tempHtml .= "</tr>";
+                        }
+
+                            $tempHtml .= "</tbody>";
+                            $tempHtml .= "<tfoot>";
+                                $tempHtml .= "<tr>";
+                                    $tempHtml .= "<td class='text-right m--font-boldest' colspan='2'>GRAND TOTAL</td>";
+                                    $tempHtml .= "<td class='text-right m--font-boldest'>".number_format($summaryGrandMpl, 2, ".", ",")."</td>";
+                                    $tempHtml .= "<td class='text-right m--font-boldest'>".number_format($summaryGrandSal, 2, ".", ",")."</td>";
+                                $tempHtml .= "</tr>";
+                            $tempHtml .= "</tfoot>";
+                        $tempHtml .= "</table>";
+                    $tempHtml .= "</div>";
+
+
+                    $resultset["response"] = true;
+                    $resultset["html"] = $tempHtml;
+                    $resultset["count"] = count($data);
+                    $resultset["grand_total"] = $arrGrandTotal;
+                }else{
+                    $resultset["response"] = false;
+                }
+            }else{
+                $resultset["response"] = false;
+            }
+        }else{
+            $resultset["response"] = false;
+        }
+
+        echo json_encode($resultset);
+    }
+
+    function generate_contribution_deduction_listv1(){
+        $post = $this->input->post();
+        if(isset($post) && $post){
+            if(is_array($post["ps_id"]) && count($post["ps_id"]) > 0){
+                $data = $this->reports->generatePayrollSheetContributionDeduction($post["ps_id"]);
+                if($data){
+                    $this->db->select("LOWER(GROUP_CONCAT(DISTINCT(code))) as code");
+                    $qCode = $this->db->get_where("payroll.loans", array("loan_type"=>1));
+                    $tempCodes = $qCode->row_array()["code"] ? explode(",", $qCode->row_array()["code"]): array();
+
+                    $tempColumns = array();
+                    foreach ($data as $value) {
+                        $value = (object) $value;
+                        if(isset($value->row_columns) && $value->row_columns){
+                            foreach ($value->row_columns as $kk => $vv) {
+                                $tempHeader = strtoupper($kk);
+                                if(!in_array($tempHeader, $tempColumns)){
+                                    $tempColumns[] = $tempHeader;
+                                }
+                            }
+                        }
+                    }
+
+                    $arrNoGrandTotal = array("biometricno", "company", "tax_status", "tin_no", "phealth_no", "pagibig_no", "sss_no", "employee_status");
                     $arrGrandTotal = array();
                     $tempHtml = "<table border='1' cellpadding='5' cellspacing='0' style='font-family: roboto; font-size: 10px; width: 100% !important;' id='monthly_contrib_deduct'>";
                     if($data){
@@ -1067,6 +1267,8 @@ class Reports extends MY_Controller {
         $tempData = array(); 
         $tempData["years"] = $this->payroll->getPostedPayrollSheetYearsData();
         $tempData["company"] = $this->payroll->select2CompanyData();
+        $tempData["payout_schedule"] = $this->payroll->select2PayoutScheduleData();
+        $tempData['payout_mode'] = $this->payroll->getPaymentModeSelect2Data();
         $tempData["payout_schedule"] = $this->payroll->select2PayoutScheduleData();
         
         $this->core_layout->setPageTitle("Payroll - Night Differential Summary Report");
