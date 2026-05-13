@@ -235,16 +235,7 @@
                                         </div>
                                         
                                     </div>
-                                    <div class="col-xl-3 col-lg-3 col-md-3 col-sm-12 mt-2">
-                                        <div class="form-group m-form__group">
-                                            <label for="payroll_group" class="mb-1" style="font-weight: 600;">
-                                                PAYOUT MODE
-                                                <span class="m-form__help p-0" style="text-transform: none; font-width: 600;">(Optional)</span>
-                                            </label>
-                                            <select class="form-control" id="payout_mode" multiple></select>
-                                        </div>
-                                    </div>
-                                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12 mt-2">
+                                    <div class="col-xl-9 col-lg-9 col-md-9 col-sm-12 mt-2">
                                         <div class="form-group m-form__group">
                                             <label for="payroll_group" class="mb-1" style="font-weight: 600;">
                                                 PAYROLL GROUP
