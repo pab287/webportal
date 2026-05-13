@@ -5752,6 +5752,7 @@ class Reports_m extends CI_Model{
             $tempRange = "";
             $option = isset($post['option']) && $post['option'] ? $post['option'] : 1; // 1 = all; 2 = earners; 3 = no earners
             $payout_mode = isset($post['payout_mode']) && $post['payout_mode'] ? $post['payout_mode'] : 0;
+            $station = isset($post['project']) && $post['project'] ? $post['project'] : 0;
 
             if(isset($post["group"]) && intval($post["group"]) === 1){
                 $tempPayDate = date("Y-m-d", strtotime($post["pay_date"]));
@@ -5814,8 +5815,8 @@ class Reports_m extends CI_Model{
                     $this->db->where('a.gross_pay <=', 0);
                 }
 
-                if (isset($post['project']) && $post['project']) {
-                    $this->db->where('g.station_id', $post['project']);
+                if ($station && $station > 0) {
+                    $this->db->where('g.station_id', $station);
                 }
 
                 if ($payout_mode && $payout_mode > 0) {
@@ -5860,12 +5861,10 @@ class Reports_m extends CI_Model{
                         );
 
                         $payoutScheduleText = array_column($payoutSchedules, "text", "id")[(int)$value->payout_sched] ?? "N/A";
-                        // $mode = $this->get_payroll_group_payout_modes($value->emp_id);
 
                         $value->employee_name = $tempName;
                         $value->net_pay_decimal = number_format($value->net_pay, 2, ".", ",");
                         $value->payroll_group = (isset($payroll_group['payroll_group']) && $payroll_group['payroll_group']) ? $payroll_group['payroll_group'] : ' N/A ';
-                        $value->payout_mode = (isset($payroll_group['payout_mode']) && $payroll_group['payout_mode']) ? $payroll_group['payout_mode'] : ' N/A ';
                         $value->payout_sched = strtoupper($payoutScheduleText);
 
                         $arrData[$key] = $value;
@@ -5883,8 +5882,10 @@ class Reports_m extends CI_Model{
                 $payout_schedule = null;
                 $qTemp = $this->db->get_where($this->tbl_payout_schedule, array("id"=>$post["payroll_sched"]));
                 if($qTemp->num_rows() == 1){ $payout_schedule = $qTemp->row()->name; }
-                $tempFilter["payout_schedule"] = $payout_schedule;
+                $tempFilter["payout_schedule"] = strtoupper($payout_schedule);
                 $tempFilter["group"] = $post["group"];
+                $tempFilter['payout_mode'] = $payout_mode && $payout_mode > 0 ? $this->getPayoutMode($payout_mode) : null;
+                $tempFilter['station'] = $station && $station > 0 ? $this->getStationName($station) : null;
                 
                 if($filteredCompany){ $tempFilter["company_description"] = $filteredCompany; }
                 $resultset["data"] = $temp;

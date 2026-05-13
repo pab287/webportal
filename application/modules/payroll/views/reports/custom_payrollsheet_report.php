@@ -368,12 +368,12 @@
                         </table>
                     </div>
                     <div class="mt-4 tbl-responsive-sm m--hide" id="summary-station-wrapper">
-                        <h4 class="m--font-bolder">PROJECT SUMMARY</h4>
+                        <h4 class="m--font-boldest">PROJECT SUMMARY</h4>
                         <table class="table table-striped table-bordered" id="tbl-summary-station" style="font-family: roboto; width: 100% !important">
                             <thead>
                                 <tr>
                                     <th>Station</th>
-                                    <th width="10%" class="text-center"># of Employee(s)</th>
+                                    <th width="13%" class="text-center"># of Employee(s)</th>
                                     <th class="text-right">Gross Total</th>
                                     <th class="text-right">NetPay Total</th>
                                 </tr>
@@ -381,21 +381,21 @@
                             <tbody></tbody>
                             <tfoot>
                                 <tr>
-                                    <th class="text-right">GRAND TOTAL</th>
-                                    <th class="text-center">0</th>
-                                    <th class="text-right">0.00</th>
-                                    <th class="text-right">0.00</th>
+                                    <th class="text-right"><span class="m--font-boldest">GRAND TOTAL</span></th>
+                                    <th class="text-center"><span class="m--font-boldest">0</span></th>
+                                    <th class="text-right"><span class="m--font-boldest">0.00</span></th>
+                                    <th class="text-right"><span class="m--font-boldest">0.00</span></th>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
                     <div class="mt-4 tbl-responsive-sm m--hide" id="summary-payout-wrapper">
-                        <h4 class="m--font-bolder">PAYOUT MODE SUMMARY</h4>
+                        <h4 class="m--font-boldest">PAYOUT MODE SUMMARY</h4>
                         <table class="table table-striped table-bordered" id="tbl-summary-payout-mode" style="font-family: roboto; width: 100% !important">
                             <thead>
                                 <tr>
                                     <th>Payout Mode</th>
-                                    <th width="10%" class="text-center"># of Employee(s)</th>
+                                    <th width="13%" class="text-center"># of Employee(s)</th>
                                     <th class="text-right">Gross Total</th>
                                     <th class="text-right">NetPay Total</th>
                                 </tr>
@@ -403,10 +403,10 @@
                             <tbody></tbody>
                             <tfoot>
                                 <tr>
-                                    <th class="text-right">GRAND TOTAL</th>
-                                    <th class="text-center">0</th>
-                                    <th class="text-right">0.00</th>
-                                    <th class="text-right">0.00</th>
+                                    <th class="text-right"><span class="m--font-boldest">GRAND TOTAL</span></th>
+                                    <th class="text-center"><span class="m--font-boldest">0</span></th>
+                                    <th class="text-right"><span class="m--font-boldest">0.00</span></th>
+                                    <th class="text-right"><span class="m--font-boldest">0.00</span></th>
                                 </tr>
                             </tfoot>
                         </table>

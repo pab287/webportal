@@ -14,6 +14,7 @@ let filteredCompany = '';
 let filteredGroup = '';
 let payroll_option = "";
 let filtered = [];
+let printCounter = { count: 0, last_printed: null, last_printed_at: null };
 
 const renderSecondarySummaryTables = function (rows) {
     const tableStation = $("#tbl-summary-station");
@@ -75,7 +76,7 @@ const renderSecondarySummaryTables = function (rows) {
 
     const renderTable = function (tableRef, rowsData) {
         const tbody = tableRef.find("tbody");
-        const tfootCells = tableRef.find("tfoot th");
+        const tfootCells = tableRef.find("tfoot tr th span");
         tbody.empty();
 
         let grandEmployees = 0;
@@ -317,7 +318,10 @@ $.validate({
                     'gross': json.gross_total_decimal,
                     'total': json.grand_total_decimal,
                     'option': json.payroll_option,
-                    'generated': filteredDate
+                    'generated': filteredDate.toUpperCase(),
+                    'payout_mode': json.filter.payout_mode,
+                    'payout_schedule': json.filter.payout_schedule,
+                    'station': json.filter.station,
                 });
 
                 if (json.response) {
@@ -344,7 +348,7 @@ const dtNetPayReport = tableNetpay.DataTable({
         title: function(){
             const option = filtered.option != 'all' ? filtered.option.toUpperCase() : '';
 
-            return `<div class="text-center m--regular-font-size-lg2">${option} PAYROLL NET PAY SUMMARY REPORT</div>`;
+            return `<div class="text-center m--regular-font-size-lg2">${option} CUSTOM PAYROLL SHEET REPORT</div>`;
         },
         exportOptions: { stripHtml: false, columns: ':visible:not(:eq(0)):not(.actions)' },
         customize: function (win) {
@@ -370,6 +374,75 @@ const dtNetPayReport = tableNetpay.DataTable({
             head.appendChild(style);
             const option = filtered.option != 'all' ? filtered.option.toUpperCase() : '';
             win.document.title = option + " Netpay Report Printable Page";
+
+            const filterLines = [];
+            if (filtered.company) {
+                filterLines.push('COMPANY: ' + filtered.company);
+            }
+            if (filtered.generated) {
+                filterLines.push('FILTER: ' + filtered.generated);
+            }
+            if (filtered.payroll_group) {
+                filterLines.push('PAYROLL GROUP: ' + filtered.payroll_group);
+            }
+            if (filtered.payout_mode) {
+                filterLines.push('PAYOUT MODE: ' + filtered.payout_mode);
+            }
+            if (filtered.payout_schedule) {
+                filterLines.push('PAYOUT SCHEDULE: ' + filtered.payout_schedule);
+            }
+            if (filtered.station) {
+                filterLines.push('STATION: ' + filtered.station);
+            }
+            if (filterLines.length > 0) {
+                const printFilterWrapper = win.document.createElement('div');
+                printFilterWrapper.className = 'mb-3';
+                printFilterWrapper.style.fontSize = '12px';
+                printFilterWrapper.style.display = 'flex';
+                printFilterWrapper.style.justifyContent = 'space-between';
+                printFilterWrapper.style.alignItems = 'flex-end';
+                printFilterWrapper.style.paddingBottom = '6px';
+                printFilterWrapper.style.marginBottom = '10px';
+
+                const rightLines = [];
+                if (printCounter.count > 0) {
+                    rightLines.push('PRINT #: ' + printCounter.count);
+                }
+                if (printCounter.last_printed) {
+                    rightLines.push('LAST PRINTED BY: ' + printCounter.last_printed);
+                }
+                if (printCounter.last_printed_at) {
+                    rightLines.push('LAST PRINTED AT: ' + printCounter.last_printed_at);
+                }
+
+                const leftHtml = filterLines.map(function (line) {
+                    return '<div><strong>' + line + '</strong></div>';
+                }).join('');
+                const rightHtml = rightLines.map(function (line) {
+                    return '<div><strong>' + line + '</strong></div>';
+                }).join('');
+
+                const leftColStyle = [
+                    'text-align:left',
+                    'width:70%',
+                    'line-height:1.3'
+                ].join(';');
+                const rightColStyle = [
+                    'text-align:left',
+                    'width:30%',
+                    'line-height:1.3'
+                ].join(';');
+
+                printFilterWrapper.innerHTML =
+                    '<div style="' + leftColStyle + '">' + leftHtml + '</div>' +
+                    '<div style="' + rightColStyle + '">' + rightHtml + '</div>';
+                const printTitle = body.querySelector('h1');
+                if (printTitle && printTitle.parentNode) {
+                    printTitle.insertAdjacentElement('afterend', printFilterWrapper);
+                } else {
+                    body.insertBefore(printFilterWrapper, body.firstChild);
+                }
+            }
 
             const tempTable = win.document.getElementsByClassName('dataTable')[0];
             $(tempTable).removeClass("table-bordered");
@@ -502,7 +575,11 @@ const dtNetPayReport = tableNetpay.DataTable({
             const option = filtered.option != 'all' ? filtered.option.toUpperCase()+' ' : '';
             const sheet = xlsx.xl.worksheets['sheet1.xml'];
             const sheetData = sheet.getElementsByTagName('sheetData')[0];
-            const downrows = filtered.payroll_group != '' ? 3 : 2;
+            const extraFilterRows = [];
+            if (filtered.payout_schedule) { extraFilterRows.push({ label: 'PAYOUT SCHEDULE: ', value: filtered.payout_schedule }); }
+            if (filtered.payout_mode) { extraFilterRows.push({ label: 'PAYOUT MODE: ', value: filtered.payout_mode }); }
+            if (filtered.station) { extraFilterRows.push({ label: 'STATION: ', value: filtered.station }); }
+            const downrows = (filtered.payroll_group != '' ? 3 : 2) + extraFilterRows.length;
             let mergeCells = $('mergeCells', sheet);
             const columnCount = tableNetpay.DataTable().columns(':visible').count();
 
@@ -565,9 +642,25 @@ const dtNetPayReport = tableNetpay.DataTable({
             const r1 = addRowTitle(1, [{ k: 'A', v: `${option}CUSTOM PAYROLL SHEET REPORT ${filtered.generated}` }, { k: 'B', v: '' }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
             const r2 = addRowMessage(2, [{ k: 'A', v: 'COMPANY: ' }, { k: 'B', v: filtered.company }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
             const r3 = addRowMessage(3, [{ k: 'A', v: 'PAYROLL GROUP: ' }, { k: 'B', v: filtered.payroll_group }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
+            const baseRowIndex = filtered.payroll_group ? 4 : 3;
+            const extraRows = extraFilterRows.map(function (item, idx) {
+                const rowNum = baseRowIndex + idx;
+                return addRowMessage(rowNum, [
+                    { k: 'A', v: item.label },
+                    { k: 'B', v: item.value },
+                    { k: 'C', v: '' },
+                    { k: 'D', v: '' }
+                ]);
+            });
 
             if(filtered.payroll_group){
                 sheetData.insertBefore(r3, sheetData.childNodes[0]);
+            }
+
+            if (extraRows.length > 0) {
+                for (let i = extraRows.length - 1; i >= 0; i--) {
+                    sheetData.insertBefore(extraRows[i], sheetData.childNodes[0]);
+                }
             }
 
             sheetData.insertBefore(r2, sheetData.childNodes[0]);
@@ -760,7 +853,7 @@ const dtNetPayReport = tableNetpay.DataTable({
         },
         startRender: function (rows, group) {
             const visibleColumnCount = dtNetPayReport.columns(':visible').count();
-            return $('<tr><td colspan="' + visibleColumnCount + '" class="m--font-boldest">PROJECT #: ' + group + '</td></tr>');
+            return $('<tr><td colspan="' + visibleColumnCount + '"><span class="m--font-boldest">PROJECT #: ' + group + '</span></td></tr>');
         },
         endRender: function (rows, group) {
             const toNumber = function (value) {
@@ -787,13 +880,13 @@ const dtNetPayReport = tableNetpay.DataTable({
             const labelColspan = Math.max(visibleColumnCount - totalColumnsToShow, 1);
 
             let tempContainer = `<tr class="bg-secondary">
-                <td colspan="${labelColspan}" class="text-right m--font-boldest">SUB TOTAL - ${group}</td>`;
+                <td colspan="${labelColspan}" class="text-right"><span class="m--font-boldest">SUB TOTAL - ${group}</span></td>`;
 
             if (isGrossVisible) {
-                tempContainer += `<td class="text-right m--font-boldest">${numberFormat(stationGrossPay)}</td>`;
+                tempContainer += `<td class="text-right"><span class="m--font-boldest">${numberFormat(stationGrossPay)}</span></td>`;
             }
             if (isNetVisible) {
-                tempContainer += `<td class="text-right m--font-boldest">${numberFormat(stationNetPay)}</td>`;
+                tempContainer += `<td class="text-right"><span class="m--font-boldest">${numberFormat(stationNetPay)}</span></td>`;
             }
             tempContainer += `</tr>`;
 
@@ -874,11 +967,67 @@ function printNetpayReport(el) {
     $("i", el).addClass("fa fa-spinner fa-spin");
     $("i", el).css({ right: 0, left: 0 });
 
-    setTimeout(() => {
-        dtNetPayReport.button(".buttons-print").trigger();
-        $("i", el).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
-        $("i", el).css({ top: "50%", left: "50%" });
-    }, 150);
+    const parseSerializedFilter = function (serialized) {
+        const parsed = {};
+        if (!serialized) { return parsed; }
+
+        $.each(serialized.split("&"), function (_i, pair) {
+            if (!pair) { return; }
+
+            const parts = pair.split("=");
+            const rawKey = decodeURIComponent((parts.shift() || "").replace(/\+/g, " "));
+            const rawValue = decodeURIComponent((parts.join("=") || "").replace(/\+/g, " "));
+            if (!rawKey) { return; }
+
+            if (rawKey.slice(-2) === "[]") {
+                const arrayKey = rawKey.slice(0, -2);
+                if (!Array.isArray(parsed[arrayKey])) { parsed[arrayKey] = []; }
+                parsed[arrayKey].push(rawValue);
+            } else {
+                parsed[rawKey] = rawValue;
+            }
+        });
+
+        return parsed;
+    };
+
+    const formSerialized = $("form#frm-filter-payroll-neypay_report").serialize();
+    const payload = parseSerializedFilter(formSerialized);
+    delete payload.csrf_token;
+    payload[_csrf_token] = _csrf_hash;
+    payload.amount = filtered.total || 0;
+    payload.module = "custom_payrollsheet_report";
+    payload.payout_sched = payload.payroll_sched || payload.payroll_sched || 0;
+    payload.station = payload.project || 0;
+
+    $.ajax({
+        url: baseUrl('payroll/reports/count_print'),
+        data: payload,
+        dataType: "json",
+        type: 'post',
+        complete: function () {
+            setTimeout(() => {
+                dtNetPayReport.button(".buttons-print").trigger();
+                $("i", el).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
+                $("i", el).css({ top: "50%", left: "50%" });
+            }, 150);
+        },
+        success: function (response) {
+            const data = response && response.data ? response.data : {};
+            const isDisplayValue = function (value) {
+                if (value === null || typeof value === "undefined") { return false; }
+                const tempVal = String(value).trim();
+                if (!tempVal) { return false; }
+                if (tempVal.toLowerCase() === "null") { return false; }
+                if (tempVal.toLowerCase() === "no assigned name") { return false; }
+                return true;
+            };
+
+            printCounter.count = (data && typeof data.count !== "undefined") ? data.count : 0;
+            printCounter.last_printed = (data && isDisplayValue(data.last_printed_by)) ? data.last_printed_by : null;
+            printCounter.last_printed_at = (data && isDisplayValue(data.last_printed_at)) ? moment(data.last_printed_at).format('lll').toUpperCase() : null;
+        }
+    });
 }
 
 /** added for payroll group */
