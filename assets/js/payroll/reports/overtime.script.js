@@ -435,6 +435,20 @@ $(document).ready(function(){
         }, buttons: [{
             extend: 'excel',
             footer: true,
+            exportOptions: {
+                // Include hidden employee_name and station in export output.
+                columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+            },
+            customizeData: function (data) {
+                const normalize = function (value) {
+                    return String(value == null ? '' : value).toLowerCase().trim();
+                };
+
+                // Sort body rows alphabetically by employee_name column (index 0).
+                data.body.sort(function (a, b) {
+                    return normalize(a[0]).localeCompare(normalize(b[0]));
+                });
+            },
             customize: function (xlsx) {
                 const sheet = xlsx.xl.worksheets['sheet1.xml'];
 

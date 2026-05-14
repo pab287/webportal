@@ -12,7 +12,12 @@
 <div class="m-portlet">
     <div class="m-portlet__body">
     <div id="printArea_monthly" class="printable-content contribution_deduction-content">
-        <a id="printAction" href="javascript:void(0);" class="pull-right btnPrint" @click="printDivMonthly('printArea_monthly')"><i class="fa fa-print" style="font-size: 28px;"></i></a>
+        <a id="printAction" href="javascript:void(0);" class="pull-right btnPrint ml-3" @click="printContent('printArea')">
+            <i class="fa fa-print" style="font-size: 28px;"></i>
+        </a>
+        <a id="printAction" href="javascript:void(0);" class="pull-right btnPrint" @click="exportDivMonthly('printArea_monthly')">
+            <i class="fa fa-file-excel-o" style="font-size: 26px;"></i>
+        </a>
         <div id="header--company_title--center" class="row m--hide">
             <div class="col-12 col-md-12 col-sm-12 text-center">
                 <h4 class="custom_header-title-top--center">{{filter.company_description}}</h4>

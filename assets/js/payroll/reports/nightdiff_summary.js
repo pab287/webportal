@@ -459,6 +459,20 @@ $(document).ready(function(){
         buttons: [{
             extend: 'excel',
             footer: true,
+            exportOptions: {
+                // Include hidden employee_name and station in export output.
+                columns: [0, 1, 2, 3, 4, 5, 6, 7]
+            },
+            customizeData: function (data) {
+                const normalize = function (value) {
+                    return String(value == null ? '' : value).toLowerCase().trim();
+                };
+
+                // Sort body rows alphabetically by employee_name column (index 0).
+                data.body.sort(function (a, b) {
+                    return normalize(a[0]).localeCompare(normalize(b[0]));
+                });
+            },
             customize: function (xlsx) {
                 const sheet = xlsx.xl.worksheets['sheet1.xml'];
 
@@ -484,8 +498,17 @@ $(document).ready(function(){
             }
         }], columns: [
             { visible: false, data: 'employee_name' },
+            { visible: false, data: 'station',
+                render: function (data){
+                    return data ? data.toUpperCase() : 'NO ASSIGNED PROJECT';
+                }
+            },
             { data: 'date', width: '10%' },
-            { data: 'day', width: '8%', className: "text-center" },
+            { data: 'day', width: '8%', className: "text-center",
+                render: function(data) {
+                    return data.toUpperCase();
+                }
+            },
             { data: 'daily_rate', width: '6%', className: "text-right",
                 render: function(data, type, row){
                     return '₱ '+data;
@@ -517,14 +540,14 @@ $(document).ready(function(){
             startRender: function ( _rows, group, level ) {
                 if (level === 0) {
                     const station = group || 'No assigned Project';
-                    return $('<tr class="text-center"><td colspan="6" class="bg-secondary"><span class="m--font-boldest">Project #: ' + station + '</span></td></tr>');
+                    return $('<tr class="text-center"><td colspan="7" class="bg-secondary"><span class="m--font-boldest">Project #: ' + station + '</span></td></tr>');
                 }
 
                 if (!group || String(group).toUpperCase() === 'NO GROUP') {
                     return null;
                 }
 
-                return $('<tr><td colspan="6" class="bg-secondary"><span class="m--font-boldest">' + group + '</span></td></tr>');
+                return $('<tr><td colspan="7" class="bg-secondary"><span class="m--font-boldest">' + group + '</span></td></tr>');
             },
             endRender: function ( rows, _group, level ) {
                 if (level !== 0 && level !== 1) {

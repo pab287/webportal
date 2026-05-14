@@ -82,6 +82,7 @@ class Reports extends MY_Controller {
         $this->core_layout->setPageTitle("Payroll - Reports");
         $this->core_layout->setPrivilegeName("payroll_contribution_deduction");
         $this->core_layout->addJs("js/buttons.print.min.js", true);
+        $this->core_layout->addJs("plugins/export_plugins/exceljs.min.js", true);
         $this->core_layout->addJs("js/payroll/reports/contribution_deduction.script.js", true, $tempData, "?v={$version}");
 
         $this->load->view("core/templates/header");
