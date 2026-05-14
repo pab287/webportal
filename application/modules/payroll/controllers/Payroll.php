@@ -904,4 +904,11 @@ class Payroll extends MY_Controller {
             ->set_content_type('json')
             ->set_output(json_encode($data));
     }
+
+    public function select_payout_mode() {
+        $data = $this->mode->select_payout_mode();
+        $this->output
+            ->set_content_type('json')
+            ->set_output(json_encode($data));
+    }
 }

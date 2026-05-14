@@ -14,6 +14,97 @@ let filteredCompany = '';
 let filteredGroup = '';
 let payroll_option = "";
 let filtered = [];
+let printCounter = { count: 0, last_printed: null, last_printed_at: null };
+
+const renderSecondarySummaryTables = function (rows) {
+    const tableStation = $("#tbl-summary-station");
+    const tablePayout = $("#tbl-summary-payout-mode");
+    const stationWrapper = $("#summary-station-wrapper");
+    const payoutWrapper = $("#summary-payout-wrapper");
+    if (!tableStation.length || !tablePayout.length) { return; }
+
+    const list = Array.isArray(rows) ? rows : [];
+    if (!list.length) {
+        stationWrapper.addClass("m--hide");
+        payoutWrapper.addClass("m--hide");
+        tableStation.find("tbody").empty();
+        tablePayout.find("tbody").empty();
+        return;
+    }
+
+    stationWrapper.removeClass("m--hide");
+    payoutWrapper.removeClass("m--hide");
+
+    const toNumber = function (value) {
+        if (typeof value === 'string') {
+            return parseFloat(value.replace(/[^0-9.-]/g, '').trim()) || 0;
+        }
+        return typeof value === 'number' ? value : 0;
+    };
+
+    const summarizeBy = function (keyName, fallbackLabel) {
+        const grouped = {};
+        list.forEach(function (row) {
+            const key = row && row[keyName] ? String(row[keyName]).trim() : fallbackLabel;
+            if (!grouped[key]) {
+                grouped[key] = {
+                    key: key,
+                    employees: {},
+                    gross_total: 0,
+                    net_total: 0
+                };
+            }
+
+            const empId = row && row.emp_id ? parseInt(row.emp_id, 10) : 0;
+            if (empId > 0) { grouped[key].employees[empId] = true; }
+            grouped[key].gross_total += toNumber(row ? row.gross_pay : 0);
+            grouped[key].net_total += toNumber(row ? row.net_pay : 0);
+        });
+
+        return Object.keys(grouped).sort().map(function (groupKey) {
+            return {
+                key: groupKey,
+                employee_count: Object.keys(grouped[groupKey].employees).length,
+                gross_total: grouped[groupKey].gross_total,
+                net_total: grouped[groupKey].net_total
+            };
+        });
+    };
+
+    const stationRows = summarizeBy("station", "No assigned Station");
+    const payoutRows = summarizeBy("payout_mode", "No payout mode");
+
+    const renderTable = function (tableRef, rowsData) {
+        const tbody = tableRef.find("tbody");
+        const tfootCells = tableRef.find("tfoot tr th span");
+        tbody.empty();
+
+        let grandEmployees = 0;
+        let grandGross = 0;
+        let grandNet = 0;
+
+        rowsData.forEach(function (row) {
+            grandEmployees += row.employee_count;
+            grandGross += row.gross_total;
+            grandNet += row.net_total;
+            tbody.append(
+                `<tr>
+                    <td>${row.key}</td>
+                    <td class="text-center">${row.employee_count}</td>
+                    <td class="text-right">${numberFormat(row.gross_total)}</td>
+                    <td class="text-right">${numberFormat(row.net_total)}</td>
+                </tr>`
+            );
+        });
+
+        $(tfootCells[1]).text(grandEmployees);
+        $(tfootCells[2]).text(numberFormat(grandGross));
+        $(tfootCells[3]).text(numberFormat(grandNet));
+    };
+
+    renderTable(tableStation, stationRows);
+    renderTable(tablePayout, payoutRows);
+};
 
 const months = [
     { id: 1, text: "January" },
@@ -203,9 +294,20 @@ $.validate({
                 vmNavigation.printable_content = null;
             },
             success: function (json) {
+                const sortedRows = Array.isArray(json.data) ? json.data.sort(function (a, b) {
+                    const stationA = (a && a.station) ? String(a.station).toLowerCase() : '';
+                    const stationB = (b && b.station) ? String(b.station).toLowerCase() : '';
+                    if (stationA !== stationB) { return stationA.localeCompare(stationB); }
+
+                    const employeeA = (a && a.employee_name) ? String(a.employee_name).toLowerCase() : '';
+                    const employeeB = (b && b.employee_name) ? String(b.employee_name).toLowerCase() : '';
+                    return employeeA.localeCompare(employeeB);
+                }) : [];
+
                 dtNetPayReport.clear();
-                dtNetPayReport.rows.add(json.data);
+                dtNetPayReport.rows.add(sortedRows);
                 dtNetPayReport.draw();
+                renderSecondarySummaryTables(sortedRows);
 
                 const filteredBy = $("input[name=group]:checked").val();
                 const filteredDate = filteredBy == 1 ? 'DATE RANGE ' + $("#date-range").val() : getMonthTextById($("#filter_month").val()).toUpperCase() + ' - ' + $("#filter_year").val();
@@ -216,7 +318,10 @@ $.validate({
                     'gross': json.gross_total_decimal,
                     'total': json.grand_total_decimal,
                     'option': json.payroll_option,
-                    'generated': filteredDate
+                    'generated': filteredDate.toUpperCase(),
+                    'payout_mode': json.filter.payout_mode,
+                    'payout_schedule': json.filter.payout_schedule,
+                    'station': json.filter.station,
                 });
 
                 if (json.response) {
@@ -243,11 +348,11 @@ const dtNetPayReport = tableNetpay.DataTable({
         title: function(){
             const option = filtered.option != 'all' ? filtered.option.toUpperCase() : '';
 
-            return `<div class="text-center m--regular-font-size-lg2">${option} PAYROLL NET PAY SUMMARY REPORT</div>`;
+            return `<div class="text-center m--regular-font-size-lg2">${option} CUSTOM PAYROLL SHEET REPORT</div>`;
         },
         exportOptions: { stripHtml: false, columns: ':visible:not(:eq(0)):not(.actions)' },
         customize: function (win) {
-            const css = `@page { size: portrait; margin: 0.5cm; } 
+            const css = `@page { size: landscape; margin: 0.5cm; } 
                 .print-size-25{ width: 25% }
                 .dt-print-view table { font-size: 12px; } 
                 .dt-print-view table.dataTable tfoot tr:first-child th{ border-top: 1px solid #000000; }
@@ -270,8 +375,162 @@ const dtNetPayReport = tableNetpay.DataTable({
             const option = filtered.option != 'all' ? filtered.option.toUpperCase() : '';
             win.document.title = option + " Netpay Report Printable Page";
 
+            const filterLines = [];
+            if (filtered.company) {
+                filterLines.push('COMPANY: ' + filtered.company);
+            }
+            if (filtered.generated) {
+                filterLines.push('FILTER: ' + filtered.generated);
+            }
+            if (filtered.payroll_group) {
+                filterLines.push('PAYROLL GROUP: ' + filtered.payroll_group);
+            }
+            if (filtered.payout_mode) {
+                filterLines.push('PAYOUT MODE: ' + filtered.payout_mode);
+            }
+            if (filtered.payout_schedule) {
+                filterLines.push('PAYOUT SCHEDULE: ' + filtered.payout_schedule);
+            }
+            if (filtered.station) {
+                filterLines.push('STATION: ' + filtered.station);
+            }
+            if (filterLines.length > 0) {
+                const printFilterWrapper = win.document.createElement('div');
+                printFilterWrapper.className = 'mb-3';
+                printFilterWrapper.style.fontSize = '12px';
+                printFilterWrapper.style.display = 'flex';
+                printFilterWrapper.style.justifyContent = 'space-between';
+                printFilterWrapper.style.alignItems = 'flex-end';
+                printFilterWrapper.style.paddingBottom = '6px';
+                printFilterWrapper.style.marginBottom = '10px';
+
+                const rightLines = [];
+                if (printCounter.count > 0) {
+                    rightLines.push('PRINT #: ' + printCounter.count);
+                }
+                if (printCounter.last_printed) {
+                    rightLines.push('LAST PRINTED BY: ' + printCounter.last_printed);
+                }
+                if (printCounter.last_printed_at) {
+                    rightLines.push('LAST PRINTED AT: ' + printCounter.last_printed_at);
+                }
+
+                const leftHtml = filterLines.map(function (line) {
+                    return '<div><strong>' + line + '</strong></div>';
+                }).join('');
+                const rightHtml = rightLines.map(function (line) {
+                    return '<div><strong>' + line + '</strong></div>';
+                }).join('');
+
+                const leftColStyle = [
+                    'text-align:left',
+                    'width:70%',
+                    'line-height:1.3'
+                ].join(';');
+                const rightColStyle = [
+                    'text-align:left',
+                    'width:30%',
+                    'line-height:1.3'
+                ].join(';');
+
+                printFilterWrapper.innerHTML =
+                    '<div style="' + leftColStyle + '">' + leftHtml + '</div>' +
+                    '<div style="' + rightColStyle + '">' + rightHtml + '</div>';
+                const printTitle = body.querySelector('h1');
+                if (printTitle && printTitle.parentNode) {
+                    printTitle.insertAdjacentElement('afterend', printFilterWrapper);
+                } else {
+                    body.insertBefore(printFilterWrapper, body.firstChild);
+                }
+            }
+
             const tempTable = win.document.getElementsByClassName('dataTable')[0];
             $(tempTable).removeClass("table-bordered");
+
+            // Rebuild print table body with station group headers + subtotals.
+            const exportIndexes = dtNetPayReport.columns(':visible').indexes().toArray().filter(function (idx) { return idx !== 0; });
+            const stationPos = exportIndexes.indexOf(9);
+            const grossPos = exportIndexes.indexOf(19);
+            const netPos = exportIndexes.indexOf(20);
+            const totalCols = exportIndexes.length;
+
+            if (stationPos >= 0 && tempTable) {
+                const tbody = tempTable.getElementsByTagName('tbody')[0];
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                rows.sort(function (a, b) {
+                    const aCells = a.querySelectorAll('td');
+                    const bCells = b.querySelectorAll('td');
+                    const stationA = aCells[stationPos] ? aCells[stationPos].textContent.trim().toLowerCase() : '';
+                    const stationB = bCells[stationPos] ? bCells[stationPos].textContent.trim().toLowerCase() : '';
+                    if (stationA !== stationB) { return stationA.localeCompare(stationB); }
+
+                    const empA = aCells[0] ? aCells[0].textContent.trim().toLowerCase() : '';
+                    const empB = bCells[0] ? bCells[0].textContent.trim().toLowerCase() : '';
+                    return empA.localeCompare(empB);
+                });
+                let currentStation = null;
+                let stationGross = 0;
+                let stationNet = 0;
+
+                const toNumber = function (value) {
+                    return parseFloat(String(value || '0').replace(/[^0-9.-]/g, '')) || 0;
+                };
+
+                const appendSubtotalRow = function (stationName) {
+                    if (stationName === null) { return; }
+                    const subtotalTr = win.document.createElement('tr');
+                    const labelColspan = Math.max(totalCols - ((grossPos >= 0 ? 1 : 0) + (netPos >= 0 ? 1 : 0)), 1);
+
+                    const labelTd = win.document.createElement('td');
+                    labelTd.setAttribute('colspan', labelColspan);
+                    labelTd.style.textAlign = 'right';
+                    labelTd.style.fontWeight = 'bold';
+                    labelTd.textContent = 'SUB TOTAL - ' + stationName;
+                    subtotalTr.appendChild(labelTd);
+
+                    if (grossPos >= 0) {
+                        const grossTd = win.document.createElement('td');
+                        grossTd.style.textAlign = 'right';
+                        grossTd.style.fontWeight = 'bold';
+                        grossTd.textContent = numberFormat(stationGross);
+                        subtotalTr.appendChild(grossTd);
+                    }
+                    if (netPos >= 0) {
+                        const netTd = win.document.createElement('td');
+                        netTd.style.textAlign = 'right';
+                        netTd.style.fontWeight = 'bold';
+                        netTd.textContent = numberFormat(stationNet);
+                        subtotalTr.appendChild(netTd);
+                    }
+                    tbody.appendChild(subtotalTr);
+                };
+
+                rows.forEach(function (tr) {
+                    const cells = tr.querySelectorAll('td');
+                    const stationValue = cells[stationPos] ? cells[stationPos].textContent.trim() : 'No assigned Station';
+
+                    if (currentStation !== stationValue) {
+                        appendSubtotalRow(currentStation);
+                        currentStation = stationValue;
+                        stationGross = 0;
+                        stationNet = 0;
+
+                        const headerTr = win.document.createElement('tr');
+                        const headerTd = win.document.createElement('td');
+                        headerTd.setAttribute('colspan', totalCols);
+                        headerTd.style.fontWeight = 'bold';
+                        headerTd.textContent = 'PROJECT #: ' + currentStation;
+                        headerTr.appendChild(headerTd);
+                        tbody.appendChild(headerTr);
+                    }
+
+                    if (grossPos >= 0 && cells[grossPos]) { stationGross += toNumber(cells[grossPos].textContent); }
+                    if (netPos >= 0 && cells[netPos]) { stationNet += toNumber(cells[netPos].textContent); }
+                    tbody.appendChild(tr);
+                });
+
+                appendSubtotalRow(currentStation);
+            }
 
             tempDiv2.innerHTML = `<div class="row mt-5 printable-row_content">
                 <div class="col-md-9 col-lg-9 col-sm-12">&nbsp;</div>
@@ -281,6 +540,22 @@ const dtNetPayReport = tableNetpay.DataTable({
                 </div>
             </div>`;
             body.appendChild(tempDiv2);
+
+            const stationSummary = document.getElementById('summary-station-wrapper');
+            const payoutSummary = document.getElementById('summary-payout-wrapper');
+            const printSummaryContainer = win.document.createElement('div');
+            printSummaryContainer.className = 'mt-5';
+
+            if (stationSummary && !stationSummary.classList.contains('m--hide')) {
+                printSummaryContainer.innerHTML += stationSummary.innerHTML;
+            }
+            if (payoutSummary && !payoutSummary.classList.contains('m--hide')) {
+                printSummaryContainer.innerHTML += payoutSummary.innerHTML;
+            }
+
+            if (printSummaryContainer.innerHTML.trim() !== '') {
+                body.appendChild(printSummaryContainer);
+            }
         }
     },{
         extend: 'excelHtml5',
@@ -296,11 +571,30 @@ const dtNetPayReport = tableNetpay.DataTable({
             stripHtml: false,
             columns: ':visible:not(:eq(0)):not(.actions)'
         },
+        customizeData: function (data) {
+            const normalize = function (value) {
+                return String(value == null ? '' : value).toLowerCase().trim();
+            };
+
+            const headers = Array.isArray(data.header) ? data.header : [];
+            const employeeIndex = headers.findIndex(function (h) {
+                return normalize(h).indexOf('employee') >= 0;
+            });
+            const sortIndex = employeeIndex >= 0 ? employeeIndex : 0;
+
+            data.body.sort(function (a, b) {
+                return normalize(a[sortIndex]).localeCompare(normalize(b[sortIndex]));
+            });
+        },
         customize: function (xlsx) {
             const option = filtered.option != 'all' ? filtered.option.toUpperCase()+' ' : '';
             const sheet = xlsx.xl.worksheets['sheet1.xml'];
             const sheetData = sheet.getElementsByTagName('sheetData')[0];
-            const downrows = filtered.payroll_group != '' ? 3 : 2;
+            const extraFilterRows = [];
+            if (filtered.payout_schedule) { extraFilterRows.push({ label: 'PAYOUT SCHEDULE: ', value: filtered.payout_schedule }); }
+            if (filtered.payout_mode) { extraFilterRows.push({ label: 'PAYOUT MODE: ', value: filtered.payout_mode }); }
+            if (filtered.station) { extraFilterRows.push({ label: 'STATION: ', value: filtered.station }); }
+            const downrows = (filtered.payroll_group != '' ? 3 : 2) + extraFilterRows.length;
             let mergeCells = $('mergeCells', sheet);
             const columnCount = tableNetpay.DataTable().columns(':visible').count();
 
@@ -363,9 +657,25 @@ const dtNetPayReport = tableNetpay.DataTable({
             const r1 = addRowTitle(1, [{ k: 'A', v: `${option}CUSTOM PAYROLL SHEET REPORT ${filtered.generated}` }, { k: 'B', v: '' }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
             const r2 = addRowMessage(2, [{ k: 'A', v: 'COMPANY: ' }, { k: 'B', v: filtered.company }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
             const r3 = addRowMessage(3, [{ k: 'A', v: 'PAYROLL GROUP: ' }, { k: 'B', v: filtered.payroll_group }, { k: 'C', v: '' }, { k: 'D', v: '' }]);
+            const baseRowIndex = filtered.payroll_group ? 4 : 3;
+            const extraRows = extraFilterRows.map(function (item, idx) {
+                const rowNum = baseRowIndex + idx;
+                return addRowMessage(rowNum, [
+                    { k: 'A', v: item.label },
+                    { k: 'B', v: item.value },
+                    { k: 'C', v: '' },
+                    { k: 'D', v: '' }
+                ]);
+            });
 
             if(filtered.payroll_group){
                 sheetData.insertBefore(r3, sheetData.childNodes[0]);
+            }
+
+            if (extraRows.length > 0) {
+                for (let i = extraRows.length - 1; i >= 0; i--) {
+                    sheetData.insertBefore(extraRows[i], sheetData.childNodes[0]);
+                }
             }
 
             sheetData.insertBefore(r2, sheetData.childNodes[0]);
@@ -552,6 +862,52 @@ const dtNetPayReport = tableNetpay.DataTable({
         },
         
     ],
+    rowGroup: {
+        dataSrc: function (row) {
+            return row.station ? row.station : 'No assigned Station';
+        },
+        startRender: function (rows, group) {
+            const visibleColumnCount = dtNetPayReport.columns(':visible').count();
+            return $('<tr><td colspan="' + visibleColumnCount + '"><span class="m--font-boldest">PROJECT #: ' + group + '</span></td></tr>');
+        },
+        endRender: function (rows, group) {
+            const toNumber = function (value) {
+                if (typeof value === 'string') {
+                    return parseFloat(value.replace(/[^0-9.-]/g, '').trim()) || 0;
+                }
+                return typeof value === 'number' ? value : 0;
+            };
+
+            const stationGrossPay = rows
+                .data()
+                .pluck('gross_pay')
+                .reduce(function (a, b) { return toNumber(a) + toNumber(b); }, 0);
+
+            const stationNetPay = rows
+                .data()
+                .pluck('net_pay')
+                .reduce(function (a, b) { return toNumber(a) + toNumber(b); }, 0);
+
+            const visibleColumnCount = dtNetPayReport.columns(':visible').count();
+            const isGrossVisible = dtNetPayReport.column(19).visible();
+            const isNetVisible = dtNetPayReport.column(20).visible();
+            const totalColumnsToShow = (isGrossVisible ? 1 : 0) + (isNetVisible ? 1 : 0);
+            const labelColspan = Math.max(visibleColumnCount - totalColumnsToShow, 1);
+
+            let tempContainer = `<tr class="bg-secondary">
+                <td colspan="${labelColspan}" class="text-right"><span class="m--font-boldest">SUB TOTAL - ${group}</span></td>`;
+
+            if (isGrossVisible) {
+                tempContainer += `<td class="text-right"><span class="m--font-boldest">${numberFormat(stationGrossPay)}</span></td>`;
+            }
+            if (isNetVisible) {
+                tempContainer += `<td class="text-right"><span class="m--font-boldest">${numberFormat(stationNetPay)}</span></td>`;
+            }
+            tempContainer += `</tr>`;
+
+            return $(tempContainer);
+        }
+    },
     footerCallback: function (row, data, start, end, display) {
         _globalNetPay = 0;
         _globalGrossPay = 0;
@@ -582,7 +938,8 @@ const dtNetPayReport = tableNetpay.DataTable({
 
 function showOrHideColumn(index, el) {
     const column = dtNetPayReport.column(index);
-    column.visible($(el)[0].checked);
+    column.visible($(el)[0].checked, false);
+    dtNetPayReport.columns.adjust().draw(false);
 }
 
 const vmNavigation = new Vue({
@@ -625,11 +982,67 @@ function printNetpayReport(el) {
     $("i", el).addClass("fa fa-spinner fa-spin");
     $("i", el).css({ right: 0, left: 0 });
 
-    setTimeout(() => {
-        dtNetPayReport.button(".buttons-print").trigger();
-        $("i", el).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
-        $("i", el).css({ top: "50%", left: "50%" });
-    }, 150);
+    const parseSerializedFilter = function (serialized) {
+        const parsed = {};
+        if (!serialized) { return parsed; }
+
+        $.each(serialized.split("&"), function (_i, pair) {
+            if (!pair) { return; }
+
+            const parts = pair.split("=");
+            const rawKey = decodeURIComponent((parts.shift() || "").replace(/\+/g, " "));
+            const rawValue = decodeURIComponent((parts.join("=") || "").replace(/\+/g, " "));
+            if (!rawKey) { return; }
+
+            if (rawKey.slice(-2) === "[]") {
+                const arrayKey = rawKey.slice(0, -2);
+                if (!Array.isArray(parsed[arrayKey])) { parsed[arrayKey] = []; }
+                parsed[arrayKey].push(rawValue);
+            } else {
+                parsed[rawKey] = rawValue;
+            }
+        });
+
+        return parsed;
+    };
+
+    const formSerialized = $("form#frm-filter-payroll-neypay_report").serialize();
+    const payload = parseSerializedFilter(formSerialized);
+    delete payload.csrf_token;
+    payload[_csrf_token] = _csrf_hash;
+    payload.amount = filtered.total || 0;
+    payload.module = "custom_payrollsheet_report";
+    payload.payout_sched = payload.payroll_sched || payload.payroll_sched || 0;
+    payload.station = payload.project || 0;
+
+    $.ajax({
+        url: baseUrl('payroll/reports/count_print'),
+        data: payload,
+        dataType: "json",
+        type: 'post',
+        complete: function () {
+            setTimeout(() => {
+                dtNetPayReport.button(".buttons-print").trigger();
+                $("i", el).removeClass("fa fa-spinner fa-spin").addClass("fa fa-print");
+                $("i", el).css({ top: "50%", left: "50%" });
+            }, 150);
+        },
+        success: function (response) {
+            const data = response && response.data ? response.data : {};
+            const isDisplayValue = function (value) {
+                if (value === null || typeof value === "undefined") { return false; }
+                const tempVal = String(value).trim();
+                if (!tempVal) { return false; }
+                if (tempVal.toLowerCase() === "null") { return false; }
+                if (tempVal.toLowerCase() === "no assigned name") { return false; }
+                return true;
+            };
+
+            printCounter.count = (data && typeof data.count !== "undefined") ? data.count : 0;
+            printCounter.last_printed = (data && isDisplayValue(data.last_printed_by)) ? data.last_printed_by : null;
+            printCounter.last_printed_at = (data && isDisplayValue(data.last_printed_at)) ? moment(data.last_printed_at).format('lll').toUpperCase() : null;
+        }
+    });
 }
 
 /** added for payroll group */
