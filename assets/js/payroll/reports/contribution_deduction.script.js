@@ -1301,9 +1301,22 @@ function exportDivMonthly(element) {
         cell.alignment = { horizontal: "center", vertical: "middle" };
     }
 
-    const employeeNameIndex = headers.findIndex(function (h) {
-        return String(h || "").toUpperCase().indexOf("EMPLOYEE") >= 0;
+    const normalizedHeaders = headers.map(function (h) {
+        return String(h || "").toUpperCase().trim();
     });
+    let employeeNameIndex = normalizedHeaders.findIndex(function (h) {
+        return h === "EMPLOYEE NAME";
+    });
+    if (employeeNameIndex < 0) {
+        employeeNameIndex = normalizedHeaders.findIndex(function (h) {
+            return h.indexOf("EMPLOYEE NAME") >= 0;
+        });
+    }
+    if (employeeNameIndex < 0) {
+        employeeNameIndex = normalizedHeaders.findIndex(function (h) {
+            return h.indexOf("EMPLOYEE") >= 0 && h.indexOf("#") === -1;
+        });
+    }
     const numberIndex = headers.findIndex(function (h) {
         return String(h || "").trim() === "#";
     });
