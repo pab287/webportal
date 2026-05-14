@@ -1042,3 +1042,337 @@ $("#payout_schedule").select2({
     placeholder: "SELECT AN OPTION",
     allowClear: true,
 });
+
+function exportContent(element) {
+    if (!vmPrintArea || !vmPrintArea.count) {
+        toastr.error("Nothing to export!", "Contribution / Deduction");
+        return;
+    }
+
+    const reportTitle = "PAYROLL SHEET - CONTRIBUTION/DEDUCTION REPORT";
+    const dynamicColumns = Array.isArray(vmPrintArea.row_columns) ? vmPrintArea.row_columns : [];
+    const sourceRows = Array.isArray(vmPrintArea.rows) ? vmPrintArea.rows : Object.values(vmPrintArea.rows || {});
+    const rows = sourceRows
+        .slice()
+        .sort(function (a, b) {
+            const nameA = ((a && a.employee_name) ? String(a.employee_name) : "").toLowerCase().trim();
+            const nameB = ((b && b.employee_name) ? String(b.employee_name) : "").toLowerCase().trim();
+            return nameA.localeCompare(nameB);
+        });
+
+    const formatNumber = function (value) {
+        const parsed = parseFloat(value);
+        return Number.isNaN(parsed) ? "0.00" : parsed.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    const renderColumnLabel = function (label) {
+        let tempLabel = String(label || "").toUpperCase();
+        switch (String(label || "").toLowerCase()) {
+            case "cal.": tempLabel = "SSS CAL"; break;
+            case "cal": tempLabel = "HDMF CAL"; break;
+            case "chrge": tempLabel = "CHARGES"; break;
+            case "medloan": tempLabel = "MED LOAN"; break;
+            default: tempLabel = String(label || "").toUpperCase(); break;
+        }
+        return tempLabel;
+    };
+
+    const parseNumber = function (value) {
+        const parsed = parseFloat(value);
+        return Number.isNaN(parsed) ? 0 : parsed;
+    };
+
+    const headers = ["#", "EMPLOYEE NAME", "SSS", "SSS PROV", "PHIC", "HDMF", "TAX"];
+    $.each(dynamicColumns, function (_i, header) {
+        headers.push(renderColumnLabel(header));
+    });
+    const lastColIndex = headers.length - 1;
+
+    const totals = {
+        sss: 0, sss_prov: 0, ph: 0, hdmf: 0, tax: 0
+    };
+    const dynamicTotals = {};
+    $.each(dynamicColumns, function (_i, header) {
+        dynamicTotals[String(header || "").toLowerCase()] = 0;
+    });
+
+    const titleRow1 = new Array(headers.length).fill("");
+    const titleRow2 = new Array(headers.length).fill("");
+    titleRow1[0] = reportTitle;
+
+    const exportRows = [];
+    exportRows.push(titleRow1);
+    exportRows.push(titleRow2);
+    exportRows.push(headers);
+
+    $.each(rows, function (index, item) {
+        const rowData = [];
+        const sss = parseNumber(item && item.sss);
+        const sssProv = parseNumber(item && item.sss_prov);
+        const ph = parseNumber(item && item.ph);
+        const hdmf = parseNumber(item && item.hdmf);
+        const tax = parseNumber(item && item.tax);
+
+        totals.sss += sss;
+        totals.sss_prov += sssProv;
+        totals.ph += ph;
+        totals.hdmf += hdmf;
+        totals.tax += tax;
+
+        rowData.push(index + 1);
+        rowData.push(item && item.employee_name ? item.employee_name : "");
+        rowData.push(formatNumber(sss));
+        rowData.push(formatNumber(sssProv));
+        rowData.push(formatNumber(ph));
+        rowData.push(formatNumber(hdmf));
+        rowData.push(formatNumber(tax));
+
+        $.each(dynamicColumns, function (_ii, header) {
+            const key = String(header || "").toLowerCase();
+            const val = parseNumber(item && item[key]);
+            dynamicTotals[key] += val;
+            rowData.push(formatNumber(val));
+        });
+
+        exportRows.push(rowData);
+    });
+
+    const grandTotalRow = ["", "GRAND TOTAL", formatNumber(totals.sss), formatNumber(totals.sss_prov), formatNumber(totals.ph), formatNumber(totals.hdmf), formatNumber(totals.tax)];
+    $.each(dynamicColumns, function (_i, header) {
+        const key = String(header || "").toLowerCase();
+        grandTotalRow.push(formatNumber(dynamicTotals[key]));
+    });
+    exportRows.push(grandTotalRow);
+
+    const xlsxFileName = "contribution_deduction_report.xlsx";
+    const endColIndex = lastColIndex + 1; // ExcelJS is 1-based
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Contribution Report");
+
+    worksheet.getColumn(1).width = 5;
+    worksheet.getColumn(2).width = 28;
+    for (let i = 3; i <= endColIndex; i++) {
+        worksheet.getColumn(i).width = 14;
+    }
+
+    worksheet.mergeCells(1, 1, 2, endColIndex);
+    const titleCell = worksheet.getCell("A1");
+    titleCell.value = reportTitle;
+    titleCell.font = { bold: true, size: 16, name: "Arial" };
+    titleCell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    worksheet.getRow(1).height = 25;
+    worksheet.getRow(2).height = 25;
+
+    const headerRow = worksheet.getRow(3);
+    headerRow.height = 18;
+    headers.forEach(function (h, i) {
+        const cell = headerRow.getCell(i + 1);
+        cell.value = h;
+        cell.font = { bold: true, name: "Arial" };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+
+    $.each(rows, function (index, item) {
+        const sss     = parseNumber(item && item.sss);
+        const sssProv = parseNumber(item && item.sss_prov);
+        const ph      = parseNumber(item && item.ph);
+        const hdmf    = parseNumber(item && item.hdmf);
+        const tax     = parseNumber(item && item.tax);
+
+        totals.sss      += sss;
+        totals.sss_prov += sssProv;
+        totals.ph       += ph;
+        totals.hdmf     += hdmf;
+        totals.tax      += tax;
+
+        const rowValues = [
+            index + 1,
+            item && item.employee_name ? item.employee_name : "",
+            formatNumber(sss), formatNumber(sssProv),
+            formatNumber(ph), formatNumber(hdmf), formatNumber(tax)
+        ];
+        $.each(dynamicColumns, function (_ii, header) {
+            const key = String(header || "").toLowerCase();
+            const val = parseNumber(item && item[key]);
+            dynamicTotals[key] += val;
+            rowValues.push(formatNumber(val));
+        });
+
+        const dataRow = worksheet.addRow(rowValues);
+        dataRow.eachCell(function (cell) {
+            cell.alignment = { horizontal: "center", vertical: "middle" };
+        });
+        dataRow.getCell(2).alignment = { horizontal: "left", vertical: "middle" };
+    });
+
+    const totalValues = ["", "GRAND TOTAL",
+        formatNumber(totals.sss), formatNumber(totals.sss_prov),
+        formatNumber(totals.ph), formatNumber(totals.hdmf), formatNumber(totals.tax)
+    ];
+    $.each(dynamicColumns, function (_i, header) {
+        totalValues.push(formatNumber(dynamicTotals[String(header || "").toLowerCase()]));
+    });
+    const totalRow = worksheet.addRow(totalValues);
+    totalRow.eachCell(function (cell) {
+        cell.font = { bold: true, name: "Arial" };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+
+    workbook.xlsx.writeBuffer().then(function (buffer) {
+        const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = xlsxFileName;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+}
+
+function exportDivMonthly(element) {
+    if (!vmPrintAreaMonthly || !vmPrintAreaMonthly.count) {
+        toastr.error("Nothing to export!", "Contribution / Deduction");
+        return;
+    }
+
+    const $table = $("#monthly_contrib_deduct");
+    if (!$table.length) {
+        toastr.error("Monthly report table is not available.", "Contribution / Deduction");
+        return;
+    }
+
+    const reportTitle = "CONTRIBUTION/DEDUCTION REPORT";
+    const headers = [];
+    $table.find("thead tr:first th").each(function () {
+        headers.push($(this).text().trim());
+    });
+
+    const bodyRows = [];
+    $table.find("tbody tr").each(function () {
+        const row = [];
+        $(this).find("td, th").each(function () {
+            row.push($(this).text().trim());
+        });
+        if (row.length) { bodyRows.push(row); }
+    });
+
+    const footerRows = [];
+    $table.find("tfoot tr").each(function () {
+        const row = [];
+        $(this).find("td, th").each(function () {
+            row.push($(this).text().trim());
+        });
+        if (row.length) { footerRows.push(row); }
+    });
+
+    const maxCols = Math.max(
+        headers.length,
+        bodyRows.reduce(function (max, row) { return Math.max(max, row.length); }, 0),
+        footerRows.reduce(function (max, row) { return Math.max(max, row.length); }, 0)
+    );
+
+    if (!maxCols) {
+        toastr.error("No monthly rows found for export.", "Contribution / Deduction");
+        return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Monthly Contribution");
+    const endColIndex = maxCols;
+
+    for (let i = 1; i <= endColIndex; i++) {
+        worksheet.getColumn(i).width = (i === 2) ? 28 : 14;
+    }
+
+    worksheet.mergeCells(1, 1, 2, endColIndex);
+    const titleCell = worksheet.getCell("A1");
+    titleCell.value = reportTitle;
+    titleCell.font = { bold: true, size: 16, name: "Arial" };
+    titleCell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    worksheet.getRow(1).height = 25;
+    worksheet.getRow(2).height = 25;
+
+    const headerRow = worksheet.getRow(3);
+    for (let i = 0; i < endColIndex; i++) {
+        const cell = headerRow.getCell(i + 1);
+        cell.value = headers[i] || "";
+        cell.font = { bold: true, name: "Arial" };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+    }
+
+    const employeeNameIndex = headers.findIndex(function (h) {
+        return String(h || "").toUpperCase().indexOf("EMPLOYEE") >= 0;
+    });
+    const numberIndex = headers.findIndex(function (h) {
+        return String(h || "").trim() === "#";
+    });
+
+    const employeeRows = bodyRows
+        .filter(function (row) {
+            if (employeeNameIndex < 0 || !row[employeeNameIndex]) { return false; }
+            const name = String(row[employeeNameIndex] || "").trim().toUpperCase();
+            if (!name) { return false; }
+            if (name.indexOf("PROJECT #:") >= 0) { return false; }
+            if (name.indexOf("SUB TOTAL") >= 0) { return false; }
+            if (name.indexOf("GRAND TOTAL") >= 0) { return false; }
+            return true;
+        })
+        .sort(function (a, b) {
+            const nameA = String(a[employeeNameIndex] || "").toLowerCase().trim();
+            const nameB = String(b[employeeNameIndex] || "").toLowerCase().trim();
+            return nameA.localeCompare(nameB);
+        });
+
+    employeeRows.forEach(function (rowValues, idx) {
+        const padded = rowValues.slice();
+        while (padded.length < endColIndex) { padded.push(""); }
+        if (numberIndex >= 0) { padded[numberIndex] = String(idx + 1); }
+        const dataRow = worksheet.addRow(padded);
+        dataRow.eachCell(function (cell) {
+            cell.alignment = { horizontal: "center", vertical: "middle" };
+        });
+    });
+
+    const parseNumber = function (value) {
+        const clean = String(value == null ? "" : value).replace(/,/g, "");
+        const parsed = parseFloat(clean);
+        return Number.isNaN(parsed) ? null : parsed;
+    };
+    const formatNumber = function (value) {
+        return Number(value || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    const grandTotal = new Array(endColIndex).fill("");
+    if (employeeNameIndex >= 0) { grandTotal[employeeNameIndex] = "GRAND TOTAL"; }
+    for (let i = 0; i < endColIndex; i++) {
+        if (i === numberIndex || i === employeeNameIndex) { continue; }
+        let sum = 0;
+        let hasNumber = false;
+        employeeRows.forEach(function (row) {
+            const val = parseNumber(row[i]);
+            if (val !== null) {
+                sum += val;
+                hasNumber = true;
+            }
+        });
+        if (hasNumber) { grandTotal[i] = formatNumber(sum); }
+    }
+
+    const totalRow = worksheet.addRow(grandTotal);
+    totalRow.eachCell(function (cell) {
+        cell.font = { bold: true, name: "Arial" };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+
+    const xlsxFileName = "contribution_deduction_monthly.xlsx";
+    workbook.xlsx.writeBuffer().then(function (buffer) {
+        const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = xlsxFileName;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+}

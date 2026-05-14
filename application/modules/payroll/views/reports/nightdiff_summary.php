@@ -153,6 +153,7 @@
                             <thead>
                                 <tr>
                                     <th class="m--hide">EMPLOYEE NAME</th>
+                                    <th class="m--hide">STATION</th>
                                     <th>DATE</th>
                                     <th>SPECIFIED DAY</th>
                                     <th>DAILY RATE</th>
@@ -163,7 +164,7 @@
                             </thead>
                             <tbody></tbody>
                             <tfoot>
-                                <th class="text-right" colspan="5">&nbsp;</th>
+                                <th class="text-right" colspan="6">&nbsp;</th>
                                 <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>
                                 <th class="text-right"><span class='m--font-boldest'>₱ 0.00</span></th>
                             </tfoot>
