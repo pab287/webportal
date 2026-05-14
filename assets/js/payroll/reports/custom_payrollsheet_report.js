@@ -571,6 +571,21 @@ const dtNetPayReport = tableNetpay.DataTable({
             stripHtml: false,
             columns: ':visible:not(:eq(0)):not(.actions)'
         },
+        customizeData: function (data) {
+            const normalize = function (value) {
+                return String(value == null ? '' : value).toLowerCase().trim();
+            };
+
+            const headers = Array.isArray(data.header) ? data.header : [];
+            const employeeIndex = headers.findIndex(function (h) {
+                return normalize(h).indexOf('employee') >= 0;
+            });
+            const sortIndex = employeeIndex >= 0 ? employeeIndex : 0;
+
+            data.body.sort(function (a, b) {
+                return normalize(a[sortIndex]).localeCompare(normalize(b[sortIndex]));
+            });
+        },
         customize: function (xlsx) {
             const option = filtered.option != 'all' ? filtered.option.toUpperCase()+' ' : '';
             const sheet = xlsx.xl.worksheets['sheet1.xml'];
